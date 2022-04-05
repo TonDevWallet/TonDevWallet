@@ -2,8 +2,8 @@ import TonWeb from 'tonweb'
 import { useEffect, useState } from 'preact/hooks'
 import { generateMnemonic, mnemonicToKeyPair, validateMnemonic } from 'tonweb-mnemonic'
 import { useAsync } from 'react-async-hook'
-import clipboard from 'clipboardy'
-import CopySvg from './components/copy'
+
+import Copier from './components/copier'
 
 const provider = new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC')
 
@@ -86,9 +86,7 @@ export function App() {
           className="text-accent text-lg font-medium my-2 flex items-center"
         >
           Words
-          <button className="ml-2 w-6 h-6" onClick={() => clipboard.write(words.join(' '))}>
-            <CopySvg />
-          </button>
+          <Copier className="w-6 h-6 ml-2" text={words.join(' ')} />
         </label>
         <div
           className="w-full h-24 outline-none"
@@ -118,9 +116,7 @@ export function App() {
           <div className="text-[8px] md:text-sm">{wallet.address}</div>
 
           <div className="ml-auto">
-            <button className="w-6 h-6" onClick={() => clipboard.write(wallet.address)}>
-              <CopySvg />
-            </button>
+            <Copier text={wallet.address} />
           </div>
         </div>
       ))}
