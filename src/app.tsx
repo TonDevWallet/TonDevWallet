@@ -52,27 +52,10 @@ export function App() {
     ]
   }, [key.result])
 
-  const walletWithBalanes = useAsync(async () => {
-    if (!wallets.result) {
-      return []
-    }
-
-    // const result = []
-    // for (const wallet of wallets.result) {
-    //   const balance = await provider.getBalance(wallet.address)
-    //   await delay(1000)
-
-    //   result.push({ ...wallet, balance: TonWeb.utils.fromNano(balance) })
-    // }
-
-    return wallets.result
-  }, [wallets.result])
-
-  const walletsToShow = walletWithBalanes.result || wallets.result
+  const walletsToShow = wallets.result
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onWordsChange = (e: any) => {
-    console.log('e', e)
     setWords(e.target.value.split(' '))
   }
 
@@ -88,15 +71,13 @@ export function App() {
           Words
           <Copier className="w-6 h-6 ml-2" text={words.join(' ')} />
         </label>
-        <div
+        <textarea
           className="w-full h-24 outline-none"
           id="wordsInput"
           type="text"
-          contentEditable
           onChange={onWordsChange}
-        >
-          {words.join(' ')}
-        </div>
+          value={words.join(' ')}
+        ></textarea>
       </div>
 
       <button onClick={generate} className="bg-highlight rounded px-2 py-2 w-48 text-white">
