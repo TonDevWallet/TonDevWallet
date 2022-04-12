@@ -2,8 +2,12 @@ import TonWeb from 'tonweb'
 import { useEffect, useState } from 'preact/hooks'
 import { generateMnemonic, mnemonicToKeyPair, validateMnemonic } from 'tonweb-mnemonic'
 import { useAsync } from 'react-async-hook'
+import clipboard from 'clipboardy'
 
 import Copier from './components/copier'
+
+import CopySvg from './components/icons/copy'
+import DoneSvg from './components/icons/done'
 
 const provider = new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC')
 
@@ -32,21 +36,21 @@ export function App() {
   const wallets = useAsync(async () => {
     // eslint-disable-next-line new-cap
     const walletv3R2 = new TonWeb.Wallets.all.v3R2(provider, { publicKey: key.result?.publicKey })
-    const v3R2Address = (await walletv3R2.getAddress()).toString(true, true, true)
+    const v3R2Address = await walletv3R2.getAddress()
 
     // eslint-disable-next-line new-cap
     const walletv4R2 = new TonWeb.Wallets.all.v4R2(provider, { publicKey: key.result?.publicKey })
-    const v4R2Address = (await walletv4R2.getAddress()).toString(true, true, true)
+    const v4R2Address = await walletv4R2.getAddress()
 
     return [
       {
-        type: 'v3R2',
-        address: v3R2Address,
+        type: 'v4R2',
+        address: v4R2Address,
         balance: '0',
       },
       {
-        type: 'v4R2',
-        address: v4R2Address,
+        type: 'v3R2',
+        address: v3R2Address,
         balance: '0',
       },
     ]
@@ -86,21 +90,43 @@ export function App() {
 
       <div className="font-medium text-lg text-accent my-2">Wallets:</div>
 
-      <div className="flex justify-start items-center">
+      {/* <div className="flex justify-start items-center">
         <div className="w-12">Type</div>
         <div>Address</div>
-      </div>
+      </div> */}
 
       {walletsToShow?.map((wallet) => (
-        <div className="my-2 flex justify-start items-center" key={wallet.address}>
-          <div className="w-12">{wallet.type}</div>
-          <div className="text-[8px] md:text-sm">{wallet.address}</div>
+        <div className="my-2 flex flex-col border" key={wallet.address.toString(true, true, true)}>
+          <div className="border-b px-1">Wallet {wallet.type}</div>
 
-          <div className="ml-auto">
-            <Copier text={wallet.address} />
-          </div>
+          <AddressRow text="Bouncable:" address={wallet.address.toString(true, true, true)} />
+          <AddressRow text="UnBouncable:" address={wallet.address.toString(true, true, false)} />
+          <AddressRow text="Raw:" address={wallet.address.toString(false)} />
         </div>
       ))}
+    </div>
+  )
+}
+
+function AddressRow({ address, text }: { address: string; text: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const pressCopy = () => {
+    clipboard.write(address)
+    setCopied(true)
+    setTimeout(() => {
+      setCopied(false)
+    }, 1000)
+  }
+
+  return (
+    <div class="flex justify-start items-center py-2 cursor-pointer px-1" onClick={pressCopy}>
+      <div className="">{text}</div>
+      <div className="text-[12px]">{address}</div>
+
+      <div className="ml-auto">
+        <button className="w-6 h-6">{copied ? <DoneSvg /> : <CopySvg />}</button>
+      </div>
     </div>
   )
 }
