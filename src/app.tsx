@@ -173,11 +173,6 @@ export function App() {
 
         <div className="font-medium text-lg text-accent my-2">Wallets:</div>
 
-        <div className="flex justify-start items-center">
-          <div className="w-12">Type</div>
-          <div>Address</div>
-        </div>
-
         {walletsToShow?.map((wallet) => (
           <div
             className="my-2 flex flex-col border"
