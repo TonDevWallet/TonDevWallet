@@ -14,6 +14,7 @@
     "postcss": "^8.4.12",
     "preact": "^10.5.15",
     "react-async-hook": "^4.0.0",
+    "reactjs-popup": "^2.0.5",
     "tailwindcss": "^3.0.23",
     "tonweb": "^0.0.38",
     "tonweb-mnemonic": "^1.0.1"

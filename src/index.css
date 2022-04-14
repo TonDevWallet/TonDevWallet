@@ -4,6 +4,8 @@
 
 @import 'tailwindcss/utilities';
 
+@import 'reactjs-popup/dist/index.css';
+
 :root {
   --color-main: #000000;
   --color-highlight: #0088CC;
