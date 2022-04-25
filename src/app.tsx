@@ -94,7 +94,11 @@ export function App() {
         />
       </div>
       <div className="md:max-w-xl w-full px-4 flex flex-col mt-16">
-        <Wallet wallet={wallet} testnet={testnet} apiKey={apiKey} />
+        {wallet ? (
+          <Wallet wallet={wallet} testnet={testnet} apiKey={apiKey} />
+        ) : (
+          <div>Click 'Use this wallet' on wallet you want to use</div>
+        )}
       </div>
     </div>
   )

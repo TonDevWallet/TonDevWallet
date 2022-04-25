@@ -5,6 +5,7 @@ import { useEffect, useState } from 'preact/hooks'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { IWallet } from '../types'
 import Popup from 'reactjs-popup'
+import { BlueButton } from './UI'
 
 const { NftItem } = TonWeb.token.nft
 
@@ -13,11 +14,13 @@ export default function SendNft({
   wallet,
   testnet,
   provider,
+  updateBalance,
 }: {
   seqno: string
   wallet: IWallet
   testnet: boolean
   provider: HttpProvider
+  updateBalance: () => void
 }) {
   const [nft, setNft] = useState('')
   const [nftRecepient, setNftRecepient] = useState('')
@@ -73,6 +76,7 @@ export default function SendNft({
         seqno={seqno}
         provider={provider}
         nftMessage={nftMessage}
+        updateBalance={updateBalance}
       />
     </div>
   )
@@ -85,6 +89,7 @@ const SendNftModal = ({
   seqno,
   provider,
   nftMessage,
+  updateBalance,
 }: {
   nft: string
   recepient: string
@@ -92,13 +97,14 @@ const SendNftModal = ({
   seqno: string
   provider: HttpProvider
   nftMessage: string
+  updateBalance: () => void
 }) => {
   const sendMoney = async (close: () => void) => {
     const nftAddress = new TonWeb.utils.Address(nft)
     const amount = TonWeb.utils.toNano(0.05)
     const nftItem = new NftItem(provider, { address: nftAddress })
 
-    const result = await wallet.wallet.methods
+    await wallet.wallet.methods
       .transfer({
         secretKey: wallet.key.secretKey,
         toAddress: nftAddress,
@@ -114,18 +120,12 @@ const SendNftModal = ({
       })
       .send()
 
-    console.log('result', result)
+    updateBalance()
     close()
   }
 
   return (
-    <Popup
-      trigger={
-        <button className="bg-highlight rounded px-2 py-2 w-48 text-white mt-2">Send</button>
-      }
-      modal
-      close={close}
-    >
+    <Popup trigger={<BlueButton className="mt-2">Send</BlueButton>} modal close={close}>
       {(close: () => void) => (
         <div className="flex flex-col p-4">
           <div>

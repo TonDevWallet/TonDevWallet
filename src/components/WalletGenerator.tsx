@@ -1,6 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { generateMnemonic, KeyPair, mnemonicToKeyPair, validateMnemonic } from 'tonweb-mnemonic'
 import { IWallet } from '../types'
+import { BlueButton } from './UI'
 import Copier from './copier'
 
 export function WalletGenerator({
@@ -48,25 +49,25 @@ export function WalletGenerator({
   return (
     <div>
       <div className="my-2">
-        <label
-          htmlFor="wordsInput"
-          className="text-accent text-lg font-medium my-2 flex items-center"
-        >
-          Words
-          <Copier className="w-6 h-6 ml-2" text={words.join(' ')} />
-        </label>
-        <textarea
-          className="w-full h-24 outline-none"
-          id="wordsInput"
-          type="text"
-          onChange={onWordsChange}
-          value={words.join(' ')}
-        ></textarea>
+        <form>
+          <label
+            htmlFor="wordsInput"
+            className="text-accent text-lg font-medium my-2 flex items-center"
+          >
+            Words
+            <Copier className="w-6 h-6 ml-2" text={words.join(' ')} />
+          </label>
+          <textarea
+            className="w-full h-24 outline-none"
+            id="wordsInput"
+            type="text"
+            onChange={onWordsChange}
+            value={words.join(' ')}
+          ></textarea>
+        </form>
       </div>
 
-      <button onClick={generate} className="bg-highlight rounded px-2 py-2 w-48 text-white">
-        Generate new words
-      </button>
+      <BlueButton onClick={generate}>Generate new words</BlueButton>
     </div>
   )
 }
