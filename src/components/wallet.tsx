@@ -7,6 +7,10 @@ import { useEffect, useMemo, useState } from 'preact/hooks'
 import SendTon from './SendTon'
 import SendNft from './SendNft'
 import { BlueButton } from './UI'
+import CreateMarketplace from './CreateMarketplace'
+import CreateNftSale from './CreateNftSale'
+import GetSaleInfo from './GetSaleInfo'
+import CancelNftSale from './CancelNftSale'
 
 function Wallet({
   wallet,
@@ -80,6 +84,32 @@ function Wallet({
         provider={provider}
         updateBalance={updateBalance}
       />
+
+      <CreateMarketplace
+        seqno={seqno}
+        wallet={wallet}
+        testnet={testnet}
+        provider={provider}
+        updateBalance={updateBalance}
+      />
+
+      <CreateNftSale
+        seqno={seqno}
+        wallet={wallet}
+        testnet={testnet}
+        provider={provider}
+        updateBalance={updateBalance}
+      />
+
+      <CancelNftSale
+        seqno={seqno}
+        wallet={wallet}
+        testnet={testnet}
+        provider={provider}
+        updateBalance={updateBalance}
+      />
+
+      <GetSaleInfo provider={provider} />
     </div>
   )
 }

@@ -1,18 +1,15 @@
+import { useState } from 'preact/hooks'
+import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
-
-import { useEffect, useState } from 'preact/hooks'
-
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { IWallet } from '../types'
-import Popup from 'reactjs-popup'
 import { BlueButton } from './UI'
 
-const { NftItem } = TonWeb.token.nft
+const { NftSale } = TonWeb.token.nft
 
-export default function SendNft({
+export default function CreateNftSale({
   seqno,
   wallet,
-  testnet,
   provider,
   updateBalance,
 }: {
@@ -22,100 +19,103 @@ export default function SendNft({
   provider: HttpProvider
   updateBalance: () => void
 }) {
-  const [nft, setNft] = useState('')
-  const [nftRecepient, setNftRecepient] = useState('')
-  const [nftMessage, setNftMessage] = useState('')
-
-  useEffect(() => {
-    setNft('')
-    setNftRecepient('')
-    setNftMessage('')
-  }, [wallet, testnet])
+  const [marketAddress, setMarketAddress] = useState('')
+  const [nftAddress, setNftAddress] = useState('')
+  const [collectionAddress, setCollectionAddress] = useState('')
 
   return (
-    <div className="flex flex-col mt-4">
-      <div className="font-medium text-lg text-accent my-2">Transfer NFT:</div>
+    <div>
+      <div>Nft Sale</div>
 
       <div className="mt-2 flex flex-col">
-        <label htmlFor="nftAddressInput">NFT Address:</label>
-        <input
-          className="border rounded p-2"
-          id="nftAddressInput"
-          type="text"
-          value={nft}
-          onChange={(e: any) => setNft(e.target.value)}
-        />
-      </div>
-
-      <div className="mt-2 flex flex-col">
-        <label htmlFor="nftToInput">Recepient:</label>
+        <label htmlFor="nftToInput">Market address:</label>
         <input
           className="border rounded p-2"
           id="nftToInput"
           type="text"
-          value={nftRecepient}
-          onChange={(e: any) => setNftRecepient(e.target.value)}
+          value={marketAddress}
+          onChange={(e: any) => setMarketAddress(e.target.value)}
         />
       </div>
 
       <div className="mt-2 flex flex-col">
-        <label htmlFor="nftMessageInput">Message:</label>
+        <label htmlFor="nftToInput">Nft address:</label>
         <input
           className="border rounded p-2"
-          id="nftMessageInput"
+          id="nftToInput"
           type="text"
-          value={nftMessage}
-          onChange={(e: any) => setNftMessage(e.target.value)}
+          value={nftAddress}
+          onChange={(e: any) => setNftAddress(e.target.value)}
         />
       </div>
 
-      <SendNftModal
-        nft={nft}
-        recepient={nftRecepient}
+      <div className="mt-2 flex flex-col">
+        <label htmlFor="nftToInput">Collection address:</label>
+        <input
+          className="border rounded p-2"
+          id="nftToInput"
+          type="text"
+          value={collectionAddress}
+          onChange={(e: any) => setCollectionAddress(e.target.value)}
+        />
+      </div>
+
+      {/* <div>Address: {marketAddress}</div> */}
+      <CreateSaleModal
+        marketAddress={marketAddress}
+        nftAddress={nftAddress}
+        collectionAddress={collectionAddress}
         wallet={wallet}
         seqno={seqno}
         provider={provider}
-        nftMessage={nftMessage}
         updateBalance={updateBalance}
       />
     </div>
   )
 }
 
-const SendNftModal = ({
-  nft,
-  recepient,
+const CreateSaleModal = ({
+  marketAddress,
+  nftAddress,
+  collectionAddress,
   wallet,
   seqno,
   provider,
-  nftMessage,
   updateBalance,
 }: {
-  nft: string
-  recepient: string
+  marketAddress: string
+  nftAddress: string
+  collectionAddress: string
   wallet: IWallet
   seqno: string
   provider: HttpProvider
-  nftMessage: string
   updateBalance: () => void
 }) => {
   const sendMoney = async (close: () => void) => {
-    const nftAddress = new TonWeb.utils.Address(nft)
     const amount = TonWeb.utils.toNano(0.05)
-    const nftItem = new NftItem(provider, { address: nftAddress })
+
+    const sale = new NftSale(provider, {
+      marketplaceAddress: new TonWeb.utils.Address(marketAddress),
+      nftAddress: new TonWeb.utils.Address(nftAddress),
+      fullPrice: TonWeb.utils.toNano('1.1'),
+      marketplaceFee: TonWeb.utils.toNano('0.2'),
+      royaltyAddress: new TonWeb.utils.Address(collectionAddress),
+      royaltyAmount: TonWeb.utils.toNano('0.1'),
+    })
+
+    const body = new TonWeb.boc.Cell()
+    body.bits.writeUint(1, 32) // OP deploy new auction
+    body.bits.writeCoins(amount)
+    body.refs.push((await sale.createStateInit()).stateInit)
+    body.refs.push(new TonWeb.boc.Cell())
 
     await wallet.wallet.methods
       .transfer({
         secretKey: wallet.key.secretKey,
-        toAddress: nftAddress,
+        toAddress: new TonWeb.utils.Address(marketAddress),
         amount: amount,
         seqno: parseInt(seqno),
-        payload: await nftItem.createTransferBody({
-          newOwnerAddress: new TonWeb.utils.Address(recepient),
-          forwardAmount: TonWeb.utils.toNano(0.02),
-          forwardPayload: new TextEncoder().encode(nftMessage),
-          responseAddress: wallet.address,
-        }),
+        payload: body,
         sendMode: 3,
       })
       .send()
@@ -128,9 +128,7 @@ const SendNftModal = ({
     <Popup trigger={<BlueButton className="mt-2">Send</BlueButton>} modal close={close}>
       {(close: () => void) => (
         <div className="flex flex-col p-4">
-          <div>
-            You will send {nft} NFT to {recepient}.
-          </div>
+          <div>You will create marketplace.</div>
           <div className="mt-4">Are you sure?</div>
           <div className="flex mt-2">
             <div
