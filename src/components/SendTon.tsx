@@ -17,10 +17,12 @@ export default function SendTon({
 }) {
   const [amount, setAmount] = useState('0')
   const [recepient, setRecepient] = useState('')
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     setAmount('0')
     setRecepient('')
+    setMessage('')
   }, [wallet, testnet])
 
   return (
@@ -51,11 +53,25 @@ export default function SendTon({
         />
       </div>
 
+      <div className="mt-2 flex flex-col">
+        <label htmlFor="amountInput">Message:</label>
+        <input
+          className="border rounded p-2"
+          id="amountInput"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={message}
+          onChange={(e: any) => setMessage(e.target.value)}
+        />
+      </div>
+
       <SendModal
         amount={amount}
         recepient={recepient}
         wallet={wallet}
         seqno={seqno}
+        message={message}
         updateBalance={updateBalance}
       />
     </div>
@@ -67,12 +83,14 @@ const SendModal = ({
   recepient,
   wallet,
   seqno,
+  message: sendMessage,
   updateBalance,
 }: {
   amount: string
   recepient: string
   wallet: IWallet
   seqno: string
+  message: string
   updateBalance: () => void
 }) => {
   const [status, setStatus] = useState(0) // 0 before send, 1 sending, 2 success, 3 error
@@ -114,6 +132,7 @@ const SendModal = ({
       secretKey: wallet.key.secretKey,
       toAddress: recepient,
       sendMode: 3,
+      payload: sendMessage || undefined,
     }
 
     try {
