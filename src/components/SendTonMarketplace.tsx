@@ -2,10 +2,11 @@ import { useEffect, useState } from 'preact/hooks'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
+import { WalletMarketplace } from '../contracts/WalletMarketpalce'
 import { IWallet } from '../types'
 import { BlueButton } from './UI'
 
-export default function SendTon({
+export default function SendTonMarketplace({
   seqno,
   wallet,
   provider,
@@ -137,7 +138,18 @@ const SendModal = ({
     }
 
     try {
-      const result = await wallet.wallet.methods.transfer(params).send()
+      const marketplace = new WalletMarketplace(wallet.wallet.provider, {
+        publicKey: wallet.key.publicKey,
+      })
+
+      // const r2w = new TonWeb.Wallets.all.v3R2(wallet.wallet.provider, {
+      //   address: await (await marketplace.getAddress()).toString(true, true, false),
+      // })
+
+      const result = await marketplace.methods.transfer(params).send()
+
+      // const result = await wallet.wallet.methods.transfer(params).send()
+      // const result = await r2w.methods.transfer(params).send()
 
       if (result['@type'] === 'error') {
         setStatus(3)

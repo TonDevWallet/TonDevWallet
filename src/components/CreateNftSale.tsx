@@ -15,7 +15,6 @@ export default function CreateNftSale({
 }: {
   seqno: string
   wallet: IWallet
-  testnet: boolean
   provider: HttpProvider
   updateBalance: () => void
 }) {

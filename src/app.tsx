@@ -1,12 +1,12 @@
 import TonWeb from 'tonweb'
 
-import { useMemo, useState } from 'preact/hooks'
+import { useState } from 'preact/hooks'
 import { KeyPair } from 'tonweb-mnemonic'
 import { useAsync } from 'react-async-hook'
 
 import Wallet from './components/wallet'
 import { IWallet } from './types'
-import { getProvider } from './utils'
+import { useProvider } from './utils'
 import { WalletGenerator } from './components/WalletGenerator'
 import { WalletsTable } from './components/WalletsTable'
 import { NetworkSettings } from './components/NetworkSettings'
@@ -18,10 +18,10 @@ export function App() {
   const [wallet, setWallet] = useState<IWallet | undefined>(undefined)
   const [keyPair, setKeyPair] = useState<KeyPair | undefined>(undefined)
 
-  const [testnet, setTestnet] = useState(true)
+  const [apiUrl, setApiUrl] = useState('')
   const [apiKey, setApiKey] = useState<string>('')
 
-  const provider = useMemo(() => getProvider(apiKey, testnet), [apiKey, testnet])
+  const provider = useProvider(apiUrl, apiKey)
 
   const wallets = useAsync<IWallet[]>(async () => {
     if (!keyPair) {
@@ -73,9 +73,9 @@ export function App() {
         <h1 className="font-bold text-xl text-accent">TON Wallet</h1>
 
         <NetworkSettings
-          testnet={testnet}
+          apiUrl={apiUrl}
           apiKey={apiKey}
-          setTestnet={setTestnet}
+          setApiUrl={setApiUrl}
           setApiKey={setApiKey}
         />
 
@@ -89,13 +89,13 @@ export function App() {
         <WalletsTable
           currentWallet={wallet}
           walletsToShow={walletsToShow}
-          testnet={testnet}
+          apiUrl={apiUrl}
           setWallet={setWallet}
         />
       </div>
       <div className="md:max-w-xl w-full px-4 flex flex-col mt-16">
         {wallet ? (
-          <Wallet wallet={wallet} testnet={testnet} apiKey={apiKey} />
+          <Wallet wallet={wallet} apiUrl={apiUrl} apiKey={apiKey} />
         ) : (
           <div>Click 'Use this wallet' on wallet you want to use</div>
         )}

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'preact/hooks'
 
 export function NetworkSettings({
-  testnet,
-  setTestnet,
+  apiUrl,
+  setApiUrl,
   apiKey,
   setApiKey,
 }: {
-  testnet: boolean
-  setTestnet: (v: boolean) => void
+  apiUrl: string
+  setApiUrl: (v: string) => void
   apiKey: string
   setApiKey: (v: string) => void
 }) {
@@ -18,11 +18,11 @@ export function NetworkSettings({
     setTimeout(() => setInit(true), 128)
 
     if (window.localStorage) {
-      const localTestnet = window.localStorage.getItem('tonwallgen_testnet')
+      const localApiUrl = window.localStorage.getItem('tonwallgen_apiurl')
       const localApikey = window.localStorage.getItem('tonwallgen_apikey')
 
-      if (localTestnet) {
-        setTestnet(localTestnet === 'true')
+      if (localApiUrl) {
+        setApiUrl(localApiUrl)
       }
 
       if (localApikey) {
@@ -38,29 +38,30 @@ export function NetworkSettings({
     }
 
     if (window.localStorage) {
-      window.localStorage.setItem('tonwallgen_testnet', testnet.toString())
+      window.localStorage.setItem('tonwallgen_apiurl', apiUrl)
       window.localStorage.setItem('tonwallgen_apikey', apiKey)
     }
-  }, [apiKey, testnet])
+  }, [apiKey, apiUrl])
 
   return (
-    <div className="flex my-2 items-center">
-      <div>
-        <label htmlFor="testnetCheckbox">Testnet: </label>
+    <div className="flex flex-col gap-2 my-2">
+      <div className="flex">
+        <label htmlFor="testnetCheckbox">ApiUrl: </label>
         <input
-          type="checkbox"
+          type="text"
           id="testnetCheckbox"
-          checked={testnet}
-          onChange={() => setTestnet(!testnet)}
+          className="border rounded px-2 w-full"
+          value={apiUrl}
+          onChange={(e: any) => setApiUrl(e.target.value)}
         />
       </div>
 
-      <div className="ml-2">
+      <div className="flex">
         <label htmlFor="apiKeyInput">ApiKey: </label>
         <input
           type="text"
           id="apiKeyInput"
-          className="border rounded px-2"
+          className="border rounded px-2 w-full"
           value={apiKey}
           onChange={(e: any) => setApiKey(e.target.value)}
         />

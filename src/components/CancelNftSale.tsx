@@ -15,7 +15,6 @@ export default function CancelNftSale({
 }: {
   seqno: string
   wallet: IWallet
-  testnet: boolean
   provider: HttpProvider
   updateBalance: () => void
 }) {

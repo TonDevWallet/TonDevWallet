@@ -1,7 +1,7 @@
 import TonWeb from 'tonweb'
 
 import { IWallet } from '../types'
-import { getProvider } from '../utils'
+import { useProvider } from '../utils'
 import { AddressRow } from './AddressRow'
 import { useEffect, useMemo, useState } from 'preact/hooks'
 import SendTon from './SendTon'
@@ -11,17 +11,10 @@ import CreateMarketplace from './CreateMarketplace'
 import CreateNftSale from './CreateNftSale'
 import GetSaleInfo from './GetSaleInfo'
 import CancelNftSale from './CancelNftSale'
+import SendTonMarketplace from './SendTonMarketplace'
 
-function Wallet({
-  wallet,
-  testnet,
-  apiKey,
-}: {
-  wallet: IWallet
-  testnet: boolean
-  apiKey: string
-}) {
-  const provider = useMemo(() => getProvider(apiKey, testnet), [apiKey, testnet])
+function Wallet({ wallet, apiUrl, apiKey }: { wallet: IWallet; apiUrl: string; apiKey: string }) {
+  const provider = useProvider(apiUrl, apiKey)
   const [balance, setBalance] = useState('')
 
   const [seqno, setSeqno] = useState('0')
@@ -40,7 +33,7 @@ function Wallet({
   useEffect(() => {
     updateBalance()
     getSeqno()
-  }, [wallet, testnet])
+  }, [wallet, provider])
 
   return (
     <div>
@@ -75,20 +68,20 @@ function Wallet({
         </div>
       </div>
 
-      <SendTon seqno={seqno} wallet={wallet} testnet={testnet} updateBalance={updateBalance} />
+      <SendTon seqno={seqno} wallet={wallet} provider={provider} updateBalance={updateBalance} />
 
-      <SendNft
-        seqno={seqno}
-        wallet={wallet}
-        testnet={testnet}
-        provider={provider}
-        updateBalance={updateBalance}
-      />
+      <SendNft seqno={seqno} wallet={wallet} provider={provider} updateBalance={updateBalance} />
 
       <CreateMarketplace
         seqno={seqno}
         wallet={wallet}
-        testnet={testnet}
+        provider={provider}
+        updateBalance={updateBalance}
+      />
+
+      <SendTonMarketplace
+        seqno={seqno}
+        wallet={wallet}
         provider={provider}
         updateBalance={updateBalance}
       />
@@ -96,7 +89,6 @@ function Wallet({
       <CreateNftSale
         seqno={seqno}
         wallet={wallet}
-        testnet={testnet}
         provider={provider}
         updateBalance={updateBalance}
       />
@@ -104,7 +96,6 @@ function Wallet({
       <CancelNftSale
         seqno={seqno}
         wallet={wallet}
-        testnet={testnet}
         provider={provider}
         updateBalance={updateBalance}
       />

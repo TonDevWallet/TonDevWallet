@@ -12,13 +12,11 @@ const { NftItem } = TonWeb.token.nft
 export default function SendNft({
   seqno,
   wallet,
-  testnet,
   provider,
   updateBalance,
 }: {
   seqno: string
   wallet: IWallet
-  testnet: boolean
   provider: HttpProvider
   updateBalance: () => void
 }) {
@@ -30,7 +28,7 @@ export default function SendNft({
     setNft('')
     setNftRecepient('')
     setNftMessage('')
-  }, [wallet, testnet])
+  }, [wallet, provider])
 
   return (
     <div className="flex flex-col mt-4">

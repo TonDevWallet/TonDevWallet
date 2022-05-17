@@ -1,12 +1,12 @@
+import { useMemo } from 'preact/hooks'
 import TonWeb from 'tonweb'
 
 export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export const getProvider = (key: string | null = null, testnet = false) => {
-  const apiKey = key ? `?api_key=${key}` : ''
-  const host = testnet
-    ? 'https://testnet.toncenter.com/api/v2/jsonRPC'
-    : 'https://toncenter.com/api/v2/jsonRPC'
+const getProvider = (apiUrl: string, key: string | undefined) => {
+  return new TonWeb.HttpProvider(apiUrl, { apiKey: key })
+}
 
-  return new TonWeb.HttpProvider(`${host}${apiKey}`)
+export const useProvider = (apiUrl: string, key: string | undefined) => {
+  return useMemo(() => getProvider(apiUrl, key), [apiUrl, key])
 }

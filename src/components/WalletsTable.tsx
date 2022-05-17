@@ -3,13 +3,13 @@ import { AddressRow } from './AddressRow'
 
 export function WalletsTable({
   walletsToShow,
-  testnet,
+  apiUrl,
   currentWallet,
 
   setWallet,
 }: {
   walletsToShow?: IWallet[]
-  testnet: boolean
+  apiUrl: string
   currentWallet?: IWallet
 
   setWallet: (wallet: IWallet) => void
@@ -24,7 +24,7 @@ export function WalletsTable({
             <div className="">
               Wallet {wallet.type}
               <a
-                href={getScanLink(wallet.address.toString(true, true, true), testnet)}
+                href={getScanLink(wallet.address.toString(true, true, true), false)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ml-2"
