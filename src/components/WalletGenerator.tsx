@@ -1,4 +1,4 @@
-import { useEffect } from 'preact/hooks'
+import { useEffect } from 'react'
 import { generateMnemonic, KeyPair, mnemonicToKeyPair, validateMnemonic } from 'tonweb-mnemonic'
 import { IWallet } from '../types'
 import { BlueButton } from './UI'

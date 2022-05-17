@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
@@ -179,43 +179,40 @@ const SendModal = ({
       closeOnDocumentClick
       trigger={<BlueButton className="mt-2">Send</BlueButton>}
       modal
-      close={close}
     >
-      {(close: () => void) => (
-        <div className="p-4">
-          {status === 0 && (
-            <div className="flex flex-col">
-              <div>
-                You will send {amount} TON to {recepient}.
-              </div>
-              <div className="mt-4">Are you sure?</div>
-              <div className="flex mt-2">
-                <BlueButton onClick={() => sendMoney()}>Yes</BlueButton>
-                <BlueButton onClick={() => close()} className="ml-2">
-                  Cancel
-                </BlueButton>
-              </div>
-            </div>
-          )}
-          {status === 1 && <div>Sending {seconds}</div>}
-          {status === 2 && (
+      <div className="p-4">
+        {status === 0 && (
+          <div className="flex flex-col">
             <div>
-              <div>Success</div>
-              <BlueButton className="mt-8" onClick={() => close()}>
-                Close
+              You will send {amount} TON to {recepient}.
+            </div>
+            <div className="mt-4">Are you sure?</div>
+            <div className="flex mt-2">
+              <BlueButton onClick={() => sendMoney()}>Yes</BlueButton>
+              <BlueButton onClick={() => close()} className="ml-2">
+                Cancel
               </BlueButton>
             </div>
-          )}
-          {status === 3 && (
-            <div>
-              <div>Error: {message}</div>
-              <BlueButton className="mt-8" onClick={() => close()}>
-                Close
-              </BlueButton>
-            </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+        {status === 1 && <div>Sending {seconds}</div>}
+        {status === 2 && (
+          <div>
+            <div>Success</div>
+            <BlueButton className="mt-8" onClick={() => close()}>
+              Close
+            </BlueButton>
+          </div>
+        )}
+        {status === 3 && (
+          <div>
+            <div>Error: {message}</div>
+            <BlueButton className="mt-8" onClick={() => close()}>
+              Close
+            </BlueButton>
+          </div>
+        )}
+      </div>
     </Popup>
   )
 }

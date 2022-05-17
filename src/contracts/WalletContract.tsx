@@ -1,12 +1,8 @@
-// const { Contract } = require('../index.js')
-// const { Cell } = require('../../boc')
-// const { nacl, stringToBytes, Address, BN } = require('../../utils')
-
 import TonWeb from 'tonweb'
 
 const Contract = TonWeb.Contract
 const Cell = TonWeb.boc.Cell
-const { nacl, stringToBytes, Address, BN } = TonWeb.utils
+const { nacl, Address, BN } = TonWeb.utils
 
 /**
  * Abstract standard wallet class
@@ -98,7 +94,8 @@ class WalletContract extends Contract {
    * @param   seqno?   {number}
    * @return {Cell}
    */
-  createSigningMessage(seqno: any, withoutOp?: any) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  createSigningMessage(seqno: any, _withoutOp?: any) {
     seqno = seqno || 0
     const cell = new Cell()
     cell.bits.writeUint(seqno, 32)
@@ -162,8 +159,8 @@ class WalletContract extends Contract {
     body.writeCell(signingMessage)
 
     let stateInit
-    let code = null
-    let data = null
+    let code
+    let data
 
     if (seqno === 0) {
       if (!this.options.publicKey) {
@@ -241,4 +238,3 @@ class WalletContract extends Contract {
 }
 
 export { WalletContract }
-// module.exports = { WalletContract }

@@ -1,11 +1,8 @@
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
-import nacl from 'tweetnacl'
 import { WalletContract } from './WalletContract'
 
 const Cell = TonWeb.boc.Cell
-const Contract = TonWeb.Contract
-const { Address, bytesToHex, BN } = TonWeb.utils
 const { NftSale } = TonWeb.token.nft
 
 // const { Cell } = require('../../boc')

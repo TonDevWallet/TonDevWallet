@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useState } from 'react'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 

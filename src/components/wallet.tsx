@@ -3,7 +3,7 @@ import TonWeb from 'tonweb'
 import { IWallet } from '../types'
 import { useProvider } from '../utils'
 import { AddressRow } from './AddressRow'
-import { useEffect, useMemo, useState } from 'preact/hooks'
+import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
 import SendNft from './SendNft'
 import { BlueButton } from './UI'
@@ -28,6 +28,7 @@ function Wallet({ wallet, apiUrl, apiKey }: { wallet: IWallet; apiUrl: string; a
     provider
       .getBalance(wallet.address.toString(true, true, true))
       .then((balance) => setBalance(balance))
+    // .catch(e)
   }
 
   useEffect(() => {

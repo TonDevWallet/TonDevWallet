@@ -1,12 +1,14 @@
-import { useMemo } from 'preact/hooks'
-import TonWeb from 'tonweb'
+import { useMemo } from 'react'
+import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
+// import TonWeb from 'tonweb'
+import { RateLimitedHttpProvider } from './utils/RateLimitedHttpProvider'
 
 export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const getProvider = (apiUrl: string, key: string | undefined) => {
-  return new TonWeb.HttpProvider(apiUrl, { apiKey: key })
+  return new RateLimitedHttpProvider(apiUrl, { apiKey: key })
 }
 
 export const useProvider = (apiUrl: string, key: string | undefined) => {
-  return useMemo(() => getProvider(apiUrl, key), [apiUrl, key])
+  return useMemo(() => getProvider(apiUrl, key) as unknown as HttpProvider, [apiUrl, key])
 }

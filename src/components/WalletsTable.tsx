@@ -3,13 +3,11 @@ import { AddressRow } from './AddressRow'
 
 export function WalletsTable({
   walletsToShow,
-  apiUrl,
   currentWallet,
 
   setWallet,
 }: {
   walletsToShow?: IWallet[]
-  apiUrl: string
   currentWallet?: IWallet
 
   setWallet: (wallet: IWallet) => void
@@ -20,7 +18,7 @@ export function WalletsTable({
 
       {walletsToShow?.map((wallet) => (
         <div className="my-2 flex flex-col border" key={wallet.address.toString(true, true, true)}>
-          <div class="flex justify-between border-b px-1">
+          <div className="flex justify-between border-b px-1">
             <div className="">
               Wallet {wallet.type}
               <a

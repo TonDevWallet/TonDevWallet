@@ -12,8 +12,9 @@
     "buffer": "^6.0.3",
     "clipboardy": "^3.0.0",
     "postcss": "^8.4.12",
-    "preact": "^10.5.15",
+    "react": "^18.1.0",
     "react-async-hook": "^4.0.0",
+    "react-dom": "^18.1.0",
     "reactjs-popup": "^2.0.5",
     "tailwindcss": "^3.0.23",
     "tonweb": "^0.0.38",
@@ -21,8 +22,11 @@
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.1.5",
+    "@types/react": "^18.0.9",
+    "@types/react-dom": "^18.0.4",
     "@typescript-eslint/eslint-plugin": "^5.18.0",
     "@typescript-eslint/parser": "^5.18.0",
+    "@vitejs/plugin-react": "^1.3.2",
     "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard": "^16.0.3",
@@ -32,7 +36,7 @@
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-react": "^7.29.4",
     "prettier": "^2.6.2",
-    "typescript": "^4.5.4",
-    "vite": "^2.9.0"
+    "typescript": "^4.6.4",
+    "vite": "^2.9.9"
   }
 }

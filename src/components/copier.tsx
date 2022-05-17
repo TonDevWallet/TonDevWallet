@@ -1,5 +1,5 @@
 import clipboard from 'clipboardy'
-import { useState } from 'preact/hooks'
+import { useState } from 'react'
 
 import CopySvg from './icons/copy'
 import DoneSvg from './icons/done'

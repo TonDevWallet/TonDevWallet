@@ -1,6 +1,6 @@
 import TonWeb from 'tonweb'
 
-import { useState } from 'preact/hooks'
+import { useState } from 'react'
 import { KeyPair } from 'tonweb-mnemonic'
 import { useAsync } from 'react-async-hook'
 
@@ -86,12 +86,7 @@ export function App() {
           setKeyPair={setKeyPair}
         />
 
-        <WalletsTable
-          currentWallet={wallet}
-          walletsToShow={walletsToShow}
-          apiUrl={apiUrl}
-          setWallet={setWallet}
-        />
+        <WalletsTable currentWallet={wallet} walletsToShow={walletsToShow} setWallet={setWallet} />
       </div>
       <div className="md:max-w-xl w-full px-4 flex flex-col mt-16">
         {wallet ? (

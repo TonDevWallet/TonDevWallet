@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
@@ -6,7 +6,7 @@ import { IWallet } from '../types'
 import { BlueButton } from './UI'
 import { WalletMarketplace } from '../contracts/WalletMarketpalce'
 
-const { NftMarketplace } = TonWeb.token.nft
+// const { NftMarketplace } = TonWeb.token.nft
 
 export default function CreateMarketplace({
   seqno,
@@ -77,27 +77,27 @@ const CreateMarketplaceModal = ({
   }
 
   return (
-    <Popup trigger={<BlueButton className="mt-2">Create</BlueButton>} modal close={close}>
-      {(close: () => void) => (
-        <div className="flex flex-col p-4">
-          <div>You will create marketplace.</div>
-          <div className="mt-4">Are you sure?</div>
-          <div className="flex mt-2">
-            <div
-              className="bg-highlight rounded px-2 py-2 text-white cursor-pointer"
-              onClick={() => sendMoney(close)}
-            >
-              Yes
-            </div>
-            <div
-              className="bg-highlight rounded px-2 py-2 text-white cursor-pointer ml-8"
-              onClick={() => close()}
-            >
-              Cancel
-            </div>
+    <Popup trigger={<BlueButton className="mt-2">Create</BlueButton>} modal>
+      {/* {(close: () => void) => ( */}
+      <div className="flex flex-col p-4">
+        <div>You will create marketplace.</div>
+        <div className="mt-4">Are you sure?</div>
+        <div className="flex mt-2">
+          <div
+            className="bg-highlight rounded px-2 py-2 text-white cursor-pointer"
+            onClick={() => sendMoney(close)}
+          >
+            Yes
+          </div>
+          <div
+            className="bg-highlight rounded px-2 py-2 text-white cursor-pointer ml-8"
+            onClick={() => close()}
+          >
+            Cancel
           </div>
         </div>
-      )}
+      </div>
+      {/* )} */}
     </Popup>
   )
 }

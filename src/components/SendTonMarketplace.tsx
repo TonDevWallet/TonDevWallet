@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
