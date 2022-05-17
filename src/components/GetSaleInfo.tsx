@@ -34,7 +34,7 @@ export default function GetSaleInfo({ provider }: { provider: HttpProvider }) {
   }
 
   return (
-    <div>
+    <div className="p-4 border rounded shadow">
       <div className="mt-2 flex flex-col">
         <label htmlFor="nftToInput">Market address:</label>
         <input

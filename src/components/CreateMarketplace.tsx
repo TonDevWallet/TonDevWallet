@@ -29,7 +29,7 @@ export default function CreateMarketplace({
   }, [marketplace])
 
   return (
-    <div>
+    <div className="p-4 border rounded shadow">
       <div>Marketplace</div>
       <div>Address: {marketAddress}</div>
       <CreateMarketplaceModal
@@ -53,6 +53,9 @@ const CreateMarketplaceModal = ({
   provider: HttpProvider
   updateBalance: () => void
 }) => {
+  const [open, setOpen] = useState(false)
+  const close = () => setOpen(false)
+
   const sendMoney = async (close: () => void) => {
     const amount = TonWeb.utils.toNano(0.05)
     const marketplace = new WalletMarketplace(provider, { publicKey: wallet.key.publicKey })
@@ -77,27 +80,32 @@ const CreateMarketplaceModal = ({
   }
 
   return (
-    <Popup trigger={<BlueButton className="mt-2">Create</BlueButton>} modal>
-      {/* {(close: () => void) => ( */}
-      <div className="flex flex-col p-4">
-        <div>You will create marketplace.</div>
-        <div className="mt-4">Are you sure?</div>
-        <div className="flex mt-2">
-          <div
-            className="bg-highlight rounded px-2 py-2 text-white cursor-pointer"
-            onClick={() => sendMoney(close)}
-          >
-            Yes
-          </div>
-          <div
-            className="bg-highlight rounded px-2 py-2 text-white cursor-pointer ml-8"
-            onClick={() => close()}
-          >
-            Cancel
+    <>
+      {!open && (
+        <BlueButton className="mt-2" onClick={() => setOpen(true)}>
+          Create
+        </BlueButton>
+      )}
+      <Popup modal open={open}>
+        <div className="flex flex-col p-4">
+          <div>You will create marketplace.</div>
+          <div className="mt-4">Are you sure?</div>
+          <div className="flex mt-2">
+            <div
+              className="bg-highlight rounded px-2 py-2 text-white cursor-pointer"
+              onClick={() => sendMoney(close)}
+            >
+              Yes
+            </div>
+            <div
+              className="bg-highlight rounded px-2 py-2 text-white cursor-pointer ml-8"
+              onClick={() => close()}
+            >
+              Cancel
+            </div>
           </div>
         </div>
-      </div>
-      {/* )} */}
-    </Popup>
+      </Popup>
+    </>
   )
 }

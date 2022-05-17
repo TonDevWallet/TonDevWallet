@@ -27,7 +27,7 @@ export default function SendTon({
   }, [wallet, provider])
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col p-4 border rounded shadow">
       <div className="font-medium text-lg text-accent my-2">Send TON:</div>
 
       <div className="mt-2 flex flex-col">
@@ -94,6 +94,9 @@ const SendModal = ({
   message: string
   updateBalance: () => void
 }) => {
+  const [open, setOpen] = useState(false)
+  const close = () => setOpen(false)
+
   const [status, setStatus] = useState(0) // 0 before send, 1 sending, 2 success, 3 error
   const [seconds, setSeconds] = useState(0)
   const [message, setMessage] = useState('')
@@ -173,46 +176,47 @@ const SendModal = ({
   }
 
   return (
-    <Popup
-      onOpen={clearPopup}
-      onClose={clearPopup}
-      closeOnDocumentClick
-      trigger={<BlueButton className="mt-2">Send</BlueButton>}
-      modal
-    >
-      <div className="p-4">
-        {status === 0 && (
-          <div className="flex flex-col">
-            <div>
-              You will send {amount} TON to {recepient}.
+    <>
+      {!open && (
+        <BlueButton className="mt-2" onClick={() => setOpen(true)}>
+          Send
+        </BlueButton>
+      )}
+      <Popup onOpen={clearPopup} onClose={clearPopup} open={open} closeOnDocumentClick modal>
+        <div className="p-4">
+          {status === 0 && (
+            <div className="flex flex-col">
+              <div>
+                You will send {amount} TON to {recepient}.
+              </div>
+              <div className="mt-4">Are you sure?</div>
+              <div className="flex mt-2">
+                <BlueButton onClick={() => sendMoney()}>Yes</BlueButton>
+                <BlueButton onClick={() => close()} className="ml-2">
+                  Cancel
+                </BlueButton>
+              </div>
             </div>
-            <div className="mt-4">Are you sure?</div>
-            <div className="flex mt-2">
-              <BlueButton onClick={() => sendMoney()}>Yes</BlueButton>
-              <BlueButton onClick={() => close()} className="ml-2">
-                Cancel
+          )}
+          {status === 1 && <div>Sending {seconds}</div>}
+          {status === 2 && (
+            <div>
+              <div>Success</div>
+              <BlueButton className="mt-8" onClick={() => close()}>
+                Close
               </BlueButton>
             </div>
-          </div>
-        )}
-        {status === 1 && <div>Sending {seconds}</div>}
-        {status === 2 && (
-          <div>
-            <div>Success</div>
-            <BlueButton className="mt-8" onClick={() => close()}>
-              Close
-            </BlueButton>
-          </div>
-        )}
-        {status === 3 && (
-          <div>
-            <div>Error: {message}</div>
-            <BlueButton className="mt-8" onClick={() => close()}>
-              Close
-            </BlueButton>
-          </div>
-        )}
-      </div>
-    </Popup>
+          )}
+          {status === 3 && (
+            <div>
+              <div>Error: {message}</div>
+              <BlueButton className="mt-8" onClick={() => close()}>
+                Close
+              </BlueButton>
+            </div>
+          )}
+        </div>
+      </Popup>
+    </>
   )
 }

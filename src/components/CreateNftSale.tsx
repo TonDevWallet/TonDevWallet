@@ -23,7 +23,7 @@ export default function CreateNftSale({
   const [collectionAddress, setCollectionAddress] = useState('')
 
   return (
-    <div>
+    <div className="p-4 border rounded shadow">
       <div>Nft Sale</div>
 
       <div className="mt-2 flex flex-col">
@@ -90,6 +90,9 @@ const CreateSaleModal = ({
   provider: HttpProvider
   updateBalance: () => void
 }) => {
+  const [open, setOpen] = useState(false)
+  const close = () => setOpen(false)
+
   const sendMoney = async (close: () => void) => {
     const amount = TonWeb.utils.toNano(0.05)
 
@@ -124,25 +127,33 @@ const CreateSaleModal = ({
   }
 
   return (
-    <Popup trigger={<BlueButton className="mt-2">Send</BlueButton>} modal>
-      <div className="flex flex-col p-4">
-        <div>You will create marketplace.</div>
-        <div className="mt-4">Are you sure?</div>
-        <div className="flex mt-2">
-          <div
-            className="bg-highlight rounded px-2 py-2 text-white cursor-pointer"
-            onClick={() => sendMoney(close)}
-          >
-            Yes
-          </div>
-          <div
-            className="bg-highlight rounded px-2 py-2 text-white cursor-pointer ml-8"
-            onClick={() => close()}
-          >
-            Cancel
+    <>
+      {!open && (
+        <BlueButton className="mt-2" onClick={() => setOpen(true)}>
+          Send
+        </BlueButton>
+      )}
+
+      <Popup open={open} modal>
+        <div className="flex flex-col p-4">
+          <div>You will create marketplace.</div>
+          <div className="mt-4">Are you sure?</div>
+          <div className="flex mt-2">
+            <div
+              className="bg-highlight rounded px-2 py-2 text-white cursor-pointer"
+              onClick={() => sendMoney(close)}
+            >
+              Yes
+            </div>
+            <div
+              className="bg-highlight rounded px-2 py-2 text-white cursor-pointer ml-8"
+              onClick={() => close()}
+            >
+              Cancel
+            </div>
           </div>
         </div>
-      </div>
-    </Popup>
+      </Popup>
+    </>
   )
 }

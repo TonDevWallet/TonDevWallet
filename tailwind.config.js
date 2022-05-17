@@ -8,11 +8,12 @@ module.exports = {
       fontFamily: {
         sans: ['Mulish', 'Open Sans', 'sans-serif'],
       },
-    },
-    colors: {
-      accent: '#34495e',
-      highlight: '#0088CC',
-      white: '#ffffff',
+
+      colors: {
+        accent: '#34495e',
+        highlight: '#0088CC',
+        white: '#ffffff',
+      },
     },
   },
   variants: {},

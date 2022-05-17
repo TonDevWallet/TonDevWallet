@@ -60,7 +60,6 @@ export function WalletGenerator({
           <textarea
             className="w-full h-24 outline-none"
             id="wordsInput"
-            type="text"
             onChange={onWordsChange}
             value={words.join(' ')}
           ></textarea>

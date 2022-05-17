@@ -28,7 +28,7 @@ export default function SendTonMarketplace({
   }, [wallet, provider])
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col p-4 border rounded shadow">
       <div className="font-medium text-lg text-accent my-2">Send TON:</div>
 
       <div className="mt-2 flex flex-col">
@@ -95,6 +95,9 @@ const SendModal = ({
   message: string
   updateBalance: () => void
 }) => {
+  const [open, setOpen] = useState(false)
+  const close = () => setOpen(false)
+
   const [status, setStatus] = useState(0) // 0 before send, 1 sending, 2 success, 3 error
   const [seconds, setSeconds] = useState(0)
   const [message, setMessage] = useState('')
@@ -185,15 +188,14 @@ const SendModal = ({
   }
 
   return (
-    <Popup
-      onOpen={clearPopup}
-      onClose={clearPopup}
-      closeOnDocumentClick
-      trigger={<BlueButton className="mt-2">Send</BlueButton>}
-      modal
-      close={close}
-    >
-      {(close: () => void) => (
+    <>
+      {!open && (
+        <BlueButton className="mt-2" onClick={() => setOpen(true)}>
+          Send
+        </BlueButton>
+      )}
+
+      <Popup onOpen={clearPopup} onClose={clearPopup} open={open} closeOnDocumentClick modal>
         <div className="p-4">
           {status === 0 && (
             <div className="flex flex-col">
@@ -227,7 +229,7 @@ const SendModal = ({
             </div>
           )}
         </div>
-      )}
-    </Popup>
+      </Popup>
+    </>
   )
 }

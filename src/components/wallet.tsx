@@ -37,11 +37,13 @@ function Wallet({ wallet, apiUrl, apiKey }: { wallet: IWallet; apiUrl: string; a
   }, [wallet, provider])
 
   return (
-    <div>
-      <div className="font-medium text-lg text-accent my-2">Wallet:</div>
-      <div>Type: {wallet.type}</div>
-      <div>
-        <AddressRow text="Address:" address={wallet.address.toString(true, true, true)} />
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col">
+        <div className="font-medium text-lg text-accent my-2">Wallet:</div>
+        <div>Type: {wallet.type}</div>
+        <div>
+          <AddressRow text="Address:" address={wallet.address.toString(true, true, true)} />
+        </div>
       </div>
 
       <div className="flex items-center">
