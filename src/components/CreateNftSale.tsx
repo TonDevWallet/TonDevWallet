@@ -2,10 +2,12 @@ import { useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
+import nacl from 'tweetnacl'
 import { IWallet } from '../types'
 import { BlueButton } from './UI'
 
 const { NftSale } = TonWeb.token.nft
+const { Cell } = TonWeb.boc
 
 export default function CreateNftSale({
   seqno,
@@ -105,11 +107,17 @@ const CreateSaleModal = ({
       royaltyAmount: TonWeb.utils.toNano('0.1'),
     })
 
-    const body = new TonWeb.boc.Cell()
-    body.bits.writeUint(1, 32) // OP deploy new auction
-    body.bits.writeCoins(amount)
-    body.refs.push((await sale.createStateInit()).stateInit)
-    body.refs.push(new TonWeb.boc.Cell())
+    const signingMessage = new TonWeb.boc.Cell()
+    signingMessage.bits.writeUint(1, 32) // OP deploy new auction
+    // signingMessage.bits.writeCoins(amount)
+    // signingMessage.bits.writeCoins(amount)
+    signingMessage.refs.push((await sale.createStateInit()).stateInit)
+    signingMessage.refs.push(new TonWeb.boc.Cell())
+
+    const body = new Cell()
+    const signature = nacl.sign.detached(await signingMessage.hash(), wallet.key.secretKey)
+    body.bits.writeBytes(signature)
+    body.writeCell(signingMessage)
 
     await wallet.wallet.methods
       .transfer({
