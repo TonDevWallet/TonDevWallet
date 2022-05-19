@@ -1,11 +1,13 @@
 import TonWeb from 'tonweb'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { IWallet } from '../types'
 import Popup from 'reactjs-popup'
 import { BlueButton } from './UI'
+import QRCode from 'react-qr-code'
+import { NftTransferParams, TxRequestBody, TxResponseOptions } from '../types/TxRequest'
 
 const { NftItem } = TonWeb.token.nft
 
@@ -29,6 +31,25 @@ export default function SendNft({
     setNftRecepient('')
     setNftMessage('')
   }, [wallet, provider])
+
+  const qrText = useMemo(() => {
+    const body = getNFTTransferBody(
+      nft,
+      nftRecepient,
+      nftMessage,
+      {
+        broadcast: false,
+        return_url: 'http://localhost:3000',
+        callback_url: 'http://localhost:3000',
+      },
+      60
+    )
+
+    const url = getRequestUrl(JSON.stringify(body))
+
+    console.log('body', body, url)
+    return url
+  }, [nft, nftRecepient, nftMessage])
 
   return (
     <div className="flex flex-col mt-4 p-4 border rounded shadow">
@@ -67,6 +88,13 @@ export default function SendNft({
         />
       </div>
 
+      <div>
+        <div>QR:</div>
+        <div>
+          <QRCode value={qrText} />
+        </div>
+      </div>
+
       <SendNftModal
         nft={nft}
         recepient={nftRecepient}
@@ -79,6 +107,32 @@ export default function SendNft({
     </div>
   )
 }
+
+const getRequestUrl = (req: any) => {
+  return `https://app.tonkeeper.com/v1/txrequest-inline/${btoa(req)}`
+}
+
+const getNFTTransferBody = (
+  nftAddress: string,
+  newOwnerAddress: string,
+  message: string,
+  responseOptions: TxResponseOptions,
+  expiresSec: number
+) => ({
+  version: '0',
+  body: {
+    type: 'nft-transfer',
+    params: {
+      newOwnerAddress: newOwnerAddress,
+      nftItemAddress: nftAddress,
+      amount: 100000000,
+      forwardAmount: 1,
+      text: message,
+    },
+    response_options: responseOptions,
+    expires_sec: expiresSec,
+  },
+})
 
 const SendNftModal = ({
   nft,

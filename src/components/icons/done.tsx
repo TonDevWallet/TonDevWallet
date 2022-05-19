@@ -8,7 +8,7 @@ export default function Done() {
       x="0px"
       y="0px"
       viewBox="0 0 490.4 490.4"
-      style="enable-background:new 0 0 490.4 490.4;"
+      // style="enable-background:new 0 0 490.4 490.4;"
       xmlSpace="preserve"
     >
       <g>

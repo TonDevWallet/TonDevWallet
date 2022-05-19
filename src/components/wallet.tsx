@@ -12,6 +12,7 @@ import CreateNftSale from './CreateNftSale'
 import GetSaleInfo from './GetSaleInfo'
 import CancelNftSale from './CancelNftSale'
 import SendTonMarketplace from './SendTonMarketplace'
+import GetNftInfo from './GetNftInfo'
 
 function Wallet({ wallet, apiUrl, apiKey }: { wallet: IWallet; apiUrl: string; apiKey: string }) {
   const provider = useProvider(apiUrl, apiKey)
@@ -103,6 +104,7 @@ function Wallet({ wallet, apiUrl, apiKey }: { wallet: IWallet; apiUrl: string; a
         updateBalance={updateBalance}
       />
 
+      <GetNftInfo provider={provider} />
       <GetSaleInfo provider={provider} />
     </div>
   )
