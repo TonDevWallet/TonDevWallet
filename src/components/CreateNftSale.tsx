@@ -2,12 +2,13 @@ import { useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
+import nacl from 'tweetnacl'
 // import nacl from 'tweetnacl'
 import { IWallet } from '../types'
 import { BlueButton } from './UI'
 
 const { NftSale } = TonWeb.token.nft
-// const { Cell } = TonWeb.boc
+const { Cell } = TonWeb.boc
 
 export default function CreateNftSale({
   seqno,
@@ -107,11 +108,28 @@ const CreateSaleModal = ({
       royaltyAmount: TonWeb.utils.toNano('0.1'),
     })
 
-    const body = new TonWeb.boc.Cell()
-    body.bits.writeUint(1, 32) // OP deploy new auction
-    body.bits.writeCoins(amount)
-    body.refs.push((await sale.createStateInit()).stateInit)
-    body.refs.push(new TonWeb.boc.Cell())
+    const saleStateInit = (await sale.createStateInit()).stateInit
+    const saleMessageBody = new TonWeb.boc.Cell()
+
+    const bodyCell = new Cell()
+    bodyCell.refs.push(saleStateInit)
+    bodyCell.refs.push(saleMessageBody)
+
+    // const signature = sign(bodyCell.hash(), params.keyPair.secretKey)
+    const signature = nacl.sign.detached(await bodyCell.hash(), wallet.key.secretKey)
+
+    const msgBody = new Cell()
+    msgBody.bits.writeUint(1, 32)
+    msgBody.bits.writeBytes(signature)
+    // msgBody.bits.writeBuffer(signature)
+    msgBody.refs.push(saleStateInit)
+    msgBody.refs.push(saleMessageBody)
+
+    // const body = new TonWeb.boc.Cell()
+    // body.bits.writeUint(1, 32) // OP deploy new auction
+    // body.bits.writeCoins(amount)
+    // body.refs.push((await sale.createStateInit()).stateInit)
+    // body.refs.push(new TonWeb.boc.Cell())
 
     await wallet.wallet.methods
       .transfer({
@@ -119,7 +137,7 @@ const CreateSaleModal = ({
         toAddress: new TonWeb.utils.Address(marketAddress),
         amount: amount,
         seqno: parseInt(seqno),
-        payload: body,
+        payload: msgBody,
         sendMode: 3,
       })
       .send()

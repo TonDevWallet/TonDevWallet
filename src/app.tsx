@@ -81,6 +81,7 @@ export function App() {
 
         <WalletGenerator
           words={words}
+          keyPair={keyPair}
           setWords={setWords}
           setWallet={setWallet}
           setKeyPair={setKeyPair}

@@ -4,9 +4,9 @@ import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { IWallet } from '../types'
 import { BlueButton } from './UI'
-// import { WalletMarketplace } from '../contracts/WalletMarketpalce'
+import { WalletMarketplace } from '../contracts/WalletMarketpalce'
 
-const { NftMarketplace } = TonWeb.token.nft
+// const { NftMarketplace } = TonWeb.token.nft
 
 export default function CreateMarketplace({
   seqno,
@@ -19,8 +19,8 @@ export default function CreateMarketplace({
   provider: HttpProvider
   updateBalance: () => void
 }) {
-  const marketplace = new NftMarketplace(provider, {
-    ownerAddress: wallet.address,
+  const marketplace = new WalletMarketplace(provider, {
+    publicKey: wallet.key.publicKey,
   })
   const [marketAddress, setMarketAddress] = useState('')
 
@@ -60,7 +60,7 @@ const CreateMarketplaceModal = ({
 
   const sendMoney = async (close: () => void) => {
     const amount = TonWeb.utils.toNano(0.05)
-    const marketplace = new NftMarketplace(provider, { ownerAddress: wallet.address })
+    const marketplace = new WalletMarketplace(provider, { publicKey: wallet.key.publicKey })
     const marketplaceAddress = await marketplace.getAddress()
     // const nftItem = new NftItem(provider, { address: nftAddress })
 
