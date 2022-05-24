@@ -7,7 +7,7 @@ import { IWallet } from '../types'
 import Popup from 'reactjs-popup'
 import { BlueButton } from './UI'
 import QRCode from 'react-qr-code'
-import { NftTransferParams, TxRequestBody, TxResponseOptions } from '../types/TxRequest'
+import { TxResponseOptions } from '../types/TxRequest'
 
 const { NftItem } = TonWeb.token.nft
 
@@ -109,7 +109,7 @@ export default function SendNft({
 }
 
 const getRequestUrl = (req: any) => {
-  return `https://app.tonkeeper.com/v1/txrequest-inline/${btoa(req)}`
+  return `https://app.tonkeeper.com/v1/txrequest-inline/${Buffer.from(req).toString('base64')}`
 }
 
 const getNFTTransferBody = (

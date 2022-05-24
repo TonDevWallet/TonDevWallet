@@ -1,14 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import QRCode from 'react-qr-code'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import nacl from 'tweetnacl'
 // import nacl from 'tweetnacl'
 import { IWallet } from '../types'
+import { TxResponseOptions } from '../types/TxRequest'
 import { BlueButton } from './UI'
 
 const { NftSale } = TonWeb.token.nft
 const { Cell } = TonWeb.boc
+
+const getRequestUrl = (req: any) => {
+  return `https://app.tonkeeper.com/v1/txrequest-inline/${Buffer.from(req).toString('base64')}`
+}
 
 export default function CreateNftSale({
   seqno,
@@ -24,6 +30,65 @@ export default function CreateNftSale({
   const [marketAddress, setMarketAddress] = useState('')
   const [nftAddress, setNftAddress] = useState('')
   const [collectionAddress, setCollectionAddress] = useState('')
+
+  const [signature, setSignature] = useState('')
+  useEffect(() => {
+    ;(async function () {
+      const sale = new NftSale(provider, {
+        marketplaceAddress: new TonWeb.utils.Address(marketAddress),
+        nftAddress: new TonWeb.utils.Address(nftAddress),
+        fullPrice: TonWeb.utils.toNano('1.1'),
+        marketplaceFee: TonWeb.utils.toNano('0.2'),
+        royaltyAddress: new TonWeb.utils.Address(collectionAddress),
+        royaltyAmount: TonWeb.utils.toNano('0.1'),
+      })
+
+      const saleStateInit = (await sale.createStateInit()).stateInit
+      const saleMessageBody = new TonWeb.boc.Cell()
+
+      const bodyCell = new Cell()
+      bodyCell.refs.push(saleStateInit)
+      bodyCell.refs.push(saleMessageBody)
+
+      // const signature = sign(bodyCell.hash(), params.keyPair.secretKey)
+      const signature = nacl.sign.detached(await bodyCell.hash(), wallet.key.secretKey)
+
+      const msgBody = new Cell()
+      msgBody.bits.writeUint(1, 32)
+      msgBody.bits.writeBytes(signature)
+      msgBody.refs.push(saleStateInit)
+      msgBody.refs.push(saleMessageBody)
+
+      const boc = await msgBody.toBoc()
+      // setSignature(Buffer.from(boc).toString('hex'))
+      setSignature('abcd')
+    })()
+  }, [marketAddress, collectionAddress, nftAddress])
+
+  // const signature = useMemo(() => {
+
+  // })
+
+  const qrText = useMemo(() => {
+    // const body = getGetgemsNFTSaleBody(
+    //   marketAddress,
+    //   collectionAddress,
+    //   nftAddress,
+    //   signature,
+    //   {
+    //     broadcast: true,
+    //     return_url: 'http://localhost:3000',
+    //     callback_url: 'http://localhost:3000',
+    //   },
+    //   60
+    // )
+
+    // const url = getRequestUrl(JSON.stringify(body))
+
+    // console.log('body', body, url)
+    // return url
+    return `https://app.tonkeeper.com/v1/txrequest-url/trcr.loca.lt/api/sale/${marketAddress}/${collectionAddress}/${nftAddress}`
+  }, [signature, marketAddress, collectionAddress, nftAddress])
 
   return (
     <div className="p-4 border rounded shadow">
@@ -60,6 +125,14 @@ export default function CreateNftSale({
           value={collectionAddress}
           onChange={(e: any) => setCollectionAddress(e.target.value)}
         />
+      </div>
+
+      <div>
+        <div>QR:</div>
+        <a href={qrText}>{qrText}</a>
+        <div>
+          <QRCode level="L" value={qrText} size={256} />
+        </div>
       </div>
 
       {/* <div>Address: {marketAddress}</div> */}
@@ -121,15 +194,8 @@ const CreateSaleModal = ({
     const msgBody = new Cell()
     msgBody.bits.writeUint(1, 32)
     msgBody.bits.writeBytes(signature)
-    // msgBody.bits.writeBuffer(signature)
     msgBody.refs.push(saleStateInit)
     msgBody.refs.push(saleMessageBody)
-
-    // const body = new TonWeb.boc.Cell()
-    // body.bits.writeUint(1, 32) // OP deploy new auction
-    // body.bits.writeCoins(amount)
-    // body.refs.push((await sale.createStateInit()).stateInit)
-    // body.refs.push(new TonWeb.boc.Cell())
 
     await wallet.wallet.methods
       .transfer({
@@ -177,3 +243,36 @@ const CreateSaleModal = ({
     </>
   )
 }
+
+const getGetgemsNFTSaleBody = (
+  marketplaceAddress: string,
+  collectionAddress: string,
+  nftAddress: string,
+  signature: string,
+  responseOptions: TxResponseOptions,
+  expiresSec: number
+) => ({
+  version: '0',
+  body: {
+    type: 'nft-sale-place-getgems',
+    params: {
+      marketplaceFeeAddress: marketplaceAddress,
+      marketplaceFee: '50000000',
+      royaltyAddress: collectionAddress,
+      royaltyAmount: '10000000',
+      createdAt: Math.floor(Date.now() / 1000),
+      marketplaceAddress: marketplaceAddress,
+      nftItemAddress: nftAddress,
+      ownerAddress: collectionAddress,
+      fullPrice: '1000000000',
+      marketplaceSignatureHex: signature,
+
+      saleMessageBocHex: '',
+      forwardAmount: '30000000',
+      transferAmount: '30000000',
+      deployAmount: '30000000',
+    },
+    response_options: responseOptions,
+    expires_sec: expiresSec,
+  },
+})
