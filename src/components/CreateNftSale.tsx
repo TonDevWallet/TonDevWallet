@@ -8,6 +8,10 @@ import nacl from 'tweetnacl'
 import { IWallet } from '../types'
 import { TxResponseOptions } from '../types/TxRequest'
 import { BlueButton } from './UI'
+import BN from 'bn.js'
+
+import { Cell as TonCell, Address as TonAddress } from 'ton'
+import { buildNftFixPriceSaleV2StateInit } from '../contracts/NftFixpriceSaleV2.data'
 
 const { NftSale } = TonWeb.token.nft
 const { Cell } = TonWeb.boc
@@ -31,64 +35,107 @@ export default function CreateNftSale({
   const [nftAddress, setNftAddress] = useState('')
   const [collectionAddress, setCollectionAddress] = useState('')
 
-  const [signature, setSignature] = useState('')
-  useEffect(() => {
-    ;(async function () {
-      const sale = new NftSale(provider, {
-        marketplaceAddress: new TonWeb.utils.Address(marketAddress),
-        nftAddress: new TonWeb.utils.Address(nftAddress),
-        fullPrice: TonWeb.utils.toNano('1.1'),
-        marketplaceFee: TonWeb.utils.toNano('0.2'),
-        royaltyAddress: new TonWeb.utils.Address(collectionAddress),
-        royaltyAmount: TonWeb.utils.toNano('0.1'),
-      })
+  // const [signature, setSignature] = useState('')
+  // useEffect(() => {
+  //   ;(async function () {
+  //     // const sale = new NftSale(provider, {
+  //     //   marketplaceAddress: new TonWeb.utils.Address(marketAddress),
+  //     //   nftAddress: new TonWeb.utils.Address(nftAddress),
+  //     //   fullPrice: TonWeb.utils.toNano('1.1'),
+  //     //   marketplaceFee: TonWeb.utils.toNano('0.2'),
+  //     //   royaltyAddress: new TonWeb.utils.Address(collectionAddress),
+  //     //   royaltyAmount: TonWeb.utils.toNano('0.1'),
+  //     // })
 
-      const saleStateInit = (await sale.createStateInit()).stateInit
-      const saleMessageBody = new TonWeb.boc.Cell()
+  //     // const saleStateInit = (await sale.createStateInit()).stateInit
+  //     // const saleMessageBody = new TonWeb.boc.Cell()
 
-      const bodyCell = new Cell()
-      bodyCell.refs.push(saleStateInit)
-      bodyCell.refs.push(saleMessageBody)
+  //     // const bodyCell = new Cell()
+  //     // bodyCell.refs.push(saleStateInit)
+  //     // bodyCell.refs.push(saleMessageBody)
 
-      // const signature = sign(bodyCell.hash(), params.keyPair.secretKey)
-      const signature = nacl.sign.detached(await bodyCell.hash(), wallet.key.secretKey)
+  //     // // const signature = sign(bodyCell.hash(), params.keyPair.secretKey)
+  //     // const signature = nacl.sign.detached(await bodyCell.hash(), wallet.key.secretKey)
 
-      const msgBody = new Cell()
-      msgBody.bits.writeUint(1, 32)
-      msgBody.bits.writeBytes(signature)
-      msgBody.refs.push(saleStateInit)
-      msgBody.refs.push(saleMessageBody)
+  //     // const msgBody = new Cell()
+  //     // msgBody.bits.writeUint(1, 32)
+  //     // msgBody.bits.writeBytes(signature)
+  //     // msgBody.refs.push(saleStateInit)
+  //     // msgBody.refs.push(saleMessageBody)
 
-      const boc = await msgBody.toBoc()
-      // setSignature(Buffer.from(boc).toString('hex'))
-      setSignature('abcd')
-    })()
-  }, [marketAddress, collectionAddress, nftAddress])
+  //     // const boc = await msgBody.toBoc()
+  //     // setSignature(Buffer.from(boc).toString('hex'))
+  //     setSignature(Buffer.from(signature).toString('hex'))
+  //   })()
+  // }, [marketAddress, collectionAddress, nftAddress])
 
   // const signature = useMemo(() => {
 
   // })
 
   const qrText = useMemo(() => {
-    // const body = getGetgemsNFTSaleBody(
-    //   marketAddress,
-    //   collectionAddress,
-    //   nftAddress,
-    //   signature,
-    //   {
-    //     broadcast: true,
-    //     return_url: 'http://localhost:3000',
-    //     callback_url: 'http://localhost:3000',
-    //   },
-    //   60
-    // )
+    if (!marketAddress || !collectionAddress || !nftAddress) {
+      return ''
+    }
 
-    // const url = getRequestUrl(JSON.stringify(body))
+    const created = Math.floor(Date.now() / 1000)
+    const fullPrice = '1000000000' // 1
+    const marketFee = '50000000' // 0.05
+    const royaltyAmount = '100000000' // 0.10
 
-    // console.log('body', body, url)
-    // return url
-    return `https://app.tonkeeper.com/v1/txrequest-url/trcr.loca.lt/api/sale/${marketAddress}/${collectionAddress}/${nftAddress}`
-  }, [signature, marketAddress, collectionAddress, nftAddress])
+    const init = buildNftFixPriceSaleV2StateInit({
+      createdAt: created,
+      marketplaceAddress: TonAddress.parse(marketAddress),
+      nftAddress: TonAddress.parse(nftAddress),
+      // nftOwnerAddress: Address.parse(owner),
+      fullPrice: new BN(fullPrice),
+      marketplaceFeeAddress: TonAddress.parse(marketAddress),
+      marketplaceFee: new BN(marketFee),
+      royaltyAddress: TonAddress.parse(collectionAddress),
+      royaltyAmount: new BN(royaltyAmount),
+    })
+
+    const stateInitCell = new TonCell()
+    init.stateInit.writeTo(stateInitCell)
+
+    const saleStateInit = stateInitCell
+    const saleMessageBody = new TonCell()
+
+    const bodyCell = new TonCell()
+    bodyCell.refs.push(saleStateInit)
+    bodyCell.refs.push(saleMessageBody)
+
+    // const signature = sign(bodyCell.hash(), params.keyPair.secretKey)
+    const signature = nacl.sign.detached(bodyCell.hash(), wallet.key.secretKey)
+
+    const body = getGetgemsNFTSaleBody(
+      marketAddress,
+      collectionAddress,
+      nftAddress,
+      wallet.address.toString(true, true, true),
+      marketFee,
+      royaltyAmount,
+      fullPrice,
+      created,
+      Buffer.from(signature).toString('hex'),
+      {
+        broadcast: true,
+        return_url: 'http://localhost:3000',
+        callback_url: 'http://localhost:3000',
+      },
+      60
+    )
+
+    const url = getRequestUrl(JSON.stringify(body))
+
+    console.log('body', body, url)
+    return url
+    // return `https://app.tonkeeper.com/v1/txrequest-url/trcr.loca.lt/api/sale/${marketAddress}/${collectionAddress}/${nftAddress}/${wallet.address.toString(
+    //   true,
+    //   true,
+    //   true
+    // )}`
+  }, [marketAddress, collectionAddress, nftAddress])
 
   return (
     <div className="p-4 border rounded shadow">
@@ -172,30 +219,55 @@ const CreateSaleModal = ({
   const sendMoney = async (close: () => void) => {
     const amount = TonWeb.utils.toNano(0.05)
 
-    const sale = new NftSale(provider, {
-      marketplaceAddress: new TonWeb.utils.Address(marketAddress),
-      nftAddress: new TonWeb.utils.Address(nftAddress),
-      fullPrice: TonWeb.utils.toNano('1.1'),
-      marketplaceFee: TonWeb.utils.toNano('0.2'),
-      royaltyAddress: new TonWeb.utils.Address(collectionAddress),
-      royaltyAmount: TonWeb.utils.toNano('0.1'),
+    // const sale = new NftSale(provider, {
+    //   marketplaceAddress: new TonWeb.utils.Address(marketAddress),
+    //   nftAddress: new TonWeb.utils.Address(nftAddress),
+    //   fullPrice: TonWeb.utils.toNano('1.1'),
+    //   marketplaceFee: TonWeb.utils.toNano('0.2'),
+    //   royaltyAddress: new TonWeb.utils.Address(collectionAddress),
+    //   royaltyAmount: TonWeb.utils.toNano('0.1'),
+    // })
+    const created = Math.floor(Date.now() / 1000)
+    const fullPrice = '1000000000' // 1
+    const marketFee = '50000000' // 0.05
+    const royaltyAmount = '100000000' // 0.10
+
+    const init = buildNftFixPriceSaleV2StateInit({
+      createdAt: created,
+      marketplaceAddress: TonAddress.parse(marketAddress),
+      nftAddress: TonAddress.parse(nftAddress),
+      // nftOwnerAddress: Address.parse(owner),
+      fullPrice: new BN(fullPrice),
+      marketplaceFeeAddress: TonAddress.parse(marketAddress),
+      marketplaceFee: new BN(marketFee),
+      royaltyAddress: TonAddress.parse(collectionAddress),
+      royaltyAmount: new BN(royaltyAmount),
     })
 
-    const saleStateInit = (await sale.createStateInit()).stateInit
-    const saleMessageBody = new TonWeb.boc.Cell()
+    const stateInitCell = new TonCell()
+    init.stateInit.writeTo(stateInitCell)
 
-    const bodyCell = new Cell()
+    const saleStateInit = stateInitCell
+    const saleMessageBody = new TonCell()
+
+    const bodyCell = new TonCell()
     bodyCell.refs.push(saleStateInit)
     bodyCell.refs.push(saleMessageBody)
 
     // const signature = sign(bodyCell.hash(), params.keyPair.secretKey)
     const signature = nacl.sign.detached(await bodyCell.hash(), wallet.key.secretKey)
 
-    const msgBody = new Cell()
+    const msgBody = new TonCell()
     msgBody.bits.writeUint(1, 32)
-    msgBody.bits.writeBytes(signature)
+    msgBody.bits.writeBuffer(Buffer.from(signature))
     msgBody.refs.push(saleStateInit)
     msgBody.refs.push(saleMessageBody)
+    const boc = msgBody.toBoc()
+    const hex = Buffer.from(boc).toString('hex')
+    console.log('toncell boc', boc, hex)
+
+    const cell = await Cell.oneFromBoc(hex)
+    console.log('tonweb boc', await cell.toBoc())
 
     await wallet.wallet.methods
       .transfer({
@@ -203,7 +275,7 @@ const CreateSaleModal = ({
         toAddress: new TonWeb.utils.Address(marketAddress),
         amount: amount,
         seqno: parseInt(seqno),
-        payload: msgBody,
+        payload: cell,
         sendMode: 3,
       })
       .send()
@@ -248,6 +320,11 @@ const getGetgemsNFTSaleBody = (
   marketplaceAddress: string,
   collectionAddress: string,
   nftAddress: string,
+  ownerAddress: string,
+  marketFee: string,
+  royaltyAmount: string,
+  fullPrice: string,
+  created: number,
   signature: string,
   responseOptions: TxResponseOptions,
   expiresSec: number
@@ -257,14 +334,14 @@ const getGetgemsNFTSaleBody = (
     type: 'nft-sale-place-getgems',
     params: {
       marketplaceFeeAddress: marketplaceAddress,
-      marketplaceFee: '50000000',
+      marketplaceFee: marketFee,
       royaltyAddress: collectionAddress,
-      royaltyAmount: '10000000',
-      createdAt: Math.floor(Date.now() / 1000),
+      royaltyAmount: royaltyAmount,
+      createdAt: created,
       marketplaceAddress: marketplaceAddress,
       nftItemAddress: nftAddress,
-      ownerAddress: collectionAddress,
-      fullPrice: '1000000000',
+      ownerAddress: ownerAddress,
+      fullPrice: fullPrice,
       marketplaceSignatureHex: signature,
 
       saleMessageBocHex: '',
