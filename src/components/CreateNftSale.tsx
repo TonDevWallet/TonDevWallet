@@ -345,7 +345,7 @@ const getGetgemsNFTSaleBody = (
       marketplaceSignatureHex: signature,
 
       saleMessageBocHex: '',
-      forwardAmount: '30000000',
+      forwardAmount: '20000000',
       transferAmount: '30000000',
       deployAmount: '30000000',
     },
