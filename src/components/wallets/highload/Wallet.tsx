@@ -1,40 +1,48 @@
 import TonWeb from 'tonweb'
 
-import { IWallet } from '../types'
-import { useProvider } from '../utils'
-import { AddressRow } from './AddressRow'
+import { ITonHighloadWalletV2 } from '../../../types'
+import { useProvider } from '../../../utils'
+import { AddressRow } from '../../AddressRow'
 import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
 import SendNft from './SendNft'
-import { BlueButton } from './UI'
-import CreateMarketplace from './CreateMarketplace'
-import CreateNftSale from './CreateNftSale'
-import GetSaleInfo from './GetSaleInfo'
-import CancelNftSale from './CancelNftSale'
-import SendTonMarketplace from './SendTonMarketplace'
-import GetNftInfo from './GetNftInfo'
+import { BlueButton } from '../../UI'
+// import CreateMarketplace from './CreateMarketplace'
+// import CreateNftSale from './CreateNftSale'
+// import GetSaleInfo from './GetSaleInfo'
+// import CancelNftSale from './CancelNftSale'
+// import SendTonMarketplace from './SendTonMarketplace'
+// import GetNftInfo from './GetNftInfo'
 
-function Wallet({ wallet, apiUrl, apiKey }: { wallet: IWallet; apiUrl: string; apiKey: string }) {
+function Wallet({
+  wallet,
+  apiUrl,
+  apiKey,
+}: {
+  wallet: ITonHighloadWalletV2
+  apiUrl: string
+  apiKey: string
+}) {
   const provider = useProvider(apiUrl, apiKey)
   const [balance, setBalance] = useState('')
 
-  const [seqno, setSeqno] = useState('0')
+  // const [seqno, setSeqno] = useState('0')
 
-  const getSeqno = async () => {
-    const newSeq = await wallet.wallet.methods.seqno().call()
-    setSeqno(newSeq ? newSeq.toString() : '0')
-  }
+  // const getSeqno = async () => {
+  //   const newSeq = await wallet.wallet.methods.seqno().call()
+  //   setSeqno(newSeq ? newSeq.toString() : '0')
+  // }
 
   const updateBalance = () => {
     provider
-      .getBalance(wallet.address.toString(true, true, true))
+      .getBalance(wallet.address.toString('base64', { bounceable: true, urlSafe: true }))
       .then((balance) => setBalance(balance))
     // .catch(e)
   }
 
   useEffect(() => {
     updateBalance()
-    getSeqno()
+    // getSeqno()
   }, [wallet, provider])
 
   return (
@@ -43,7 +51,10 @@ function Wallet({ wallet, apiUrl, apiKey }: { wallet: IWallet; apiUrl: string; a
         <div className="font-medium text-lg text-accent my-2">Wallet:</div>
         <div>Type: {wallet.type}</div>
         <div>
-          <AddressRow text="Address:" address={wallet.address.toString(true, true, true)} />
+          <AddressRow
+            text="Address:"
+            address={wallet.address.toString('base64', { bounceable: true, urlSafe: true })}
+          />
         </div>
       </div>
 
@@ -54,7 +65,7 @@ function Wallet({ wallet, apiUrl, apiKey }: { wallet: IWallet; apiUrl: string; a
         </BlueButton>
       </div>
 
-      <div className="mt-2 flex flex-col">
+      {/* <div className="mt-2 flex flex-col">
         <label htmlFor="amountInput">Seqno:</label>
         <div>
           <input
@@ -70,11 +81,17 @@ function Wallet({ wallet, apiUrl, apiKey }: { wallet: IWallet; apiUrl: string; a
             Get Seqno
           </BlueButton>
         </div>
-      </div>
+      </div> */}
 
-      <SendTon seqno={seqno} wallet={wallet} provider={provider} updateBalance={updateBalance} />
+      <SendTon
+        wallet={wallet}
+        provider={provider}
+        // updateBalance={updateBalance}
+      />
 
-      <SendNft seqno={seqno} wallet={wallet} provider={provider} updateBalance={updateBalance} />
+      <SendNft wallet={wallet} provider={provider} updateBalance={updateBalance} />
+
+      {/*
 
       <CreateMarketplace
         seqno={seqno}
@@ -105,7 +122,7 @@ function Wallet({ wallet, apiUrl, apiKey }: { wallet: IWallet; apiUrl: string; a
       />
 
       <GetNftInfo provider={provider} />
-      <GetSaleInfo provider={provider} />
+      <GetSaleInfo provider={provider} /> */}
     </div>
   )
 }

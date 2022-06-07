@@ -1,21 +1,22 @@
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import TonWeb from 'tonweb'
+import { WalletTransfer } from 'ton3-contracts/dist/types/wallet-transfer'
+import { Address, BOC, Builder, Cell, Coins } from 'ton3-core'
+// import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
-import { WalletMarketplace } from '../contracts/WalletMarketpalce'
-import { IWallet } from '../types'
-import { BlueButton } from './UI'
+import { ITonHighloadWalletV2 } from '../../../types'
+import { BlueButton } from './../../UI'
 
-export default function SendTonMarketplace({
-  seqno,
+export default function SendTon({
+  // seqno,
   wallet,
   provider,
-  updateBalance,
-}: {
-  seqno: string
-  wallet: IWallet
+}: // updateBalance,
+{
+  // seqno: string
+  wallet: ITonHighloadWalletV2
   provider: HttpProvider
-  updateBalance: () => void
+  // updateBalance: () => void
 }) {
   const [amount, setAmount] = useState('0')
   const [recepient, setRecepient] = useState('')
@@ -55,7 +56,7 @@ export default function SendTonMarketplace({
         />
       </div>
 
-      <div className="mt-2 flex flex-col">
+      {/* <div className="mt-2 flex flex-col">
         <label htmlFor="amountInput">Message:</label>
         <input
           className="border rounded p-2"
@@ -66,15 +67,16 @@ export default function SendTonMarketplace({
           value={message}
           onChange={(e: any) => setMessage(e.target.value)}
         />
-      </div>
+      </div> */}
 
       <SendModal
         amount={amount}
         recepient={recepient}
         wallet={wallet}
-        seqno={seqno}
+        // seqno={seqno}
         message={message}
-        updateBalance={updateBalance}
+        provider={provider}
+        // updateBalance={updateBalance}
       />
     </div>
   )
@@ -84,16 +86,18 @@ const SendModal = ({
   amount,
   recepient,
   wallet,
-  seqno,
+  // seqno,
   message: sendMessage,
-  updateBalance,
-}: {
+  provider,
+}: // updateBalance,
+{
   amount: string
   recepient: string
-  wallet: IWallet
-  seqno: string
+  wallet: ITonHighloadWalletV2
+  // seqno: string
   message: string
-  updateBalance: () => void
+  provider: HttpProvider
+  // updateBalance: () => void
 }) => {
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
@@ -108,51 +112,45 @@ const SendModal = ({
     setMessage('')
   }
 
-  const checkSeqno = async (oldSeqno: number, seqs: number, interval: number) => {
-    const newSeq = await wallet.wallet.methods.seqno().call()
-    const seqnoUpdated = newSeq && newSeq === oldSeqno + 1
+  // const checkSeqno = async (oldSeqno: number, seqs: number, interval: number) => {
+  //   const newSeq = await wallet.wallet.methods.seqno().call()
+  //   const seqnoUpdated = newSeq && newSeq === oldSeqno + 1
 
-    if (seqnoUpdated) {
-      setStatus(2)
-      if (interval) {
-        clearInterval(interval)
-      }
-      updateBalance()
-      return
-    }
+  //   if (seqnoUpdated) {
+  //     setStatus(2)
+  //     if (interval) {
+  //       window.clearInterval(interval)
+  //     }
+  //     updateBalance()
+  //     return
+  //   }
 
-    if (seqs === 0) {
-      setStatus(3)
-      if (interval) {
-        clearInterval(interval)
-      }
-      setMessage('Send Timeout, seqno not increased')
-    }
-  }
+  //   if (seqs === 0) {
+  //     setStatus(3)
+  //     if (interval) {
+  //       window.clearInterval(interval)
+  //     }
+  //     setMessage('Send Timeout, seqno not increased')
+  //   }
+  // }
 
   const sendMoney = async () => {
-    const params = {
-      amount: TonWeb.utils.toNano(amount),
-      seqno: parseInt(seqno),
-      secretKey: wallet.key.secretKey,
-      toAddress: recepient,
-      sendMode: 3,
-      payload: sendMessage || undefined,
+    const params: WalletTransfer = {
+      destination: new Address(recepient),
+      amount: new Coins(amount),
+      mode: 3,
+      body: sendMessage
+        ? new Builder().storeUint(0, 32).storeString(sendMessage).cell()
+        : new Cell(),
     }
 
     try {
-      const marketplace = new WalletMarketplace(wallet.wallet.provider, {
-        publicKey: wallet.key.publicKey,
-      })
+      const message = wallet.wallet.createTransferMessage([params])
+      const signed = message.sign(wallet.key.secretKey)
+      const payload = Buffer.from(BOC.toBytesStandard(signed))
 
-      // const r2w = new TonWeb.Wallets.all.v3R2(wallet.wallet.provider, {
-      //   address: await (await marketplace.getAddress()).toString(true, true, false),
-      // })
-
-      const result = await marketplace.methods.transfer(params).send()
-
+      const result = await provider.sendBoc(payload.toString('base64'))
       // const result = await wallet.wallet.methods.transfer(params).send()
-      // const result = await r2w.methods.transfer(params).send()
 
       if (result['@type'] === 'error') {
         setStatus(3)
@@ -169,22 +167,21 @@ const SendModal = ({
       return
     }
 
-    let secondsLeft = 30
-    const oldSeqno = parseInt(seqno)
-    const intervalId = setInterval(() => {
-      setSeconds(--secondsLeft)
+    // const secondsLeft = 30
+    // const oldSeqno = parseInt(seqno)
+    // const intervalId = window.setInterval(() => {
+    //   setSeconds(--secondsLeft)
 
-      if (secondsLeft % 5 === 0) {
-        checkSeqno(oldSeqno, secondsLeft, intervalId)
-      }
+    //   if (secondsLeft % 5 === 0) {
+    //     checkSeqno(oldSeqno, secondsLeft, intervalId)
+    //   }
 
-      if (secondsLeft === 0 && intervalId) {
-        clearInterval(intervalId)
-      }
-    }, 1000)
+    //   if (secondsLeft === 0 && intervalId) {
+    //     window.clearInterval(intervalId)
+    //   }
+    // }, 1000)
 
-    setStatus(1)
-    setSeconds(secondsLeft)
+    setStatus(2)
   }
 
   return (
@@ -194,7 +191,6 @@ const SendModal = ({
           Send
         </BlueButton>
       )}
-
       <Popup onOpen={clearPopup} onClose={clearPopup} open={open} closeOnDocumentClick modal>
         <div className="p-4">
           {status === 0 && (

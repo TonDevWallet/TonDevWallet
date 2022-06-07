@@ -5,13 +5,13 @@ import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import nacl from 'tweetnacl'
 // import nacl from 'tweetnacl'
-import { ITonWebWallet } from '../types'
-import { TxResponseOptions } from '../types/TxRequest'
-import { BlueButton } from './UI'
+import { ITonWebWallet } from '../../../types'
+import { TxResponseOptions } from '../../../types/TxRequest'
+import { BlueButton } from '../../UI'
 import BN from 'bn.js'
 
 import { Cell as TonCell, Address as TonAddress } from 'ton'
-import { buildNftFixPriceSaleV2StateInit } from '../contracts/NftFixpriceSaleV2.data'
+import { buildNftFixPriceSaleV2StateInit } from '../../../contracts/NftFixpriceSaleV2.data'
 
 // const { NftSale } = TonWeb.token.nft
 const { Cell } = TonWeb.boc
@@ -23,7 +23,7 @@ const getRequestUrl = (req: any) => {
 export default function CreateNftSale({
   seqno,
   wallet,
-  provider,
+
   updateBalance,
 }: {
   seqno: string
@@ -189,7 +189,7 @@ export default function CreateNftSale({
         collectionAddress={collectionAddress}
         wallet={wallet}
         seqno={seqno}
-        provider={provider}
+        // provider={provider}
         updateBalance={updateBalance}
       />
     </div>
@@ -210,7 +210,7 @@ const CreateSaleModal = ({
   collectionAddress: string
   wallet: ITonWebWallet
   seqno: string
-  provider: HttpProvider
+  // provider: HttpProvider
   updateBalance: () => void
 }) => {
   const [open, setOpen] = useState(false)

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
-import { IWallet } from '../types'
-import { BlueButton } from './UI'
+import { ITonWebWallet } from '../../../types'
+import { BlueButton } from '../../UI'
 
 export default function SendTon({
   seqno,
@@ -12,7 +12,7 @@ export default function SendTon({
   updateBalance,
 }: {
   seqno: string
-  wallet: IWallet
+  wallet: ITonWebWallet
   provider: HttpProvider
   updateBalance: () => void
 }) {
@@ -89,7 +89,7 @@ const SendModal = ({
 }: {
   amount: string
   recepient: string
-  wallet: IWallet
+  wallet: ITonWebWallet
   seqno: string
   message: string
   updateBalance: () => void
@@ -159,7 +159,7 @@ const SendModal = ({
 
     let secondsLeft = 30
     const oldSeqno = parseInt(seqno)
-    const intervalId = setInterval(() => {
+    const intervalId = window.setInterval(() => {
       setSeconds(--secondsLeft)
 
       if (secondsLeft % 5 === 0) {

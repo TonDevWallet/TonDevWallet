@@ -4,12 +4,15 @@ import { useState } from 'react'
 import { KeyPair } from 'tonweb-mnemonic'
 import { useAsync } from 'react-async-hook'
 
-import Wallet from './components/wallet'
+import Wallet from './components/wallets/tonweb/Wallet'
+import HighloadWallet from './components/wallets/highload/Wallet'
+
 import { IWallet } from './types'
 import { useProvider } from './utils'
 import { WalletGenerator } from './components/WalletGenerator'
 import { WalletsTable } from './components/WalletsTable'
 import { NetworkSettings } from './components/NetworkSettings'
+import { ContractHighloadWalletV2 } from './contracts/HighloadWalletV2'
 
 // const provider = new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC')
 
@@ -27,6 +30,9 @@ export function App() {
     if (!keyPair) {
       return []
     }
+
+    const highload = new ContractHighloadWalletV2(0, keyPair.publicKey, 1)
+    const highloadAddress = highload.address
 
     // eslint-disable-next-line new-cap
     const walletv3R1 = new TonWeb.Wallets.all.v3R1(provider, { publicKey: keyPair.publicKey })
@@ -53,6 +59,13 @@ export function App() {
         address: v3R2Address,
         balance: '0',
         wallet: walletv3R2,
+        key: keyPair,
+      },
+      {
+        type: 'highload',
+        address: highloadAddress,
+        balance: '0',
+        wallet: highload,
         key: keyPair,
       },
       {
@@ -91,7 +104,11 @@ export function App() {
       </div>
       <div className="md:max-w-xl w-full px-4 flex flex-col mt-16">
         {wallet ? (
-          <Wallet wallet={wallet} apiUrl={apiUrl} apiKey={apiKey} />
+          wallet.type === 'highload' ? (
+            <HighloadWallet wallet={wallet} apiUrl={apiUrl} apiKey={apiKey} />
+          ) : (
+            <Wallet wallet={wallet} apiUrl={apiUrl} apiKey={apiKey} />
+          )
         ) : (
           <div>Click 'Use this wallet' on wallet you want to use</div>
         )}

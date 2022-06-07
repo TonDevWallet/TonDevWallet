@@ -2,8 +2,8 @@ import { useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
-import { IWallet } from '../types'
-import { BlueButton } from './UI'
+import { ITonWebWallet } from '../../../types'
+import { BlueButton } from '../../UI'
 
 const { NftSale } = TonWeb.token.nft
 
@@ -14,7 +14,7 @@ export default function CancelNftSale({
   updateBalance,
 }: {
   seqno: string
-  wallet: IWallet
+  wallet: ITonWebWallet
   provider: HttpProvider
   updateBalance: () => void
 }) {
@@ -85,7 +85,7 @@ const CancelSaleModal = ({
   marketAddress: string
   nftAddress: string
   collectionAddress: string
-  wallet: IWallet
+  wallet: ITonWebWallet
   seqno: string
   provider: HttpProvider
   updateBalance: () => void

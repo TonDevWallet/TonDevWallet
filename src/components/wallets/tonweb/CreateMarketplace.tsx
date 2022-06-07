@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
-import { IWallet } from '../types'
-import { BlueButton } from './UI'
-import { WalletMarketplace } from '../contracts/WalletMarketpalce'
+import { ITonWebWallet } from '../../../types'
+import { BlueButton } from '../../UI'
+import { WalletMarketplace } from '../../../contracts/WalletMarketpalce'
 
 // const { NftMarketplace } = TonWeb.token.nft
 
@@ -15,7 +15,7 @@ export default function CreateMarketplace({
   updateBalance,
 }: {
   seqno: string
-  wallet: IWallet
+  wallet: ITonWebWallet
   provider: HttpProvider
   updateBalance: () => void
 }) {
@@ -50,7 +50,7 @@ const CreateMarketplaceModal = ({
   provider,
   updateBalance,
 }: {
-  wallet: IWallet
+  wallet: ITonWebWallet
   seqno: string
   provider: HttpProvider
   updateBalance: () => void

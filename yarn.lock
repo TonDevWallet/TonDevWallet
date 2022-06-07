@@ -1297,6 +1297,11 @@ cross-spawn@^7.0.2, cross-spawn@^7.0.3:
     shebang-command "^2.0.0"
     which "^2.0.1"
 
+crypto-js@4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.1.1.tgz#9e485bcf03521041bd85844786b83fb7619736cf"
+  integrity sha512-o2JlM7ydqd3Qk9CA0L4NL6mTzU2sdx96a+oOfPu8Mkl/PK51vSyoi8/rQ8NknZtk44vq15lmhAj9CIAGwgeWKw==
+
 cssesc@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/cssesc/-/cssesc-3.0.0.tgz#37741919903b868565e1c09ea747445cd18983ee"
@@ -1332,6 +1337,11 @@ debug@^4.1.0, debug@^4.1.1, debug@^4.3.1, debug@^4.3.2:
   integrity sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==
   dependencies:
     ms "2.1.2"
+
+decimal.js@10.3.1:
+  version "10.3.1"
+  resolved "https://registry.yarnpkg.com/decimal.js/-/decimal.js-10.3.1.tgz#d8c3a444a9c6774ba60ca6ad7261c3a94fd5e783"
+  integrity sha512-V0pfhfr8suzyPGOx3nmq4aHqabehUZn6Ch9kyFpV79TGDTWFmHqUqXdabR7QHqxzrYolF4+tVmJhUG4OURg5dQ==
 
 deep-extend@^0.6.0:
   version "0.6.0"
@@ -3741,6 +3751,22 @@ ton-crypto@2.1.0:
   dependencies:
     jssha "3.2.0"
     ton-crypto-primitives "2.0.0"
+    tweetnacl "1.0.3"
+
+ton3-contracts@^0.0.8:
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/ton3-contracts/-/ton3-contracts-0.0.8.tgz#ebc86bbdfc8cee18b9b950de17455ad66fc875f4"
+  integrity sha512-lLv4h+TWMzqXitejooRbbu3n4MTXYWW1Jb3XJXhj0fK7+22kuJQRKCybI8FIGTttrKvtl3Ty5Wl15sWR2gIBZQ==
+  dependencies:
+    ton3-core "0.0.12"
+
+ton3-core@0.0.12, ton3-core@^0.0.12:
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/ton3-core/-/ton3-core-0.0.12.tgz#461f08333171f01d2c20f28ab9be1fd2c1b7cbe8"
+  integrity sha512-famK5zK5wQlJZpcxjWyopJXzpUcw/nvZgm6LUBZvBJw6Uq34r4+NpRgb4bg1GckDWzZoGC+KZVfQDM+7sPXUvw==
+  dependencies:
+    crypto-js "4.1.1"
+    decimal.js "10.3.1"
     tweetnacl "1.0.3"
 
 ton@^11.12.0:
