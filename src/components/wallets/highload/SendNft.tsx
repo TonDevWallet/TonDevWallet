@@ -108,7 +108,8 @@ const SendNftModal = ({
     const transferPayload = await nftItem.createTransferBody({
       newOwnerAddress: new TonWeb.utils.Address(recepient),
       forwardAmount: TonWeb.utils.toNano(0.02),
-      forwardPayload: new TextEncoder().encode(nftMessage),
+      forwardPayload: undefined,
+      // new TextEncoder().encode(nftMessage),
       responseAddress: new TonWeb.utils.Address(wallet.address.toString('raw')),
     })
     const boc = await transferPayload.toBoc()
@@ -116,13 +117,13 @@ const SendNftModal = ({
     const cell = BOC.fromStandard(boc)
 
     const params: WalletTransfer = {
-      destination: new Address(recepient),
-      amount: new Coins('0.05'),
+      destination: new Address(nftAddress.toString()),
+      amount: new Coins('0.7'),
       mode: 3,
       body: cell,
     }
 
-    const message = wallet.wallet.createTransferMessage([params])
+    const message = wallet.wallet.createTransferMessage([params], true)
     const signed = message.sign(wallet.key.secretKey)
     const payload = Buffer.from(BOC.toBytesStandard(signed))
 
