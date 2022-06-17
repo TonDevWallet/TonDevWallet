@@ -20,6 +20,7 @@ export function App() {
   const [words, setWords] = useState<string[]>([])
   const [wallet, setWallet] = useState<IWallet | undefined>(undefined)
   const [keyPair, setKeyPair] = useState<KeyPair | undefined>(undefined)
+  const [walletId, setWalletId] = useState<number>(698983191) // default wallet id
 
   const [apiUrl, setApiUrl] = useState('')
   const [apiKey, setApiKey] = useState<string>('')
@@ -35,15 +36,24 @@ export function App() {
     const highloadAddress = highload.address
 
     // eslint-disable-next-line new-cap
-    const walletv3R1 = new TonWeb.Wallets.all.v3R1(provider, { publicKey: keyPair.publicKey })
+    const walletv3R1 = new TonWeb.Wallets.all.v3R1(provider, {
+      publicKey: keyPair.publicKey,
+      walletId,
+    })
     const v3R1Address = await walletv3R1.getAddress()
 
     // eslint-disable-next-line new-cap
-    const walletv3R2 = new TonWeb.Wallets.all.v3R2(provider, { publicKey: keyPair.publicKey })
+    const walletv3R2 = new TonWeb.Wallets.all.v3R2(provider, {
+      publicKey: keyPair.publicKey,
+      walletId,
+    })
     const v3R2Address = await walletv3R2.getAddress()
 
     // eslint-disable-next-line new-cap
-    const walletv4R2 = new TonWeb.Wallets.all.v4R2(provider, { publicKey: keyPair.publicKey })
+    const walletv4R2 = new TonWeb.Wallets.all.v4R2(provider, {
+      publicKey: keyPair.publicKey,
+      walletId,
+    })
     const v4R2Address = await walletv4R2.getAddress()
 
     return [
@@ -76,7 +86,7 @@ export function App() {
         key: keyPair,
       },
     ]
-  }, [keyPair])
+  }, [keyPair, walletId])
 
   const walletsToShow = wallets.result
 
@@ -94,10 +104,12 @@ export function App() {
 
         <WalletGenerator
           words={words}
+          walletId={walletId}
           keyPair={keyPair}
           setWords={setWords}
           setWallet={setWallet}
           setKeyPair={setKeyPair}
+          setWalletId={setWalletId}
         />
 
         <WalletsTable currentWallet={wallet} walletsToShow={walletsToShow} setWallet={setWallet} />

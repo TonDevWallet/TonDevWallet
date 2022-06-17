@@ -13,17 +13,21 @@ import Copier from './copier'
 export function WalletGenerator({
   words,
   keyPair,
+  walletId,
 
   setWords,
   setWallet,
   setKeyPair,
+  setWalletId,
 }: {
   words: string[]
   keyPair?: KeyPair
+  walletId: number
 
   setWords: (v: string[]) => void
   setWallet: (v: IWallet | undefined) => void
   setKeyPair: (v: KeyPair | undefined) => void
+  setWalletId: (v: number) => void
 }) {
   const [seed, setSeed] = useState<Uint8Array | undefined>(undefined)
 
@@ -85,6 +89,20 @@ export function WalletGenerator({
           onChange={onWordsChange}
           value={words.join(' ')}
         ></textarea>
+
+        <div>
+          <label
+            htmlFor="walletIdInput"
+            className="text-accent text-lg font-medium my-2 flex items-center"
+          >
+            WalletID
+          </label>
+          <input
+            type="number"
+            value={walletId}
+            onChange={(e: any) => setWalletId(parseInt(e.target.value))}
+          />
+        </div>
 
         {keyPair && seed && (
           <>
