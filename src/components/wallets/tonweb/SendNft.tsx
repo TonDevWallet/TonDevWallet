@@ -1,13 +1,11 @@
 import TonWeb from 'tonweb'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { ITonWebWallet } from '../../../types'
 import Popup from 'reactjs-popup'
 import { BlueButton } from './../../UI'
-import QRCode from 'react-qr-code'
-import { TxResponseOptions } from '../../../types/TxRequest'
 
 const { NftItem } = TonWeb.token.nft
 
@@ -25,31 +23,16 @@ export default function SendNft({
   const [nft, setNft] = useState('')
   const [nftRecepient, setNftRecepient] = useState('')
   const [nftMessage, setNftMessage] = useState('')
+  const [sendAmount, setSendAmount] = useState(0.05)
+  const [forwardAmount, setForwardAmount] = useState(0.02)
 
   useEffect(() => {
     setNft('')
     setNftRecepient('')
     setNftMessage('')
+    setSendAmount(0.05)
+    setForwardAmount(0.02)
   }, [wallet, provider])
-
-  const qrText = useMemo(() => {
-    const body = getNFTTransferBody(
-      nft,
-      nftRecepient,
-      nftMessage,
-      {
-        broadcast: false,
-        return_url: 'http://localhost:3000',
-        callback_url: 'http://localhost:3000',
-      },
-      60
-    )
-
-    const url = getRequestUrl(JSON.stringify(body))
-
-    console.log('body', body, url)
-    return url
-  }, [nft, nftRecepient, nftMessage])
 
   return (
     <div className="flex flex-col mt-4 p-4 border rounded shadow">
@@ -88,12 +71,34 @@ export default function SendNft({
         />
       </div>
 
-      <div>
+      <div className="mt-2 flex flex-col">
+        <label htmlFor="nftSendInput">SendAmount:</label>
+        <input
+          className="border rounded p-2"
+          id="nftSendInput"
+          type="number"
+          value={sendAmount}
+          onChange={(e: any) => setSendAmount(parseFloat(e.target.value) || e.target.value)}
+        />
+      </div>
+
+      <div className="mt-2 flex flex-col">
+        <label htmlFor="nftForwardInput">Message:</label>
+        <input
+          className="border rounded p-2"
+          id="nftForwardInput"
+          type="text"
+          value={forwardAmount}
+          onChange={(e: any) => setForwardAmount(parseFloat(e.target.value) || e.target.value)}
+        />
+      </div>
+
+      {/* <div>
         <div>QR:</div>
         <div>
           <QRCode value={qrText} />
         </div>
-      </div>
+      </div> */}
 
       <SendNftModal
         nft={nft}
@@ -103,36 +108,12 @@ export default function SendNft({
         provider={provider}
         nftMessage={nftMessage}
         updateBalance={updateBalance}
+        sendAmount={sendAmount}
+        forwardAmount={forwardAmount}
       />
     </div>
   )
 }
-
-const getRequestUrl = (req: any) => {
-  return `https://app.tonkeeper.com/v1/txrequest-inline/${Buffer.from(req).toString('base64')}`
-}
-
-const getNFTTransferBody = (
-  nftAddress: string,
-  newOwnerAddress: string,
-  message: string,
-  responseOptions: TxResponseOptions,
-  expiresSec: number
-) => ({
-  version: '0',
-  body: {
-    type: 'nft-transfer',
-    params: {
-      newOwnerAddress: newOwnerAddress,
-      nftItemAddress: nftAddress,
-      amount: 100000000,
-      forwardAmount: 1,
-      text: message,
-    },
-    response_options: responseOptions,
-    expires_sec: expiresSec,
-  },
-})
 
 const SendNftModal = ({
   nft,
@@ -141,6 +122,8 @@ const SendNftModal = ({
   seqno,
   provider,
   nftMessage,
+  sendAmount,
+  forwardAmount,
   updateBalance,
 }: {
   nft: string
@@ -149,6 +132,8 @@ const SendNftModal = ({
   seqno: string
   provider: HttpProvider
   nftMessage: string
+  sendAmount: number
+  forwardAmount: number
   updateBalance: () => void
 }) => {
   const [open, setOpen] = useState(false)
@@ -156,7 +141,7 @@ const SendNftModal = ({
 
   const sendMoney = async (close: () => void) => {
     const nftAddress = new TonWeb.utils.Address(nft)
-    const amount = TonWeb.utils.toNano(0.05)
+    const amount = TonWeb.utils.toNano(sendAmount)
     const nftItem = new NftItem(provider, { address: nftAddress })
 
     await wallet.wallet.methods
@@ -167,7 +152,7 @@ const SendNftModal = ({
         seqno: parseInt(seqno),
         payload: await nftItem.createTransferBody({
           newOwnerAddress: new TonWeb.utils.Address(recepient),
-          forwardAmount: TonWeb.utils.toNano(0.02),
+          forwardAmount: TonWeb.utils.toNano(forwardAmount),
           forwardPayload: new TextEncoder().encode(nftMessage),
           responseAddress: wallet.address,
         }),

@@ -1,32 +1,22 @@
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import TonWeb, { TransferMethodParams } from 'tonweb'
+import TonWeb from 'tonweb'
+// import TonWeb from 'tonweb'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
-import { ITonWebWallet } from '../../../types'
 import { BlueButton } from '../../UI'
 
-export default function SendTon({
-  seqno,
-  wallet,
-  provider,
-  updateBalance,
-}: {
-  seqno: string
-  wallet: ITonWebWallet
-  provider: HttpProvider
-  updateBalance: () => void
-}) {
+export default function SendMessage({ provider }: { provider: HttpProvider }) {
   const [amount, setAmount] = useState('0')
   const [recepient, setRecepient] = useState('')
-  const [message, setMessage] = useState('')
+
   const [stateInit, setStateInit] = useState('')
+  const [body, setBody] = useState('')
 
   useEffect(() => {
     setAmount('0')
     setRecepient('')
-    setMessage('')
-    setStateInit('')
-  }, [wallet, provider])
+    setBody('')
+  }, [provider])
 
   return (
     <div className="flex flex-col p-4 border rounded shadow">
@@ -57,21 +47,8 @@ export default function SendTon({
       </div>
 
       <div className="mt-2 flex flex-col">
-        <label htmlFor="amountInput">Message:</label>
-        <input
-          className="border rounded p-2"
-          id="amountInput"
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={message}
-          onChange={(e: any) => setMessage(e.target.value)}
-        />
-      </div>
-
-      <div className="mt-2 flex flex-col">
         <label htmlFor="amountInput">StateInit:</label>
-        <p className="text-gray-600 text-sm my-1">Base64url encoded state init cell</p>
+        <p className="text-gray-600 text-sm my-1">Base64 encoded state init cell</p>
         <input
           className="border rounded p-2"
           id="amountInput"
@@ -83,14 +60,28 @@ export default function SendTon({
         />
       </div>
 
+      <div className="mt-2 flex flex-col">
+        <label htmlFor="amountInput">Body:</label>
+        <p className="text-gray-600 text-sm my-1">Base64 encoded body cell</p>
+        <input
+          className="border rounded p-2"
+          id="amountInput"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={body}
+          onChange={(e: any) => setBody(e.target.value)}
+        />
+      </div>
+
       <SendModal
         amount={amount}
         recepient={recepient}
-        wallet={wallet}
-        seqno={seqno}
-        message={message}
+        // seqno={seqno}
+        provider={provider}
         stateInit={stateInit}
-        updateBalance={updateBalance}
+        body={body}
+        // updateBalance={updateBalance}
       />
     </div>
   )
@@ -99,19 +90,17 @@ export default function SendTon({
 const SendModal = ({
   amount,
   recepient,
-  wallet,
-  seqno,
-  stateInit,
-  message: sendMessage,
-  updateBalance,
-}: {
+  body: bodyString,
+  provider,
+  stateInit: stateInitString,
+}: // updateBalance,
+{
   amount: string
   recepient: string
-  wallet: ITonWebWallet
-  seqno: string
-  message: string
   stateInit: string
-  updateBalance: () => void
+  body: string
+  provider: HttpProvider
+  // updateBalance: () => void
 }) => {
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
@@ -126,47 +115,17 @@ const SendModal = ({
     setMessage('')
   }
 
-  const checkSeqno = async (oldSeqno: number, seqs: number, interval: number) => {
-    const newSeq = await wallet.wallet.methods.seqno().call()
-    const seqnoUpdated = newSeq && newSeq === oldSeqno + 1
-
-    if (seqnoUpdated) {
-      setStatus(2)
-      if (interval) {
-        clearInterval(interval)
-      }
-      updateBalance()
-      return
-    }
-
-    if (seqs === 0) {
-      setStatus(3)
-      if (interval) {
-        clearInterval(interval)
-      }
-      setMessage('Send Timeout, seqno not increased')
-    }
-  }
-
   const sendMoney = async () => {
-    const params: TransferMethodParams = {
-      amount: TonWeb.utils.toNano(amount),
-      seqno: parseInt(seqno),
-      secretKey: wallet.key.secretKey,
-      toAddress: recepient,
-      sendMode: 3,
-      payload: sendMessage || undefined,
-    }
-
-    if (stateInit) {
-      const parsed = TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(stateInit))
-      if (parsed) {
-        params.stateInit = parsed
-      }
-    }
-
     try {
-      const result = await wallet.wallet.methods.transfer(params).send()
+      const header = TonWeb.Contract.createExternalMessageHeader(recepient)
+
+      const stateInit = TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(stateInitString))
+      const body = TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(bodyString))
+
+      const commonMsgInfo = TonWeb.Contract.createCommonMsgInfo(header, stateInit, body)
+
+      const msg = Buffer.from(await commonMsgInfo.toBoc(false))
+      const result = await provider.sendBoc(msg.toString('base64'))
 
       if (result['@type'] === 'error') {
         setStatus(3)
@@ -183,22 +142,7 @@ const SendModal = ({
       return
     }
 
-    let secondsLeft = 30
-    const oldSeqno = parseInt(seqno)
-    const intervalId = window.setInterval(() => {
-      setSeconds(--secondsLeft)
-
-      if (secondsLeft % 5 === 0) {
-        checkSeqno(oldSeqno, secondsLeft, intervalId)
-      }
-
-      if (secondsLeft === 0 && intervalId) {
-        clearInterval(intervalId)
-      }
-    }, 1000)
-
-    setStatus(1)
-    setSeconds(secondsLeft)
+    setStatus(2)
   }
 
   return (

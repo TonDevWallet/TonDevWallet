@@ -6,6 +6,7 @@ import { useAsync } from 'react-async-hook'
 
 import Wallet from './components/wallets/tonweb/Wallet'
 import HighloadWallet from './components/wallets/highload/Wallet'
+import ExternalWallet from './components/wallets/external/Wallet'
 
 import { IWallet } from './types'
 import { useProvider } from './utils'
@@ -63,6 +64,7 @@ export function App() {
         balance: '0',
         wallet: walletv4R2,
         key: keyPair,
+        id: 'v4R2',
       },
       {
         type: 'v3R2',
@@ -70,6 +72,7 @@ export function App() {
         balance: '0',
         wallet: walletv3R2,
         key: keyPair,
+        id: 'v3R2',
       },
       {
         type: 'highload',
@@ -77,6 +80,7 @@ export function App() {
         balance: '0',
         wallet: highload,
         key: keyPair,
+        id: 'highload',
       },
       {
         type: 'v3R1',
@@ -84,6 +88,11 @@ export function App() {
         balance: '0',
         wallet: walletv3R1,
         key: keyPair,
+        id: 'v3R1',
+      },
+      {
+        type: 'external',
+        id: 'external',
       },
     ]
   }, [keyPair, walletId])
@@ -118,6 +127,8 @@ export function App() {
         {wallet ? (
           wallet.type === 'highload' ? (
             <HighloadWallet wallet={wallet} apiUrl={apiUrl} apiKey={apiKey} />
+          ) : wallet.type === 'external' ? (
+            <ExternalWallet apiUrl={apiUrl} apiKey={apiKey} />
           ) : (
             <Wallet wallet={wallet} apiUrl={apiUrl} apiKey={apiKey} />
           )

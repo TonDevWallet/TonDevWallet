@@ -9,6 +9,7 @@ export interface ITonWebWallet {
   address: Address
   wallet: WalletContract
   key: KeyPair
+  id: string
 }
 
 export interface ITonHighloadWalletV2 {
@@ -16,6 +17,12 @@ export interface ITonHighloadWalletV2 {
   address: Ton3Address
   wallet: ContractHighloadWalletV2
   key: KeyPair
+  id: string
 }
 
-export type IWallet = ITonWebWallet | ITonHighloadWalletV2
+export interface ITonExternalWallet {
+  type: 'external'
+  id: string
+}
+
+export type IWallet = ITonWebWallet | ITonHighloadWalletV2 | ITonExternalWallet

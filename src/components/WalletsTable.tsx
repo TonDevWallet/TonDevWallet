@@ -1,4 +1,4 @@
-import { ITonHighloadWalletV2, ITonWebWallet, IWallet } from '../types'
+import { ITonExternalWallet, ITonHighloadWalletV2, ITonWebWallet, IWallet } from '../types'
 import { AddressRow } from './AddressRow'
 
 function TonWalletRow({
@@ -99,6 +99,33 @@ function HighloadWalletRow({
   )
 }
 
+function ExternalWalletRow({
+  wallet,
+  isSelected,
+
+  setWallet,
+}: {
+  wallet: ITonExternalWallet
+  isSelected: boolean
+  setWallet: (wallet: IWallet) => void
+}) {
+  return (
+    <div className="my-2 flex flex-col border" key={wallet.id}>
+      <div className="flex justify-between border-b px-1">
+        <div className="">Wallet {wallet.type}</div>
+
+        {isSelected ? (
+          <div>Selected</div>
+        ) : (
+          <div className="cursor-pointer text-highlight" onClick={() => setWallet(wallet)}>
+            Use this wallet
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function WalletsTable({
   walletsToShow,
   currentWallet,
@@ -118,13 +145,19 @@ export function WalletsTable({
         wallet.type === 'highload' ? (
           <HighloadWalletRow
             wallet={wallet}
-            isSelected={currentWallet?.address.toString() === wallet.address.toString()}
+            isSelected={currentWallet?.id === wallet.id}
+            setWallet={setWallet}
+          />
+        ) : wallet.type === 'external' ? (
+          <ExternalWalletRow
+            wallet={wallet}
+            isSelected={currentWallet?.id === wallet.id}
             setWallet={setWallet}
           />
         ) : (
           <TonWalletRow
             wallet={wallet}
-            isSelected={currentWallet?.address.toString() === wallet.address.toString()}
+            isSelected={currentWallet?.id === wallet.id}
             setWallet={setWallet}
           />
         )
