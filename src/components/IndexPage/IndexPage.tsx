@@ -1,6 +1,6 @@
 import TonWeb from 'tonweb'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { KeyPair, mnemonicToKeyPair, mnemonicToSeed } from 'tonweb-mnemonic'
 import { useAsync } from 'react-async-hook'
 
@@ -135,15 +135,17 @@ export function IndexPage() {
   const [walletsUpdateCounter, setWalletUpdateCounter] = useState(0)
   const savedWalletsList = useMemo(() => {
     return (
-      <SavedWalletsList
-        wallet={wallet}
-        words={words}
-        setWords={setWords}
-        seed={seed}
-        setSeed={setSeed}
-        setKeyPair={setKeyPair}
-        setWallet={setWallet}
-      />
+      <React.Suspense fallback={<div>Loading</div>}>
+        <SavedWalletsList
+          wallet={wallet}
+          words={words}
+          setWords={setWords}
+          seed={seed}
+          setSeed={setSeed}
+          setKeyPair={setKeyPair}
+          setWallet={setWallet}
+        />
+      </React.Suspense>
     )
   }, [wallet, words, setWords, walletsUpdateCounter])
 

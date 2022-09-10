@@ -5,6 +5,8 @@ import { generateMnemonic, KeyPair, mnemonicToKeyPair, mnemonicToSeed } from 'to
 import Jazzicon from 'react-jazzicon'
 import { SavedWalletRow } from './SavedWalletRow'
 import { useWallets } from '../useWallets'
+import { useTasksState } from '@/store/walletState'
+import { suspend } from '@hookstate/core'
 
 export function SavedWalletsList({
   wallet,
@@ -24,6 +26,7 @@ export function SavedWalletsList({
   setWallet: (s: IWallet | undefined) => void
 }) {
   const wallets = useWallets()
+  const tasks = useTasksState()
   // const db = useDatabase()
   // console.log('walletslist update')
 
@@ -68,18 +71,20 @@ export function SavedWalletsList({
   }
 
   return (
-    <div className="p-2">
-      {wallets &&
-        wallets.map((dbWallet) => (
-          <SavedWalletRow
-            updateMnemonic={updateMnemonic}
-            wallet={wallet}
-            walletWords={dbWallet.name.split(' ')}
-            words={words}
-          />
-        ))}
+    suspend(tasks) || (
+      <div className="p-2">
+        {wallets &&
+          wallets.map((dbWallet) => (
+            <SavedWalletRow
+              updateMnemonic={updateMnemonic}
+              wallet={wallet}
+              walletWords={dbWallet.name.split(' ')}
+              words={words}
+            />
+          ))}
 
-      <div onClick={() => updateMnemonic()}>New wallet</div>
-    </div>
+        <div onClick={() => updateMnemonic()}>New wallet</div>
+      </div>
+    )
   )
 }
