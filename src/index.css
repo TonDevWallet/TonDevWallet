@@ -16,6 +16,8 @@
 body {
   color: var(--color-main);
   font-family: Mulish, "Open Sans", sans-serif;
+  overflow-y: scroll;
+  /* overflow-x: hidden; */
 }
 
 a {

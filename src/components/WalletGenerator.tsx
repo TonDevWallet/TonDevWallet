@@ -9,39 +9,45 @@ import {
 import { IWallet } from '../types'
 import { BlueButton } from './UI'
 import Copier from './copier'
+import { useDatabase } from '@/db'
+import { useWalletsUpdate } from './useWallets'
 
 export function WalletGenerator({
   words,
   keyPair,
   walletId,
+  seed,
 
   setWords,
   setWallet,
   setKeyPair,
   setWalletId,
+  setSeed,
+  walletsUpdated,
 }: {
   words: string[]
   keyPair?: KeyPair
   walletId: number
+  seed: Uint8Array | undefined
 
   setWords: (v: string[]) => void
   setWallet: (v: IWallet | undefined) => void
   setKeyPair: (v: KeyPair | undefined) => void
   setWalletId: (v: number) => void
+  setSeed: (s: Uint8Array | undefined) => void
+  walletsUpdated: () => void
 }) {
-  const [seed, setSeed] = useState<Uint8Array | undefined>(undefined)
+  // const generate = async () => {
+  //   console.log('generate')
+  //   const mnemonic = await generateMnemonic()
+  //   const keyPair = await mnemonicToKeyPair(mnemonic)
+  //   const sd = await mnemonicToSeed(mnemonic)
 
-  const generate = async () => {
-    console.log('generate')
-    const mnemonic = await generateMnemonic()
-    const keyPair = await mnemonicToKeyPair(mnemonic)
-    const sd = await mnemonicToSeed(mnemonic)
-
-    setWords(mnemonic)
-    setSeed(sd)
-    setKeyPair(keyPair)
-    setWallet(undefined)
-  }
+  //   setWords(mnemonic)
+  //   setSeed(sd)
+  //   setKeyPair(keyPair)
+  //   setWallet(undefined)
+  // }
 
   console.log('wallet generator')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,12 +72,35 @@ export function WalletGenerator({
     }
   }
 
+  // useEffect(() => {
+  //   console.log('effect', words)
+  //   const tm = setTimeout(() => {
+  //     console.log('effect timeout')
+  //     if (words.length === 0) {
+  //       generate()
+  //     }
+  //   }, 256)
+
+  //   return () => clearTimeout(tm)
+  // }, [words])
+
+  const [updateCounter, updateWallets] = useWalletsUpdate()
+
+  const db = useDatabase()
+  const saveWallet = async () => {
+    await db.execute(`INSERT INTO files(name) VALUES($1)`, [words.join(' ')])
+    console.log('save wallet')
+    // walletsUpdated()
+    updateWallets()
+  }
+  const deleteWallet = async () => {
+    await db.execute(`DELETE FROM files WHERE name = $1`, [words.join(' ')])
+    walletsUpdated()
+  }
+
   useEffect(() => {
-    console.log('effect', words)
-    if (words.length === 0) {
-      generate()
-    }
-  }, [])
+    console.log('updateCounter eff', updateCounter)
+  }, [updateCounter])
 
   return (
     <div>
@@ -147,7 +176,9 @@ export function WalletGenerator({
         )}
       </div>
 
-      <BlueButton onClick={generate}>Generate new words</BlueButton>
+      {/* <BlueButton onClick={generate}>Generate new words</BlueButton> */}
+      <BlueButton onClick={saveWallet}>Save seed</BlueButton>
+      <BlueButton onClick={deleteWallet}>Delete seed</BlueButton>
     </div>
   )
 }
