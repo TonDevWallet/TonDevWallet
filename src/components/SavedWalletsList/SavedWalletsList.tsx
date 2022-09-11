@@ -74,8 +74,10 @@ export function SavedWalletsList({
             <SavedWalletRow
               updateMnemonic={updateMnemonic}
               wallet={wallet}
-              walletWords={dbWallet.get().name.split(' ')}
+              walletKey={dbWallet.get()}
+              // walletWords={dbWallet.get().words.split(' ')}
               words={words}
+              key={dbWallet.get().id}
             />
           ))}
 

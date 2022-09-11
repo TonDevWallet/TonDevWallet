@@ -1,19 +1,20 @@
+import { useLiteclient } from '@/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb, { TransferMethodParams } from 'tonweb'
-import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
+// import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { ITonWebWallet } from '../../../types'
 import { BlueButton } from '../../UI'
 
 export default function SendTon({
   seqno,
   wallet,
-  provider,
+  // provider,
   updateBalance,
 }: {
   seqno: string
   wallet: ITonWebWallet
-  provider: HttpProvider
+  // provider: HttpProvider
   updateBalance: () => void
 }) {
   const [amount, setAmount] = useState('0')
@@ -26,7 +27,7 @@ export default function SendTon({
     setRecepient('')
     setMessage('')
     setStateInit('')
-  }, [wallet, provider])
+  }, [wallet])
 
   return (
     <div className="flex flex-col p-4 border rounded shadow">
@@ -166,11 +167,13 @@ const SendModal = ({
     }
 
     try {
-      const result = await wallet.wallet.methods.transfer(params).send()
+      const query = await wallet.wallet.methods.transfer(params).getQuery()
+      const liteClient = useLiteclient()
+      const result = await liteClient.sendMessage(Buffer.from(await query.toBoc(false)))
 
-      if (result['@type'] === 'error') {
+      if (result.status !== 1) {
         setStatus(3)
-        setMessage(`Error occured. Code: ${result.code}. Message: ${result.message}`)
+        setMessage(`Error occured. Code: ${result}. Message: ${result}`)
         return
       }
     } catch (e) {

@@ -45,7 +45,7 @@ export function NetworkSettings({
 
   return (
     <div className="flex flex-col gap-2 my-2">
-      <div className="flex">
+      {/* <div className="flex">
         <label htmlFor="testnetCheckbox">ApiUrl: </label>
         <input
           type="text"
@@ -65,7 +65,7 @@ export function NetworkSettings({
           value={apiKey}
           onChange={(e: any) => setApiKey(e.target.value)}
         />
-      </div>
+      </div> */}
     </div>
   )
 }

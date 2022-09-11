@@ -13,6 +13,8 @@ import GetSaleInfo from './GetSaleInfo'
 import CancelNftSale from './CancelNftSale'
 import SendTonMarketplace from './SendTonMarketplace'
 import GetNftInfo from './GetNftInfo'
+import { useLiteclient } from '@/liteClient'
+import { Address } from 'ton'
 
 function Wallet({
   wallet,
@@ -23,7 +25,8 @@ function Wallet({
   apiUrl: string
   apiKey: string
 }) {
-  const provider = useProvider(apiUrl, apiKey)
+  const provider = useProvider()
+  const liteClient = useLiteclient()
   const [balance, setBalance] = useState('')
 
   const [seqno, setSeqno] = useState('0')
@@ -33,7 +36,14 @@ function Wallet({
     setSeqno(newSeq ? newSeq.toString() : '0')
   }
 
-  const updateBalance = () => {
+  const updateBalance = async () => {
+    const state = await liteClient.getAccountState(
+      Address.parse(wallet.address.toString(true, true, true)),
+      (
+        await liteClient.getMasterchainInfo()
+      ).last
+    )
+    setBalance(state.balance.coins.toString())
     provider
       .getBalance(wallet.address.toString(true, true, true))
       .then((balance) => setBalance(balance))
@@ -80,7 +90,7 @@ function Wallet({
         </div>
       </div>
 
-      <SendTon seqno={seqno} wallet={wallet} provider={provider} updateBalance={updateBalance} />
+      <SendTon seqno={seqno} wallet={wallet} updateBalance={updateBalance} />
 
       <SendNft seqno={seqno} wallet={wallet} provider={provider} updateBalance={updateBalance} />
 

@@ -147,18 +147,21 @@ export function WalletsTable({
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}
             setWallet={setWallet}
+            key={wallet.id}
           />
         ) : wallet.type === 'external' ? (
           <ExternalWalletRow
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}
             setWallet={setWallet}
+            key={wallet.id}
           />
         ) : (
           <TonWalletRow
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}
             setWallet={setWallet}
+            key={wallet.id}
           />
         )
       )}

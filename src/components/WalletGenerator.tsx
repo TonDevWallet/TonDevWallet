@@ -30,6 +30,7 @@ export function WalletGenerator({
   setWalletId: (v: number) => void
   setSeed: (s: Uint8Array | undefined) => void
 }) {
+  const [isInfoOpened, setIsInfoOpened] = useState(false)
   const [open, setOpen] = useState(false)
   const nameRef = useRef<HTMLInputElement | null>(null)
   const close = () => setOpen(false)
@@ -77,8 +78,11 @@ export function WalletGenerator({
     updateWalletsList()
   }
 
-  return (
+  return !isInfoOpened ? (
+    <div onClick={() => setIsInfoOpened(true)}>Open wallet key info</div>
+  ) : (
     <div>
+      <div onClick={() => setIsInfoOpened(false)}>Close wallet key info</div>
       <div className="my-2">
         <label
           htmlFor="wordsInput"
