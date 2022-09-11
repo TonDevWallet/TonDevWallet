@@ -1,18 +1,14 @@
-import { useDatabase } from '@/db'
 import { IWallet } from '@/types'
-import { useAsync } from 'react-async-hook'
 import { generateMnemonic, KeyPair, mnemonicToKeyPair, mnemonicToSeed } from 'tonweb-mnemonic'
-import Jazzicon from 'react-jazzicon'
 import { SavedWalletRow } from './SavedWalletRow'
-import { useWallets } from '../useWallets'
-import { useTasksState } from '@/store/walletState'
 import { suspend } from '@hookstate/core'
+import { useWalletListState } from '@/store/walletsListState'
 
 export function SavedWalletsList({
   wallet,
   words,
   setWords,
-  seed,
+  // seed,
   setSeed,
   setKeyPair,
   setWallet,
@@ -25,8 +21,8 @@ export function SavedWalletsList({
   setKeyPair: (s: KeyPair) => void
   setWallet: (s: IWallet | undefined) => void
 }) {
-  const wallets = useWallets()
-  const tasks = useTasksState()
+  const wallets = useWalletListState()
+  // const tasks = useTasksState()
   // const db = useDatabase()
   // console.log('walletslist update')
 
@@ -71,19 +67,30 @@ export function SavedWalletsList({
   }
 
   return (
-    suspend(tasks) || (
+    suspend(wallets) || (
       <div className="p-2">
         {wallets &&
           wallets.map((dbWallet) => (
             <SavedWalletRow
               updateMnemonic={updateMnemonic}
               wallet={wallet}
-              walletWords={dbWallet.name.split(' ')}
+              walletWords={dbWallet.get().name.split(' ')}
               words={words}
             />
           ))}
 
-        <div onClick={() => updateMnemonic()}>New wallet</div>
+        <div
+          onClick={() => updateMnemonic()}
+          className="cursor-pointer rounded p-1 flex flex-col items-center my-2"
+        >
+          <div
+            className="rounded-full w-16 h-16 bg-gray-300
+            flex items-center justify-center text-[32px]"
+          >
+            +
+          </div>
+          <div>New wallet</div>
+        </div>
       </div>
     )
   )

@@ -1,7 +1,7 @@
 import TonWeb from 'tonweb'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { KeyPair, mnemonicToKeyPair, mnemonicToSeed } from 'tonweb-mnemonic'
+import { KeyPair, mnemonicToKeyPair } from 'tonweb-mnemonic'
 import { useAsync } from 'react-async-hook'
 
 import Wallet from '@/components/wallets/tonweb/Wallet'
@@ -17,29 +17,9 @@ import { ContractHighloadWalletV2 } from '@/contracts/HighloadWalletV2'
 
 // const provider = new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC')
 
-import { useDatabase } from '@/db'
 import { SavedWalletsList } from '../SavedWalletsList/SavedWalletsList'
-// import { path } from '@tauri-apps/api'
-
-// import Database from 'tauri-plugin-sql-api'
-
-async function makeDbCall(db) {
-  //   // const db = await Database.load('sqlite:test.db')
-  await db.execute(`CREATE TABLE IF NOT EXISTS files (
-    id integer PRIMARY KEY,
-    name text
-  )`)
-  //   await db.execute(`INSERT INTO files(name) VALUES(1)`)
-  const res = await db.select(`SELECT * FROM files`)
-  //   // const dbFile = await path.resolve(await path.appDir(), 'test.db')
-  //   // .('test.db')
-  console.log('db', res)
-}
 
 export function IndexPage() {
-  const db = useDatabase()
-  makeDbCall(db)
-
   const [words, setWords] = useState<string[]>([])
   const [wallet, setWallet] = useState<IWallet | undefined>(undefined)
   const [keyPair, setKeyPair] = useState<KeyPair | undefined>(undefined)
@@ -132,7 +112,6 @@ export function IndexPage() {
 
   const walletsToShow = wallets.result
 
-  const [walletsUpdateCounter, setWalletUpdateCounter] = useState(0)
   const savedWalletsList = useMemo(() => {
     return (
       <React.Suspense fallback={<div>Loading</div>}>
@@ -147,12 +126,7 @@ export function IndexPage() {
         />
       </React.Suspense>
     )
-  }, [wallet, words, setWords, walletsUpdateCounter])
-
-  const walletsUpdated = () => {
-    console.log('counter update')
-    setWalletUpdateCounter((v) => v + 1)
-  }
+  }, [wallet, words, setWords])
 
   return (
     <div className="grid grid-cols-[128px_1fr_1fr] justify-center flex-col md:flex-row">
@@ -179,7 +153,6 @@ export function IndexPage() {
           setKeyPair={setKeyPair}
           setWalletId={setWalletId}
           setSeed={setSeed}
-          walletsUpdated={walletsUpdated}
         />
 
         <WalletsTable currentWallet={wallet} walletsToShow={walletsToShow} setWallet={setWallet} />

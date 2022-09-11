@@ -1,11 +1,10 @@
 import { IWallet } from '@/types'
-import { useMemo, useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Jazzicon from 'react-jazzicon'
 import { mnemonicToSeed } from 'tonweb-mnemonic'
 
 export function SavedWalletRow({
   walletWords,
-  wallet,
   words,
 
   updateMnemonic,
@@ -32,8 +31,8 @@ export function SavedWalletRow({
   return (
     <div
       className={
-        'rounded p-1 flex flex-col items-center ' +
-          (walletWords.join(' ') === words.join(' ') && 'bg-red-500') || ''
+        'rounded p-1 flex flex-col items-center my-2 select-none ' +
+          (walletWords.join(' ') === words.join(' ') && 'bg-gray-300') || ''
       }
       onClick={() => {
         updateMnemonic(walletWords)

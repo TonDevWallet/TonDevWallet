@@ -1,16 +1,11 @@
-import { useEffect, useState } from 'react'
-import {
-  generateMnemonic,
-  KeyPair,
-  mnemonicToKeyPair,
-  validateMnemonic,
-  mnemonicToSeed,
-} from 'tonweb-mnemonic'
+import { KeyPair, mnemonicToKeyPair, validateMnemonic, mnemonicToSeed } from 'tonweb-mnemonic'
 import { IWallet } from '../types'
 import { BlueButton } from './UI'
 import Copier from './copier'
 import { useDatabase } from '@/db'
-import { useWalletsUpdate } from './useWallets'
+import { updateWalletsList } from '@/store/walletsListState'
+import Popup from 'reactjs-popup'
+import { useRef, useState } from 'react'
 
 export function WalletGenerator({
   words,
@@ -23,7 +18,6 @@ export function WalletGenerator({
   setKeyPair,
   setWalletId,
   setSeed,
-  walletsUpdated,
 }: {
   words: string[]
   keyPair?: KeyPair
@@ -35,19 +29,10 @@ export function WalletGenerator({
   setKeyPair: (v: KeyPair | undefined) => void
   setWalletId: (v: number) => void
   setSeed: (s: Uint8Array | undefined) => void
-  walletsUpdated: () => void
 }) {
-  // const generate = async () => {
-  //   console.log('generate')
-  //   const mnemonic = await generateMnemonic()
-  //   const keyPair = await mnemonicToKeyPair(mnemonic)
-  //   const sd = await mnemonicToSeed(mnemonic)
-
-  //   setWords(mnemonic)
-  //   setSeed(sd)
-  //   setKeyPair(keyPair)
-  //   setWallet(undefined)
-  // }
+  const [open, setOpen] = useState(false)
+  const nameRef = useRef<HTMLInputElement | null>(null)
+  const close = () => setOpen(false)
 
   console.log('wallet generator')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,35 +57,25 @@ export function WalletGenerator({
     }
   }
 
-  // useEffect(() => {
-  //   console.log('effect', words)
-  //   const tm = setTimeout(() => {
-  //     console.log('effect timeout')
-  //     if (words.length === 0) {
-  //       generate()
-  //     }
-  //   }, 256)
-
-  //   return () => clearTimeout(tm)
-  // }, [words])
-
-  const [updateCounter, updateWallets] = useWalletsUpdate()
-
   const db = useDatabase()
-  const saveWallet = async () => {
-    await db.execute(`INSERT INTO files(name) VALUES($1)`, [words.join(' ')])
+  const saveWallet = async (walletName: string) => {
+    if (!seed) {
+      return
+    }
+
+    await db.execute(`INSERT INTO keys(words,seed,wallet_id,name) VALUES($1,$2,$3,$4)`, [
+      words.join(' '),
+      Buffer.from(seed).toString('hex'),
+      walletId,
+      walletName,
+    ])
     console.log('save wallet')
-    // walletsUpdated()
-    updateWallets()
+    updateWalletsList()
   }
   const deleteWallet = async () => {
-    await db.execute(`DELETE FROM files WHERE name = $1`, [words.join(' ')])
-    walletsUpdated()
+    await db.execute(`DELETE FROM keys WHERE words = $1`, [words.join(' ')])
+    updateWalletsList()
   }
-
-  useEffect(() => {
-    console.log('updateCounter eff', updateCounter)
-  }, [updateCounter])
 
   return (
     <div>
@@ -175,10 +150,31 @@ export function WalletGenerator({
           </>
         )}
       </div>
-
       {/* <BlueButton onClick={generate}>Generate new words</BlueButton> */}
-      <BlueButton onClick={saveWallet}>Save seed</BlueButton>
+      <BlueButton
+        onClick={() => {
+          console.log('open popup')
+          setOpen(true)
+        }}
+      >
+        Save seed
+      </BlueButton>
       <BlueButton onClick={deleteWallet}>Delete seed</BlueButton>
+
+      <Popup onClose={() => setOpen(false)} open={open} closeOnDocumentClick modal>
+        <div className="p-4">
+          <BlueButton
+            onClick={() => {
+              saveWallet(nameRef.current?.value || '')
+              close()
+            }}
+            // disabled={!nameRef.current?.value}
+          >
+            Save
+          </BlueButton>
+          <input type="text" ref={nameRef} className="border" />
+        </div>
+      </Popup>
     </div>
   )
 }
