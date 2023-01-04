@@ -1,8 +1,8 @@
-import { useProvider } from '../../../utils'
+// import { useProvider } from '../../../utils'
 import SendMessage from './SendMessage'
 
-function Wallet({ apiUrl, apiKey }: { apiUrl: string; apiKey: string }) {
-  const provider = useProvider(apiUrl, apiKey)
+function Wallet() {
+  // const provider = useProvider(apiUrl, apiKey)
 
   return (
     <div className="flex flex-col gap-2">
@@ -11,7 +11,7 @@ function Wallet({ apiUrl, apiKey }: { apiUrl: string; apiKey: string }) {
         <div>Type: external</div>
       </div>
 
-      <SendMessage provider={provider} />
+      <SendMessage />
     </div>
   )
 }

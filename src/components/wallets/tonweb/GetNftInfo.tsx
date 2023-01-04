@@ -4,13 +4,13 @@ import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 
 const { NftItem } = TonWeb.token.nft
 
-export default function GetNftInfo({ provider }: { provider: HttpProvider }) {
+export default function GetNftInfo() {
   const [info, setInfo] = useState('')
   const [nftAddress, setNftAddress] = useState('')
 
   const getInfo = async () => {
     console.log('getInfo')
-    const nft = new NftItem(provider, { address: nftAddress })
+    const nft = new NftItem(new TonWeb.HttpProvider(), { address: nftAddress })
 
     const info = await nft.getData()
     const data: any = { ...info }

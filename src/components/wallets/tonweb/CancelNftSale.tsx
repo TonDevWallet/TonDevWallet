@@ -10,12 +10,10 @@ const { NftSale } = TonWeb.token.nft
 export default function CancelNftSale({
   seqno,
   wallet,
-  provider,
   updateBalance,
 }: {
   seqno: string
   wallet: ITonWebWallet
-  provider: HttpProvider
   updateBalance: () => void
 }) {
   const [marketAddress, setMarketAddress] = useState('')
@@ -66,7 +64,6 @@ export default function CancelNftSale({
         collectionAddress={collectionAddress}
         wallet={wallet}
         seqno={seqno}
-        provider={provider}
         updateBalance={updateBalance}
       />
     </div>
@@ -79,7 +76,6 @@ const CancelSaleModal = ({
   collectionAddress,
   wallet,
   seqno,
-  provider,
   updateBalance,
 }: {
   marketAddress: string
@@ -87,7 +83,6 @@ const CancelSaleModal = ({
   collectionAddress: string
   wallet: ITonWebWallet
   seqno: string
-  provider: HttpProvider
   updateBalance: () => void
 }) => {
   const [open, setOpen] = useState(false)
@@ -96,7 +91,7 @@ const CancelSaleModal = ({
   const sendMoney = async (close: () => void) => {
     const amount = TonWeb.utils.toNano(1)
 
-    const sale = new NftSale(provider, {
+    const sale = new NftSale(new TonWeb.HttpProvider(), {
       marketplaceAddress: new TonWeb.utils.Address(marketAddress),
       nftAddress: new TonWeb.utils.Address(nftAddress),
       fullPrice: TonWeb.utils.toNano('1.1'),

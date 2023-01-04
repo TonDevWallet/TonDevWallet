@@ -1,3 +1,4 @@
+import { useTonClient } from '@/store/tonClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import { WalletTransfer } from 'ton3-contracts/dist/types/wallet-transfer'
@@ -10,23 +11,24 @@ import { BlueButton } from './../../UI'
 export default function SendTon({
   // seqno,
   wallet,
-  provider,
-}: // updateBalance,
+}: // provider,
+// updateBalance,
 {
   // seqno: string
   wallet: ITonHighloadWalletV2
-  provider: HttpProvider
+  // provider: HttpProvider
   // updateBalance: () => void
 }) {
   const [amount, setAmount] = useState('0')
   const [recepient, setRecepient] = useState('')
   const [message, setMessage] = useState('')
+  const tonClient = useTonClient()
 
   useEffect(() => {
     setAmount('0')
     setRecepient('')
     setMessage('')
-  }, [wallet, provider])
+  }, [wallet, tonClient])
 
   return (
     <div className="flex flex-col p-4 border rounded shadow">
@@ -75,7 +77,7 @@ export default function SendTon({
         wallet={wallet}
         // seqno={seqno}
         message={message}
-        provider={provider}
+        // provider={provider}
         // updateBalance={updateBalance}
       />
     </div>
@@ -88,17 +90,19 @@ const SendModal = ({
   wallet,
   // seqno,
   message: sendMessage,
-  provider,
-}: // updateBalance,
+}: // provider,
+// updateBalance,
 {
   amount: string
   recepient: string
   wallet: ITonHighloadWalletV2
   // seqno: string
   message: string
-  provider: HttpProvider
+  // provider: HttpProvider
   // updateBalance: () => void
 }) => {
+  const tonClient = useTonClient()
+
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
 
@@ -149,14 +153,14 @@ const SendModal = ({
       const signed = message.sign(wallet.key.secretKey)
       const payload = Buffer.from(BOC.toBytesStandard(signed))
 
-      const result = await provider.sendBoc(payload.toString('base64'))
+      const result = await tonClient.get().sendFile(payload)
       // const result = await wallet.wallet.methods.transfer(params).send()
 
-      if (result['@type'] === 'error') {
-        setStatus(3)
-        setMessage(`Error occured. Code: ${result.code}. Message: ${result.message}`)
-        return
-      }
+      // if (result['@type'] === 'error') {
+      //   setStatus(3)
+      //   setMessage(`Error occured. Code:. Message:`)
+      //   return
+      // }
     } catch (e) {
       setStatus(3)
       if (e instanceof Error) {

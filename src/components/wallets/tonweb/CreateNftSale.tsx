@@ -28,7 +28,6 @@ export default function CreateNftSale({
 }: {
   seqno: string
   wallet: ITonWebWallet
-  provider: HttpProvider
   updateBalance: () => void
 }) {
   const [marketAddress, setMarketAddress] = useState('')

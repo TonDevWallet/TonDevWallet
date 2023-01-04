@@ -1,7 +1,6 @@
 import TonWeb from 'tonweb'
 
 import { ITonWebWallet } from '../../../types'
-import { useProvider } from '../../../utils'
 import { AddressRow } from '../../AddressRow'
 import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
@@ -15,18 +14,15 @@ import SendTonMarketplace from './SendTonMarketplace'
 import GetNftInfo from './GetNftInfo'
 import { useLiteclient } from '@/liteClient'
 import { Address } from 'ton'
+import { useWallet } from '@/store/walletState'
+import { useTonClient } from '@/store/tonClient'
 
-function Wallet({
-  wallet,
-  apiUrl,
-  apiKey,
-}: {
-  wallet: ITonWebWallet
-  apiUrl: string
-  apiKey: string
-}) {
-  const provider = useProvider()
-  const liteClient = useLiteclient()
+function Wallet() {
+  const currentWallet = useWallet()
+  const wallet = currentWallet.selectedWallet.get() as ITonWebWallet
+
+  const tonClient = useTonClient()
+  // const liteClient = useLiteclient()
   const [balance, setBalance] = useState('')
 
   const [seqno, setSeqno] = useState('0')
@@ -37,23 +33,25 @@ function Wallet({
   }
 
   const updateBalance = async () => {
-    const state = await liteClient.getAccountState(
-      Address.parse(wallet.address.toString(true, true, true)),
-      (
-        await liteClient.getMasterchainInfo()
-      ).last
-    )
-    setBalance(state.balance.coins.toString())
-    provider
-      .getBalance(wallet.address.toString(true, true, true))
-      .then((balance) => setBalance(balance))
+    // const state = await liteClient.getAccountState(
+    //   Address.parse(wallet.address.toString(true, true, true)),
+    //   (
+    //     await liteClient.getMasterchainInfo()
+    //   ).last
+    // )
+    // setBalance(state.balance.coins.toString())
+    console.log('updateBalance')
+    tonClient
+      .get()
+      .getBalance(Address.parse(wallet.address.toString(true, true, true)))
+      .then((balance) => setBalance(balance.toString()))
     // .catch(e)
   }
 
   useEffect(() => {
     updateBalance()
     getSeqno()
-  }, [wallet, provider])
+  }, [wallet, tonClient])
 
   return (
     <div className="flex flex-col gap-2">
@@ -92,38 +90,33 @@ function Wallet({
 
       <SendTon seqno={seqno} wallet={wallet} updateBalance={updateBalance} />
 
-      <SendNft seqno={seqno} wallet={wallet} provider={provider} updateBalance={updateBalance} />
+      <SendNft seqno={seqno} wallet={wallet} updateBalance={updateBalance} />
 
       <CreateMarketplace
         seqno={seqno}
         wallet={wallet}
-        provider={provider}
+        // provider={provider}
         updateBalance={updateBalance}
       />
 
       <SendTonMarketplace
         seqno={seqno}
         wallet={wallet}
-        provider={provider}
+        // provider={provider}
         updateBalance={updateBalance}
       />
 
       <CreateNftSale
         seqno={seqno}
         wallet={wallet}
-        provider={provider}
+        // provider={provider}
         updateBalance={updateBalance}
       />
 
-      <CancelNftSale
-        seqno={seqno}
-        wallet={wallet}
-        provider={provider}
-        updateBalance={updateBalance}
-      />
+      <CancelNftSale seqno={seqno} wallet={wallet} updateBalance={updateBalance} />
 
-      <GetNftInfo provider={provider} />
-      <GetSaleInfo provider={provider} />
+      <GetNftInfo />
+      <GetSaleInfo />
     </div>
   )
 }

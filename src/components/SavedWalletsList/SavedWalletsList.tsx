@@ -1,26 +1,12 @@
 import { IWallet } from '@/types'
-import { generateMnemonic, KeyPair, mnemonicToKeyPair, mnemonicToSeed } from 'tonweb-mnemonic'
+import { generateMnemonic, KeyPair, mnemonicToSeed } from 'tonweb-mnemonic'
 import { SavedWalletRow } from './SavedWalletRow'
 import { suspend } from '@hookstate/core'
 import { useWalletListState } from '@/store/walletsListState'
+import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
+import { mnemonicToPrivateKey } from 'ton-crypto'
 
-export function SavedWalletsList({
-  wallet,
-  words,
-  setWords,
-  // seed,
-  setSeed,
-  setKeyPair,
-  setWallet,
-}: {
-  wallet: IWallet | undefined
-  words: string[]
-  setWords: (words: string[]) => void
-  seed: Uint8Array | undefined
-  setSeed: (s: Uint8Array) => void
-  setKeyPair: (s: KeyPair) => void
-  setWallet: (s: IWallet | undefined) => void
-}) {
+export function SavedWalletsList() {
   const wallets = useWalletListState()
   // const tasks = useTasksState()
   // const db = useDatabase()
@@ -54,16 +40,30 @@ export function SavedWalletsList({
   //   return () => clearTimeout(tm)
   // }, [words])
 
+  const wallet = useWallet()
+
   const updateMnemonic = async (words?: string[]) => {
     console.log('generate')
     const mnemonic = words || (await generateMnemonic())
-    const keyPair = await mnemonicToKeyPair(mnemonic)
+    // const keyPair = await mnemonicToKeyPair(mnemonic)
     const sd = await mnemonicToSeed(mnemonic)
 
-    setWords(mnemonic)
-    setSeed(sd)
-    setKeyPair(keyPair)
-    setWallet(undefined)
+    setWalletKey({
+      id: 0,
+      name: '',
+      seed: Buffer.from(sd).toString('hex'),
+      wallet_id: wallet.key.get()?.wallet_id || 0,
+      words: mnemonic.join(' '),
+      keyPair: await mnemonicToPrivateKey(mnemonic),
+    })
+    setSelectedWallet(null)
+    // setWalletKey({
+
+    // })
+    // setWords(mnemonic)
+    // setSeed(sd)
+    // setKeyPair(keyPair)
+    // setWallet(undefined)
   }
 
   return (
@@ -73,10 +73,10 @@ export function SavedWalletsList({
           wallets.map((dbWallet) => (
             <SavedWalletRow
               updateMnemonic={updateMnemonic}
-              wallet={wallet}
+              // wallet={wallet}
               walletKey={dbWallet.get()}
               // walletWords={dbWallet.get().words.split(' ')}
-              words={words}
+              // words={words}
               key={dbWallet.get().id}
             />
           ))}

@@ -4,14 +4,14 @@ import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 
 const { NftSale } = TonWeb.token.nft
 
-export default function GetSaleInfo({ provider }: { provider: HttpProvider }) {
+export default function GetSaleInfo() {
   const [marketAddress, setMarketAddress] = useState('')
   const [nftAddress, setNftAddress] = useState('')
   const [collectionAddress, setCollectionAddress] = useState('')
 
   const getInfo = async () => {
     console.log('getInfo')
-    const sale = new NftSale(provider, {
+    const sale = new NftSale(new TonWeb.HttpProvider(), {
       marketplaceAddress: new TonWeb.utils.Address(marketAddress),
       nftAddress: new TonWeb.utils.Address(nftAddress),
       fullPrice: TonWeb.utils.toNano('1.1'),

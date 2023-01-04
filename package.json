@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@hookstate/core": "^4.0.0-rc21",
+    "@hookstate/devtools": "^4.0.0-rc21",
     "@tauri-apps/api": "^1.0.2",
     "@types/bn.js": "^5.1.0",
     "autoprefixer": "^10.4.4",
@@ -27,6 +28,7 @@
     "tailwindcss": "^3.1.8",
     "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9",
     "ton": "^11.12.0",
+    "ton-crypto": "^3.2.0",
     "ton-lite-client": "npm:@truecarry/ton-lite-client@^1.6.1",
     "ton3-contracts": "^0.0.8",
     "ton3-core": "^0.0.12",

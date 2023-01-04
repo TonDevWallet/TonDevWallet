@@ -11,15 +11,13 @@ import { WalletMarketplace } from '../../../contracts/WalletMarketpalce'
 export default function CreateMarketplace({
   seqno,
   wallet,
-  provider,
   updateBalance,
 }: {
   seqno: string
   wallet: ITonWebWallet
-  provider: HttpProvider
   updateBalance: () => void
 }) {
-  const marketplace = new WalletMarketplace(provider, {
+  const marketplace = new WalletMarketplace(new TonWeb.HttpProvider(), {
     publicKey: wallet.key.publicKey,
   })
   const [marketAddress, setMarketAddress] = useState('')
@@ -34,12 +32,7 @@ export default function CreateMarketplace({
     <div className="p-4 border rounded shadow">
       <div>Marketplace</div>
       <div>Address: {marketAddress}</div>
-      <CreateMarketplaceModal
-        wallet={wallet}
-        seqno={seqno}
-        provider={provider}
-        updateBalance={updateBalance}
-      />
+      <CreateMarketplaceModal wallet={wallet} seqno={seqno} updateBalance={updateBalance} />
     </div>
   )
 }
@@ -47,12 +40,10 @@ export default function CreateMarketplace({
 const CreateMarketplaceModal = ({
   wallet,
   seqno,
-  provider,
   updateBalance,
 }: {
   wallet: ITonWebWallet
   seqno: string
-  provider: HttpProvider
   updateBalance: () => void
 }) => {
   const [open, setOpen] = useState(false)
@@ -60,7 +51,9 @@ const CreateMarketplaceModal = ({
 
   const sendMoney = async (close: () => void) => {
     const amount = TonWeb.utils.toNano(0.05)
-    const marketplace = new WalletMarketplace(provider, { publicKey: wallet.key.publicKey })
+    const marketplace = new WalletMarketplace(new TonWeb.HttpProvider(), {
+      publicKey: wallet.key.publicKey,
+    })
     const marketplaceAddress = await marketplace.getAddress()
     // const nftItem = new NftItem(provider, { address: nftAddress })
 

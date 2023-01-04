@@ -1,3 +1,5 @@
+import { setSelectedWallet, useWallet } from '@/store/walletState'
+import { useMemo } from 'react'
 import { ITonExternalWallet, ITonHighloadWalletV2, ITonWebWallet, IWallet } from '../types'
 import { AddressRow } from './AddressRow'
 
@@ -128,15 +130,20 @@ function ExternalWalletRow({
 
 export function WalletsTable({
   walletsToShow,
-  currentWallet,
+}: // currentWallet,
 
-  setWallet,
-}: {
+// setWallet,
+{
   walletsToShow?: IWallet[]
-  currentWallet?: IWallet
+  // currentWallet?: IWallet
 
-  setWallet: (wallet: IWallet) => void
+  // setWallet: (wallet: IWallet) => void
 }) {
+  const wallet = useWallet()
+
+  const currentWallet = useMemo(() => wallet.selectedWallet.get(), [wallet.selectedWallet])
+  console.log('currentWallet', currentWallet)
+
   return (
     <>
       <div className="font-medium text-lg text-accent my-2">Wallets:</div>
@@ -146,21 +153,21 @@ export function WalletsTable({
           <HighloadWalletRow
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}
-            setWallet={setWallet}
+            setWallet={setSelectedWallet}
             key={wallet.id}
           />
         ) : wallet.type === 'external' ? (
           <ExternalWalletRow
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}
-            setWallet={setWallet}
+            setWallet={setSelectedWallet}
             key={wallet.id}
           />
         ) : (
           <TonWalletRow
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}
-            setWallet={setWallet}
+            setWallet={setSelectedWallet}
             key={wallet.id}
           />
         )

@@ -1,3 +1,4 @@
+import { useTonClient } from '@/store/tonClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
@@ -6,7 +7,8 @@ import { Cell } from 'tonweb/dist/types/boc/cell'
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { BlueButton } from '../../UI'
 
-export default function SendMessage({ provider }: { provider: HttpProvider }) {
+export default function SendMessage() {
+  const tonClient = useTonClient()
   const [recepient, setRecepient] = useState('')
 
   const [stateInit, setStateInit] = useState('')
@@ -15,7 +17,7 @@ export default function SendMessage({ provider }: { provider: HttpProvider }) {
   useEffect(() => {
     setRecepient('')
     setBody('')
-  }, [provider])
+  }, [tonClient])
 
   return (
     <div className="flex flex-col p-4 border rounded shadow">
@@ -63,7 +65,7 @@ export default function SendMessage({ provider }: { provider: HttpProvider }) {
       <SendModal
         recepient={recepient}
         // seqno={seqno}
-        provider={provider}
+        // provider={provider}
         stateInit={stateInit}
         body={body}
         // updateBalance={updateBalance}
@@ -75,16 +77,17 @@ export default function SendMessage({ provider }: { provider: HttpProvider }) {
 const SendModal = ({
   recepient,
   body: bodyString,
-  provider,
+  // provider,
   stateInit: stateInitString,
 }: // updateBalance,
 {
   recepient: string
   stateInit: string
   body: string
-  provider: HttpProvider
+  // provider: HttpProvider
   // updateBalance: () => void
 }) => {
+  const tonClient = useTonClient()
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
 
@@ -123,11 +126,12 @@ const SendModal = ({
       const commonMsgInfo = TonWeb.Contract.createCommonMsgInfo(header, stateInit, body)
 
       const msg = Buffer.from(await commonMsgInfo.toBoc(false))
-      const result = await provider.sendBoc(msg.toString('base64'))
+      // const result = await provider.sendBoc(msg.toString('base64'))
+      const result = await tonClient.get().sendFile(msg)
 
       if (result['@type'] === 'error') {
         setStatus(3)
-        setMessage(`Error occured. Code: ${result.code}. Message: ${result.message}`)
+        setMessage(`Error occured. Code:. Message:`)
         return
       }
     } catch (e) {

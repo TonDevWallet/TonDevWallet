@@ -6,18 +6,17 @@ import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { ITonWebWallet } from '../../../types'
 import Popup from 'reactjs-popup'
 import { BlueButton } from './../../UI'
+import { useTonClient } from '@/store/tonClient'
 
 const { NftItem } = TonWeb.token.nft
 
 export default function SendNft({
   seqno,
   wallet,
-  provider,
   updateBalance,
 }: {
   seqno: string
   wallet: ITonWebWallet
-  provider: HttpProvider
   updateBalance: () => void
 }) {
   const [nft, setNft] = useState('')
@@ -26,13 +25,15 @@ export default function SendNft({
   const [sendAmount, setSendAmount] = useState(0.05)
   const [forwardAmount, setForwardAmount] = useState(0.02)
 
+  const tonClient = useTonClient()
+
   useEffect(() => {
     setNft('')
     setNftRecepient('')
     setNftMessage('')
     setSendAmount(0.05)
     setForwardAmount(0.02)
-  }, [wallet, provider])
+  }, [wallet, tonClient])
 
   return (
     <div className="flex flex-col mt-4 p-4 border rounded shadow">
@@ -105,7 +106,6 @@ export default function SendNft({
         recepient={nftRecepient}
         wallet={wallet}
         seqno={seqno}
-        provider={provider}
         nftMessage={nftMessage}
         updateBalance={updateBalance}
         sendAmount={sendAmount}
@@ -120,7 +120,6 @@ const SendNftModal = ({
   recepient,
   wallet,
   seqno,
-  provider,
   nftMessage,
   sendAmount,
   forwardAmount,
@@ -130,7 +129,6 @@ const SendNftModal = ({
   recepient: string
   wallet: ITonWebWallet
   seqno: string
-  provider: HttpProvider
   nftMessage: string
   sendAmount: number
   forwardAmount: number
@@ -142,7 +140,7 @@ const SendNftModal = ({
   const sendMoney = async (close: () => void) => {
     const nftAddress = new TonWeb.utils.Address(nft)
     const amount = TonWeb.utils.toNano(sendAmount)
-    const nftItem = new NftItem(provider, { address: nftAddress })
+    const nftItem = new NftItem(new TonWeb.HttpProvider(), { address: nftAddress })
 
     await wallet.wallet.methods
       .transfer({

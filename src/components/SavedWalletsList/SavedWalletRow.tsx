@@ -1,3 +1,4 @@
+import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
 import { IWallet } from '@/types'
 import { Key } from '@/types/Key'
 import { useState, useCallback, useEffect } from 'react'
@@ -6,16 +7,17 @@ import { mnemonicToSeed } from 'tonweb-mnemonic'
 
 export function SavedWalletRow({
   walletKey,
-  words,
+  // words,
 
   updateMnemonic,
 }: {
   walletKey: Key
-  wallet: IWallet | undefined
-  words: string[]
+  // wallet: IWallet | undefined
+  // words: string[]
 
   updateMnemonic: (words?: string[]) => void
 }) {
+  const wallet = useWallet()
   const [jazzNumber, setJazzNumber] = useState(0)
 
   const getJazziconSeed = useCallback(async () => {
@@ -29,14 +31,17 @@ export function SavedWalletRow({
     getJazziconSeed()
   }, [])
 
+  console.log('wallet id', walletKey.id, wallet.key.get()?.id)
+
   return (
     <div
       className={
         'rounded p-1 flex flex-col items-center my-2 select-none ' +
-          (walletKey.words === words.join(' ') && 'bg-gray-300') || ''
+          (walletKey.id === wallet.key.get()?.id && 'bg-gray-300') || ''
       }
       onClick={() => {
-        updateMnemonic(walletKey.words.split(' '))
+        setWalletKey({ ...walletKey })
+        setSelectedWallet(null)
       }}
     >
       {jazzNumber ? <Jazzicon diameter={64} seed={jazzNumber} /> : <div className="w-16 h-16" />}

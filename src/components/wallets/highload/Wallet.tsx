@@ -1,12 +1,15 @@
 import TonWeb from 'tonweb'
 
 import { ITonHighloadWalletV2 } from '../../../types'
-import { useProvider } from '../../../utils'
+// import { useProvider } from '../../../utils'
 import { AddressRow } from '../../AddressRow'
 import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
 import SendNft from './SendNft'
 import { BlueButton } from '../../UI'
+import { useWallet } from '@/store/walletState'
+import { useTonClient } from '@/store/tonClient'
+import { Address } from 'ton'
 // import CreateMarketplace from './CreateMarketplace'
 // import CreateNftSale from './CreateNftSale'
 // import GetSaleInfo from './GetSaleInfo'
@@ -14,16 +17,12 @@ import { BlueButton } from '../../UI'
 // import SendTonMarketplace from './SendTonMarketplace'
 // import GetNftInfo from './GetNftInfo'
 
-function Wallet({
-  wallet,
-  apiUrl,
-  apiKey,
-}: {
-  wallet: ITonHighloadWalletV2
-  apiUrl: string
-  apiKey: string
-}) {
-  const provider = useProvider(apiUrl, apiKey)
+function Wallet() {
+  const currentWallet = useWallet()
+  const wallet = currentWallet.selectedWallet.get() as ITonHighloadWalletV2
+
+  // const provider = useProvider()
+  const tonClient = useTonClient()
   const [balance, setBalance] = useState('')
 
   // const [seqno, setSeqno] = useState('0')
@@ -34,16 +33,19 @@ function Wallet({
   // }
 
   const updateBalance = () => {
-    provider
-      .getBalance(wallet.address.toString('base64', { bounceable: true, urlSafe: true }))
-      .then((balance) => setBalance(balance))
+    tonClient
+      .get()
+      .getBalance(
+        Address.parse(wallet.address.toString('base64', { bounceable: true, urlSafe: true }))
+      )
+      .then((balance) => setBalance(balance.toString()))
     // .catch(e)
   }
 
   useEffect(() => {
     updateBalance()
     // getSeqno()
-  }, [wallet, provider])
+  }, [wallet, tonClient])
 
   return (
     <div className="flex flex-col gap-2">
@@ -85,11 +87,11 @@ function Wallet({
 
       <SendTon
         wallet={wallet}
-        provider={provider}
+        // provider={provider}
         // updateBalance={updateBalance}
       />
 
-      <SendNft wallet={wallet} provider={provider} updateBalance={updateBalance} />
+      <SendNft wallet={wallet} updateBalance={updateBalance} />
 
       {/*
 
