@@ -13,6 +13,7 @@ specifiers:
   '@typescript-eslint/parser': ^5.18.0
   '@vitejs/plugin-react': ^2.1.0
   autoprefixer: ^10.4.4
+  bn.js: ^5.2.1
   buffer: ^6.0.3
   clipboardy: ^3.0.0
   eslint: ^8.12.0
@@ -42,6 +43,7 @@ specifiers:
   ton3-core: ^0.0.12
   tonweb: ^0.0.38
   tonweb-mnemonic: ^1.0.1
+  tweetnacl: ^1.0.3
   typescript: ^4.8.3
   vite: ^3.1.0
   vite-plugin-mix: ^0.3.1
@@ -52,6 +54,7 @@ dependencies:
   '@tauri-apps/api': 1.2.0
   '@types/bn.js': 5.1.1
   autoprefixer: 10.4.13_postcss@8.4.20
+  bn.js: 5.2.1
   buffer: 6.0.3
   clipboardy: 3.0.0
   express: 4.18.2
@@ -72,6 +75,7 @@ dependencies:
   ton3-core: 0.0.12
   tonweb: 0.0.38
   tonweb-mnemonic: 1.0.1
+  tweetnacl: 1.0.3
   vite-plugin-mix: 0.3.1_vite@3.2.5
 
 devDependencies:

@@ -15,6 +15,7 @@
     "@tauri-apps/api": "^1.0.2",
     "@types/bn.js": "^5.1.0",
     "autoprefixer": "^10.4.4",
+    "bn.js": "^5.2.1",
     "buffer": "^6.0.3",
     "clipboardy": "^3.0.0",
     "express": "^4.18.1",
@@ -35,6 +36,7 @@
     "ton3-core": "^0.0.12",
     "tonweb": "^0.0.38",
     "tonweb-mnemonic": "^1.0.1",
+    "tweetnacl": "^1.0.3",
     "vite-plugin-mix": "^0.3.1"
   },
   "devDependencies": {
