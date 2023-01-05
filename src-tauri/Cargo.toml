@@ -18,6 +18,7 @@ tauri-build = { version = "1.0.4", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.0.4", features = ["http-all", "path-all"] }
+libsqlite3-sys = { version = "0.24.0", features = ["bundled-sqlcipher-vendored-openssl"] }
 
 [features]
 # by default Tauri runs in production mode
@@ -29,6 +30,6 @@ custom-protocol = [ "tauri/custom-protocol" ]
 
 [dependencies.tauri-plugin-sql]
 git = "https://github.com/tauri-apps/tauri-plugin-sql"
-rev = "013b002d72dde1a77ce6cda60007adbe36e146c9"
+rev = "5379183f139625ca6c6660e2f17afa6f250066ef"
 features = ["sqlite"] # or "postgres", or "mysql"
 #branch = "main"

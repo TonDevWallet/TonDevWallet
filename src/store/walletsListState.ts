@@ -1,7 +1,7 @@
 import { getDatabase } from '@/db'
 import { Key } from '@/types/Key'
 import { hookstate, useHookstate } from '@hookstate/core'
-import Database from 'tauri-plugin-sql-api'
+import { Knex } from 'knex'
 
 const state = hookstate<Key[]>(() => getWallets())
 
@@ -19,13 +19,13 @@ export function useWalletListState() {
   return useHookstate(state)
 }
 
-export async function saveWallet(db: Database, key: Key, walletName: string) {
+export async function saveWallet(db: Knex, key: Key, walletName: string) {
   // const key = wallet.key.get()
   if (!key?.seed) {
     return
   }
 
-  await db.execute(`INSERT INTO keys(words,seed,wallet_id,name) VALUES($1,$2,$3,$4)`, [
+  await db.raw(`INSERT INTO keys(words,seed,wallet_id,name) VALUES(?,?,?,?)`, [
     key.words,
     key.seed,
     key.wallet_id,
@@ -33,7 +33,7 @@ export async function saveWallet(db: Database, key: Key, walletName: string) {
   ])
   updateWalletsList()
 }
-export async function deleteWallet(db: Database, key: Key) {
-  await db.execute(`DELETE FROM keys WHERE id = $1`, [key?.id])
+export async function deleteWallet(db: Knex, key: Key) {
+  await db.raw(`DELETE FROM keys WHERE id = ?`, [key?.id])
   updateWalletsList()
 }

@@ -1,5 +1,6 @@
 import KnexDb, { Knex } from 'knex'
 import { createContext, useContext } from 'react'
+import { ImportMigrations } from './utils/getMigrations'
 import { ClientSqliteWasm } from './utils/knexSqliteDialect'
 
 const db = KnexDb({
@@ -14,11 +15,18 @@ export const DbContext = createContext<Knex>(db)
 export const useDatabase = () => useContext(DbContext)
 
 export async function InitDB() {
-  // const db = useDatabase()
-  console.log('knex sql=======', db.select(db.raw(1)).toSQL())
-  console.log('knex sql=======', await db.select(db.raw(1)).first())
+  await db.migrate.latest({
+    migrationSource: new ImportMigrations(),
+  })
 }
 
-export function getDatabase() {
+let waiting: Promise<void> | undefined
+
+export async function getDatabase() {
+  if (!waiting) {
+    waiting = InitDB()
+  }
+  await waiting
+
   return db
 }

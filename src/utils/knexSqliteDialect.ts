@@ -16,7 +16,6 @@ class clientSqliteWasm extends sqliteDialect {
     // const flags = this.connectionSettings.flags || 'ct'
     // console.log('connectionSettings', this.connectionSettings.flags)
 
-    console.log('acquireRawConnection', this)
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     return this.driver.load(this.connectionSettings.filename)
@@ -52,8 +51,6 @@ class clientSqliteWasm extends sqliteDialect {
       default:
         callMethod = 'all'
     }
-
-    console.log('query', obj.sql, callMethod)
 
     if (callMethod === 'all') {
       const res = await connection.select(obj.sql, bindings)
