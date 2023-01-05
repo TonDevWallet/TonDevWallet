@@ -13,11 +13,11 @@ export default defineConfig({
   optimizeDeps: {
     include: ['bn.js'],
     esbuildOptions: {
-      target: 'es2020',
+      target: 'esnext',
     },
   },
   build: {
-    target: 'es2020',
+    target: 'esnext',
   },
   resolve: {
     alias: {
