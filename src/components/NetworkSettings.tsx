@@ -70,28 +70,31 @@
 //   )
 // }
 
-import { useTonClient } from '@/store/tonClient'
-import { useState, useEffect } from 'react'
-import { TonClient } from 'ton'
+import { changeLiteClient, LiteClientState } from '@/store/liteClient'
+// import { useTonClient } from '@/store/tonClient'
+import { useHookstate } from '@hookstate/core'
+// import { useState, useEffect } from 'react'
+// import { TonClient } from 'ton'
 
 export function NetworkSettings() {
-  const [apiKey, setApiKey] = useState('')
-  const [endpoint, setEndpoint] = useState('https://mainnet.tonhubapi.com/jsonRPC')
+  // const [apiKey, setApiKey] = useState('')
+  // const [endpoint, setEndpoint] = useState('https://mainnet.tonhubapi.com/jsonRPC')
+  const liteClientState = useHookstate(LiteClientState)
 
-  const tonClient = useTonClient()
+  // const tonClient = useTonClient()
 
-  useEffect(() => {
-    tonClient.set(
-      new TonClient({
-        endpoint,
-        apiKey,
-      })
-    )
-  }, [apiKey, endpoint])
+  // useEffect(() => {
+  //   tonClient.set(
+  //     new TonClient({
+  //       endpoint,
+  //       apiKey,
+  //     })
+  //   )
+  // }, [apiKey, endpoint])
 
   return (
     <div className="my-2">
-      <div>
+      {/* <div>
         <label htmlFor="apiEndpointInput">API Endpoint:</label>
         <input
           className="w-full px-2 py-2 bg-gray-200 rounded"
@@ -109,6 +112,21 @@ export function NetworkSettings() {
           id="apiKeyInput"
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
+        />
+      </div> */}
+      Test {liteClientState.testnet.get()}
+      <div>
+        <label htmlFor="apiKeyInput">Testnet:</label>
+        <input
+          className="w-full px-2 py-2 bg-gray-200 rounded"
+          type="checkbox"
+          id="apiKeyInput"
+          // value={liteClientState.testnet.get() ? 'checked' : 'checked'}
+          defaultChecked={liteClientState.testnet.get()}
+          onChange={(e) => {
+            console.log('e', e.target.value)
+            changeLiteClient(!liteClientState.testnet.get())
+          }}
         />
       </div>
     </div>

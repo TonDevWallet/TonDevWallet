@@ -1,29 +1,24 @@
+import KnexDb, { Knex } from 'knex'
 import { createContext, useContext } from 'react'
-import Database from 'tauri-plugin-sql-api'
+import { ClientSqliteWasm } from './utils/knexSqliteDialect'
 
-export const DbContext = createContext<Database>(Database.prototype)
+const db = KnexDb({
+  client: ClientSqliteWasm as any,
+  connection: {
+    filename: 'sqlite:test.db',
+  },
+})
+
+export const DbContext = createContext<Knex>(db)
 
 export const useDatabase = () => useContext(DbContext)
 
-let globalDb: Database
-export const getDatabase = async () => {
-  if (globalDb) {
-    return globalDb
-  }
-
-  const db = await Database.load('sqlite:test.db')
-  await initDb(db)
-  globalDb = db
-  return globalDb
+export async function InitDB() {
+  // const db = useDatabase()
+  console.log('knex sql=======', db.select(db.raw(1)).toSQL())
+  console.log('knex sql=======', await db.select(db.raw(1)).first())
 }
 
-async function initDb(db: Database) {
-  await db.execute(`
-  CREATE TABLE IF NOT EXISTS keys (
-    id integer PRIMARY KEY,
-    words text,
-    seed text,
-    wallet_id integer,
-    name text
-  )`)
+export function getDatabase() {
+  return db
 }

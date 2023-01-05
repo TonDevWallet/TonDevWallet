@@ -19,9 +19,9 @@ import { ContractHighloadWalletV2 } from '@/contracts/HighloadWalletV2'
 // const provider = new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC')
 
 import { SavedWalletsList } from '../SavedWalletsList/SavedWalletsList'
-import { useLiteclient } from '@/liteClient'
 import { useWallet } from '@/store/walletState'
 import { useTonClient } from '@/store/tonClient'
+import { useLiteclient } from '@/store/liteClient'
 
 export function IndexPage() {
   const liteClient = useLiteclient()
@@ -55,7 +55,7 @@ export function IndexPage() {
   // }, [updateSeed])
 
   // const provider = useProvider(apiUrl, apiKey)
-  const tonClient = useTonClient()
+  // const tonClient = useTonClient()
 
   const wallets = useAsync<IWallet[]>(async () => {
     const key = wallet.key.get()

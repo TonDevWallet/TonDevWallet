@@ -4,15 +4,16 @@ import './index.css'
 
 import '@hookstate/devtools'
 
-import { getDatabase } from './db'
-import liteClient, { initLiteClient } from './liteClient'
+import { getDatabase, InitDB } from './db'
 import './store/walletState'
 
-const db = await getDatabase()
-// const wallet = useWallet()
+const db = getDatabase()
 
-initLiteClient()
+await InitDB()
+
+// const sql = await db.select('SELECT 1')
+// console.log('sql', sql, 1)
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const root = createRoot(document.getElementById('app')!)
-root.render(<App db={db} liteClient={liteClient} />)
+root.render(<App db={db} />)

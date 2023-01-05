@@ -12,16 +12,16 @@ import GetSaleInfo from './GetSaleInfo'
 import CancelNftSale from './CancelNftSale'
 import SendTonMarketplace from './SendTonMarketplace'
 import GetNftInfo from './GetNftInfo'
-import { useLiteclient } from '@/liteClient'
 import { Address } from 'ton'
 import { useWallet } from '@/store/walletState'
-import { useTonClient } from '@/store/tonClient'
+// import { useTonClient } from '@/store/tonClient'
+import { useLiteclient } from '@/store/liteClient'
 
 function Wallet() {
   const currentWallet = useWallet()
   const wallet = currentWallet.selectedWallet.get() as ITonWebWallet
 
-  const tonClient = useTonClient()
+  // const tonClient = useTonClient()
   // const liteClient = useLiteclient()
   const [balance, setBalance] = useState('')
 
@@ -32,26 +32,27 @@ function Wallet() {
     setSeqno(newSeq ? newSeq.toString() : '0')
   }
 
+  const liteClient = useLiteclient()
   const updateBalance = async () => {
-    // const state = await liteClient.getAccountState(
-    //   Address.parse(wallet.address.toString(true, true, true)),
-    //   (
-    //     await liteClient.getMasterchainInfo()
-    //   ).last
-    // )
-    // setBalance(state.balance.coins.toString())
+    const state = await liteClient.getAccountState(
+      Address.parse(wallet.address.toString(true, true, true)),
+      (
+        await liteClient.getMasterchainInfo()
+      ).last
+    )
+    setBalance(state.balance.coins.toString())
     console.log('updateBalance')
-    tonClient
-      .get()
-      .getBalance(Address.parse(wallet.address.toString(true, true, true)))
-      .then((balance) => setBalance(balance.toString()))
+    // tonClient
+    //   .get()
+    //   .getBalance(Address.parse(wallet.address.toString(true, true, true)))
+    //   .then((balance) => setBalance(balance.toString()))
     // .catch(e)
   }
 
   useEffect(() => {
     updateBalance()
     getSeqno()
-  }, [wallet, tonClient])
+  }, [wallet, liteClient])
 
   return (
     <div className="flex flex-col gap-2">

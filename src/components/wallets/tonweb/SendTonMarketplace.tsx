@@ -1,8 +1,7 @@
-import { useTonClient } from '@/store/tonClient'
+import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
-import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { WalletMarketplace } from '../../../contracts/WalletMarketpalce'
 import { ITonWebWallet } from '../../../types'
 import { BlueButton } from '../../UI'
@@ -20,13 +19,13 @@ export default function SendTonMarketplace({
   const [recepient, setRecepient] = useState('')
   const [message, setMessage] = useState('')
 
-  const tonClient = useTonClient()
+  const liteClient = useLiteclient()
 
   useEffect(() => {
     setAmount('0')
     setRecepient('')
     setMessage('')
-  }, [wallet, tonClient])
+  }, [wallet, liteClient])
 
   return (
     <div className="flex flex-col p-4 border rounded shadow">

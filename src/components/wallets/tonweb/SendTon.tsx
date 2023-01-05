@@ -1,4 +1,5 @@
-import { useLiteclient } from '@/liteClient'
+// import { useLiteclient } from '@/liteClient'
+import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb, { TransferMethodParams } from 'tonweb'

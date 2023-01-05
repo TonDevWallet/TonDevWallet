@@ -7,7 +7,7 @@ const state = hookstate<Key[]>(() => getWallets())
 
 async function getWallets() {
   const db = await getDatabase()
-  const res = await db.select<Key[]>(`SELECT * FROM keys`)
+  const res = await db<Key>('keys')
   return res
 }
 

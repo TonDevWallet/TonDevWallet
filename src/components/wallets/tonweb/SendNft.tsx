@@ -6,7 +6,7 @@ import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { ITonWebWallet } from '../../../types'
 import Popup from 'reactjs-popup'
 import { BlueButton } from './../../UI'
-import { useTonClient } from '@/store/tonClient'
+import { useLiteclient } from '@/store/liteClient'
 
 const { NftItem } = TonWeb.token.nft
 
@@ -25,7 +25,7 @@ export default function SendNft({
   const [sendAmount, setSendAmount] = useState(0.05)
   const [forwardAmount, setForwardAmount] = useState(0.02)
 
-  const tonClient = useTonClient()
+  const liteClient = useLiteclient()
 
   useEffect(() => {
     setNft('')
@@ -33,7 +33,7 @@ export default function SendNft({
     setNftMessage('')
     setSendAmount(0.05)
     setForwardAmount(0.02)
-  }, [wallet, tonClient])
+  }, [wallet, liteClient])
 
   return (
     <div className="flex flex-col mt-4 p-4 border rounded shadow">

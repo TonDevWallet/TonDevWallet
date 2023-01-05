@@ -8,8 +8,9 @@ import SendTon from './SendTon'
 import SendNft from './SendNft'
 import { BlueButton } from '../../UI'
 import { useWallet } from '@/store/walletState'
-import { useTonClient } from '@/store/tonClient'
+// import { useTonClient } from '@/store/tonClient'
 import { Address } from 'ton'
+import { useLiteclient } from '@/store/liteClient'
 // import CreateMarketplace from './CreateMarketplace'
 // import CreateNftSale from './CreateNftSale'
 // import GetSaleInfo from './GetSaleInfo'
@@ -22,8 +23,9 @@ function Wallet() {
   const wallet = currentWallet.selectedWallet.get() as ITonHighloadWalletV2
 
   // const provider = useProvider()
-  const tonClient = useTonClient()
+  // const tonClient = useTonClient()
   const [balance, setBalance] = useState('')
+  const liteClient = useLiteclient()
 
   // const [seqno, setSeqno] = useState('0')
 
@@ -32,20 +34,28 @@ function Wallet() {
   //   setSeqno(newSeq ? newSeq.toString() : '0')
   // }
 
-  const updateBalance = () => {
-    tonClient
-      .get()
-      .getBalance(
-        Address.parse(wallet.address.toString('base64', { bounceable: true, urlSafe: true }))
-      )
-      .then((balance) => setBalance(balance.toString()))
+  const updateBalance = async () => {
+    const state = await liteClient.getAccountState(
+      Address.parse(wallet.address.toString('base64', { urlSafe: true, bounceable: true })),
+      (
+        await liteClient.getMasterchainInfo()
+      ).last
+    )
+    setBalance(state.balance.coins.toString())
+
+    // tonClient
+    //   .get()
+    //   .getBalance(
+    //     Address.parse(wallet.address.toString('base64', { bounceable: true, urlSafe: true }))
+    //   )
+    //   .then((balance) => setBalance(balance.toString()))
     // .catch(e)
   }
 
   useEffect(() => {
     updateBalance()
     // getSeqno()
-  }, [wallet, tonClient])
+  }, [wallet, liteClient])
 
   return (
     <div className="flex flex-col gap-2">

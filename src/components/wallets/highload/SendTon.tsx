@@ -1,34 +1,22 @@
-import { useTonClient } from '@/store/tonClient'
+import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import { WalletTransfer } from 'ton3-contracts/dist/types/wallet-transfer'
 import { Address, BOC, Builder, Cell, Coins } from 'ton3-core'
-// import TonWeb from 'tonweb'
-import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { ITonHighloadWalletV2 } from '../../../types'
 import { BlueButton } from './../../UI'
 
-export default function SendTon({
-  // seqno,
-  wallet,
-}: // provider,
-// updateBalance,
-{
-  // seqno: string
-  wallet: ITonHighloadWalletV2
-  // provider: HttpProvider
-  // updateBalance: () => void
-}) {
+export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
   const [amount, setAmount] = useState('0')
   const [recepient, setRecepient] = useState('')
   const [message, setMessage] = useState('')
-  const tonClient = useTonClient()
+  const liteClient = useLiteclient()
 
   useEffect(() => {
     setAmount('0')
     setRecepient('')
     setMessage('')
-  }, [wallet, tonClient])
+  }, [wallet, liteClient])
 
   return (
     <div className="flex flex-col p-4 border rounded shadow">
@@ -71,15 +59,7 @@ export default function SendTon({
         />
       </div> */}
 
-      <SendModal
-        amount={amount}
-        recepient={recepient}
-        wallet={wallet}
-        // seqno={seqno}
-        message={message}
-        // provider={provider}
-        // updateBalance={updateBalance}
-      />
+      <SendModal amount={amount} recepient={recepient} wallet={wallet} message={message} />
     </div>
   )
 }
@@ -88,20 +68,14 @@ const SendModal = ({
   amount,
   recepient,
   wallet,
-  // seqno,
   message: sendMessage,
-}: // provider,
-// updateBalance,
-{
+}: {
   amount: string
   recepient: string
   wallet: ITonHighloadWalletV2
-  // seqno: string
   message: string
-  // provider: HttpProvider
-  // updateBalance: () => void
 }) => {
-  const tonClient = useTonClient()
+  const liteClient = useLiteclient()
 
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
@@ -115,28 +89,6 @@ const SendModal = ({
     setSeconds(0)
     setMessage('')
   }
-
-  // const checkSeqno = async (oldSeqno: number, seqs: number, interval: number) => {
-  //   const newSeq = await wallet.wallet.methods.seqno().call()
-  //   const seqnoUpdated = newSeq && newSeq === oldSeqno + 1
-
-  //   if (seqnoUpdated) {
-  //     setStatus(2)
-  //     if (interval) {
-  //       window.clearInterval(interval)
-  //     }
-  //     updateBalance()
-  //     return
-  //   }
-
-  //   if (seqs === 0) {
-  //     setStatus(3)
-  //     if (interval) {
-  //       window.clearInterval(interval)
-  //     }
-  //     setMessage('Send Timeout, seqno not increased')
-  //   }
-  // }
 
   const sendMoney = async () => {
     const params: WalletTransfer = {
@@ -153,14 +105,14 @@ const SendModal = ({
       const signed = message.sign(wallet.key.secretKey)
       const payload = Buffer.from(BOC.toBytesStandard(signed))
 
-      const result = await tonClient.get().sendFile(payload)
+      const result = await liteClient.sendMessage(payload)
       // const result = await wallet.wallet.methods.transfer(params).send()
 
-      // if (result['@type'] === 'error') {
-      //   setStatus(3)
-      //   setMessage(`Error occured. Code:. Message:`)
-      //   return
-      // }
+      if (result.status !== 0) {
+        setStatus(3)
+        setMessage(`Error occured. Code: ${result.status}. Message:`)
+        return
+      }
     } catch (e) {
       setStatus(3)
       if (e instanceof Error) {
@@ -170,20 +122,6 @@ const SendModal = ({
       }
       return
     }
-
-    // const secondsLeft = 30
-    // const oldSeqno = parseInt(seqno)
-    // const intervalId = window.setInterval(() => {
-    //   setSeconds(--secondsLeft)
-
-    //   if (secondsLeft % 5 === 0) {
-    //     checkSeqno(oldSeqno, secondsLeft, intervalId)
-    //   }
-
-    //   if (secondsLeft === 0 && intervalId) {
-    //     window.clearInterval(intervalId)
-    //   }
-    // }, 1000)
 
     setStatus(2)
   }

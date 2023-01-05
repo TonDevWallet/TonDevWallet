@@ -1,23 +1,20 @@
-import { useTonClient } from '@/store/tonClient'
+import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import TonWeb from 'tonweb'
 import { Cell } from 'tonweb/dist/types/boc/cell'
-// import TonWeb from 'tonweb'
-import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import { BlueButton } from '../../UI'
 
 export default function SendMessage() {
-  const tonClient = useTonClient()
   const [recepient, setRecepient] = useState('')
-
+  const liteClient = useLiteclient()
   const [stateInit, setStateInit] = useState('')
   const [body, setBody] = useState('')
 
   useEffect(() => {
     setRecepient('')
     setBody('')
-  }, [tonClient])
+  }, [liteClient])
 
   return (
     <div className="flex flex-col p-4 border rounded shadow">
@@ -87,7 +84,7 @@ const SendModal = ({
   // provider: HttpProvider
   // updateBalance: () => void
 }) => {
-  const tonClient = useTonClient()
+  const liteClient = useLiteclient()
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
 
@@ -127,7 +124,7 @@ const SendModal = ({
 
       const msg = Buffer.from(await commonMsgInfo.toBoc(false))
       // const result = await provider.sendBoc(msg.toString('base64'))
-      const result = await tonClient.get().sendFile(msg)
+      const result = await liteClient.sendMessage(msg)
 
       if (result['@type'] === 'error') {
         setStatus(3)
