@@ -60,9 +60,17 @@ jobs:
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
       - name: install app dependencies and build it
         run: pnpm install
-      - uses: tauri-apps/tauri-action@v0
+      - name: tauri
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: log out
+        run: |
+          echo ${{ steps.tauri.outputs.artifactPaths }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: binaries
+          path: ${{ steps.tauri.outputs.artifactPaths }}
         # with:
         #   releaseId: ${{ needs.create-release.outputs.release_id }}
 
