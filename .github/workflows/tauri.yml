@@ -64,9 +64,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: log out
-        run: |
-          echo ${{ steps.tauri.outputs.artifactPaths }}
       - uses: actions/upload-artifact@v3
         with:
           name: binaries
