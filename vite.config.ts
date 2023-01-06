@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 // import mix from 'vite-plugin-mix'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
   server: {
     port: 3000,
@@ -24,10 +24,14 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
       '~': resolve(__dirname, './src'),
       util: 'src/util.ts',
+      fs: 'src/fs.ts',
     },
   },
   define: {
-    process: {},
-    util: {},
+    ...(command === 'build'
+      ? {}
+      : {
+          process: {},
+        }),
   },
-})
+}))
