@@ -3,7 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "prepare": "husky install",
     "dev": "vite",
     "serve:tauri": "cross-env VITE_NETWORK_PROCESSOR=tauri vite",
     "serve:native": "tauri dev",
