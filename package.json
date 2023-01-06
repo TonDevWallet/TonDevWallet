@@ -19,7 +19,7 @@
     "buffer": "^6.0.3",
     "clipboardy": "^3.0.0",
     "express": "^4.18.1",
-    "knex": "https://github.com/TrueCarry/knex#2b4a57c840ed45de6737daaaa19975e283af8e2c",
+    "knex": "^2.3.0",
     "postcss": "^8.4.16",
     "react": "^18.1.0",
     "react-async-hook": "^4.0.0",
@@ -29,15 +29,14 @@
     "reactjs-popup": "^2.0.5",
     "tailwindcss": "^3.1.8",
     "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9",
-    "ton": "^11.12.0",
+    "ton": "^12.3.3",
     "ton-crypto": "^3.2.0",
     "ton-lite-client": "npm:@truecarry/ton-lite-client@^1.6.1",
     "ton3-contracts": "^0.0.8",
     "ton3-core": "^0.0.12",
     "tonweb": "^0.0.38",
     "tonweb-mnemonic": "^1.0.1",
-    "tweetnacl": "^1.0.3",
-    "vite-plugin-mix": "^0.3.1"
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.2.2",
@@ -46,17 +45,17 @@
     "@types/react-dom": "^18.0.4",
     "@typescript-eslint/eslint-plugin": "^5.18.0",
     "@typescript-eslint/parser": "^5.18.0",
-    "@vitejs/plugin-react": "^2.1.0",
+    "@vitejs/plugin-react": "^3.0.1",
     "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-config-standard": "^16.0.3",
+    "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.25.4",
-    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-n": "^15.6.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-react": "^7.29.4",
     "prettier": "^2.6.2",
     "typescript": "^4.8.3",
-    "vite": "^3.1.0"
+    "vite": "^4.0.4"
   }
 }
