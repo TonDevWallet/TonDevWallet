@@ -25,7 +25,7 @@ specifiers:
   eslint-plugin-promise: ^6.0.0
   eslint-plugin-react: ^7.29.4
   express: ^4.18.1
-  knex: https://github.com/TrueCarry/knex#2b4a57c840ed45de6737daaaa19975e283af8e2c
+  knex: ^2.3.0
   postcss: ^8.4.16
   prettier: ^2.6.2
   react: ^18.1.0
