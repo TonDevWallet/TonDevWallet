@@ -1,8 +1,8 @@
 import { KeyPair } from 'tonweb-mnemonic/dist/types'
-import { Address as Ton3Address } from 'ton3-core'
 import { WalletContract } from 'tonweb/dist/types/contract/wallet/wallet-contract'
-import { Address } from 'tonweb/dist/types/utils/address'
-import { ContractHighloadWalletV2 } from '../contracts/HighloadWalletV2'
+// import { Address } from 'tonweb/dist/types/utils/address'
+import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
+import { Address } from 'ton'
 
 export interface ITonWebWallet {
   type: 'v3R2' | 'v3R1' | 'v4R2'
@@ -14,8 +14,8 @@ export interface ITonWebWallet {
 
 export interface ITonHighloadWalletV2 {
   type: 'highload'
-  address: Ton3Address
-  wallet: ContractHighloadWalletV2
+  address: Address
+  wallet: HighloadWalletV2
   key: KeyPair
   id: string
 }

@@ -35,7 +35,7 @@ function Wallet() {
   const liteClient = useLiteclient()
   const updateBalance = async () => {
     const state = await liteClient.getAccountState(
-      Address.parse(wallet.address.toString(true, true, true)),
+      Address.parse(wallet.address.toFriendly({ bounceable: true, urlSafe: true })),
       (
         await liteClient.getMasterchainInfo()
       ).last
@@ -44,7 +44,7 @@ function Wallet() {
     console.log('updateBalance')
     // tonClient
     //   .get()
-    //   .getBalance(Address.parse(wallet.address.toString(true, true, true)))
+    //   .getBalance(Address.parse(wallet.address.toFriendly({ bounceable: true, urlSafe: true })))
     //   .then((balance) => setBalance(balance.toString()))
     // .catch(e)
   }
@@ -60,7 +60,10 @@ function Wallet() {
         <div className="font-medium text-lg text-accent my-2">Wallet:</div>
         <div>Type: {wallet.type}</div>
         <div>
-          <AddressRow text="Address:" address={wallet.address.toString(true, true, true)} />
+          <AddressRow
+            text="Address:"
+            address={wallet.address.toFriendly({ bounceable: true, urlSafe: true })}
+          />
         </div>
       </div>
 

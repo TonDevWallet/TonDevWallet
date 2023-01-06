@@ -1,60 +1,33 @@
 import TonWeb from 'tonweb'
 
 import { ITonHighloadWalletV2 } from '../../../types'
-// import { useProvider } from '../../../utils'
 import { AddressRow } from '../../AddressRow'
 import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
 import SendNft from './SendNft'
 import { BlueButton } from '../../UI'
 import { useWallet } from '@/store/walletState'
-// import { useTonClient } from '@/store/tonClient'
-import { Address } from 'ton'
 import { useLiteclient } from '@/store/liteClient'
-// import CreateMarketplace from './CreateMarketplace'
-// import CreateNftSale from './CreateNftSale'
-// import GetSaleInfo from './GetSaleInfo'
-// import CancelNftSale from './CancelNftSale'
-// import SendTonMarketplace from './SendTonMarketplace'
-// import GetNftInfo from './GetNftInfo'
 
 function Wallet() {
   const currentWallet = useWallet()
   const wallet = currentWallet.selectedWallet.get() as ITonHighloadWalletV2
 
-  // const provider = useProvider()
-  // const tonClient = useTonClient()
   const [balance, setBalance] = useState('')
   const liteClient = useLiteclient()
 
-  // const [seqno, setSeqno] = useState('0')
-
-  // const getSeqno = async () => {
-  //   const newSeq = await wallet.wallet.methods.seqno().call()
-  //   setSeqno(newSeq ? newSeq.toString() : '0')
-  // }
-
   const updateBalance = async () => {
     const state = await liteClient.getAccountState(
-      Address.parse(wallet.address.toString('base64', { urlSafe: true, bounceable: true })),
+      wallet.address,
       (
         await liteClient.getMasterchainInfo()
       ).last
     )
     setBalance(state.balance.coins.toString())
-
-    // tonClient
-    //   .get()
-    //   .getBalance(
-    //     Address.parse(wallet.address.toString('base64', { bounceable: true, urlSafe: true }))
-    //   )
-    //   .then((balance) => setBalance(balance.toString()))
-    // .catch(e)
   }
 
   useEffect(() => {
     updateBalance()
-    // getSeqno()
   }, [wallet, liteClient])
 
   return (
@@ -65,7 +38,7 @@ function Wallet() {
         <div>
           <AddressRow
             text="Address:"
-            address={wallet.address.toString('base64', { bounceable: true, urlSafe: true })}
+            address={wallet.address.toFriendly({ bounceable: true, urlSafe: true })}
           />
         </div>
       </div>
@@ -95,46 +68,9 @@ function Wallet() {
         </div>
       </div> */}
 
-      <SendTon
-        wallet={wallet}
-        // provider={provider}
-        // updateBalance={updateBalance}
-      />
+      <SendTon wallet={wallet} />
 
       <SendNft wallet={wallet} updateBalance={updateBalance} />
-
-      {/*
-
-      <CreateMarketplace
-        seqno={seqno}
-        wallet={wallet}
-        provider={provider}
-        updateBalance={updateBalance}
-      />
-
-      <SendTonMarketplace
-        seqno={seqno}
-        wallet={wallet}
-        provider={provider}
-        updateBalance={updateBalance}
-      />
-
-      <CreateNftSale
-        seqno={seqno}
-        wallet={wallet}
-        provider={provider}
-        updateBalance={updateBalance}
-      />
-
-      <CancelNftSale
-        seqno={seqno}
-        wallet={wallet}
-        provider={provider}
-        updateBalance={updateBalance}
-      />
-
-      <GetNftInfo provider={provider} />
-      <GetSaleInfo provider={provider} /> */}
     </div>
   )
 }

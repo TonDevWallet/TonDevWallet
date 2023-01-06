@@ -3,9 +3,11 @@ import { useEffect, useState } from 'react'
 import { ITonHighloadWalletV2 } from '../../../types'
 import Popup from 'reactjs-popup'
 import { BlueButton } from '../../UI'
-import { WalletTransfer } from 'ton3-contracts/dist/types/wallet-transfer'
-import { Coins, BOC, Address } from 'ton3-core'
 import { useLiteclient } from '@/store/liteClient'
+import { Address, Cell } from 'ton'
+import { WalletTransfer } from '@/contracts/HighloadWalletTypes'
+import BN from 'bn.js'
+import { SignExternalMessage } from '@/contracts/SignExternalMessage'
 
 const { NftItem } = TonWeb.token.nft
 
@@ -102,24 +104,23 @@ const SendNftModal = ({
       forwardAmount: TonWeb.utils.toNano(0.02),
       forwardPayload: undefined,
       // new TextEncoder().encode(nftMessage),
-      responseAddress: new TonWeb.utils.Address(wallet.address.toString('raw')),
+      responseAddress: new TonWeb.utils.Address(wallet.address.toString()),
     })
     const boc = await transferPayload.toBoc()
 
-    const cell = BOC.fromStandard(boc)
+    const cell = Cell.fromBoc(Buffer.from(boc))[0]
 
     const params: WalletTransfer = {
-      destination: new Address(nftAddress.toString()),
-      amount: new Coins('0.7'),
+      destination: Address.parse(nftAddress.toString()),
+      amount: new BN(700000000),
       mode: 3,
       body: cell,
     }
 
-    const message = wallet.wallet.createTransferMessage([params], true)
-    const signed = message.sign(wallet.key.secretKey)
-    const payload = Buffer.from(BOC.toBytesStandard(signed))
-
-    await liteClient.sendMessage(payload)
+    const message = wallet.wallet.CreateTransferMessage([params])
+    const payload = new Cell()
+    SignExternalMessage(Buffer.from(wallet.key.secretKey), message).writeTo(payload)
+    await liteClient.sendMessage(payload.toBoc())
 
     updateBalance()
     close()

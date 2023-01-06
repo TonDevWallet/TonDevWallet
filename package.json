@@ -32,8 +32,6 @@
     "ton": "^12.3.3",
     "ton-crypto": "^3.2.0",
     "ton-lite-client": "npm:@truecarry/ton-lite-client@^1.6.1",
-    "ton3-contracts": "^0.0.8",
-    "ton3-core": "^0.0.12",
     "tonweb": "^0.0.38",
     "tonweb-mnemonic": "^1.0.1",
     "tweetnacl": "^1.0.3"

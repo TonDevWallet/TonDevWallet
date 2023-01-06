@@ -39,8 +39,6 @@ specifiers:
   ton: ^12.3.3
   ton-crypto: ^3.2.0
   ton-lite-client: npm:@truecarry/ton-lite-client@^1.6.1
-  ton3-contracts: ^0.0.8
-  ton3-core: ^0.0.12
   tonweb: ^0.0.38
   tonweb-mnemonic: ^1.0.1
   tweetnacl: ^1.0.3
@@ -70,8 +68,6 @@ dependencies:
   ton: 12.3.3
   ton-crypto: 3.2.0
   ton-lite-client: /@truecarry/ton-lite-client/1.7.0_ton@12.3.3
-  ton3-contracts: 0.0.8
-  ton3-core: 0.0.12
   tonweb: 0.0.38
   tonweb-mnemonic: 1.0.1
   tweetnacl: 1.0.3
@@ -1565,10 +1561,6 @@ packages:
         optional: true
     dependencies:
       ms: 2.1.2
-
-  /decimal.js/10.3.1:
-    resolution: {integrity: sha512-V0pfhfr8suzyPGOx3nmq4aHqabehUZn6Ch9kyFpV79TGDTWFmHqUqXdabR7QHqxzrYolF4+tVmJhUG4OURg5dQ==}
-    dev: false
 
   /deep-is/0.1.4:
     resolution: {integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==}
@@ -3802,20 +3794,6 @@ packages:
       tweetnacl: 1.0.3
     transitivePeerDependencies:
       - debug
-    dev: false
-
-  /ton3-contracts/0.0.8:
-    resolution: {integrity: sha512-lLv4h+TWMzqXitejooRbbu3n4MTXYWW1Jb3XJXhj0fK7+22kuJQRKCybI8FIGTttrKvtl3Ty5Wl15sWR2gIBZQ==}
-    dependencies:
-      ton3-core: 0.0.12
-    dev: false
-
-  /ton3-core/0.0.12:
-    resolution: {integrity: sha512-famK5zK5wQlJZpcxjWyopJXzpUcw/nvZgm6LUBZvBJw6Uq34r4+NpRgb4bg1GckDWzZoGC+KZVfQDM+7sPXUvw==}
-    dependencies:
-      crypto-js: 4.1.1
-      decimal.js: 10.3.1
-      tweetnacl: 1.0.3
     dev: false
 
   /tonweb-mnemonic/1.0.1:

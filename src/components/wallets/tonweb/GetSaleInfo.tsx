@@ -23,13 +23,13 @@ export default function GetSaleInfo() {
     const data = await sale.methods.getData()
 
     const logData = { ...data } as any
-    logData.marketplaceAddress = data.marketplaceAddress?.toString(true, true, true)
-    logData.nftAddress = data.nftAddress?.toString(true, true, true)
-    logData.nftOwnerAddress = data.nftOwnerAddress?.toString(true, true, true)
+    logData.marketplaceAddress = data.marketplaceAddress?.toFriendly({ bounceable: true, urlSafe: true })
+    logData.nftAddress = data.nftAddress?.toFriendly({ bounceable: true, urlSafe: true })
+    logData.nftOwnerAddress = data.nftOwnerAddress?.toFriendly({ bounceable: true, urlSafe: true })
     logData.fullPrice = data.fullPrice.toString()
     logData.marketplaceFee = data.marketplaceFee.toString()
     logData.royaltyAmount = data.royaltyAmount.toString()
-    logData.royaltyAddress = data.royaltyAddress?.toString(true, true, true)
+    logData.royaltyAddress = data.royaltyAddress?.toFriendly({ bounceable: true, urlSafe: true })
     console.log(logData)
   }
 

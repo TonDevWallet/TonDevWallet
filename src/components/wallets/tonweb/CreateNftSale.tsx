@@ -111,7 +111,7 @@ export default function CreateNftSale({
       marketAddress,
       collectionAddress,
       nftAddress,
-      wallet.address.toString(true, true, true),
+      wallet.address.toFriendly({ bounceable: true, urlSafe: true }),
       marketFee,
       royaltyAmount,
       fullPrice,

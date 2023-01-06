@@ -1,9 +1,7 @@
 import TonWeb from 'tonweb'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { KeyPair, mnemonicToKeyPair } from 'tonweb-mnemonic'
+import React, { useEffect } from 'react'
 import { useAsync } from 'react-async-hook'
-import { suspend } from '@hookstate/core'
 
 import Wallet from '@/components/wallets/tonweb/Wallet'
 import HighloadWallet from '@/components/wallets/highload/Wallet'
@@ -14,14 +12,14 @@ import { IWallet } from '@/types'
 import { WalletGenerator } from '@/components/WalletGenerator'
 import { WalletsTable } from '@/components/WalletsTable'
 import { NetworkSettings } from '@/components/NetworkSettings'
-import { ContractHighloadWalletV2 } from '@/contracts/HighloadWalletV2'
 
 // const provider = new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC')
 
 import { SavedWalletsList } from '../SavedWalletsList/SavedWalletsList'
 import { useWallet } from '@/store/walletState'
-import { useTonClient } from '@/store/tonClient'
 import { useLiteclient } from '@/store/liteClient'
+import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
+import { Address } from 'ton'
 
 export function IndexPage() {
   const liteClient = useLiteclient()
@@ -35,28 +33,6 @@ export function IndexPage() {
 
   const wallet = useWallet()
 
-  // const [words, setWords] = useState<string[]>([])
-  // const [wallet, setWallet] = useState<IWallet | undefined>(undefined)
-  // const [keyPair, setKeyPair] = useState<KeyPair | undefined>(undefined)
-  // const [walletId, setWalletId] = useState<number>(698983191) // default wallet id
-  // const [seed, setSeed] = useState<Uint8Array | undefined>(undefined)
-
-  const [apiUrl, setApiUrl] = useState('')
-  const [apiKey, setApiKey] = useState<string>('')
-
-  // const updateSeed = useCallback(async () => {
-  //   // const sd = await mnemonicToSeed(words)
-  //   const keyPair = await mnemonicToKeyPair(wallet.)
-  //   setKeyPair(keyPair)
-  // }, [wallet.key])
-
-  // useEffect(() => {
-  //   updateSeed()
-  // }, [updateSeed])
-
-  // const provider = useProvider(apiUrl, apiKey)
-  // const tonClient = useTonClient()
-
   const wallets = useAsync<IWallet[]>(async () => {
     const key = wallet.key.get()
     console.log('update wallet key', key?.keyPair)
@@ -67,15 +43,12 @@ export function IndexPage() {
     const walletId = key.wallet_id
     const keyPair = key.keyPair
 
-    const highload = new ContractHighloadWalletV2(0, keyPair.publicKey, 1)
-    const highloadAddress = highload.address
-
-    // eslint-disable-next-line new-cap
-    const walletv3R1 = new TonWeb.Wallets.all.v3R1(new TonWeb.HttpProvider(), {
-      publicKey: key.keyPair.publicKey,
-      // walletId: key.walletId,
+    const highload = new HighloadWalletV2({
+      publicKey: keyPair.publicKey,
+      subwalletId: 1,
+      workchain: 0,
     })
-    const v3R1Address = await walletv3R1.getAddress()
+    const highloadAddress = highload.address
 
     // eslint-disable-next-line new-cap
     const walletv3R2 = new TonWeb.Wallets.all.v3R2(new TonWeb.HttpProvider(), {
@@ -91,19 +64,17 @@ export function IndexPage() {
     })
     const v4R2Address = await walletv4R2.getAddress()
 
-    return [
+    const wallets: IWallet[] = [
       {
         type: 'v4R2',
-        address: v4R2Address,
-        balance: '0',
+        address: Address.parse(v4R2Address.toString()),
         wallet: walletv4R2,
         key: keyPair,
         id: 'v4R2',
       },
       {
         type: 'v3R2',
-        address: v3R2Address,
-        balance: '0',
+        address: Address.parse(v3R2Address.toString()),
         wallet: walletv3R2,
         key: keyPair,
         id: 'v3R2',
@@ -111,24 +82,17 @@ export function IndexPage() {
       {
         type: 'highload',
         address: highloadAddress,
-        balance: '0',
         wallet: highload,
         key: keyPair,
         id: 'highload',
-      },
-      {
-        type: 'v3R1',
-        address: v3R1Address,
-        balance: '0',
-        wallet: walletv3R1,
-        key: keyPair,
-        id: 'v3R1',
       },
       {
         type: 'external',
         id: 'external',
       },
     ]
+
+    return wallets
   }, [wallet.key])
 
   const walletsToShow = wallets.result

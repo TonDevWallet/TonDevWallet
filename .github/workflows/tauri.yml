@@ -67,7 +67,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: binaries
-          path: ./src-tauri/target/release
+          path: ./src-tauri/target/release/bundle
         # with:
         #   releaseId: ${{ needs.create-release.outputs.release_id }}
 

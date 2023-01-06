@@ -24,7 +24,7 @@ export default function CreateMarketplace({
 
   useEffect(() => {
     marketplace.getAddress().then((address) => {
-      setMarketAddress(address.toString(true, true, true))
+      setMarketAddress(address.toFriendly({ bounceable: true, urlSafe: true }))
     })
   }, [marketplace])
 

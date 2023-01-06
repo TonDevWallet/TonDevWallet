@@ -14,8 +14,8 @@ export default function GetNftInfo() {
 
     const info = await nft.getData()
     const data: any = { ...info }
-    data.ownerAddress = info.ownerAddress?.toString(true, true, true)
-    data.collectionAddress = info.collectionAddress.toString(true, true, true)
+    data.ownerAddress = info.ownerAddress?.toFriendly({ bounceable: true, urlSafe: true })
+    data.collectionAddress = info.collectionAddress.toFriendly({ bounceable: true, urlSafe: true })
 
     setInfo(JSON.stringify(data, null, 2))
   }

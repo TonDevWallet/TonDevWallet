@@ -1,22 +1,10 @@
 import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
-import { IWallet } from '@/types'
 import { Key } from '@/types/Key'
 import { useState, useCallback, useEffect } from 'react'
 import Jazzicon from 'react-jazzicon'
 import { mnemonicToSeed } from 'tonweb-mnemonic'
 
-export function SavedWalletRow({
-  walletKey,
-  // words,
-
-  updateMnemonic,
-}: {
-  walletKey: Key
-  // wallet: IWallet | undefined
-  // words: string[]
-
-  updateMnemonic: (words?: string[]) => void
-}) {
+export function SavedWalletRow({ walletKey }: { walletKey: Key }) {
   const wallet = useWallet()
   const [jazzNumber, setJazzNumber] = useState(0)
 
