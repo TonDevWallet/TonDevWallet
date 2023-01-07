@@ -1,17 +1,17 @@
 import {
   Builder,
   Cell,
-  CellMessage,
-  CommonMessageInfo,
   contractAddress,
-  DictBuilder,
-  ExternalMessage,
-  InternalMessage,
+  Dictionary,
+  external,
+  internal,
+  loadStateInit,
+  Message,
   StateInit,
-} from 'ton'
-import BN from 'bn.js'
+} from 'ton-core'
+import { HighloadDictionaryMessageValue } from '../utils/HighloadMessageDictionary'
 import { HighloadWalletInternalCodeCell } from './HighloadWalletInternal.source'
-import { HighloadWalletInitData, WalletTransfer } from '../HighloadWalletTypes'
+import { HighloadWalletInitData, WalletTransfer } from '../utils/HighloadWalletTypes'
 
 export class HighloadWalletInternal {
   data: HighloadWalletInitData
@@ -21,13 +21,7 @@ export class HighloadWalletInternal {
   }
 
   get address() {
-    const walletStateInit = this.stateInit
-    const highloadAddress = contractAddress({
-      workchain: this.data.workchain,
-      initialCode: walletStateInit.code || new Cell(),
-      initialData: walletStateInit.data || new Cell(),
-    })
-
+    const highloadAddress = contractAddress(this.data.workchain, this.stateInit)
     return highloadAddress
   }
 
@@ -42,16 +36,16 @@ export class HighloadWalletInternal {
     dataCell.storeUint(data.subwalletId, 32)
     dataCell.storeUint(0, 64)
     dataCell.storeBuffer(data.publicKey)
-    dataCell.storeDict(new DictBuilder(16).endDict())
+    dataCell.storeDict(Dictionary.empty(Dictionary.Keys.Int(16), HighloadDictionaryMessageValue))
 
     return dataCell.endCell()
   }
 
   static BuildStateInit(data: HighloadWalletInitData): StateInit {
-    const stateInit = new StateInit({
+    const stateInit = {
       code: HighloadWalletInternalCodeCell,
       data: HighloadWalletInternal.BuildDataCell(data),
-    })
+    }
 
     return stateInit
   }
@@ -63,58 +57,47 @@ export class HighloadWalletInternal {
     return (BigInt(now + timeout) << 32n) | BigInt(random)
   }
 
-  CreateTransferBody(transfers: WalletTransfer[], _queryId?: bigint): CommonMessageInfo {
+  CreateTransferBody(transfers: WalletTransfer[], _queryId?: bigint): Cell {
     if (!transfers.length || transfers.length > 254) {
       throw new Error('ContractHighloadWalletV2: can make only 1 to 254 transfers per operation.')
     }
 
     const queryId = _queryId || HighloadWalletInternal.GenerateQueryId(60)
 
-    const dictBuilder = new DictBuilder(16)
+    const dictBuilder = Dictionary.empty(Dictionary.Keys.Int(16), HighloadDictionaryMessageValue)
     for (let i = 0; i < transfers.length; i++) {
       const v = transfers[i]
-      const internal = new InternalMessage({
+      const internalMsg = internal({
         to: v.destination,
         bounce: v.bounce || false,
         value: v.amount,
-        body: new CommonMessageInfo({
-          body: v.body ? new CellMessage(v.body) : null,
-          stateInit: v.state ? new CellMessage(v.state) : null,
-        }),
+        body: v.body,
       })
+      if (v.state) {
+        internalMsg.init = loadStateInit(v.state.asSlice())
+      }
 
-      const internalCell = new Cell()
-      internal.writeTo(internalCell)
-
-      const bodyCell = new Builder()
-        .storeUint(v.mode, 8) // send mode
-        .storeRef(internalCell)
-        .endCell()
-
-      dictBuilder.storeCell(i, bodyCell)
+      dictBuilder.set(i, {
+        message: internalMsg,
+        sendMode: v.mode,
+      })
     }
 
-    const body = new Builder()
-      .storeUint(this.data.subwalletId, 32)
-      .storeUint(new BN(queryId.toString()), 64)
-    body.storeDict(dictBuilder.endDict())
+    const body = new Builder().storeUint(this.data.subwalletId, 32).storeUint(queryId, 64)
+    body.storeDict(dictBuilder)
 
-    const msg = new CommonMessageInfo({
-      body: new CellMessage(body.endCell()),
-      stateInit: this.stateInit,
-    })
-
-    return msg
+    return body.endCell()
   }
 
-  CreateExternalTransfer(body: CommonMessageInfo): ExternalMessage {
-    return new ExternalMessage({
+  CreateExternalTransfer(body: Cell): Message {
+    return external({
       to: this.address,
       body,
+      init: this.stateInit,
     })
   }
 
-  CreateTransferMessage(transfers: WalletTransfer[], _queryId?: bigint): ExternalMessage {
+  CreateTransferMessage(transfers: WalletTransfer[], _queryId?: bigint): Message {
     const body = this.CreateTransferBody(transfers, _queryId)
     return this.CreateExternalTransfer(body)
   }

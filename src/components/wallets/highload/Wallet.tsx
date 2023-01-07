@@ -1,10 +1,8 @@
-import TonWeb from 'tonweb'
-
 import { ITonHighloadWalletV2 } from '../../../types'
 import { AddressRow } from '../../AddressRow'
 import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
-import SendNft from './SendNft'
+// import SendNft from './SendNft'
 import { BlueButton } from '../../UI'
 import { useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
@@ -38,13 +36,13 @@ function Wallet() {
         <div>
           <AddressRow
             text="Address:"
-            address={wallet.address.toFriendly({ bounceable: true, urlSafe: true })}
+            address={wallet.address.toString({ bounceable: true, urlSafe: true })}
           />
         </div>
       </div>
 
       <div className="flex items-center">
-        <div>Balance: {balance && TonWeb.utils.fromNano(balance)}</div>
+        <div>Balance: {balance && balance.toString()}</div>
         <BlueButton onClick={updateBalance} className="ml-2 px-2 py-0 w-auto">
           Refresh Balance
         </BlueButton>
@@ -70,7 +68,7 @@ function Wallet() {
 
       <SendTon wallet={wallet} />
 
-      <SendNft wallet={wallet} updateBalance={updateBalance} />
+      {/* <SendNft wallet={wallet} updateBalance={updateBalance} /> */}
     </div>
   )
 }

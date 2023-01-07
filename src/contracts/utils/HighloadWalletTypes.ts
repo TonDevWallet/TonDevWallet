@@ -1,5 +1,4 @@
-import BN from 'bn.js'
-import { Address, Cell } from 'ton'
+import { Address, Cell } from 'ton-core'
 
 export interface HighloadWalletInitData {
   subwalletId: number // uint 32
@@ -9,7 +8,7 @@ export interface HighloadWalletInitData {
 
 export interface WalletTransfer {
   destination: Address
-  amount: BN
+  amount: bigint
   mode: number
 
   body?: Cell

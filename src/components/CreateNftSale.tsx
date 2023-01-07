@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import QRCode from 'react-qr-code'
 import Popup from 'reactjs-popup'
-import TonWeb from 'tonweb'
+
 import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 import nacl from 'tweetnacl'
 // import nacl from 'tweetnacl'
-import { ITonWebWallet } from '../types'
+import { ITonWallet } from '../types'
 import { TxResponseOptions } from '../types/TxRequest'
 import { BlueButton } from './UI'
 import BN from 'bn.js'
@@ -27,7 +27,7 @@ export default function CreateNftSale({
   updateBalance,
 }: {
   seqno: string
-  wallet: ITonWebWallet
+  wallet: ITonWallet
   provider: HttpProvider
   updateBalance: () => void
 }) {
@@ -208,7 +208,7 @@ const CreateSaleModal = ({
   marketAddress: string
   nftAddress: string
   collectionAddress: string
-  wallet: ITonWebWallet
+  wallet: ITonWallet
   seqno: string
   provider: HttpProvider
   updateBalance: () => void

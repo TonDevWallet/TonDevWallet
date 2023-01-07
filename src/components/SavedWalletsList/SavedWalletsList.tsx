@@ -1,10 +1,8 @@
-import { IWallet } from '@/types'
-import { generateMnemonic, KeyPair, mnemonicToSeed } from 'tonweb-mnemonic'
 import { SavedWalletRow } from './SavedWalletRow'
 import { suspend } from '@hookstate/core'
 import { useWalletListState } from '@/store/walletsListState'
 import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
-import { mnemonicToPrivateKey } from 'ton-crypto'
+import { mnemonicNew, mnemonicToSeed, keyPairFromSeed } from 'ton-crypto'
 
 export function SavedWalletsList() {
   const wallets = useWalletListState()
@@ -44,9 +42,8 @@ export function SavedWalletsList() {
 
   const updateMnemonic = async (words?: string[]) => {
     console.log('generate')
-    const mnemonic = words || (await generateMnemonic())
-    // const keyPair = await mnemonicToKeyPair(mnemonic)
-    const sd = await mnemonicToSeed(mnemonic)
+    const mnemonic = words || (await mnemonicNew())
+    const sd = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
 
     setWalletKey({
       id: 0,
@@ -54,16 +51,9 @@ export function SavedWalletsList() {
       seed: Buffer.from(sd).toString('hex'),
       wallet_id: wallet.key.get()?.wallet_id || 0,
       words: mnemonic.join(' '),
-      keyPair: await mnemonicToPrivateKey(mnemonic),
+      keyPair: keyPairFromSeed(sd),
     })
     setSelectedWallet(null)
-    // setWalletKey({
-
-    // })
-    // setWords(mnemonic)
-    // setSeed(sd)
-    // setKeyPair(keyPair)
-    // setWallet(undefined)
   }
 
   return (
@@ -71,14 +61,7 @@ export function SavedWalletsList() {
       <div className="p-2">
         {wallets &&
           wallets.map((dbWallet) => (
-            <SavedWalletRow
-              updateMnemonic={updateMnemonic}
-              // wallet={wallet}
-              walletKey={dbWallet.get()}
-              // walletWords={dbWallet.get().words.split(' ')}
-              // words={words}
-              key={dbWallet.get().id}
-            />
+            <SavedWalletRow walletKey={dbWallet.get()} key={dbWallet.get().id} />
           ))}
 
         <div

@@ -29,11 +29,10 @@
     "reactjs-popup": "^2.0.5",
     "tailwindcss": "^3.1.8",
     "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9",
-    "ton": "^12.3.3",
+    "ton": "^13.3.0",
+    "ton-core": "^0.44.0",
     "ton-crypto": "^3.2.0",
-    "ton-lite-client": "npm:@truecarry/ton-lite-client@^1.6.1",
-    "tonweb": "^0.0.38",
-    "tonweb-mnemonic": "^1.0.1",
+    "ton-lite-client": "npm:@truecarry/ton-lite-client@2.0.0-beta.0",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {

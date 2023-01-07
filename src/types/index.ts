@@ -1,13 +1,36 @@
-import { KeyPair } from 'tonweb-mnemonic/dist/types'
-import { WalletContract } from 'tonweb/dist/types/contract/wallet/wallet-contract'
 // import { Address } from 'tonweb/dist/types/utils/address'
 import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
-import { Address } from 'ton'
+import {
+  Address,
+  MessageRelaxed,
+  SendMode,
+  WalletContractV4,
+  WalletContractV3R2,
+  ContractProvider,
+} from 'ton'
+import { Maybe } from 'ton-core/dist/utils/maybe'
+import { KeyPair } from 'ton-crypto'
 
-export interface ITonWebWallet {
-  type: 'v3R2' | 'v3R1' | 'v4R2'
+export type OpenedContract<T> = {
+  [P in keyof T]: P extends `get${string}` | `send${string}`
+    ? T[P] extends (x: ContractProvider, ...args: infer P_1) => infer R
+      ? (...args: P_1) => R
+      : never
+    : T[P]
+}
+
+export interface ITonWalletV3 {
+  type: 'v3R2'
   address: Address
-  wallet: WalletContract
+  wallet: OpenedContract<WalletContractV3R2>
+  key: KeyPair
+  id: string
+}
+
+export interface ITonWalletV4 {
+  type: 'v4R2'
+  address: Address
+  wallet: OpenedContract<WalletContractV4>
   key: KeyPair
   id: string
 }
@@ -25,4 +48,14 @@ export interface ITonExternalWallet {
   id: string
 }
 
-export type IWallet = ITonWebWallet | ITonHighloadWalletV2 | ITonExternalWallet
+export type ITonWallet = ITonWalletV3 | ITonWalletV4
+
+export type IWallet = ITonWallet | ITonHighloadWalletV2 | ITonExternalWallet
+
+export type TonWalletTransferArg = {
+  seqno: number
+  secretKey: Buffer
+  messages: MessageRelaxed[]
+  sendMode?: Maybe<SendMode>
+  timeout?: Maybe<number>
+}

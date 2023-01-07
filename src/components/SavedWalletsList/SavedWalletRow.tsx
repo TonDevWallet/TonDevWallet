@@ -2,16 +2,19 @@ import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
 import { Key } from '@/types/Key'
 import { useState, useCallback, useEffect } from 'react'
 import Jazzicon from 'react-jazzicon'
-import { mnemonicToSeed } from 'tonweb-mnemonic'
+import { mnemonicToSeed } from 'ton-crypto'
 
 export function SavedWalletRow({ walletKey }: { walletKey: Key }) {
   const wallet = useWallet()
   const [jazzNumber, setJazzNumber] = useState(0)
 
   const getJazziconSeed = useCallback(async () => {
-    const sd = await mnemonicToSeed(walletKey.words.split(' '))
-    const number = parseInt(sd.slice(0, 10).toString())
-    console.log('number', number)
+    const sd = (await mnemonicToSeed(walletKey.words.split(' '), 'TON default seed')).subarray(
+      0,
+      32
+    )
+    const number = parseInt('0x' + sd.slice(0, 10).toString('hex'))
+    console.log('number', number, sd.slice(0, 10))
     setJazzNumber(number)
   }, [walletKey.words])
 

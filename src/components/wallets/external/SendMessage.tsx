@@ -1,8 +1,6 @@
 import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import TonWeb from 'tonweb'
-import { Cell } from 'tonweb/dist/types/boc/cell'
 import { BlueButton } from '../../UI'
 
 export default function SendMessage() {
@@ -100,37 +98,32 @@ const SendModal = ({
 
   const sendMoney = async () => {
     try {
-      const header = TonWeb.Contract.createExternalMessageHeader(recepient)
-
-      let stateInit: Cell | undefined
-      let body: Cell | undefined
-
-      try {
-        if (stateInitString) {
-          stateInit = TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(stateInitString))
-        }
-      } catch (e) {
-        console.log('stateInit parsing error', e)
-      }
-      try {
-        if (bodyString) {
-          body = TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(bodyString))
-        }
-      } catch (e) {
-        console.log('body parsing error', e)
-      }
-
-      const commonMsgInfo = TonWeb.Contract.createCommonMsgInfo(header, stateInit, body)
-
-      const msg = Buffer.from(await commonMsgInfo.toBoc(false))
-      // const result = await provider.sendBoc(msg.toString('base64'))
-      const result = await liteClient.sendMessage(msg)
-
-      if (result['@type'] === 'error') {
-        setStatus(3)
-        setMessage(`Error occured. Code:. Message:`)
-        return
-      }
+      // const header = TonWeb.Contract.createExternalMessageHeader(recepient)
+      // let stateInit: Cell | undefined
+      // let body: Cell | undefined
+      // try {
+      //   if (stateInitString) {
+      //     stateInit = TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(stateInitString))
+      //   }
+      // } catch (e) {
+      //   console.log('stateInit parsing error', e)
+      // }
+      // try {
+      //   if (bodyString) {
+      //     body = TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(bodyString))
+      //   }
+      // } catch (e) {
+      //   console.log('body parsing error', e)
+      // }
+      // const commonMsgInfo = TonWeb.Contract.createCommonMsgInfo(header, stateInit, body)
+      // const msg = Buffer.from(await commonMsgInfo.toBoc(false))
+      // // const result = await provider.sendBoc(msg.toString('base64'))
+      // const result = await liteClient.sendMessage(msg)
+      // if (result['@type'] === 'error') {
+      //   setStatus(3)
+      //   setMessage(`Error occured. Code:. Message:`)
+      //   return
+      // }
     } catch (e) {
       setStatus(3)
       if (e instanceof Error) {

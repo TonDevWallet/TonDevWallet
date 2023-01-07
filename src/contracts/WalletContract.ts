@@ -1,4 +1,4 @@
-import TonWeb from 'tonweb'
+
 
 const Contract = TonWeb.Contract
 const Cell = TonWeb.boc.Cell

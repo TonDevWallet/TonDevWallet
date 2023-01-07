@@ -2,20 +2,17 @@
 import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import TonWeb, { TransferMethodParams } from 'tonweb'
-// import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
-import { ITonWebWallet } from '../../../types'
+import { Address, Cell, internal, loadStateInit } from 'ton'
+import { ITonWallet, TonWalletTransferArg } from '../../../types'
 import { BlueButton } from '../../UI'
 
 export default function SendTon({
   seqno,
   wallet,
-  // provider,
   updateBalance,
 }: {
   seqno: string
-  wallet: ITonWebWallet
-  // provider: HttpProvider
+  wallet: ITonWallet
   updateBalance: () => void
 }) {
   const [amount, setAmount] = useState('0')
@@ -109,7 +106,7 @@ const SendModal = ({
 }: {
   amount: string
   recepient: string
-  wallet: ITonWebWallet
+  wallet: ITonWallet
   seqno: string
   message: string
   stateInit: string
@@ -129,7 +126,7 @@ const SendModal = ({
   }
 
   const checkSeqno = async (oldSeqno: number, seqs: number, interval: number) => {
-    const newSeq = await wallet.wallet.methods.seqno().call()
+    const newSeq = await wallet.wallet.getSeqno()
     const seqnoUpdated = newSeq && newSeq === oldSeqno + 1
 
     if (seqnoUpdated) {
@@ -151,26 +148,33 @@ const SendModal = ({
   }
 
   const sendMoney = async () => {
-    const params: TransferMethodParams = {
-      amount: TonWeb.utils.toNano(amount),
+    const { address: rAddress, isBounceable: bounce } = Address.parseFriendly(recepient)
+    const params: TonWalletTransferArg = {
       seqno: parseInt(seqno),
       secretKey: wallet.key.secretKey,
-      toAddress: recepient,
       sendMode: 3,
-      payload: sendMessage || undefined,
+      messages: [
+        internal({
+          body: Cell.fromBase64(sendMessage) || new Cell(),
+          bounce,
+          value: BigInt(amount),
+          to: rAddress,
+        }),
+      ],
     }
 
     if (stateInit) {
-      const parsed = TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(stateInit))
+      const parsed = Cell.fromBoc(Buffer.from(stateInit, 'base64'))[0] // TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(stateInit))
       if (parsed) {
-        params.stateInit = parsed
+        const init = loadStateInit(parsed.asSlice())
+        params.messages[0].init = init
       }
     }
 
     try {
-      const query = await wallet.wallet.methods.transfer(params).getQuery()
+      const query = await wallet.wallet.createTransfer(params)
       const liteClient = useLiteclient()
-      const result = await liteClient.sendMessage(Buffer.from(await query.toBoc(false)))
+      const result = await liteClient.sendMessage(query.toBoc())
 
       if (result.status !== 1) {
         setStatus(3)

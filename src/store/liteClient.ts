@@ -111,6 +111,7 @@ function getLiteClient(isTestnet: boolean): LiteClient {
         new LiteSingleEngine({
           host: `wss://ws.tonlens.com/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`,
           publicKey: Buffer.from(ls.id.key, 'base64'),
+          client: 'ws',
         })
       )
     }

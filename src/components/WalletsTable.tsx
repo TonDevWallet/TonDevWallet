@@ -1,6 +1,6 @@
 import { setSelectedWallet, useWallet } from '@/store/walletState'
 import { useMemo } from 'react'
-import { ITonExternalWallet, ITonHighloadWalletV2, ITonWebWallet, IWallet } from '../types'
+import { ITonExternalWallet, ITonHighloadWalletV2, ITonWallet, IWallet } from '../types'
 import { AddressRow } from './AddressRow'
 
 function TonWalletRow({
@@ -9,23 +9,20 @@ function TonWalletRow({
 
   setWallet,
 }: {
-  wallet: ITonWebWallet
+  wallet: ITonWallet
   isSelected: boolean
   setWallet: (wallet: IWallet) => void
 }) {
   return (
     <div
       className="my-2 flex flex-col border"
-      key={wallet.address.toFriendly({ bounceable: true, urlSafe: true })}
+      key={wallet.address.toString({ bounceable: true, urlSafe: true })}
     >
       <div className="flex justify-between border-b px-1">
         <div className="">
           Wallet {wallet.type}
           <a
-            href={getScanLink(
-              wallet.address.toFriendly({ bounceable: true, urlSafe: true }),
-              false
-            )}
+            href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }), false)}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-2"
@@ -46,13 +43,13 @@ function TonWalletRow({
       <div className="px-2 my-2">
         <AddressRow
           text="Bouncable:"
-          address={wallet.address.toFriendly({ bounceable: true, urlSafe: true })}
+          address={wallet.address.toString({ bounceable: true, urlSafe: true })}
         />
         <AddressRow
           text="UnBouncable:"
-          address={wallet.address.toFriendly({ urlSafe: true, bounceable: false })}
+          address={wallet.address.toString({ urlSafe: true, bounceable: false })}
         />
-        <AddressRow text="Raw:" address={wallet.address.toString()} />
+        <AddressRow text="Raw:" address={wallet.address.toRawString()} />
       </div>
     </div>
   )
@@ -71,16 +68,13 @@ function HighloadWalletRow({
   return (
     <div
       className="my-2 flex flex-col border"
-      key={wallet.address.toFriendly({ bounceable: true, urlSafe: true })}
+      key={wallet.address.toString({ bounceable: true, urlSafe: true })}
     >
       <div className="flex justify-between border-b px-1">
         <div className="">
           Wallet {wallet.type}
           <a
-            href={getScanLink(
-              wallet.address.toFriendly({ bounceable: true, urlSafe: true }),
-              false
-            )}
+            href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }), false)}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-2"
@@ -101,13 +95,13 @@ function HighloadWalletRow({
       <div className="px-2 my-2">
         <AddressRow
           text="Bouncable:"
-          address={wallet.address.toFriendly({ bounceable: true, urlSafe: true })}
+          address={wallet.address.toString({ bounceable: true, urlSafe: true })}
         />
         <AddressRow
           text="UnBouncable:"
-          address={wallet.address.toFriendly({ bounceable: false, urlSafe: true })}
+          address={wallet.address.toString({ bounceable: false, urlSafe: true })}
         />
-        <AddressRow text="Raw:" address={wallet.address.toString()} />
+        <AddressRow text="Raw:" address={wallet.address.toRawString()} />
       </div>
     </div>
   )

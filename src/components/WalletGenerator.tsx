@@ -1,12 +1,11 @@
-import { mnemonicToKeyPair, validateMnemonic, mnemonicToSeed } from 'tonweb-mnemonic'
 import { BlueButton } from './UI'
 import Copier from './copier'
 import { useDatabase } from '@/db'
-import { deleteWallet, saveWallet, updateWalletsList } from '@/store/walletsListState'
+import { deleteWallet, saveWallet } from '@/store/walletsListState'
 import Popup from 'reactjs-popup'
 import { useEffect, useRef, useState } from 'react'
 import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
-import { mnemonicToPrivateKey } from 'ton-crypto'
+import { keyPairFromSeed, mnemonicToSeed, mnemonicValidate } from 'ton-crypto'
 
 export function WalletGenerator() {
   const [isInfoOpened, setIsInfoOpened] = useState(false)
@@ -21,8 +20,8 @@ export function WalletGenerator() {
     try {
       const mnemonic = e.target.value.split(' ')
 
-      if (await validateMnemonic(mnemonic)) {
-        const ls = await mnemonicToSeed(mnemonic)
+      if (await mnemonicValidate(mnemonic)) {
+        const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
 
         setWalletKey({
           id: 0,
@@ -30,7 +29,7 @@ export function WalletGenerator() {
           seed: Buffer.from(ls).toString('hex'),
           wallet_id: wallet.key.get()?.wallet_id || 0,
           words: mnemonic.join(' '),
-          keyPair: await mnemonicToPrivateKey(mnemonic),
+          keyPair: keyPairFromSeed(ls),
         })
         setSelectedWallet(null)
       } else {

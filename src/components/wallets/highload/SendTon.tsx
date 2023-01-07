@@ -1,10 +1,9 @@
-import { WalletTransfer } from '@/contracts/HighloadWalletTypes'
-import { SignExternalMessage } from '@/contracts/SignExternalMessage'
+import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
+import { SignCell } from '@/contracts/utils/SignExternalMessage'
 import { useLiteclient } from '@/store/liteClient'
-import BN from 'bn.js'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import { Address, Builder, Cell } from 'ton'
+import { Address, beginCell, Builder, Cell, storeMessage } from 'ton'
 import { ITonHighloadWalletV2 } from '../../../types'
 import { BlueButton } from './../../UI'
 
@@ -95,7 +94,7 @@ const SendModal = ({
   const sendMoney = async () => {
     const params: WalletTransfer = {
       destination: Address.parse(recepient),
-      amount: new BN(parseFloat(amount) * 10 ** 9),
+      amount: BigInt(parseFloat(amount) * 10 ** 9),
       mode: 3,
       body: sendMessage
         ? new Builder().storeUint(0, 32).storeBuffer(Buffer.from(sendMessage)).endCell()
@@ -104,16 +103,13 @@ const SendModal = ({
 
     try {
       const message = wallet.wallet.CreateTransferMessage([params])
-      const payload = new Cell()
-      SignExternalMessage(Buffer.from(wallet.key.secretKey), message).writeTo(payload)
+      const signedBody = SignCell(wallet.key.secretKey, message.body)
+      message.body = signedBody
 
-      // const message = wallet.wallet.CreateTransferMessage([params])
-      // const signed = message.sign(wallet.key.secretKey)
-      // const payload = Buffer.from(BOC.toBytesStandard(signed))
-
+      const payload = beginCell().store(storeMessage(message)).endCell()
       const result = await liteClient.sendMessage(payload.toBoc())
-      // const result = await wallet.wallet.methods.transfer(params).send()
 
+      console.log('result:', result)
       if (result.status !== 0) {
         setStatus(3)
         setMessage(`Error occured. Code: ${result.status}. Message:`)

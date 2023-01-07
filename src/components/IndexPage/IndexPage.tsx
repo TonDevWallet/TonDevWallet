@@ -1,5 +1,3 @@
-import TonWeb from 'tonweb'
-
 import React, { useEffect } from 'react'
 import { useAsync } from 'react-async-hook'
 
@@ -19,7 +17,7 @@ import { SavedWalletsList } from '../SavedWalletsList/SavedWalletsList'
 import { useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
 import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
-import { Address } from 'ton'
+import { TonClient, WalletContractV3R2, WalletContractV4 } from 'ton'
 
 export function IndexPage() {
   const liteClient = useLiteclient()
@@ -40,7 +38,7 @@ export function IndexPage() {
       return []
     }
 
-    const walletId = key.wallet_id
+    // const walletId = key.wallet_id
     const keyPair = key.keyPair
 
     const highload = new HighloadWalletV2({
@@ -48,33 +46,37 @@ export function IndexPage() {
       subwalletId: 1,
       workchain: 0,
     })
+
     const highloadAddress = highload.address
 
-    // eslint-disable-next-line new-cap
-    const walletv3R2 = new TonWeb.Wallets.all.v3R2(new TonWeb.HttpProvider(), {
-      publicKey: keyPair.publicKey,
-      walletId,
+    const client = new TonClient({
+      endpoint: 'https://toncenter.com/api/v2/jsonRPC',
     })
-    const v3R2Address = await walletv3R2.getAddress()
+
+    const walletv4R2 = client.open(
+      WalletContractV4.create({ workchain: 0, publicKey: keyPair.publicKey })
+    )
+
+    const walletv3R2 = client.open(
+      WalletContractV3R2.create({ workchain: 0, publicKey: keyPair.publicKey })
+    )
+
+    const v3R2Address = walletv3R2.address
 
     // eslint-disable-next-line new-cap
-    const walletv4R2 = new TonWeb.Wallets.all.v4R2(new TonWeb.HttpProvider(), {
-      publicKey: keyPair.publicKey,
-      walletId,
-    })
-    const v4R2Address = await walletv4R2.getAddress()
+    const v4R2Address = walletv4R2.address
 
     const wallets: IWallet[] = [
       {
         type: 'v4R2',
-        address: Address.parse(v4R2Address.toString()),
+        address: v4R2Address,
         wallet: walletv4R2,
         key: keyPair,
         id: 'v4R2',
       },
       {
         type: 'v3R2',
-        address: Address.parse(v3R2Address.toString()),
+        address: v3R2Address,
         wallet: walletv3R2,
         key: keyPair,
         id: 'v3R2',
