@@ -1,5 +1,3 @@
-// import { useLiteclient } from '@/liteClient'
-import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import { Address, Cell, internal, loadStateInit } from 'ton'
@@ -118,6 +116,7 @@ const SendModal = ({
   const [status, setStatus] = useState(0) // 0 before send, 1 sending, 2 success, 3 error
   const [seconds, setSeconds] = useState(0)
   const [message, setMessage] = useState('')
+  // const liteClient = useLiteclient()
 
   const clearPopup = () => {
     setStatus(0)
@@ -128,6 +127,7 @@ const SendModal = ({
   const checkSeqno = async (oldSeqno: number, seqs: number, interval: number) => {
     const newSeq = await wallet.wallet.getSeqno()
     const seqnoUpdated = newSeq && newSeq === oldSeqno + 1
+    console.log('seqno check', newSeq, oldSeqno)
 
     if (seqnoUpdated) {
       setStatus(2)
@@ -155,7 +155,7 @@ const SendModal = ({
       sendMode: 3,
       messages: [
         internal({
-          body: Cell.fromBase64(sendMessage) || new Cell(),
+          body: sendMessage ? Cell.fromBase64(sendMessage) : new Cell(),
           bounce,
           value: BigInt(amount),
           to: rAddress,
@@ -173,15 +173,22 @@ const SendModal = ({
 
     try {
       const query = await wallet.wallet.createTransfer(params)
-      const liteClient = useLiteclient()
-      const result = await liteClient.sendMessage(query.toBoc())
+      await wallet.wallet.send(query)
+      // const transfer = external({
+      //   to: wallet.address,
+      //   body: query,
+      // })
+      // const pkg = beginCell().store(storeMessage(transfer)).endCell().toBoc()
+      // // const liteClient = useLiteclient()
+      // const result = await liteClient.sendMessage(pkg)
 
-      if (result.status !== 1) {
-        setStatus(3)
-        setMessage(`Error occured. Code: ${result}. Message: ${result}`)
-        return
-      }
+      // if (result.status !== 1) {
+      //   setStatus(3)
+      //   setMessage(`Error occured. Code: ${result}. Message: ${result}`)
+      //   return
+      // }
     } catch (e) {
+      console.log(e)
       setStatus(3)
       if (e instanceof Error) {
         setMessage('Error occured: ' + e.message)

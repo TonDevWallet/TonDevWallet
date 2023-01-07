@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useAsync } from 'react-async-hook'
 
 import Wallet from '@/components/wallets/tonweb/Wallet'
@@ -14,13 +14,15 @@ import { NetworkSettings } from '@/components/NetworkSettings'
 // const provider = new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC')
 
 import { SavedWalletsList } from '../SavedWalletsList/SavedWalletsList'
-import { useWallet } from '@/store/walletState'
+import { setSelectedWallet, useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
 import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
 import { TonClient, WalletContractV3R2, WalletContractV4 } from 'ton'
+import { openLiteClient } from '@/utils/liteClientProvider'
+import { LiteClient } from 'ton-lite-client'
 
 export function IndexPage() {
-  const liteClient = useLiteclient()
+  const liteClient = useLiteclient() as unknown as LiteClient
 
   useEffect(() => {
     console.log('liteclient hook')
@@ -52,14 +54,20 @@ export function IndexPage() {
     const client = new TonClient({
       endpoint: 'https://toncenter.com/api/v2/jsonRPC',
     })
+    console.log('index page')
 
-    const walletv4R2 = client.open(
-      WalletContractV4.create({ workchain: 0, publicKey: keyPair.publicKey })
-    )
+    const v4Contract = WalletContractV4.create({ workchain: 0, publicKey: keyPair.publicKey })
+    console.log('index page ct')
+    const walletv4R2 = openLiteClient(liteClient, v4Contract)
 
-    const walletv3R2 = client.open(
+    console.log('index page wallet')
+
+    const walletv3R2 = openLiteClient(
+      liteClient,
       WalletContractV3R2.create({ workchain: 0, publicKey: keyPair.publicKey })
     )
+
+    console.log('wallet v4', walletv4R2)
 
     const v3R2Address = walletv3R2.address
 
@@ -94,8 +102,9 @@ export function IndexPage() {
       },
     ]
 
+    setSelectedWallet(null)
     return wallets
-  }, [wallet.key])
+  }, [wallet.key, liteClient])
 
   const walletsToShow = wallets.result
 
