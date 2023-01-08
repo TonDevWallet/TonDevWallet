@@ -13,6 +13,7 @@
     "@hookstate/core": "^4.0.0-rc21",
     "@hookstate/devtools": "^4.0.0-rc21",
     "@tauri-apps/api": "^1.0.2",
+    "@tonconnect/protocol": "^2.0.1",
     "@types/bn.js": "^5.1.0",
     "autoprefixer": "^10.4.4",
     "bn.js": "^5.2.1",

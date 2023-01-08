@@ -12,15 +12,19 @@ import { NetworkSettings } from '@/components/NetworkSettings'
 
 // const provider = new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC')
 
-import { setSelectedWallet, useWallet } from '@/store/walletState'
+import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
 import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
 import { WalletContractV3R2, WalletContractV4 } from 'ton'
 import { openLiteClient } from '@/utils/liteClientProvider'
 import { LiteClient } from 'ton-lite-client'
+import { useParams } from 'react-router-dom'
+import { useWalletListState } from '@/store/walletsListState'
 
 export function WalletPage() {
   const liteClient = useLiteclient() as unknown as LiteClient
+  const urlParams = useParams()
+  const walletsList = useWalletListState()
 
   useEffect(() => {
     console.log('liteclient hook')
@@ -28,6 +32,16 @@ export function WalletPage() {
       console.log('info', res)
     })
   }, [])
+
+  useEffect(() => {
+    const id = parseInt(urlParams.walletId || '')
+    const selectedWallet = walletsList.get().find((i) => i.id === id)
+    if (selectedWallet) {
+      setWalletKey({
+        ...selectedWallet,
+      })
+    }
+  }, [urlParams.walletId])
 
   const wallet = useWallet()
 

@@ -26,7 +26,9 @@ export function WalletGenerator() {
   }
 
   return !isInfoOpened ? (
-    <BlueButton onClick={() => setIsInfoOpened(true)}>Open wallet key info</BlueButton>
+    <>
+      <BlueButton onClick={() => setIsInfoOpened(true)}>Open wallet key info</BlueButton>
+    </>
   ) : (
     <div>
       <BlueButton onClick={() => setIsInfoOpened(false)}>Close wallet key info</BlueButton>

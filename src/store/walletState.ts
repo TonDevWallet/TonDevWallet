@@ -3,7 +3,7 @@ import { hookstate, useHookstate } from '@hookstate/core'
 
 import { IWallet } from '@/types'
 
-import { keyPairFromSeed, mnemonicNew, mnemonicToSeed, mnemonicToPrivateKey } from 'ton-crypto'
+import { keyPairFromSeed } from 'ton-crypto'
 
 interface SelectedKey {
   key: Key | null
@@ -11,20 +11,8 @@ interface SelectedKey {
 }
 
 const state = hookstate<SelectedKey>(async () => {
-  const mnemonic = await mnemonicNew(24)
-  // https://github.com/toncenter/tonweb-mnemonic/blob/2459698f4bf639efffb05f3508bd29c6161946c6/src/functions/mnemonic-to-seed.ts
-  const seed = await (await mnemonicToSeed(mnemonic, 'TON default seed')).slice(0, 32)
-  const keyPair = await mnemonicToPrivateKey(mnemonic)
-
   return {
-    key: {
-      id: 0,
-      words: mnemonic.join(' '),
-      seed: seed.toString('hex'),
-      wallet_id: 0,
-      name: '',
-      keyPair,
-    },
+    key: null,
     selectedWallet: null,
   }
 })

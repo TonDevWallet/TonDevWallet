@@ -6,6 +6,7 @@ import { BlueButton } from '../../UI'
 import { Address } from 'ton'
 import { useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
+import { TonConnect } from '@/components/TonConnect/TonConnect'
 
 function Wallet() {
   const currentWallet = useWallet()
@@ -73,6 +74,8 @@ function Wallet() {
           </BlueButton>
         </div>
       </div>
+
+      <TonConnect />
 
       <SendTon seqno={seqno} wallet={wallet} updateBalance={updateBalance} />
 

@@ -5,6 +5,7 @@ specifiers:
   '@hookstate/devtools': ^4.0.0-rc21
   '@tauri-apps/api': ^1.0.2
   '@tauri-apps/cli': ^1.2.2
+  '@tonconnect/protocol': ^2.0.1
   '@types/bn.js': ^5.1.0
   '@types/node': ^17.0.35
   '@types/react': ^18.0.9
@@ -49,6 +50,7 @@ dependencies:
   '@hookstate/core': 4.0.0_react@18.2.0
   '@hookstate/devtools': 4.0.0_@hookstate+core@4.0.0
   '@tauri-apps/api': 1.2.0
+  '@tonconnect/protocol': 2.0.1
   '@types/bn.js': 5.1.1
   autoprefixer: 10.4.13_postcss@8.4.20
   bn.js: 5.2.1
@@ -752,6 +754,12 @@ packages:
       '@tauri-apps/cli-win32-ia32-msvc': 1.2.2
       '@tauri-apps/cli-win32-x64-msvc': 1.2.2
     dev: true
+
+  /@tonconnect/protocol/2.0.1:
+    resolution: {integrity: sha512-jkSj6EKjIlHnJxrtxdlO7KqVJe41yrIgqamGZiqziKH6iwx0m9YyKvuIREd6CmWY2jbsev3BvBWqPp9KH6HrRw==}
+    dependencies:
+      tweetnacl-util: 0.15.1
+    dev: false
 
   /@truecarry/ton-lite-client/2.0.0-beta.0_l74i2356aoedurpqlhrqpgf3um:
     resolution: {integrity: sha512-DQ8lxrToYVr5UxvMnwhY7aWwtJ9Fn6qjdG4QOWn4iU0iLmFolMcy+xRu2iLPf/cNImaZBy6Ix6UBPbAfeAbB8w==}
@@ -3549,6 +3557,10 @@ packages:
       tslib: 1.14.1
       typescript: 4.9.4
     dev: true
+
+  /tweetnacl-util/0.15.1:
+    resolution: {integrity: sha512-RKJBIj8lySrShN4w6i/BonWp2Z/uxwC3h4y7xsRrpP59ZboCd0GpEVsOnMDYLMmKBpYhb5TgHzZXy7wTfYFBRw==}
+    dev: false
 
   /tweetnacl/1.0.3:
     resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}

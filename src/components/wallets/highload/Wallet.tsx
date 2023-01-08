@@ -6,6 +6,7 @@ import SendTon from './SendTon'
 import { BlueButton } from '../../UI'
 import { useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
+import { TonConnect } from '@/components/TonConnect/TonConnect'
 
 function Wallet() {
   const currentWallet = useWallet()
@@ -65,6 +66,8 @@ function Wallet() {
           </BlueButton>
         </div>
       </div> */}
+
+      <TonConnect />
 
       <SendTon wallet={wallet} />
 
