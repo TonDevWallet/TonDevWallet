@@ -26,6 +26,7 @@
     "react-dom": "^18.1.0",
     "react-jazzicon": "^1.0.4",
     "react-qr-code": "^2.0.7",
+    "react-router-dom": "^6.6.1",
     "reactjs-popup": "^2.0.5",
     "tailwindcss": "^3.1.8",
     "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9",

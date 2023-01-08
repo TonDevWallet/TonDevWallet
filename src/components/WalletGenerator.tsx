@@ -6,6 +6,7 @@ import Popup from 'reactjs-popup'
 import { useEffect, useRef, useState } from 'react'
 import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
 import { keyPairFromSeed, mnemonicToSeed, mnemonicValidate } from 'ton-crypto'
+import { useNavigate } from 'react-router-dom'
 
 export function WalletGenerator() {
   const [isInfoOpened, setIsInfoOpened] = useState(false)
@@ -13,6 +14,7 @@ export function WalletGenerator() {
   const nameRef = useRef<HTMLInputElement | null>(null)
   const close = () => setOpen(false)
   const wallet = useWallet()
+  const navigate = useNavigate()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onWordsChange = async (e: any) => {
@@ -61,38 +63,42 @@ export function WalletGenerator() {
   }, [wallet.key])
 
   return !isInfoOpened ? (
-    <div onClick={() => setIsInfoOpened(true)}>Open wallet key info</div>
+    <BlueButton onClick={() => setIsInfoOpened(true)}>Open wallet key info</BlueButton>
   ) : (
     <div>
-      <div onClick={() => setIsInfoOpened(false)}>Close wallet key info</div>
+      <BlueButton onClick={() => setIsInfoOpened(false)}>Close wallet key info</BlueButton>
       <div className="my-2">
-        <label
-          htmlFor="wordsInput"
-          className="text-accent text-lg font-medium my-2 flex items-center"
-        >
-          Words
-          <Copier className="w-6 h-6 ml-2" text={wallet.key.get()?.words || ''} />
-        </label>
-        <textarea
-          className="w-full h-24 outline-none"
-          id="wordsInput"
-          onChange={onWordsChange}
-          value={words}
-        />
+        {wallet.key.get()?.words && (
+          <>
+            <label
+              htmlFor="wordsInput"
+              className="text-accent text-lg font-medium my-2 flex items-center"
+            >
+              Words
+              <Copier className="w-6 h-6 ml-2" text={wallet.key.get()?.words || ''} />
+            </label>
+            <textarea
+              className="w-full h-24 outline-none"
+              id="wordsInput"
+              onChange={onWordsChange}
+              value={words}
+            />
+          </>
+        )}
 
-        <div>
-          <label
+        {/* <div> */}
+        {/* <label
             htmlFor="walletIdInput"
             className="text-accent text-lg font-medium my-2 flex items-center"
           >
             WalletID
-          </label>
-          {/* <input
+          </label> */}
+        {/* <input
             type="number"
             value={walletId}
             onChange={(e: any) => setWalletId(parseInt(e.target.value))}
           /> */}
-        </div>
+        {/* </div> */}
 
         {wallet.key.get()?.keyPair && wallet.key.get()?.seed && (
           <>
@@ -137,17 +143,24 @@ export function WalletGenerator() {
         )}
       </div>
       {/* <BlueButton onClick={generate}>Generate new words</BlueButton> */}
-      <BlueButton
+      {/* <BlueButton
         onClick={() => {
           console.log('open popup')
           setOpen(true)
         }}
       >
         Save seed
+      </BlueButton> */}
+      <BlueButton
+        onClick={() => {
+          deleteWallet(db, wallet.key.get()!)
+          navigate('/')
+        }}
+      >
+        Delete seed
       </BlueButton>
-      <BlueButton onClick={() => deleteWallet(db, wallet.key.get()!)}>Delete seed</BlueButton>
 
-      <Popup onClose={() => setOpen(false)} open={open} closeOnDocumentClick modal>
+      {/* <Popup onClose={() => setOpen(false)} open={open} closeOnDocumentClick modal>
         <div className="p-4">
           <BlueButton
             onClick={() => {
@@ -159,7 +172,7 @@ export function WalletGenerator() {
           </BlueButton>
           <input type="text" ref={nameRef} className="border" />
         </div>
-      </Popup>
+      </Popup> */}
     </div>
   )
 }
