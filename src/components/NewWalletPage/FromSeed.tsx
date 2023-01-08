@@ -1,5 +1,6 @@
 import { useDatabase } from '@/db'
 import { saveWallet } from '@/store/walletsListState'
+import { setWalletKey } from '@/store/walletState'
 import { Key } from '@/types/Key'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -113,6 +114,7 @@ export function FromSeed() {
             <BlueButton
               onClick={async () => {
                 const newWallet = await saveWallet(db, mnemonicKey, nameRef.current?.value || '')
+                setWalletKey(newWallet)
                 navigate(`/wallets/${newWallet?.id}`)
               }}
               className="mt-2"
