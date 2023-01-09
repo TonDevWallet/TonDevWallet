@@ -2,6 +2,9 @@ import { SavedWalletRow } from './SavedWalletRow'
 import { suspend } from '@hookstate/core'
 import { useWalletListState } from '@/store/walletsListState'
 import { NavLink } from 'react-router-dom'
+import { BlueButton } from '../UI'
+import { getDatabase } from '@/db'
+import { ImportMigrations } from '@/utils/getMigrations'
 
 export function SavedWalletsList() {
   const wallets = useWalletListState()
@@ -45,6 +48,17 @@ export function SavedWalletsList() {
           </div>
           <div>New wallet</div>
         </NavLink>
+
+        <BlueButton
+          onClick={async () => {
+            const db = await getDatabase()
+            await db.migrate.down({
+              migrationSource: new ImportMigrations(),
+            })
+          }}
+        >
+          Migrate back
+        </BlueButton>
       </div>
     )
   )

@@ -1,16 +1,14 @@
+import { addTonConnectSession } from '@/store/tonConnect'
 import { useWallet } from '@/store/walletState'
-import { ITonWalletV4 } from '@/types'
-import { Body, fetch as tFetch } from '@tauri-apps/api/http'
 import {
   ConnectEventSuccess,
   CHAIN,
   SessionCrypto,
   hexToByteArray,
   Base64,
-  SendTransactionRpcRequest,
 } from '@tonconnect/protocol'
 import { useRef } from 'react'
-import { Cell, beginCell, storeStateInit, StateInit, internal } from 'ton-core'
+import { Cell, beginCell, storeStateInit, StateInit } from 'ton-core'
 import nacl from 'tweetnacl'
 import { BlueButton } from '../UI'
 
@@ -89,108 +87,11 @@ export function TonConnect() {
       // Base64.encode(message),
     })
 
-    const sseUrl = new URL(`${bridgeUrl}/events`)
-    sseUrl.searchParams.append('client_id', Buffer.from(sessionKeypair.publicKey).toString('hex'))
-    sseUrl.searchParams.append('last_event_id', '0')
-    // url.searchParams.append('to', clientId)
-    // url.searchParams.append('ttl', '300')
-    const sse = new EventSource(sseUrl)
-
-    /*
-     * This will listen only for events
-     * similar to the following:
-     *
-     * event: notice
-     * data: useful data
-     * id: someid
-     */
-    sse.addEventListener('notice', (e) => {
-      console.log('sse notice', e.data)
-    })
-
-    /*
-     * Similarly, this will listen for events
-     * with the field `event: update`
-     */
-    sse.addEventListener('update', (e) => {
-      console.log('sse update', e.data)
-    })
-
-    /*
-     * The event "message" is a special case, as it
-     * will capture events without an event field
-     * as well as events that have the specific type
-     * `event: message` It will not trigger on any
-     * other event type.
-     */
-    sse.addEventListener('message', async (e) => {
-      console.log('sse message2', e.data)
-
-      const bridgeIncomingMessage = JSON.parse(e.data)
-      const walletMessage: SendTransactionRpcRequest = JSON.parse(
-        session.decrypt(
-          Base64.decode(bridgeIncomingMessage.message).toUint8Array(),
-          hexToByteArray(bridgeIncomingMessage.from)
-        )
-      )
-      console.log('wallet message', walletMessage)
-
-      if (walletMessage.method !== 'sendTransaction') {
-        return
-      }
-
-      const info = JSON.parse(walletMessage.params[0]) as {
-        messages: {
-          address: string
-          amount: string
-          payload: string // boc
-        }[]
-        valid_until: number // date now
-      }
-
-      const w = selectedWallet as unknown as ITonWalletV4
-
-      console.log(
-        'messages, ',
-        info.messages.map((m) =>
-          internal({
-            body: Cell.fromBase64(m.payload),
-            to: m.address,
-            value: BigInt(m.amount),
-          })
-        ),
-        await w.wallet.getSeqno()
-      )
-
-      const transfer = w.wallet.createTransfer({
-        seqno: await w.wallet.getSeqno(),
-        secretKey: w.key.secretKey,
-        messages: info.messages.map((m) =>
-          internal({
-            body: Cell.fromBase64(m.payload),
-            to: m.address,
-            value: BigInt(m.amount),
-          })
-        ),
-        sendMode: 3,
-      })
-      console.log('message boc', transfer.toBoc().toString('base64'))
-      try {
-        const txInfo = await tFetch('https://tonapi.io/v1/send/estimateTx', {
-          method: 'POST',
-          body: Body.json({
-            boc: transfer.toBoc().toString('base64'),
-          }),
-        })
-        console.log('info ok', txInfo)
-      } catch (e) {}
-      console.log('send ok')
-    })
-
-    // protocol.
-    // await fetch(`https://bridge.tonapi.io/bridge/message?client_id=${clientId}`, {
-    //   method: 'POST',
-    // })
+    await addTonConnectSession(
+      Buffer.from(sessionKeypair.secretKey),
+      clientId,
+      wallet.key.get()?.id || 0
+    )
   }
 
   return (
