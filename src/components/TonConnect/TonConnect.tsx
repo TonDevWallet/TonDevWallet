@@ -94,9 +94,10 @@ export function TonConnect() {
     await addTonConnectSession({
       secretKey: Buffer.from(sessionKeypair.secretKey),
       userId: clientId,
-      walletId: wallet.key.get()?.id.get() || 0,
-      walletType: selectedWallet.type as unknown as WalletType,
-      subwalletId: selectedWallet.subwalletId,
+      keyId: wallet.key.get({ noproxy: true })?.id.get() || 0,
+      walletId: selectedWallet.id,
+      // walletType: selectedWallet.type as unknown as WalletType,
+      // subwalletId: selectedWallet.subwalletId,
     })
   }
 

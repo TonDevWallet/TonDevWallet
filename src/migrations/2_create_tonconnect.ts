@@ -8,6 +8,7 @@ export function up(knex) {
       id integer PRIMARY KEY,
       secret_key text,
       user_id text,
+      key_id integer,
       wallet_id integer,
       last_event_id integer
     )

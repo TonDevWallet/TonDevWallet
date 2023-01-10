@@ -1,7 +1,10 @@
+import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
+import { SignCell } from '@/contracts/utils/SignExternalMessage'
 import { useLiteclient } from '@/store/liteClient'
 import { updateSessionEventId, useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
 import { openLiteClient } from '@/utils/liteClientProvider'
+import { w } from '@tauri-apps/api/clipboard-2fa91cee'
 import { Body, fetch as tFetch } from '@tauri-apps/api/http'
 import {
   Base64,
@@ -10,9 +13,9 @@ import {
   SessionCrypto,
 } from '@tonconnect/protocol'
 import { useEffect, useState } from 'react'
-import { WalletContractV4 } from 'ton'
-import { beginCell, Cell, internal, storeMessage, external } from 'ton-core'
-import { keyPairFromSeed } from 'ton-crypto'
+import { WalletContractV3R2, WalletContractV4 } from 'ton'
+import { beginCell, Cell, internal, storeMessage, external, Address } from 'ton-core'
+import { keyPairFromSeed, sign } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import nacl from 'tweetnacl'
 
@@ -67,59 +70,107 @@ export function TonConnectListener() {
           valid_until: number // date now
         }
 
-        const selectedWallet = walletsList.get().find((i) => i.id === s.walletId)
+        const selectedKey = walletsList.get().find((i) => i.id === s.keyId)
 
-        if (!selectedWallet || !selectedWallet.seed) {
-          console.log('walletsList', selectedWallet, walletsList.get(), s.walletId)
+        if (!selectedKey || !selectedKey.seed) {
+          console.log('walletsList', selectedKey, walletsList.get(), s.walletId)
           throw new Error('no wallet')
         }
 
-        const walletKeyPair = keyPairFromSeed(Buffer.from(selectedWallet.seed, 'hex'))
+        const w = selectedKey.wallets?.find((w) => w.id === s.walletId)
+        if (!w) {
+          console.log('walletsList', selectedKey, walletsList.get(), s.walletId)
+          throw new Error('no wallet')
+        }
 
+        const walletKeyPair = keyPairFromSeed(Buffer.from(selectedKey.seed, 'hex'))
+
+        const wallet =
+          w.type === 'highload'
+            ? new HighloadWalletV2({
+                publicKey: walletKeyPair.publicKey,
+                subwalletId: 1,
+                workchain: 0,
+              })
+            : w.type === 'v3R2'
+            ? openLiteClient(
+                liteClient,
+                WalletContractV3R2.create({
+                  workchain: 0,
+                  publicKey: walletKeyPair.publicKey,
+                  walletId: w.subwallet_id,
+                })
+              )
+            : openLiteClient(
+                liteClient,
+                WalletContractV4.create({
+                  workchain: 0,
+                  publicKey: walletKeyPair.publicKey,
+                  walletId: w.subwallet_id,
+                })
+              )
         // const w = selectedWallet as unknown as ITonWalletV4
-        const w = openLiteClient(
-          liteClient,
-          WalletContractV4.create({ workchain: 0, publicKey: walletKeyPair.publicKey })
-        )
+        // const w = openLiteClient(
+        //   liteClient,
+        //   WalletContractV4.create({ workchain: 0, publicKey: walletKeyPair.publicKey })
+        // )
 
-        console.log(
-          'messages, ',
-          info.messages.map((m) =>
-            internal({
+        // console.log(
+        //   'messages, ',
+        //   info.messages.map((m) =>
+        //     internal({
+        //       body: Cell.fromBase64(m.payload),
+        //       to: m.address,
+        //       value: BigInt(m.amount),
+        //     })
+        //   ),
+        //   await w.getSeqno()
+        // )
+
+        let messageCell: Cell
+        if (wallet instanceof HighloadWalletV2) {
+          const message = wallet.CreateTransferMessage(
+            info.messages.map((m) => ({
               body: Cell.fromBase64(m.payload),
-              to: m.address,
-              value: BigInt(m.amount),
-            })
-          ),
-          await w.getSeqno()
-        )
+              destination: Address.parse(m.address),
+              amount: BigInt(m.amount),
+              mode: 3,
+            }))
+          )
+          const signedBody = SignCell(walletKeyPair.secretKey, message.body)
+          message.body = signedBody
+          messageCell = beginCell().store(storeMessage(message)).endCell()
+        } else {
+          const transfer = wallet.createTransfer({
+            seqno: await wallet.getSeqno(),
+            secretKey: walletKeyPair.secretKey,
+            messages: info.messages.map((m) =>
+              internal({
+                body: Cell.fromBase64(m.payload),
+                to: m.address,
+                value: BigInt(m.amount),
+              })
+            ),
+            sendMode: 3,
+          })
+          const ext = external({
+            to: wallet.address,
+            init: wallet.init,
+            // init: neededInit ? { code: neededInit.code, data: neededInit.data } : null,
+            body: transfer,
+          })
+          messageCell = beginCell().store(storeMessage(ext)).endCell()
+        }
 
-        const transfer = w.createTransfer({
-          seqno: await w.getSeqno(),
-          secretKey: walletKeyPair.secretKey,
-          messages: info.messages.map((m) =>
-            internal({
-              body: Cell.fromBase64(m.payload),
-              to: m.address,
-              value: BigInt(m.amount),
-            })
-          ),
-          sendMode: 3,
-        })
+        // const transfer =
 
-        const ext = external({
-          to: w.address,
-          init: w.init,
-          // init: neededInit ? { code: neededInit.code, data: neededInit.data } : null,
-          body: transfer,
-        })
-        const pkg = beginCell().store(storeMessage(ext)).endCell().toBoc()
-        console.log('message boc', pkg.toString('base64'))
+        // const pkg = beginCell().store(storeMessage(ext)).endCell().toBoc()
+        console.log('message boc', messageCell.toBoc().toString('base64'))
         try {
           const txInfo = await tFetch('https://tonapi.io/v1/send/estimateTx', {
             method: 'POST',
             body: Body.json({
-              boc: pkg.toString('base64'),
+              boc: messageCell.toBoc().toString('base64'),
             }),
           })
           console.log('info ok', txInfo)
@@ -127,7 +178,7 @@ export function TonConnectListener() {
         console.log('send ok')
 
         // w.send()
-        // liteClient.sendMessage(transfer.toBoc())
+        // liteClient.sendMessage(messageCell.toBoc())
 
         console.log('update before', e)
         updateSessionEventId(s.id, parseInt(e.lastEventId))

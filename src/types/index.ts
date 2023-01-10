@@ -26,7 +26,7 @@ export interface ITonWalletV3 {
   address: Address
   wallet: OpenedContract<WalletContractV3R2>
   key: KeyPair
-  id: string
+  id: number
   subwalletId: number
 }
 
@@ -35,7 +35,7 @@ export interface ITonWalletV4 {
   address: Address
   wallet: OpenedContract<WalletContractV4>
   key: KeyPair
-  id: string
+  id: number
   subwalletId: number
 }
 
@@ -44,7 +44,7 @@ export interface ITonHighloadWalletV2 {
   address: Address
   wallet: HighloadWalletV2
   key: KeyPair
-  id: string
+  id: number
   subwalletId: number
 }
 

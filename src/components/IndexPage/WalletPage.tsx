@@ -68,11 +68,19 @@ export function WalletPage() {
             : w.type === 'v3R2'
             ? openLiteClient(
                 liteClient,
-                WalletContractV3R2.create({ workchain: 0, publicKey: keyPair.publicKey })
+                WalletContractV3R2.create({
+                  workchain: 0,
+                  publicKey: keyPair.publicKey,
+                  walletId: w.subwallet_id,
+                })
               )
             : openLiteClient(
                 liteClient,
-                WalletContractV4.create({ workchain: 0, publicKey: keyPair.publicKey })
+                WalletContractV4.create({
+                  workchain: 0,
+                  publicKey: keyPair.publicKey,
+                  walletId: w.subwallet_id,
+                })
               )
 
         return {
@@ -80,7 +88,7 @@ export function WalletPage() {
           address: wallet.address,
           wallet,
           key: keyPair,
-          id: w.type,
+          id: w.id,
           subwalletId: 0,
         } as IWallet
       }) || []
