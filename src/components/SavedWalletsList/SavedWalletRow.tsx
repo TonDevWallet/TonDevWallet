@@ -1,15 +1,16 @@
 import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
 import { Key } from '@/types/Key'
+import { State } from '@hookstate/core'
 import { useState, useCallback, useEffect } from 'react'
 import Jazzicon from 'react-jazzicon'
 import { NavLink } from 'react-router-dom'
 
-export function SavedWalletRow({ walletKey }: { walletKey: Key }) {
+export function SavedWalletRow({ walletKey }: { walletKey: State<Key> }) {
   const wallet = useWallet()
   const [jazzNumber, setJazzNumber] = useState(0)
 
   const getJazziconSeed = useCallback(async () => {
-    const sd = Buffer.from(walletKey.seed || '', 'hex')
+    const sd = Buffer.from(walletKey.get().seed || '', 'hex')
     const number = parseInt('0x' + sd.slice(0, 10).toString('hex'))
     console.log('number', number, sd.slice(0, 10))
     setJazzNumber(number)
@@ -27,18 +28,18 @@ export function SavedWalletRow({ walletKey }: { walletKey: Key }) {
 
   return (
     <NavLink
-      to={`/wallets/${walletKey.id}`}
+      to={`/wallets/${walletKey.get().id}`}
       className={({ isActive }) =>
         'rounded p-1 flex flex-col items-center my-2 select-none ' + (isActive ? activeStyle : '')
       }
       onClick={() => {
-        setWalletKey({ ...walletKey })
+        setWalletKey(walletKey.get().id)
         setSelectedWallet(null)
       }}
     >
       {jazzNumber ? <Jazzicon diameter={64} seed={jazzNumber} /> : <div className="w-16 h-16" />}
 
-      <div>{walletKey.name}</div>
+      <div>{walletKey.get().name}</div>
     </NavLink>
   )
 }

@@ -1,10 +1,10 @@
 // // import { useMemo } from 'react'
 // // import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
-// // // 
+// // //
 // // import { RateLimitedHttpProvider } from './utils/RateLimitedHttpProvider'
 
 // import { useMemo } from 'react'
-// 
+//
 // import { HttpProvider } from 'tonweb/dist/types/providers/http-provider'
 // import { RateLimitedHttpProvider } from './utils/RateLimitedHttpProvider'
 

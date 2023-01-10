@@ -2,7 +2,7 @@ import { BlueButton } from './UI'
 import Copier from './copier'
 import { useDatabase } from '@/db'
 import { deleteWallet } from '@/store/walletsListState'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useWallet } from '@/store/walletState'
 import { useNavigate } from 'react-router-dom'
 
@@ -10,16 +10,12 @@ export function WalletGenerator() {
   const [isInfoOpened, setIsInfoOpened] = useState(false)
   const wallet = useWallet()
   const navigate = useNavigate()
-  const key = wallet.key.get()
+  const key = wallet.key.get({ noproxy: true })
 
   const db = useDatabase()
 
-  const [words, setWords] = useState(key?.words)
-
-  useEffect(() => {
-    console.log('set words ', key?.words || '')
-    setWords(key?.words || '')
-  }, [wallet.key])
+  const words = key?.words.get() || ''
+  const seed = key?.seed.get() || ''
 
   if (!key) {
     return <></>
@@ -40,9 +36,9 @@ export function WalletGenerator() {
               className="text-accent text-lg font-medium my-2 flex items-center"
             >
               Words
-              <Copier className="w-6 h-6 ml-2" text={key.words || ''} />
+              <Copier className="w-6 h-6 ml-2" text={words} />
             </label>
-            <textarea className="w-full h-24 outline-none" id="wordsInput" value={words} />
+            <textarea className="w-full h-24 outline-none" id="wordsInput" defaultValue={words} />
           </>
         )}
 
@@ -51,8 +47,8 @@ export function WalletGenerator() {
             <div>
               <div className="text-accent text-lg font-medium my-2 flex items-center">Seed:</div>
               <div className="flex">
-                <div className="w-96 overflow-hidden text-ellipsis text-xs">{key.seed}</div>
-                <Copier className="w-6 h-6 ml-2" text={key.seed || ''} />
+                <div className="w-96 overflow-hidden text-ellipsis text-xs">{key.get().seed}</div>
+                <Copier className="w-6 h-6 ml-2" text={seed} />
               </div>
             </div>
             <div>
@@ -61,11 +57,11 @@ export function WalletGenerator() {
               </div>
               <div className="flex">
                 <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                  {Buffer.from(key.keyPair?.publicKey || []).toString('hex')}
+                  {Buffer.from(key.keyPair?.get()?.publicKey || []).toString('hex')}
                 </div>
                 <Copier
                   className="w-6 h-6 ml-2"
-                  text={Buffer.from(key.keyPair?.publicKey || []).toString('hex')}
+                  text={Buffer.from(key.keyPair?.get()?.publicKey || []).toString('hex')}
                 />
               </div>
             </div>
@@ -75,11 +71,11 @@ export function WalletGenerator() {
               </div>
               <div className="flex">
                 <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                  {Buffer.from(key.keyPair?.secretKey || []).toString('hex')}
+                  {Buffer.from(key.keyPair?.get()?.secretKey || []).toString('hex')}
                 </div>
                 <Copier
                   className="w-6 h-6 ml-2"
-                  text={Buffer.from(key.keyPair?.secretKey || []).toString('hex')}
+                  text={Buffer.from(key.keyPair?.get()?.secretKey || []).toString('hex')}
                 />
               </div>
             </div>
@@ -88,7 +84,7 @@ export function WalletGenerator() {
       </div>
       <BlueButton
         onClick={() => {
-          deleteWallet(db, key)
+          deleteWallet(db, key.id.get())
           navigate('/')
         }}
       >

@@ -1,6 +1,5 @@
 import { useDatabase } from '@/db'
-import { saveWallet } from '@/store/walletsListState'
-import { setWalletKey } from '@/store/walletState'
+import { saveKeyAndWallets } from '@/store/walletsListState'
 import { Key } from '@/types/Key'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -118,11 +117,9 @@ export function FromRandom() {
             <input type="text" ref={nameRef} id="nameRef" className="border w-3/4 outline-none" />
 
             <BlueButton
-              onClick={async () => {
-                const newWallet = await saveWallet(db, mnemonicKey, nameRef.current?.value || '')
-                setWalletKey(newWallet)
-                navigate(`/wallets/${newWallet?.id}`)
-              }}
+              onClick={async () =>
+                saveKeyAndWallets(db, mnemonicKey, nameRef.current?.value || '', navigate)
+              }
               className="mt-2"
             >
               Save

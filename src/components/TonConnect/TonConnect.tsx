@@ -1,5 +1,6 @@
 import { addTonConnectSession } from '@/store/tonConnect'
 import { useWallet } from '@/store/walletState'
+import { WalletType } from '@/types'
 import {
   ConnectEventSuccess,
   CHAIN,
@@ -37,6 +38,9 @@ export function TonConnect() {
   }
 
   const doBridgeAuth = async () => {
+    if (!selectedWallet) {
+      return
+    }
     const input = nameRef.current?.value || ''
     const parsed = new URL(input)
     console.log('parse', parsed, parsed.searchParams.get('id'))
@@ -87,11 +91,13 @@ export function TonConnect() {
       // Base64.encode(message),
     })
 
-    await addTonConnectSession(
-      Buffer.from(sessionKeypair.secretKey),
-      clientId,
-      wallet.key.get()?.id || 0
-    )
+    await addTonConnectSession({
+      secretKey: Buffer.from(sessionKeypair.secretKey),
+      userId: clientId,
+      walletId: wallet.key.get()?.id.get() || 0,
+      walletType: selectedWallet.type as unknown as WalletType,
+      subwalletId: selectedWallet.subwalletId,
+    })
   }
 
   return (

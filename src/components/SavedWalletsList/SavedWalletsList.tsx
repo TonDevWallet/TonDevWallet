@@ -30,7 +30,7 @@ export function SavedWalletsList() {
 
         {wallets &&
           wallets.map((dbWallet) => (
-            <SavedWalletRow walletKey={dbWallet.get()} key={dbWallet.get().id} />
+            <SavedWalletRow walletKey={dbWallet} key={dbWallet.get().id} />
           ))}
 
         <NavLink

@@ -11,7 +11,7 @@ import {
 } from '@tonconnect/protocol'
 import { useEffect, useState } from 'react'
 import { WalletContractV4 } from 'ton'
-import { Cell, internal } from 'ton-core'
+import { beginCell, Cell, internal, storeMessage, external } from 'ton-core'
 import { keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import nacl from 'tweetnacl'
@@ -106,17 +106,28 @@ export function TonConnectListener() {
           ),
           sendMode: 3,
         })
-        console.log('message boc', transfer.toBoc().toString('base64'))
+
+        const ext = external({
+          to: w.address,
+          init: w.init,
+          // init: neededInit ? { code: neededInit.code, data: neededInit.data } : null,
+          body: transfer,
+        })
+        const pkg = beginCell().store(storeMessage(ext)).endCell().toBoc()
+        console.log('message boc', pkg.toString('base64'))
         try {
           const txInfo = await tFetch('https://tonapi.io/v1/send/estimateTx', {
             method: 'POST',
             body: Body.json({
-              boc: transfer.toBoc().toString('base64'),
+              boc: pkg.toString('base64'),
             }),
           })
           console.log('info ok', txInfo)
         } catch (e) {}
         console.log('send ok')
+
+        // w.send()
+        // liteClient.sendMessage(transfer.toBoc())
 
         console.log('update before', e)
         updateSessionEventId(s.id, parseInt(e.lastEventId))

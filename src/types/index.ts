@@ -19,12 +19,15 @@ export type OpenedContract<T> = {
     : T[P]
 }
 
+export type WalletType = 'v3R2' | 'v4R2' | 'highload'
+
 export interface ITonWalletV3 {
   type: 'v3R2'
   address: Address
   wallet: OpenedContract<WalletContractV3R2>
   key: KeyPair
   id: string
+  subwalletId: number
 }
 
 export interface ITonWalletV4 {
@@ -33,6 +36,7 @@ export interface ITonWalletV4 {
   wallet: OpenedContract<WalletContractV4>
   key: KeyPair
   id: string
+  subwalletId: number
 }
 
 export interface ITonHighloadWalletV2 {
@@ -41,6 +45,7 @@ export interface ITonHighloadWalletV2 {
   wallet: HighloadWalletV2
   key: KeyPair
   id: string
+  subwalletId: number
 }
 
 export interface ITonExternalWallet {
@@ -50,7 +55,7 @@ export interface ITonExternalWallet {
 
 export type ITonWallet = ITonWalletV3 | ITonWalletV4
 
-export type IWallet = ITonWallet | ITonHighloadWalletV2 | ITonExternalWallet
+export type IWallet = ITonWallet | ITonHighloadWalletV2 // | ITonExternalWallet
 
 export type TonWalletTransferArg = {
   seqno: number
@@ -58,4 +63,11 @@ export type TonWalletTransferArg = {
   messages: MessageRelaxed[]
   sendMode?: Maybe<SendMode>
   timeout?: Maybe<number>
+}
+
+export interface SavedWallet {
+  id: number
+  type: WalletType
+  key_id: number
+  subwallet_id: number
 }

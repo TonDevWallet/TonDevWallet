@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react'
 
 import Wallet from '@/components/wallets/tonweb/Wallet'
 import HighloadWallet from '@/components/wallets/highload/Wallet'
-import ExternalWallet from '@/components/wallets/external/Wallet'
 
 import { IWallet } from '@/types'
 // import { useProvider } from '@/utils'
@@ -15,11 +14,11 @@ import { NetworkSettings } from '@/components/NetworkSettings'
 import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
 import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
-import { WalletContractV3R2, WalletContractV4 } from 'ton'
-import { openLiteClient } from '@/utils/liteClientProvider'
 import { LiteClient } from 'ton-lite-client'
 import { useParams } from 'react-router-dom'
 import { useWalletListState } from '@/store/walletsListState'
+import { openLiteClient } from '@/utils/liteClientProvider'
+import { WalletContractV3R2, WalletContractV4 } from 'ton'
 
 export function WalletPage() {
   const liteClient = useLiteclient() as unknown as LiteClient
@@ -37,74 +36,54 @@ export function WalletPage() {
     const id = parseInt(urlParams.walletId || '')
     const selectedWallet = walletsList.get().find((i) => i.id === id)
     if (selectedWallet) {
-      setWalletKey({
-        ...selectedWallet,
-      })
+      setWalletKey(selectedWallet.id)
     }
   }, [urlParams.walletId])
 
   const wallet = useWallet()
 
   const wallets = useMemo<IWallet[]>(() => {
-    const key = wallet.key.get()
+    const key = wallet.key.get({ noproxy: true })
     console.log('update wallet key', key?.keyPair)
     if (!key?.keyPair) {
       return []
     }
 
     // const walletId = key.wallet_id
-    const keyPair = key.keyPair
+    const keyPair = key.keyPair.get()
+    console.log('keypair', keyPair)
+    if (!keyPair) {
+      return []
+    }
 
-    const highload = new HighloadWalletV2({
-      publicKey: keyPair.publicKey,
-      subwalletId: 1,
-      workchain: 0,
-    })
+    const wallets: IWallet[] =
+      key.wallets.get()?.map((w) => {
+        const wallet =
+          w.type === 'highload'
+            ? new HighloadWalletV2({
+                publicKey: keyPair.publicKey,
+                subwalletId: 1,
+                workchain: 0,
+              })
+            : w.type === 'v3R2'
+            ? openLiteClient(
+                liteClient,
+                WalletContractV3R2.create({ workchain: 0, publicKey: keyPair.publicKey })
+              )
+            : openLiteClient(
+                liteClient,
+                WalletContractV4.create({ workchain: 0, publicKey: keyPair.publicKey })
+              )
 
-    const highloadAddress = highload.address
-
-    const v4Contract = WalletContractV4.create({ workchain: 0, publicKey: keyPair.publicKey })
-    const walletv4R2 = openLiteClient(liteClient, v4Contract)
-
-    const walletv3R2 = openLiteClient(
-      liteClient,
-      WalletContractV3R2.create({ workchain: 0, publicKey: keyPair.publicKey })
-    )
-
-    console.log('wallet v4', walletv4R2)
-
-    const v3R2Address = walletv3R2.address
-
-    // eslint-disable-next-line new-cap
-    const v4R2Address = walletv4R2.address
-
-    const wallets: IWallet[] = [
-      {
-        type: 'v4R2',
-        address: v4R2Address,
-        wallet: walletv4R2,
-        key: keyPair,
-        id: 'v4R2',
-      },
-      {
-        type: 'v3R2',
-        address: v3R2Address,
-        wallet: walletv3R2,
-        key: keyPair,
-        id: 'v3R2',
-      },
-      {
-        type: 'highload',
-        address: highloadAddress,
-        wallet: highload,
-        key: keyPair,
-        id: 'highload',
-      },
-      {
-        type: 'external',
-        id: 'external',
-      },
-    ]
+        return {
+          type: w.type,
+          address: wallet.address,
+          wallet,
+          key: keyPair,
+          id: w.type,
+          subwalletId: 0,
+        } as IWallet
+      }) || []
 
     setSelectedWallet(null)
     return wallets
@@ -141,9 +120,10 @@ export function WalletPage() {
         {wallet.selectedWallet.get() ? (
           wallet.selectedWallet.get()?.type === 'highload' ? (
             <HighloadWallet />
-          ) : wallet.selectedWallet.get()?.type === 'external' ? (
-            <ExternalWallet />
           ) : (
+            // : wallet.selectedWallet.get()?.type === 'external' ? (
+            // <ExternalWallet />
+            // )
             <Wallet />
           )
         ) : (
