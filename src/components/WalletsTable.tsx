@@ -1,6 +1,6 @@
-import { setSelectedWallet, useWallet } from '@/store/walletState'
-import { useMemo } from 'react'
-import { ITonExternalWallet, ITonHighloadWalletV2, ITonWallet, IWallet } from '../types'
+import { setSelectedWallet } from '@/store/walletState'
+import { useSelectedTonWallet } from '@/utils/wallets'
+import { ITonHighloadWalletV2, ITonWallet, IWallet } from '../types'
 import { AddressRow } from './AddressRow'
 
 function TonWalletRow({
@@ -107,32 +107,32 @@ function HighloadWalletRow({
   )
 }
 
-function ExternalWalletRow({
-  wallet,
-  isSelected,
+// function ExternalWalletRow({
+//   wallet,
+//   isSelected,
 
-  setWallet,
-}: {
-  wallet: ITonExternalWallet
-  isSelected: boolean
-  setWallet: (wallet: IWallet) => void
-}) {
-  return (
-    <div className="my-2 flex flex-col border" key={wallet.id}>
-      <div className="flex justify-between border-b px-1">
-        <div className="">Wallet {wallet.type}</div>
+//   setWallet,
+// }: {
+//   wallet: ITonExternalWallet
+//   isSelected: boolean
+//   setWallet: (wallet: IWallet) => void
+// }) {
+//   return (
+//     <div className="my-2 flex flex-col border" key={wallet.id}>
+//       <div className="flex justify-between border-b px-1">
+//         <div className="">Wallet {wallet.type}</div>
 
-        {isSelected ? (
-          <div>Selected</div>
-        ) : (
-          <div className="cursor-pointer text-highlight" onClick={() => setWallet(wallet)}>
-            Use this wallet
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+//         {isSelected ? (
+//           <div>Selected</div>
+//         ) : (
+//           <div className="cursor-pointer text-highlight" onClick={() => setWallet(wallet.id)}>
+//             Use this wallet
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   )
+// }
 
 export function WalletsTable({
   walletsToShow,
@@ -145,9 +145,8 @@ export function WalletsTable({
 
   // setWallet: (wallet: IWallet) => void
 }) {
-  const wallet = useWallet()
-
-  const currentWallet = useMemo(() => wallet.selectedWallet.get(), [wallet.selectedWallet])
+  // const currentWallet = useMemo(() => wallet.selectedWallet.get(), [wallet.selectedWallet])
+  const currentWallet = useSelectedTonWallet()
   console.log('currentWallet', currentWallet)
 
   return (
@@ -162,14 +161,15 @@ export function WalletsTable({
             setWallet={setSelectedWallet}
             key={wallet.id}
           />
-        ) : wallet.type === 'external' ? (
-          <ExternalWalletRow
-            wallet={wallet}
-            isSelected={currentWallet?.id === wallet.id}
-            setWallet={setSelectedWallet}
-            key={wallet.id}
-          />
         ) : (
+          // : wallet.type === 'external' ? (
+          //   <ExternalWalletRow
+          //     wallet={wallet}
+          //     isSelected={currentWallet?.id === wallet.id}
+          //     setWallet={setSelectedWallet}
+          //     key={wallet.id}
+          //   />
+          // )
           <TonWalletRow
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}

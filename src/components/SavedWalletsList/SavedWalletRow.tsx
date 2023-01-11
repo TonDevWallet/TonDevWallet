@@ -1,4 +1,4 @@
-import { setSelectedWallet, setWalletKey, useWallet } from '@/store/walletState'
+import { setSelectedWallet, setWalletKey } from '@/store/walletState'
 import { Key } from '@/types/Key'
 import { State } from '@hookstate/core'
 import { useState, useCallback, useEffect } from 'react'
@@ -6,7 +6,6 @@ import Jazzicon from 'react-jazzicon'
 import { NavLink } from 'react-router-dom'
 
 export function SavedWalletRow({ walletKey }: { walletKey: State<Key> }) {
-  const wallet = useWallet()
   const [jazzNumber, setJazzNumber] = useState(0)
 
   const getJazziconSeed = useCallback(async () => {
@@ -19,8 +18,6 @@ export function SavedWalletRow({ walletKey }: { walletKey: State<Key> }) {
   useEffect(() => {
     getJazziconSeed()
   }, [])
-
-  console.log('wallet id', walletKey.id, wallet.key.get()?.id)
 
   // const route = useRoute
   // const isSelected =

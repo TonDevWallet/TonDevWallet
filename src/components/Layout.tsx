@@ -5,7 +5,7 @@ import { TonConnectListener } from './TonConnect/TonConnectListener'
 export function Layout() {
   return (
     <div className="grid grid-cols-[128px_1fr] justify-center flex-col md:flex-row">
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 h-screen overflow-y-scroll overflow-x-hidden">
         <TonConnectListener />
         <SavedWalletsList />
       </div>

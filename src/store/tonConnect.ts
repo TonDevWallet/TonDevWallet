@@ -1,5 +1,4 @@
 import { getDatabase } from '@/db'
-import { WalletType } from '@/types'
 import { hookstate, useHookstate } from '@hookstate/core'
 
 interface TonConnectSession {
@@ -20,7 +19,9 @@ interface ConnectSession {
   key_id: number
 }
 
-const state = hookstate<TonConnectSession[]>(async () => {
+const state = hookstate<TonConnectSession[]>(getSessions)
+
+async function getSessions() {
   const db = await getDatabase()
   const dbSessions = await db<ConnectSession>('connect_sessions').select('*')
 
@@ -36,7 +37,7 @@ const state = hookstate<TonConnectSession[]>(async () => {
   })
 
   return sessions
-})
+}
 
 export function useTonConnectSessions() {
   return useHookstate(state)
@@ -82,6 +83,16 @@ export async function addTonConnectSession({
   state.merge([session])
 }
 
+export async function deleteTonConnectSession(id: number) {
+  const db = await getDatabase()
+  await db<ConnectSession>('connect_sessions')
+    .where({
+      id,
+    })
+    .delete()
+
+  state.set(await getSessions())
+}
 export async function updateSessionEventId(id: number, eventId: number) {
   const db = await getDatabase()
   const session = state.find((s) => s.get().id === id)

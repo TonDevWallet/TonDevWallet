@@ -3,23 +3,25 @@ import Copier from './copier'
 import { useDatabase } from '@/db'
 import { deleteWallet } from '@/store/walletsListState'
 import { useState } from 'react'
-import { useWallet } from '@/store/walletState'
 import { useNavigate } from 'react-router-dom'
+import { useSelectedKey } from '@/store/walletState'
 
 export function WalletGenerator() {
   const [isInfoOpened, setIsInfoOpened] = useState(false)
-  const wallet = useWallet()
   const navigate = useNavigate()
-  const key = wallet.key.get({ noproxy: true })
-
+  const key = useSelectedKey()
   const db = useDatabase()
 
   const words = key?.words.get() || ''
   const seed = key?.seed.get() || ''
 
+  console.log('generator', words, key)
+
   if (!key) {
     return <></>
   }
+
+  console.log('generator ok')
 
   return !isInfoOpened ? (
     <>

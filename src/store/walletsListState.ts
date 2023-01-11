@@ -98,8 +98,13 @@ export async function saveKeyAndWallets(
   setWalletKey(newWallet.id)
 
   const wallets = await db<SavedWallet>('wallets').insert(defaultWallets).returning('*')
+
   const walletState = getWalletState()
-  walletState.key.get()?.wallets.set(wallets)
+  const stateKey = state.find((k) => k.id === walletState.keyId)
+
+  if (stateKey) {
+    stateKey.wallets.set(wallets)
+  }
 
   navigate(`/wallets/${newWallet?.id}`)
 }

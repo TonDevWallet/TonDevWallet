@@ -1,6 +1,8 @@
+import { useLiteclient } from '@/store/liteClient'
 import { addTonConnectSession } from '@/store/tonConnect'
-import { useWallet } from '@/store/walletState'
-import { WalletType } from '@/types'
+import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
+import { getWalletFromKey } from '@/utils/wallets'
+// import { useWallet } from '@/store/walletState'
 import {
   ConnectEventSuccess,
   CHAIN,
@@ -10,30 +12,44 @@ import {
 } from '@tonconnect/protocol'
 import { useRef } from 'react'
 import { Cell, beginCell, storeStateInit, StateInit } from 'ton-core'
+import { LiteClient } from 'ton-lite-client'
 import nacl from 'tweetnacl'
 import { BlueButton } from '../UI'
 
 export function TonConnect() {
   const nameRef = useRef<HTMLInputElement | null>(null)
-  const wallet = useWallet()
+  // const wallet = useWallet()
+  const liteClient = useLiteclient() as unknown as LiteClient
 
-  const selectedWallet = wallet.selectedWallet.get()
+  const selectedWallet = useSelectedWallet()
+  const selectedKey = useSelectedKey()
+
+  if (!selectedKey || !selectedWallet) {
+    return <></>
+  }
+
+  const wallet = getWalletFromKey(liteClient, selectedKey, selectedWallet)
+
+  if (!wallet) {
+    return <></>
+  }
+
   let address: string
   let stateInit: Cell
-  if (selectedWallet?.type === 'highload') {
-    address = selectedWallet.address.toRawString()
+  if (wallet?.type === 'highload') {
+    address = wallet.address.toRawString()
     stateInit = beginCell()
-      .store(storeStateInit(selectedWallet.wallet.stateInit as unknown as StateInit))
+      .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
       .endCell()
-  } else if (selectedWallet?.type === 'v3R2') {
-    address = selectedWallet.address.toRawString()
+  } else if (wallet?.type === 'v3R2') {
+    address = wallet.address.toRawString()
     stateInit = beginCell()
-      .store(storeStateInit(selectedWallet.wallet.init as unknown as StateInit))
+      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
       .endCell()
-  } else if (selectedWallet?.type === 'v4R2') {
-    address = selectedWallet.address.toRawString()
+  } else if (wallet?.type === 'v4R2') {
+    address = wallet.address.toRawString()
     stateInit = beginCell()
-      .store(storeStateInit(selectedWallet.wallet.init as unknown as StateInit))
+      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
       .endCell()
   }
 
@@ -94,7 +110,7 @@ export function TonConnect() {
     await addTonConnectSession({
       secretKey: Buffer.from(sessionKeypair.secretKey),
       userId: clientId,
-      keyId: wallet.key.get({ noproxy: true })?.id.get() || 0,
+      keyId: selectedKey.id.get() || 0,
       walletId: selectedWallet.id,
       // walletType: selectedWallet.type as unknown as WalletType,
       // subwalletId: selectedWallet.subwalletId,
