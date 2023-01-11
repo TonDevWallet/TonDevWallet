@@ -3,16 +3,7 @@ import { useSelectedTonWallet } from '@/utils/wallets'
 import { ITonHighloadWalletV2, ITonWallet, IWallet } from '../types'
 import { AddressRow } from './AddressRow'
 
-function TonWalletRow({
-  wallet,
-  isSelected,
-
-  setWallet,
-}: {
-  wallet: ITonWallet
-  isSelected: boolean
-  setWallet: (wallet: IWallet) => void
-}) {
+function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: boolean }) {
   return (
     <div
       className="my-2 flex flex-col border"
@@ -34,7 +25,7 @@ function TonWalletRow({
         {isSelected ? (
           <div>Selected</div>
         ) : (
-          <div className="cursor-pointer text-highlight" onClick={() => setWallet(wallet)}>
+          <div className="cursor-pointer text-highlight" onClick={() => setSelectedWallet(wallet)}>
             Use this wallet
           </div>
         )}
@@ -58,12 +49,9 @@ function TonWalletRow({
 function HighloadWalletRow({
   wallet,
   isSelected,
-
-  setWallet,
 }: {
   wallet: ITonHighloadWalletV2
   isSelected: boolean
-  setWallet: (wallet: IWallet) => void
 }) {
   return (
     <div
@@ -86,7 +74,7 @@ function HighloadWalletRow({
         {isSelected ? (
           <div>Selected</div>
         ) : (
-          <div className="cursor-pointer text-highlight" onClick={() => setWallet(wallet)}>
+          <div className="cursor-pointer text-highlight" onClick={() => setSelectedWallet(wallet)}>
             Use this wallet
           </div>
         )}
@@ -147,7 +135,6 @@ export function WalletsTable({
 }) {
   // const currentWallet = useMemo(() => wallet.selectedWallet.get(), [wallet.selectedWallet])
   const currentWallet = useSelectedTonWallet()
-  console.log('currentWallet', currentWallet)
 
   return (
     <>
@@ -158,7 +145,7 @@ export function WalletsTable({
           <HighloadWalletRow
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}
-            setWallet={setSelectedWallet}
+            // setWallet={setSelectedWallet}
             key={wallet.id}
           />
         ) : (
@@ -173,7 +160,7 @@ export function WalletsTable({
           <TonWalletRow
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}
-            setWallet={setSelectedWallet}
+            // setWallet={setSelectedWallet}
             key={wallet.id}
           />
         )

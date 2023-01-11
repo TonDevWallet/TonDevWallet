@@ -1,9 +1,9 @@
-import { hookstate } from '@hookstate/core'
+import { hookstate, useHookstate } from '@hookstate/core'
 
 import { IWallet } from '@/types'
 
 import { keyPairFromSeed } from 'ton-crypto'
-import { getWalletListState } from './walletsListState'
+import { getWalletListState, useWalletListState } from './walletsListState'
 import { useMemo } from 'react'
 
 interface SelectedKey {
@@ -20,18 +20,19 @@ const state = hookstate<SelectedKey>(() => {
 })
 
 export function useSelectedKey() {
-  const walletsList = getWalletListState()
+  const s = useHookstate(state)
+  const walletsList = useWalletListState()
 
-  return useMemo(() => walletsList.find((k) => k.id.get() === state.keyId.get()), [state.keyId])
+  return useMemo(() => walletsList.find((k) => k.id.get() === s.keyId.get()), [state.keyId])
 }
 
 export function useSelectedWallet() {
   const key = useSelectedKey()
+  const s = useHookstate(state)
 
-  return useMemo(
-    () => key?.wallets.get()?.find((w) => w.id === state.selectedWalletId.get()),
-    [state.selectedWalletId, key]
-  )
+  return useMemo(() => {
+    return key?.wallets.get()?.find((w) => w.id === state.selectedWalletId.get())
+  }, [s.selectedWalletId, key])
 }
 
 export function getWalletState() {
@@ -39,20 +40,16 @@ export function getWalletState() {
 }
 
 export async function setWalletKey(keyId: number /* key: Key */) {
-  console.log('setWalletKey', keyId)
   const keyList = getWalletListState()
   const key = keyList.find((key) => key.get().id === keyId)
-  console.log('key found?', key)
   if (!key) {
     return
   }
 
   if (key.seed && !key.keyPair.get()) {
-    console.log('seed', key.seed)
     key.merge({
       keyPair: keyPairFromSeed(Buffer.from(key.get().seed || '', 'hex')),
     })
-    console.log('key merge', key)
   }
   state.keyId.set(key.id.get())
 }
