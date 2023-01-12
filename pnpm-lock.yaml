@@ -3,7 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@hookstate/core': ^4.0.0-rc21
   '@hookstate/devtools': ^4.0.0-rc21
-  '@tauri-apps/api': ^1.0.2
+  '@tauri-apps/api': ^1.2.0
   '@tauri-apps/cli': ^1.2.2
   '@tonconnect/protocol': ^2.0.1
   '@tonconnect/sdk': ^2.0.5

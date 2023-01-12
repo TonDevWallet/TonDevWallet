@@ -12,7 +12,7 @@
   "dependencies": {
     "@hookstate/core": "^4.0.0-rc21",
     "@hookstate/devtools": "^4.0.0-rc21",
-    "@tauri-apps/api": "^1.0.2",
+    "@tauri-apps/api": "^1.2.0",
     "@tonconnect/protocol": "^2.0.1",
     "@tonconnect/sdk": "^2.0.5",
     "@types/bn.js": "^5.1.0",
