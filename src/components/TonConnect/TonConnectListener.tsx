@@ -1,3 +1,4 @@
+import { addConnectMessage } from '@/store/connectMessages'
 import { useLiteclient } from '@/store/liteClient'
 import { updateSessionEventId, useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
@@ -65,6 +66,15 @@ export function TonConnectListener() {
           }[]
           valid_until: number // date now
         }
+
+        await addConnectMessage({
+          connect_event_id: parseInt(walletMessage.id),
+          connect_session_id: s.id,
+          payload: info,
+          key_id: s.keyId,
+          wallet_id: s.walletId,
+          status: 0,
+        })
 
         const selectedKey = walletsList.find((i) => i.id.get() === s.keyId)
 

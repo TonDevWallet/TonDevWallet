@@ -4,15 +4,7 @@ import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
 import { CreateMessage, createTonProofMessage, SignatureCreate } from '@/utils/tonProof'
 import { getWalletFromKey } from '@/utils/wallets'
 // import { useWallet } from '@/store/walletState'
-import {
-  ConnectEventSuccess,
-  CHAIN,
-  SessionCrypto,
-  hexToByteArray,
-  Base64,
-  ConnectRequest,
-  TonProofItem,
-} from '@tonconnect/protocol'
+import { ConnectEventSuccess, CHAIN, ConnectRequest, TonProofItem } from '@tonconnect/protocol'
 import { useRef } from 'react'
 import { Cell, beginCell, storeStateInit, StateInit } from 'ton-core'
 import { keyPairFromSeed } from 'ton-crypto'
@@ -20,8 +12,7 @@ import { LiteClient } from 'ton-lite-client'
 import nacl from 'tweetnacl'
 import { BlueButton } from '../UI'
 import { fetch as tFetch } from '@tauri-apps/api/http'
-
-const bridgeUrl = 'https://bridge.tonapi.io/bridge'
+import { sendTonConnectMessage } from '@/utils/tonConnect'
 
 export function TonConnect() {
   const nameRef = useRef<HTMLInputElement | null>(null)
@@ -147,29 +138,16 @@ export function TonConnect() {
       })
     }
 
-    const url = new URL(`${bridgeUrl}/message`)
-    url.searchParams.append('client_id', Buffer.from(sessionKeypair.publicKey).toString('hex'))
-    url.searchParams.append('to', clientId)
-    url.searchParams.append('ttl', '300')
-
-    const session = new SessionCrypto({
-      publicKey: Buffer.from(sessionKeypair.publicKey).toString('hex'),
-      secretKey: Buffer.from(sessionKeypair.secretKey).toString('hex'),
-    })
-
-    const id = 0
-    const message = session.encrypt(JSON.stringify({ ...data, id }), hexToByteArray(clientId))
-
-    await fetch(url, {
-      method: 'post',
-      body: Base64.encode(message),
-    })
+    await sendTonConnectMessage(data, sessionKeypair.secretKey, clientId)
 
     await addTonConnectSession({
       secretKey: Buffer.from(sessionKeypair.secretKey),
       userId: clientId,
       keyId: selectedKey.id.get() || 0,
       walletId: selectedWallet.id,
+      iconUrl: metaInfo.iconUrl,
+      name: metaInfo.name,
+      url: metaInfo.url,
     })
   }
 

@@ -14,7 +14,7 @@ import {
 } from '@/types'
 import { Key } from '@/types/Key'
 import { State } from '@hookstate/core'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   beginCell,
   storeMessage,
@@ -22,10 +22,14 @@ import {
   WalletContractV4,
   external,
   internal,
+  Cell,
 } from 'ton'
 import { KeyPair, keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import { openLiteClient } from './liteClientProvider'
+import { Body, fetch as tFetch } from '@tauri-apps/api/http'
+import { AccountEvent } from 'tonapi-sdk-js'
+import camelcaseKeys from 'camelcase-keys'
 
 export function getWalletFromKey(
   liteClient: LiteClient,
@@ -153,4 +157,42 @@ function getExternalMessageCellFromTonWallet(
 
     return messageCell
   }
+}
+
+export function useWalletExternalMessageCell(
+  wallet: IWallet | undefined,
+  keyPair: KeyPair,
+  transfers: WalletTransfer[]
+) {
+  const [cell, setCell] = useState<Cell | undefined>()
+
+  useEffect(() => {
+    if (wallet) {
+      wallet.getExternalMessageCell(keyPair, transfers).then(setCell)
+    }
+  }, [wallet])
+
+  return cell
+}
+
+export function useTonapiTxInfo(cell: Cell | undefined) {
+  const [response, setResponse] = useState<AccountEvent | undefined>()
+
+  useEffect(() => {
+    if (cell) {
+      tFetch<AccountEvent>('https://tonapi.io/v1/send/estimateTx', {
+        method: 'POST',
+        body: Body.json({
+          boc: cell.toBoc().toString('base64'),
+        }),
+      }).then((txInfo) => {
+        console.log('useTonapiTxInfo', cell.toBoc().toString('base64'), txInfo)
+        setResponse(camelcaseKeys(txInfo.data, { deep: true }))
+      })
+    } else {
+      setResponse(undefined)
+    }
+  }, [cell])
+
+  return response
 }

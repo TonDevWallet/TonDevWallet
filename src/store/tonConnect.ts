@@ -1,22 +1,17 @@
 import { getDatabase } from '@/db'
+import { ConnectSession } from '@/types/connect'
 import { hookstate, useHookstate } from '@hookstate/core'
 
-interface TonConnectSession {
+export interface TonConnectSession {
   id: number
   secretKey: Buffer
   userId: string
   walletId: number
   lastEventId: number
   keyId: number
-}
-
-interface ConnectSession {
-  id: number
-  secret_key: string
-  user_id: string
-  wallet_id: number
-  last_event_id: number
-  key_id: number
+  url: string
+  name: string
+  iconUrl: string
 }
 
 const state = hookstate<TonConnectSession[]>(getSessions)
@@ -33,6 +28,9 @@ async function getSessions() {
       lastEventId: dbSession.last_event_id,
       id: dbSession.id,
       keyId: dbSession.key_id,
+      url: dbSession.url,
+      name: dbSession.name,
+      iconUrl: dbSession.icon_url,
     }
   })
 
@@ -48,6 +46,9 @@ export async function addTonConnectSession({
   userId,
   keyId,
   walletId,
+  url,
+  name,
+  iconUrl,
 }: // walletType,
 // subwalletId,
 {
@@ -55,6 +56,9 @@ export async function addTonConnectSession({
   userId: string
   keyId: number
   walletId: number
+  url: string
+  name: string
+  iconUrl: string
 }) {
   const db = await getDatabase()
   const res = await db<ConnectSession>('connect_sessions')
@@ -64,6 +68,9 @@ export async function addTonConnectSession({
       key_id: keyId,
       wallet_id: walletId,
       last_event_id: 0,
+      url,
+      name,
+      icon_url: iconUrl,
     })
     .returning('*')
 
@@ -78,6 +85,9 @@ export async function addTonConnectSession({
     lastEventId: 0,
     id: res[0].id,
     keyId,
+    iconUrl,
+    name,
+    url,
   }
 
   state.merge([session])
