@@ -1,6 +1,7 @@
 import { useLiteclient } from '@/store/liteClient'
 import { addTonConnectSession } from '@/store/tonConnect'
 import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
+import { CreateMessage, createTonProofMessage, SignatureCreate } from '@/utils/tonProof'
 import { getWalletFromKey } from '@/utils/wallets'
 // import { useWallet } from '@/store/walletState'
 import {
@@ -9,12 +10,18 @@ import {
   SessionCrypto,
   hexToByteArray,
   Base64,
+  ConnectRequest,
+  TonProofItem,
 } from '@tonconnect/protocol'
 import { useRef } from 'react'
 import { Cell, beginCell, storeStateInit, StateInit } from 'ton-core'
+import { keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import nacl from 'tweetnacl'
 import { BlueButton } from '../UI'
+import { fetch as tFetch } from '@tauri-apps/api/http'
+
+const bridgeUrl = 'https://bridge.tonapi.io/bridge'
 
 export function TonConnect() {
   const nameRef = useRef<HTMLInputElement | null>(null)
@@ -33,6 +40,9 @@ export function TonConnect() {
   if (!wallet) {
     return <></>
   }
+
+  const seed = selectedKey.seed.get() || ''
+  const keyPair = keyPairFromSeed(Buffer.from(seed, 'hex'))
 
   let address: string
   let stateInit: Cell
@@ -64,7 +74,35 @@ export function TonConnect() {
     // protocol.SessionCrypto
     const sessionKeypair = nacl.box.keyPair()
     const clientId = parsed.searchParams.get('id') || '' // '230f1e4df32364888a5dbd92a410266fcb974b73e30ff3e546a654fc8ee2c953'
-    const bridgeUrl = 'https://bridge.tonapi.io/bridge'
+    const rString = parsed.searchParams.get('r')
+    const r = rString ? (JSON.parse(rString) as ConnectRequest) : undefined
+
+    if (!r) {
+      return
+    }
+
+    const { data: metaInfo } = await tFetch<{
+      iconUrl: string
+      name: string
+      url: string
+    }>(r.manifestUrl)
+
+    if (!metaInfo.url || !metaInfo.name) {
+      return
+    }
+
+    const serviceUrl = new URL(metaInfo.url)
+    const host = serviceUrl.host
+
+    const proof = r?.items.find((i) => i.name === 'ton_proof') as TonProofItem
+
+    const timestamp = Math.floor(Date.now())
+
+    const domain = {
+      LengthBytes: Buffer.from(host).length,
+      Value: host,
+    }
+
     const data: ConnectEventSuccess = {
       event: 'connect',
       payload: {
@@ -72,7 +110,7 @@ export function TonConnect() {
           platform: 'windows',
           appName: 'ton-dev-wallet',
           appVersion: '0.1.0',
-          maxProtocolVersion: 1,
+          maxProtocolVersion: 2,
           features: ['SendTransaction'],
         },
         items: [
@@ -84,6 +122,29 @@ export function TonConnect() {
           },
         ],
       },
+    }
+
+    if (proof) {
+      const signMessage = createTonProofMessage({
+        address: wallet.address,
+        domain,
+        payload: proof.payload,
+        stateInit: stateInit.toBoc().toString('base64'),
+        timestamp,
+      })
+      const signature = SignatureCreate(keyPair.secretKey, await CreateMessage(signMessage))
+      data.payload.items.push({
+        name: 'ton_proof',
+        proof: {
+          timestamp,
+          domain: {
+            lengthBytes: domain.LengthBytes,
+            value: domain.Value,
+          },
+          payload: proof.payload,
+          signature: signature.toString('base64'),
+        },
+      })
     }
 
     const url = new URL(`${bridgeUrl}/message`)
@@ -99,12 +160,9 @@ export function TonConnect() {
     const id = 0
     const message = session.encrypt(JSON.stringify({ ...data, id }), hexToByteArray(clientId))
 
-    // this.bridge.send(encodedRequest, this.session.walletPublicKey).catch(reject)
-
     await fetch(url, {
       method: 'post',
       body: Base64.encode(message),
-      // Base64.encode(message),
     })
 
     await addTonConnectSession({
@@ -112,8 +170,6 @@ export function TonConnect() {
       userId: clientId,
       keyId: selectedKey.id.get() || 0,
       walletId: selectedWallet.id,
-      // walletType: selectedWallet.type as unknown as WalletType,
-      // subwalletId: selectedWallet.subwalletId,
     })
   }
 
