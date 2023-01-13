@@ -1,26 +1,30 @@
-import { ITonWalletV3, ITonWalletV4 } from '../../../types'
+import { ITonWallet } from '../../../types'
 import { AddressRow } from '../../AddressRow'
 import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
 import { BlueButton } from '../../UI'
 import { Address } from 'ton'
-import { useWallet } from '@/store/walletState'
+// import { useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
+import { TonConnect } from '@/components/TonConnect/TonConnect'
+import { useSelectedTonWallet } from '@/utils/wallets'
 
 function Wallet() {
-  const currentWallet = useWallet()
-  const wallet = currentWallet.selectedWallet.get() as ITonWalletV3 | ITonWalletV4
+  // const currentWallet = useWallet()
+  // const currentWallet =
+  const wallet = useSelectedTonWallet() as ITonWallet
+  const liteClient = useLiteclient()
+  // as ITonWalletV3 | ITonWalletV4
 
   const [balance, setBalance] = useState('')
 
   const [seqno, setSeqno] = useState('0')
 
   const getSeqno = async () => {
-    const newSeq = await wallet.wallet.getSeqno()
+    const newSeq = await wallet?.wallet.getSeqno()
     setSeqno(newSeq ? newSeq.toString() : '0')
   }
 
-  const liteClient = useLiteclient()
   const updateBalance = async () => {
     const state = await liteClient.getAccountState(
       Address.parse(wallet.address.toString({ bounceable: true, urlSafe: true })),
@@ -73,6 +77,8 @@ function Wallet() {
           </BlueButton>
         </div>
       </div>
+
+      <TonConnect />
 
       <SendTon seqno={seqno} wallet={wallet} updateBalance={updateBalance} />
 

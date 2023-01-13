@@ -12,11 +12,14 @@
   "dependencies": {
     "@hookstate/core": "^4.0.0-rc21",
     "@hookstate/devtools": "^4.0.0-rc21",
-    "@tauri-apps/api": "^1.0.2",
+    "@tauri-apps/api": "^1.2.0",
+    "@tonconnect/protocol": "^2.0.1",
+    "@tonconnect/sdk": "^2.0.5",
     "@types/bn.js": "^5.1.0",
     "autoprefixer": "^10.4.4",
     "bn.js": "^5.2.1",
     "buffer": "^6.0.3",
+    "camelcase-keys": "^8.0.2",
     "clipboardy": "^3.0.0",
     "express": "^4.18.1",
     "knex": "^2.3.0",
@@ -26,6 +29,7 @@
     "react-dom": "^18.1.0",
     "react-jazzicon": "^1.0.4",
     "react-qr-code": "^2.0.7",
+    "react-router-dom": "^6.6.1",
     "reactjs-popup": "^2.0.5",
     "tailwindcss": "^3.1.8",
     "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9",
@@ -33,6 +37,7 @@
     "ton-core": "^0.44.0",
     "ton-crypto": "^3.2.0",
     "ton-lite-client": "npm:@truecarry/ton-lite-client@2.0.0-beta.0",
+    "tonapi-sdk-js": "^0.24.0",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {

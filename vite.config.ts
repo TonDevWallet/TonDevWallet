@@ -7,7 +7,7 @@ import { resolve } from 'node:path'
 export default defineConfig(({ command }) => ({
   plugins: [react()],
   server: {
-    port: 3000,
+    port: 3003,
   },
   base: '',
   optimizeDeps: {

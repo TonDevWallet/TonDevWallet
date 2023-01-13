@@ -1,4 +1,5 @@
 import { KeyPair } from 'ton-crypto'
+import { SavedWallet } from '.'
 
 export interface Key {
   id: number
@@ -9,4 +10,5 @@ export interface Key {
 
   // not in db
   keyPair?: KeyPair
+  wallets?: SavedWallet[]
 }

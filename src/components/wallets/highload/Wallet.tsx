@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
 // import SendNft from './SendNft'
 import { BlueButton } from '../../UI'
-import { useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
+import { TonConnect } from '@/components/TonConnect/TonConnect'
+import { useSelectedTonWallet } from '@/utils/wallets'
 
 function Wallet() {
-  const currentWallet = useWallet()
-  const wallet = currentWallet.selectedWallet.get() as ITonHighloadWalletV2
+  const wallet = useSelectedTonWallet() as ITonHighloadWalletV2
 
   const [balance, setBalance] = useState('')
   const liteClient = useLiteclient()
@@ -65,6 +65,8 @@ function Wallet() {
           </BlueButton>
         </div>
       </div> */}
+
+      <TonConnect />
 
       <SendTon wallet={wallet} />
 

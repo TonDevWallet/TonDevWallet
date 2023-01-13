@@ -3,7 +3,7 @@
   "build": {
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run dev",
-    "devPath": "http://localhost:3000",
+    "devPath": "http://localhost:3003",
     "distDir": "../dist"
   },
   "package": {
@@ -22,6 +22,12 @@
       },
       "path": {
         "all": true
+      },
+     "shell": {
+        "all": false,
+        "execute": false,
+        "open": true,
+        "sidecar": false
       }
     },
     "bundle": {

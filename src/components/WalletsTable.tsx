@@ -1,18 +1,9 @@
-import { setSelectedWallet, useWallet } from '@/store/walletState'
-import { useMemo } from 'react'
-import { ITonExternalWallet, ITonHighloadWalletV2, ITonWallet, IWallet } from '../types'
+import { setSelectedWallet } from '@/store/walletState'
+import { useSelectedTonWallet } from '@/utils/wallets'
+import { ITonHighloadWalletV2, ITonWallet, IWallet } from '../types'
 import { AddressRow } from './AddressRow'
 
-function TonWalletRow({
-  wallet,
-  isSelected,
-
-  setWallet,
-}: {
-  wallet: ITonWallet
-  isSelected: boolean
-  setWallet: (wallet: IWallet) => void
-}) {
+function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: boolean }) {
   return (
     <div
       className="my-2 flex flex-col border"
@@ -34,7 +25,7 @@ function TonWalletRow({
         {isSelected ? (
           <div>Selected</div>
         ) : (
-          <div className="cursor-pointer text-highlight" onClick={() => setWallet(wallet)}>
+          <div className="cursor-pointer text-highlight" onClick={() => setSelectedWallet(wallet)}>
             Use this wallet
           </div>
         )}
@@ -58,12 +49,9 @@ function TonWalletRow({
 function HighloadWalletRow({
   wallet,
   isSelected,
-
-  setWallet,
 }: {
   wallet: ITonHighloadWalletV2
   isSelected: boolean
-  setWallet: (wallet: IWallet) => void
 }) {
   return (
     <div
@@ -86,7 +74,7 @@ function HighloadWalletRow({
         {isSelected ? (
           <div>Selected</div>
         ) : (
-          <div className="cursor-pointer text-highlight" onClick={() => setWallet(wallet)}>
+          <div className="cursor-pointer text-highlight" onClick={() => setSelectedWallet(wallet)}>
             Use this wallet
           </div>
         )}
@@ -107,32 +95,32 @@ function HighloadWalletRow({
   )
 }
 
-function ExternalWalletRow({
-  wallet,
-  isSelected,
+// function ExternalWalletRow({
+//   wallet,
+//   isSelected,
 
-  setWallet,
-}: {
-  wallet: ITonExternalWallet
-  isSelected: boolean
-  setWallet: (wallet: IWallet) => void
-}) {
-  return (
-    <div className="my-2 flex flex-col border" key={wallet.id}>
-      <div className="flex justify-between border-b px-1">
-        <div className="">Wallet {wallet.type}</div>
+//   setWallet,
+// }: {
+//   wallet: ITonExternalWallet
+//   isSelected: boolean
+//   setWallet: (wallet: IWallet) => void
+// }) {
+//   return (
+//     <div className="my-2 flex flex-col border" key={wallet.id}>
+//       <div className="flex justify-between border-b px-1">
+//         <div className="">Wallet {wallet.type}</div>
 
-        {isSelected ? (
-          <div>Selected</div>
-        ) : (
-          <div className="cursor-pointer text-highlight" onClick={() => setWallet(wallet)}>
-            Use this wallet
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+//         {isSelected ? (
+//           <div>Selected</div>
+//         ) : (
+//           <div className="cursor-pointer text-highlight" onClick={() => setWallet(wallet.id)}>
+//             Use this wallet
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   )
+// }
 
 export function WalletsTable({
   walletsToShow,
@@ -145,10 +133,8 @@ export function WalletsTable({
 
   // setWallet: (wallet: IWallet) => void
 }) {
-  const wallet = useWallet()
-
-  const currentWallet = useMemo(() => wallet.selectedWallet.get(), [wallet.selectedWallet])
-  console.log('currentWallet', currentWallet)
+  // const currentWallet = useMemo(() => wallet.selectedWallet.get(), [wallet.selectedWallet])
+  const currentWallet = useSelectedTonWallet()
 
   return (
     <>
@@ -159,21 +145,22 @@ export function WalletsTable({
           <HighloadWalletRow
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}
-            setWallet={setSelectedWallet}
-            key={wallet.id}
-          />
-        ) : wallet.type === 'external' ? (
-          <ExternalWalletRow
-            wallet={wallet}
-            isSelected={currentWallet?.id === wallet.id}
-            setWallet={setSelectedWallet}
+            // setWallet={setSelectedWallet}
             key={wallet.id}
           />
         ) : (
+          // : wallet.type === 'external' ? (
+          //   <ExternalWalletRow
+          //     wallet={wallet}
+          //     isSelected={currentWallet?.id === wallet.id}
+          //     setWallet={setSelectedWallet}
+          //     key={wallet.id}
+          //   />
+          // )
           <TonWalletRow
             wallet={wallet}
             isSelected={currentWallet?.id === wallet.id}
-            setWallet={setSelectedWallet}
+            // setWallet={setSelectedWallet}
             key={wallet.id}
           />
         )
