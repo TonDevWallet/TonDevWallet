@@ -1,13 +1,3 @@
-//! A simple echo server.
-//!
-//! You can test this out by running:
-//!
-//!     cargo run --example server 127.0.0.1:12345
-//!
-//! And then in another window run:
-//!
-//!     cargo run --example client ws://127.0.0.1:12345/
-
 use std::borrow::Cow;
 use std::{env};
 
@@ -41,11 +31,6 @@ async fn main() -> Result<(), Box<dyn stdError>> {
     info!("Listening on: {}", addr);
 
     while let Ok((stream, _)) = listener.accept().await {
-        // tokio::spawn(accept_connection(stream));
-        // tokio::spawn(async move {
-        //     accept_connection(stream).await
-        // })
-
         tokio::spawn(async move {
             // Process each socket concurrently.
             let res = accept_connection(stream).await;
@@ -79,28 +64,9 @@ async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
 
     let auth_callback = |req: &Request, res: Response| {
         info!("req uri {} {:?}", req.uri(), req.uri().host(), );
-
-        // let url = match
-// Url::parse_with_params(input, iter)
-
-        // let mut url = match Url::parse(&mut uri) {
-        //     Ok(url) => url,
-        //     Err(err) => {
-        //         info!("Parse error {:?}", err);
-        //         return Err(http::Response::<Option<String>>::new(None))
-        //     }
-        // };
-        // info!("Got url");
-
-        // let url = Url::parse(&mut uri).unwrap_or_else(|e| return Err(http::Response::<Option<String>>::new(None)))
-        // let pairs = url.query();
-        // let query = uri.query();
-        // let mut pairs = url.query_pairs();
         let mut pairs = form_urlencoded::parse(req.uri().query().unwrap_or("").as_bytes());
         info!("Got pairs");
 
-
-        
         loop {
             info!("Got pairs loop");
             let (k, v) = match pairs.next() {
@@ -128,21 +94,6 @@ async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
 
         if port == 0 {
             return Err(http::Response::<Option<String>>::new(None));
-            // match a {
-            //     // Auth::Bearer { token } => {
-            //     //     if format!("Bearer {}", token)
-            //     //         != h.to_str().unwrap()
-            //     //     {
-            //             return Err(
-            //                 http::Response::<Option<String>>::new(None),
-            //             );
-            //         }
-            //     }
-            //     Auth::Basic {
-            //         user: _user,
-            //         password: _password,
-            //     } => { /* Not needed for tests at the moment */ }
-            // }
         }
         Ok(res)
     };
@@ -173,32 +124,6 @@ async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
 
     Ok(())
 }
-
-
-
-// pub trait Destruct {}
-// impl<T, E> Result<T, E> {
-//     impl {
-        
-    
-// pub const fn unwrap_or<T>(self, default: T) -> T
-//     // where
-//         // T: ~const Destruct,
-//         // E: ~const Destruct,
-//     {
-//         match self {
-//             Ok(t) => t,
-//             // FIXME: ~const Drop doesn't quite work right yet
-//             #[allow(unused_variables)]
-//             Err(e) => default,
-//         }
-//     }
-// }
-// }
-
-// fn match_error<Result<T, E>() {
-//     match()
-// }
 
 async fn ws_to_tcp(
     mut ro: SplitStream<WebSocketStream<TcpStream>>,
