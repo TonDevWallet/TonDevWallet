@@ -109,7 +109,8 @@ function getLiteClient(isTestnet: boolean): LiteClient {
       const pubkey = encodeURIComponent(ls.id.key)
       engines.push(
         new LiteSingleEngine({
-          host: `wss://ws.tonlens.com/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`,
+          // host: `wss://ws.tonlens.com/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`,
+          host: `ws://localhost:12345/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`,
           publicKey: Buffer.from(ls.id.key, 'base64'),
           client: 'ws',
         })

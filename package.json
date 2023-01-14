@@ -22,7 +22,7 @@
     "camelcase-keys": "^8.0.2",
     "clipboardy": "^3.0.0",
     "express": "^4.18.1",
-    "knex": "^2.3.0",
+    "knex": "github:TrueCarry/knex#2b4a57c840ed45de6737daaaa19975e283af8e2c",
     "postcss": "^8.4.16",
     "react": "^18.1.0",
     "react-async-hook": "^4.0.0",
