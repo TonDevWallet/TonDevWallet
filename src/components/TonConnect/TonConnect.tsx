@@ -1,4 +1,4 @@
-import { useLiteclient } from '@/store/liteClient'
+import { LiteClientState, useLiteclient } from '@/store/liteClient'
 import { addTonConnectSession } from '@/store/tonConnect'
 import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
 import { CreateMessage, createTonProofMessage, SignatureCreate } from '@/utils/tonProof'
@@ -7,12 +7,13 @@ import { getWalletFromKey } from '@/utils/wallets'
 import { ConnectEventSuccess, CHAIN, ConnectRequest, TonProofItem } from '@tonconnect/protocol'
 import { useRef } from 'react'
 import { Cell, beginCell, storeStateInit, StateInit } from 'ton-core'
-import { keyPairFromSeed } from 'ton-crypto'
+import { KeyPair } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import nacl from 'tweetnacl'
 import { BlueButton } from '../UI'
 import { fetch as tFetch } from '@tauri-apps/api/http'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
+import { IWallet } from '@/types'
 
 export function TonConnect() {
   const nameRef = useRef<HTMLInputElement | null>(null)
@@ -32,28 +33,6 @@ export function TonConnect() {
     return <></>
   }
 
-  const seed = selectedKey.seed.get() || ''
-  const keyPair = keyPairFromSeed(Buffer.from(seed, 'hex'))
-
-  let address: string
-  let stateInit: Cell
-  if (wallet?.type === 'highload') {
-    address = wallet.address.toRawString()
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
-      .endCell()
-  } else if (wallet?.type === 'v3R2') {
-    address = wallet.address.toRawString()
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-      .endCell()
-  } else if (wallet?.type === 'v4R2') {
-    address = wallet.address.toRawString()
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-      .endCell()
-  }
-
   const doBridgeAuth = async () => {
     if (!selectedWallet) {
       return
@@ -62,8 +41,7 @@ export function TonConnect() {
     const parsed = new URL(input)
     console.log('parse', parsed, parsed.searchParams.get('id'))
 
-    // protocol.SessionCrypto
-    const sessionKeypair = nacl.box.keyPair()
+    const sessionKeypair = nacl.box.keyPair() as KeyPair
     const clientId = parsed.searchParams.get('id') || '' // '230f1e4df32364888a5dbd92a410266fcb974b73e30ff3e546a654fc8ee2c953'
     const rString = parsed.searchParams.get('r')
     const r = rString ? (JSON.parse(rString) as ConnectRequest) : undefined
@@ -85,60 +63,7 @@ export function TonConnect() {
     const serviceUrl = new URL(metaInfo.url)
     const host = serviceUrl.host
 
-    const proof = r?.items.find((i) => i.name === 'ton_proof') as TonProofItem
-
-    const timestamp = Math.floor(Date.now())
-
-    const domain = {
-      LengthBytes: Buffer.from(host).length,
-      Value: host,
-    }
-
-    const data: ConnectEventSuccess = {
-      event: 'connect',
-      payload: {
-        device: {
-          platform: 'windows',
-          appName: 'ton-dev-wallet',
-          appVersion: '0.1.0',
-          maxProtocolVersion: 2,
-          features: ['SendTransaction'],
-        },
-        items: [
-          {
-            name: 'ton_addr',
-            address,
-            network: CHAIN.MAINNET,
-            walletStateInit: stateInit.toBoc().toString('base64'),
-          },
-        ],
-      },
-    }
-
-    if (proof) {
-      const signMessage = createTonProofMessage({
-        address: wallet.address,
-        domain,
-        payload: proof.payload,
-        stateInit: stateInit.toBoc().toString('base64'),
-        timestamp,
-      })
-      const signature = SignatureCreate(keyPair.secretKey, await CreateMessage(signMessage))
-      data.payload.items.push({
-        name: 'ton_proof',
-        proof: {
-          timestamp,
-          domain: {
-            lengthBytes: domain.LengthBytes,
-            value: domain.Value,
-          },
-          payload: proof.payload,
-          signature: signature.toString('base64'),
-        },
-      })
-    }
-
-    await sendTonConnectMessage(data, sessionKeypair.secretKey, clientId)
+    await sendTonConnectStartMessage(wallet, host, sessionKeypair, clientId, r)
 
     await addTonConnectSession({
       secretKey: Buffer.from(sessionKeypair.secretKey),
@@ -157,4 +82,83 @@ export function TonConnect() {
       <input type="text" ref={nameRef} id="nameRef" className="border w-3/4 outline-none" />
     </div>
   )
+}
+
+export async function sendTonConnectStartMessage(
+  wallet: IWallet,
+  host: string,
+  sessionKeyPair: KeyPair,
+  sessionClientId: string,
+  connectRequest?: ConnectRequest
+) {
+  let stateInit: Cell
+  if (wallet?.type === 'highload') {
+    stateInit = beginCell()
+      .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
+      .endCell()
+  } else if (wallet?.type === 'v3R2') {
+    stateInit = beginCell()
+      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+      .endCell()
+  } else {
+    // if (wallet?.type === 'v4R2') {
+    stateInit = beginCell()
+      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+      .endCell()
+  }
+
+  const walletKeyPair = wallet.key
+
+  const proof = connectRequest?.items.find((i) => i.name === 'ton_proof') as TonProofItem
+  const timestamp = Math.floor(Date.now())
+  const domain = {
+    LengthBytes: Buffer.from(host).length,
+    Value: host,
+  }
+
+  const data: ConnectEventSuccess = {
+    event: 'connect',
+    payload: {
+      device: {
+        platform: 'windows',
+        appName: 'ton-dev-wallet',
+        appVersion: '0.1.0',
+        maxProtocolVersion: 2,
+        features: ['SendTransaction'],
+      },
+      items: [
+        {
+          name: 'ton_addr',
+          address: wallet.address.toRawString(),
+          network: LiteClientState.testnet.get() ? CHAIN.TESTNET : CHAIN.MAINNET,
+          walletStateInit: stateInit.toBoc().toString('base64'),
+        },
+      ],
+    },
+  }
+
+  if (proof) {
+    const signMessage = createTonProofMessage({
+      address: wallet.address,
+      domain,
+      payload: proof.payload,
+      stateInit: stateInit.toBoc().toString('base64'),
+      timestamp,
+    })
+    const signature = SignatureCreate(walletKeyPair.secretKey, await CreateMessage(signMessage))
+    data.payload.items.push({
+      name: 'ton_proof',
+      proof: {
+        timestamp,
+        domain: {
+          lengthBytes: domain.LengthBytes,
+          value: domain.Value,
+        },
+        payload: proof.payload,
+        signature: signature.toString('base64'),
+      },
+    })
+  }
+
+  await sendTonConnectMessage(data, sessionKeyPair.secretKey, sessionClientId)
 }
