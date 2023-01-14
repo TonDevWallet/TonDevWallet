@@ -28,7 +28,7 @@ specifiers:
   eslint-plugin-promise: ^6.0.0
   eslint-plugin-react: ^7.29.4
   express: ^4.18.1
-  knex: ^2.3.0
+  knex: npm:@truecarry/knex@^2.3.0
   postcss: ^8.4.16
   prettier: ^2.6.2
   react: ^18.1.0
@@ -62,7 +62,7 @@ dependencies:
   camelcase-keys: 8.0.2
   clipboardy: 3.0.0
   express: 4.18.2
-  knex: github.com/TrueCarry/knex/2b4a57c840ed45de6737daaaa19975e283af8e2c
+  knex: /@truecarry/knex/2.3.0
   postcss: 8.4.20
   react: 18.2.0
   react-async-hook: 4.0.0_react@18.2.0
@@ -789,6 +789,52 @@ packages:
       tweetnacl: 1.0.3
     transitivePeerDependencies:
       - encoding
+    dev: false
+
+  /@truecarry/knex/2.3.0:
+    resolution: {integrity: sha512-ahLC733cwksxeJcFeTSswalAqgnqy4dd/lQ+svIJ+mfBs+Voxv+jQy3vNrscr8hrRkd1rAr8ovveCWS/WH/0cA==}
+    engines: {node: '>=12'}
+    hasBin: true
+    peerDependencies:
+      better-sqlite3: '*'
+      mysql: '*'
+      mysql2: '*'
+      pg: '*'
+      pg-native: '*'
+      sqlite3: '*'
+      tedious: '*'
+    peerDependenciesMeta:
+      better-sqlite3:
+        optional: true
+      mysql:
+        optional: true
+      mysql2:
+        optional: true
+      pg:
+        optional: true
+      pg-native:
+        optional: true
+      sqlite3:
+        optional: true
+      tedious:
+        optional: true
+    dependencies:
+      colorette: 2.0.19
+      commander: 9.4.1
+      debug: 4.3.4
+      escalade: 3.1.1
+      esm: 3.2.25
+      get-package-type: 0.1.0
+      getopts: 2.3.0
+      interpret: 2.2.0
+      lodash: 4.17.21
+      pg-connection-string: 2.5.0
+      rechoir: 0.8.0
+      resolve-from: 5.0.0
+      tarn: 3.0.2
+      tildify: 2.0.0
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /@truecarry/ton-lite-client/2.0.0-beta.0_l74i2356aoedurpqlhrqpgf3um:
@@ -3939,55 +3985,6 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
-
-  github.com/TrueCarry/knex/2b4a57c840ed45de6737daaaa19975e283af8e2c:
-    resolution: {registry: https://registry.npmjs.org/, tarball: https://codeload.github.com/TrueCarry/knex/tar.gz/2b4a57c840ed45de6737daaaa19975e283af8e2c}
-    name: knex
-    version: 2.3.0
-    engines: {node: '>=12'}
-    hasBin: true
-    requiresBuild: true
-    peerDependencies:
-      better-sqlite3: '*'
-      mysql: '*'
-      mysql2: '*'
-      pg: '*'
-      pg-native: '*'
-      sqlite3: '*'
-      tedious: '*'
-    peerDependenciesMeta:
-      better-sqlite3:
-        optional: true
-      mysql:
-        optional: true
-      mysql2:
-        optional: true
-      pg:
-        optional: true
-      pg-native:
-        optional: true
-      sqlite3:
-        optional: true
-      tedious:
-        optional: true
-    dependencies:
-      colorette: 2.0.19
-      commander: 9.4.1
-      debug: 4.3.4
-      escalade: 3.1.1
-      esm: 3.2.25
-      get-package-type: 0.1.0
-      getopts: 2.3.0
-      interpret: 2.2.0
-      lodash: 4.17.21
-      pg-connection-string: 2.5.0
-      rechoir: 0.8.0
-      resolve-from: 5.0.0
-      tarn: 3.0.2
-      tildify: 2.0.0
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
 
   github.com/tauri-apps/tauri-plugin-sql/013b002d72dde1a77ce6cda60007adbe36e146c9:
     resolution: {tarball: https://codeload.github.com/tauri-apps/tauri-plugin-sql/tar.gz/013b002d72dde1a77ce6cda60007adbe36e146c9}
