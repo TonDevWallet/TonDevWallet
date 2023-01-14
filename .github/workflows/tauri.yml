@@ -39,7 +39,7 @@ jobs:
       fail-fast: false
       matrix:
         # platform: [macos-latest, ubuntu-20.04, windows-latest]
-        platform: [macos-latest, windows-latest]
+        platform: [macos-latest,  ubuntu-20.04, windows-latest]
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -70,6 +70,7 @@ jobs:
           path: |
             ./src-tauri/target/release/bundle/**/*.msi
             ./src-tauri/target/release/bundle/**/*.dmg
+            ./src-tauri/target/release/bundle/*
         # with:
         #   releaseId: ${{ needs.create-release.outputs.release_id }}
 
