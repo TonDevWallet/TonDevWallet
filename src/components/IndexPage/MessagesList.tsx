@@ -83,10 +83,11 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
     tonWallet,
     walletKeyPair,
     s.payload.messages.map((m) => ({
-      body: Cell.fromBase64(m.payload.get()),
+      body: m.payload.get() ? Cell.fromBase64(m.payload.get()!) : undefined,
       destination: Address.parse(m.address.get()),
       amount: BigInt(m.amount.get()),
       mode: 3,
+      state: m.stateInit.get() ? Cell.fromBase64(m.stateInit.get()!) : undefined,
     }))
   )
 

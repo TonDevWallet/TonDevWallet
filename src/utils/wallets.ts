@@ -23,6 +23,7 @@ import {
   external,
   internal,
   Cell,
+  loadStateInit,
 } from 'ton'
 import { KeyPair, keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
@@ -133,14 +134,20 @@ function getExternalMessageCellFromTonWallet(
     const transfer = wallet.createTransfer({
       seqno: await wallet.getSeqno(),
       secretKey: keyPair.secretKey,
-      messages: transfers.map((m) =>
-        internal({
+      messages: transfers.map((m) => {
+        const msg = internal({
           body: m.body,
           to: m.destination,
           value: m.amount,
           bounce: m.bounce,
+          // init: m.state,
         })
-      ),
+
+        if (m.state) {
+          msg.init = loadStateInit(m.state.asSlice())
+        }
+        return msg
+      }),
       sendMode: 3,
     })
     const ext = external({

@@ -8,7 +8,8 @@ export interface ConnectMessageTransactionPayload {
   messages: {
     address: string
     amount: string
-    payload: string // boc
+    payload?: string // boc
+    stateInit?: string
   }[]
   valid_until: number // date now
 }
