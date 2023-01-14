@@ -122,7 +122,10 @@ async fn ws_to_tcp(
     info!("got ws to tcp start");
 
     loop {
-        let msg = ro.try_next().await?.unwrap();
+        let msg = match ro.try_next().await? {
+          Some(v) => v,
+          None => break
+        };
 
         if msg.is_binary() {
             info!("got ws to tcp");
@@ -131,6 +134,8 @@ async fn ws_to_tcp(
             info!("writen to tcp {}", data.len());
         }
     }
+
+    Ok(())
 }
 
 async fn tcp_to_ws(

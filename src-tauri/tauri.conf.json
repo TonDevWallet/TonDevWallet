@@ -28,6 +28,9 @@
         "execute": false,
         "open": true,
         "sidecar": false
+      },
+      "notification": {
+        "all": true
       }
     },
     "bundle": {

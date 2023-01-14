@@ -1,26 +1,24 @@
 import { addConnectMessage } from '@/store/connectMessages'
 import { useLiteclient } from '@/store/liteClient'
 import { updateSessionEventId, useTonConnectSessions } from '@/store/tonConnect'
-import { useWalletListState } from '@/store/walletsListState'
-import { getWalletFromKey } from '@/utils/wallets'
-import { Body, fetch as tFetch } from '@tauri-apps/api/http'
 import {
   Base64,
   hexToByteArray,
   SendTransactionRpcRequest,
   SessionCrypto,
 } from '@tonconnect/protocol'
-import { useEffect, useState } from 'react'
-import { Cell, Address } from 'ton-core'
-import { keyPairFromSeed } from 'ton-crypto'
+import { useEffect } from 'react'
 import { LiteClient } from 'ton-lite-client'
 import nacl from 'tweetnacl'
+import {
+  isPermissionGranted,
+  requestPermission,
+  sendNotification,
+} from '@tauri-apps/api/notification'
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
-  const [listners, setListeners] = useState<EventSource[]>([])
   const liteClient = useLiteclient() as unknown as LiteClient
-  const walletsList = useWalletListState()
 
   useEffect(() => {
     const bridgeUrl = 'https://bridge.tonapi.io/bridge'
@@ -75,63 +73,23 @@ export function TonConnectListener() {
           wallet_id: s.walletId,
           status: 0,
         })
-
-        const selectedKey = walletsList.find((i) => i.id.get() === s.keyId)
-
-        if (!selectedKey || !selectedKey.seed) {
-          console.log('walletsList', selectedKey, walletsList.get(), s.walletId)
-          throw new Error('no wallet')
+        let permissionGranted = await isPermissionGranted()
+        if (!permissionGranted) {
+          const permission = await requestPermission()
+          permissionGranted = permission === 'granted'
         }
-
-        const w = selectedKey.wallets.get()?.find((w) => w.id === s.walletId)
-        if (!w) {
-          console.log('walletsList', selectedKey, walletsList.get(), s.walletId)
-          throw new Error('no wallet')
+        if (permissionGranted) {
+          sendNotification({ title: 'New message', body: `From ${s.name}` })
         }
-
-        const walletKeyPair = keyPairFromSeed(Buffer.from(selectedKey.seed.get() || '', 'hex'))
-
-        const wallet = getWalletFromKey(liteClient, selectedKey, w)
-        if (!wallet) {
-          throw new Error('no wallet')
-        }
-
-        const messageCell: Cell = await wallet.getExternalMessageCell(
-          walletKeyPair,
-          info.messages.map((m) => ({
-            body: Cell.fromBase64(m.payload),
-            destination: Address.parse(m.address),
-            amount: BigInt(m.amount),
-            mode: 3,
-          }))
-        )
-        console.log('message boc', messageCell.toBoc().toString('base64'))
-        try {
-          const txInfo = await tFetch('https://tonapi.io/v1/send/estimateTx', {
-            method: 'POST',
-            body: Body.json({
-              boc: messageCell.toBoc().toString('base64'),
-            }),
-          })
-          console.log('info ok', txInfo)
-        } catch (e) {}
-        console.log('send ok')
-
-        // w.send()
-        // liteClient.sendMessage(messageCell.toBoc())
 
         console.log('update before', e)
         updateSessionEventId(s.id, parseInt(e.lastEventId))
       })
 
-      // protocol.
-      // await fetch(`https://bridge.tonapi.io/bridge/message?client_id=${clientId}`, {
-      //   method: 'POST',
-      // })
       listeners.push(sse)
     }
 
-    setListeners(listeners)
+    // setListeners(listeners)
 
     return () => {
       for (const listener of listeners) {
@@ -139,9 +97,5 @@ export function TonConnectListener() {
       }
     }
   }, [liteClient, sessions])
-  return (
-    <>
-      <div>Listeners: {listners.length}</div>
-    </>
-  )
+  return <></>
 }

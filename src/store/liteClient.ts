@@ -15,9 +15,17 @@ export function useLiteclient() {
   return useHookstate(LiteClientState).liteClient.get({ noproxy: true })
 }
 
+export function useLiteclientState() {
+  return useHookstate(LiteClientState)
+}
+
 export function changeLiteClient(testnet: boolean) {
   console.log('changeLiteClient', testnet)
   const newLiteClient = getLiteClient(testnet)
+
+  if (LiteClientState.liteClient.get()) {
+    LiteClientState.liteClient.get().engine.close()
+  }
   LiteClientState.set({
     testnet,
     liteClient: newLiteClient,
@@ -34,10 +42,11 @@ function getTempClient() {
 
   const queue: queueItem[] = []
   let localClient: LiteClient | undefined
+  let clientResolved = false
 
   const createShim = (name: string) => {
     return (...args: unknown[]) => {
-      if (localClient) {
+      if (clientResolved && localClient) {
         return localClient[name](...args)
       }
 
@@ -78,12 +87,20 @@ function getTempClient() {
     'getAllShardsInfo',
     'listBlockTransactions',
     'getFullBlock',
+    // 'engine',
   ]) {
     tempWait[name] = createShim(name)
   }
 
+  localClient = tempWait as LiteClient
+
   const endWait = (client: LiteClient) => {
     localClient = client
+    clientResolved = true
+
+    LiteClientState.merge({
+      liteClient: localClient,
+    })
     for (const item of queue) {
       // console.log('item work', item, lc)
       if (client && client[item.method]) {
@@ -95,7 +112,7 @@ function getTempClient() {
   }
 
   return {
-    tmpClient: tempWait as LiteClient,
+    tmpClient: localClient as LiteClient,
     endWait,
   }
 }

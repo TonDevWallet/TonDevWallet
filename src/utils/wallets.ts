@@ -1,7 +1,7 @@
 import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import { SignCell } from '@/contracts/utils/SignExternalMessage'
-import { useLiteclient } from '@/store/liteClient'
+import { useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
 import {
   GetExternalMessageCell,
@@ -177,22 +177,26 @@ export function useWalletExternalMessageCell(
 
 export function useTonapiTxInfo(cell: Cell | undefined) {
   const [response, setResponse] = useState<AccountEvent | undefined>()
+  const liteClientState = useLiteclientState()
 
   useEffect(() => {
     if (cell) {
-      tFetch<AccountEvent>('https://tonapi.io/v1/send/estimateTx', {
-        method: 'POST',
-        body: Body.json({
-          boc: cell.toBoc().toString('base64'),
-        }),
-      }).then((txInfo) => {
+      tFetch<AccountEvent>(
+        `https://${liteClientState.testnet.get() ? 'testnet.' : ''}tonapi.io/v1/send/estimateTx`,
+        {
+          method: 'POST',
+          body: Body.json({
+            boc: cell.toBoc().toString('base64'),
+          }),
+        }
+      ).then((txInfo) => {
         console.log('useTonapiTxInfo', cell.toBoc().toString('base64'), txInfo)
         setResponse(camelcaseKeys(txInfo.data, { deep: true }))
       })
     } else {
       setResponse(undefined)
     }
-  }, [cell])
+  }, [cell, liteClientState.testnet])
 
   return response
 }

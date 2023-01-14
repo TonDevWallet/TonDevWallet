@@ -4,12 +4,8 @@ import Wallet from '@/components/wallets/tonweb/Wallet'
 import HighloadWallet from '@/components/wallets/highload/Wallet'
 
 import { IWallet } from '@/types'
-// import { useProvider } from '@/utils'
 import { WalletGenerator } from '@/components/WalletGenerator'
 import { WalletsTable } from '@/components/WalletsTable'
-import { NetworkSettings } from '@/components/NetworkSettings'
-
-// const provider = new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC')
 
 import {
   setSelectedWallet,
@@ -62,47 +58,12 @@ export function WalletPage() {
 
     const wallets: IWallet[] =
       key.wallets.get()?.map((w) => {
-        // const  =
-        // const k = wallet.get().key!
         const newWallet = getWalletFromKey(liteClient, key, w)
         if (!newWallet) {
           throw new Error('no wallet')
         }
 
         return newWallet
-        // const wallet =
-        //   w.type === 'highload'
-        //     ? new HighloadWalletV2({
-        //         publicKey: keyPair.publicKey,
-        //         subwalletId: 1,
-        //         workchain: 0,
-        //       })
-        //     : w.type === 'v3R2'
-        //     ? openLiteClient(
-        //         liteClient,
-        //         WalletContractV3R2.create({
-        //           workchain: 0,
-        //           publicKey: keyPair.publicKey,
-        //           walletId: w.subwallet_id,
-        //         })
-        //       )
-        //     : openLiteClient(
-        //         liteClient,
-        //         WalletContractV4.create({
-        //           workchain: 0,
-        //           publicKey: keyPair.publicKey,
-        //           walletId: w.subwallet_id,
-        //         })
-        //       )
-
-        // return {
-        //   type: w.type,
-        //   address: wallet.address,
-        //   wallet,
-        //   key: keyPair,
-        //   id: w.id,
-        //   subwalletId: 0,
-        // } as IWallet
       }) || []
 
     setSelectedWallet(null)
@@ -116,24 +77,7 @@ export function WalletPage() {
       {/* <div className="flex flex-1"> */}
       <div className="md:max-w-xl min-w-0 w-full flex-grow-0 px-4 flex flex-col mt-8">
         <h1 className="font-bold text-xl text-accent">TON Wallet</h1>
-        Network
-        <NetworkSettings
-        // apiUrl={apiUrl}
-        // apiKey={apiKey}
-        // setApiUrl={setApiUrl}
-        // setApiKey={setApiKey}
-        />
-        <WalletGenerator
-        // words={words}
-        // walletId={walletId}
-        // keyPair={keyPair}
-        // seed={seed}
-        // setWords={setWords}
-        // setWallet={setWallet}
-        // setKeyPair={setKeyPair}
-        // setWalletId={setWalletId}
-        // setSeed={setSeed}
-        />
+        <WalletGenerator />
         <WalletsTable walletsToShow={walletsToShow} />
       </div>
       <div className="md:max-w-xl min-w-0 w-full flex-grow-0 px-4 flex flex-col mt-16">
