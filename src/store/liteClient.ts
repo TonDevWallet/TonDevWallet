@@ -102,11 +102,13 @@ function getTempClient() {
 
 function getLiteClient(isTestnet: boolean): LiteClient {
   const { tmpClient, endWait } = getTempClient()
+  console.log('getLiteClient', isTestnet)
   setTimeout(async () => {
     const data = isTestnet ? networkConfig.testnetConfig : networkConfig.mainnetConfig
 
-    const tauri = await tauriState.promise
+    const tauri = (await tauriState.promise) || tauriState
     if (!tauri) {
+      console.log('no tauri', tauri)
       return
     }
 

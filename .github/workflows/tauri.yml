@@ -70,7 +70,8 @@ jobs:
           path: |
             ./src-tauri/target/release/bundle/**/*.msi
             ./src-tauri/target/release/bundle/**/*.dmg
-            ./src-tauri/target/release/bundle/*
+            ./src-tauri/target/release/bundle/**/*.AppImage
+            ./src-tauri/target/release/bundle/**/*.deb
         # with:
         #   releaseId: ${{ needs.create-release.outputs.release_id }}
 
