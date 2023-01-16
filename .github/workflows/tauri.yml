@@ -66,7 +66,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.name }}-binaries
+          name: ${{ matrix.platform }}-binaries
           path: |
             ./src-tauri/target/release/bundle/**/*.msi
             ./src-tauri/target/release/bundle/**/*.dmg
