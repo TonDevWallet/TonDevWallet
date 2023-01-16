@@ -23,7 +23,11 @@ export function useSelectedKey() {
   const s = useHookstate(state)
   const walletsList = useWalletListState()
 
-  return useMemo(() => walletsList.find((k) => k.id.get() === s.keyId.get()), [state.keyId])
+  return useMemo(() => {
+    const wallet = walletsList.find((k) => k.id.get() === s.keyId.get())
+    console.log('useSelectedKey update', s.keyId.get(), walletsList, wallet, wallet?.id.get())
+    return wallet
+  }, [s.keyId, walletsList])
 }
 
 export function useSelectedWallet() {
@@ -46,11 +50,11 @@ export async function setWalletKey(keyId: number /* key: Key */) {
     return
   }
 
-  if (key.seed && !key.keyPair.get()) {
-    key.merge({
-      keyPair: keyPairFromSeed(Buffer.from(key.get().seed || '', 'hex')),
-    })
-  }
+  // if (key.seed && !key.keyPair.get()) {
+  //   key.merge({
+  //     keyPair: keyPairFromSeed(Buffer.from(key.get().seed || '', 'hex')),
+  //   })
+  // }
   state.keyId.set(key.id.get())
 }
 

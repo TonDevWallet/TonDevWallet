@@ -4,7 +4,7 @@ import { hookstate, useHookstate } from '@hookstate/core'
 import { Knex } from 'knex'
 import { getWalletState, setWalletKey } from './walletState'
 import { NavigateFunction } from 'react-router-dom'
-import { SavedWallet } from '@/types'
+import { SavedWallet, WalletType } from '@/types'
 
 const state = hookstate<Key[]>(() => getWallets())
 
@@ -107,4 +107,43 @@ export async function saveKeyAndWallets(
   }
 
   navigate(`/wallets/${newWallet?.id}`)
+}
+
+export async function CreateNewKeyWallet({
+  type,
+  subwalletId,
+  keyId,
+}: {
+  type: WalletType
+  subwalletId: number
+  keyId: number
+}) {
+  const db = await getDatabase()
+  const wallets = await db<SavedWallet>('wallets')
+    .insert({
+      type,
+      key_id: keyId,
+      subwallet_id: subwalletId,
+    })
+    .returning('*')
+
+  const walletState = getWalletState()
+  const stateKey = state.find((k) => k.id.get() === walletState.keyId.get())
+  console.log('stateKey?', state)
+
+  if (stateKey) {
+    console.log('merge', stateKey, wallets)
+    stateKey.wallets.merge(wallets)
+  }
+}
+
+export async function DeleteKeyWallet(walletId: number) {
+  const db = await getDatabase()
+  await db<SavedWallet>('wallets')
+    .where({
+      id: walletId,
+    })
+    .delete()
+
+  updateWalletsList()
 }

@@ -94,7 +94,7 @@ export function SavedWalletsList() {
         <NavLink
           to="/new_wallet"
           className={({ isActive }) =>
-            'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center' +
+            'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center ' +
             (isActive ? 'bg-gray-200' : '')
           }
         >

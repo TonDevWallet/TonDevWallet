@@ -9,6 +9,6 @@ export interface Key {
   name: string
 
   // not in db
-  keyPair?: KeyPair
+  // keyPair?: KeyPair
   wallets?: SavedWallet[]
 }

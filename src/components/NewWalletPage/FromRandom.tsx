@@ -1,7 +1,8 @@
 import { useDatabase } from '@/db'
+import { useKeyPair } from '@/hooks/useKeyPair'
 import { saveKeyAndWallets } from '@/store/walletsListState'
 import { Key } from '@/types/Key'
-import { useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { mnemonicValidate, mnemonicToSeed, keyPairFromSeed, mnemonicNew } from 'ton-crypto'
 import Copier from '../copier'
@@ -19,8 +20,13 @@ export function FromRandom() {
     seed: undefined,
     wallet_id: 0,
     words: '', // target.value,
-    keyPair: undefined,
+    // keyPair: undefined,
   })
+
+  const generateNewMnemonic = async () => {
+    const mnemonic = await mnemonicNew()
+    onWordsChange(mnemonic.join(' '))
+  }
 
   const onWordsChange = async (value: string) => {
     try {
@@ -36,7 +42,7 @@ export function FromRandom() {
           seed: Buffer.from(ls).toString('hex'),
           wallet_id: 0,
           words: mnemonic.join(' '),
-          keyPair: keyPairFromSeed(ls),
+          // keyPair: keyPairFromSeed(ls),
         })
         // setSelectedWallet(null)
       } else {
@@ -46,7 +52,7 @@ export function FromRandom() {
           seed: undefined,
           wallet_id: 0,
           words: mnemonic.join(' '), // target.value,
-          keyPair: undefined,
+          // keyPair: undefined,
         })
         // setSelectedWallet(null)
       }
@@ -55,20 +61,21 @@ export function FromRandom() {
     }
   }
 
+  useEffect(() => {
+    if (words === '') {
+      generateNewMnemonic()
+    }
+  }, [])
+
+  const walletKeyPair = useKeyPair(mnemonicKey.seed)
+
   return (
     <div>
       <div className="flex flex-col">
-        <BlueButton
-          onClick={async () => {
-            const mnemonic = await mnemonicNew()
-            onWordsChange(mnemonic.join(' '))
-          }}
-        >
-          Generate mnemonic
-        </BlueButton>
+        <BlueButton onClick={generateNewMnemonic}>Generate mnemonic</BlueButton>
       </div>
 
-      {mnemonicKey.keyPair && mnemonicKey.seed && (
+      {mnemonicKey.seed && (
         <>
           <div className="text-accent text-lg font-medium my-2 flex items-center">Mnemonic:</div>
           <div>
@@ -89,11 +96,11 @@ export function FromRandom() {
             </div>
             <div className="flex">
               <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                {Buffer.from(mnemonicKey.keyPair?.publicKey || []).toString('hex')}
+                {Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
               </div>
               <Copier
                 className="w-6 h-6 ml-2"
-                text={Buffer.from(mnemonicKey.keyPair?.publicKey || []).toString('hex')}
+                text={Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
               />
             </div>
           </div>
@@ -103,11 +110,11 @@ export function FromRandom() {
             </div>
             <div className="flex">
               <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                {Buffer.from(mnemonicKey.keyPair?.secretKey || []).toString('hex')}
+                {Buffer.from(walletKeyPair?.secretKey || []).toString('hex')}
               </div>
               <Copier
                 className="w-6 h-6 ml-2"
-                text={Buffer.from(mnemonicKey.keyPair?.secretKey || []).toString('hex')}
+                text={Buffer.from(walletKeyPair?.secretKey || []).toString('hex')}
               />
             </div>
           </div>

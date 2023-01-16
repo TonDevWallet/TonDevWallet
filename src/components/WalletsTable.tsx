@@ -1,9 +1,17 @@
+import { DeleteKeyWallet } from '@/store/walletsListState'
 import { setSelectedWallet } from '@/store/walletState'
 import { useSelectedTonWallet } from '@/utils/wallets'
 import { ITonHighloadWalletV2, ITonWallet, IWallet } from '../types'
 import { AddressRow } from './AddressRow'
 
+// const defaultHighloadId = 1
+// const defaultTonWalletId = 698983191
+
 function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: boolean }) {
+  const deleteWallet = () => {
+    DeleteKeyWallet(wallet.id)
+  }
+
   return (
     <div
       className="my-2 flex flex-col border"
@@ -11,7 +19,7 @@ function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: 
     >
       <div className="flex justify-between border-b px-1">
         <div className="">
-          Wallet {wallet.type}
+          Wallet {wallet.type} ({wallet.subwalletId})
           <a
             href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }), false)}
             target="_blank"
@@ -31,7 +39,7 @@ function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: 
         )}
       </div>
 
-      <div className="px-2 my-2">
+      <div className="px-2 mt-2">
         <AddressRow
           text="Bouncable:"
           address={wallet.address.toString({ bounceable: true, urlSafe: true })}
@@ -41,6 +49,12 @@ function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: 
           address={wallet.address.toString({ urlSafe: true, bounceable: false })}
         />
         <AddressRow text="Raw:" address={wallet.address.toRawString()} />
+      </div>
+
+      <div className="px-2 mt-1">
+        <div className="cursor-pointer text-highlight" onClick={deleteWallet}>
+          Disconnect
+        </div>
       </div>
     </div>
   )
@@ -53,6 +67,9 @@ function HighloadWalletRow({
   wallet: ITonHighloadWalletV2
   isSelected: boolean
 }) {
+  const deleteWallet = () => {
+    DeleteKeyWallet(wallet.id)
+  }
   return (
     <div
       className="my-2 flex flex-col border"
@@ -60,7 +77,7 @@ function HighloadWalletRow({
     >
       <div className="flex justify-between border-b px-1">
         <div className="">
-          Wallet {wallet.type}
+          Wallet {wallet.type} ({wallet.subwalletId})
           <a
             href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }), false)}
             target="_blank"
@@ -80,7 +97,7 @@ function HighloadWalletRow({
         )}
       </div>
 
-      <div className="px-2 my-2">
+      <div className="px-2 mt-2 border-b">
         <AddressRow
           text="Bouncable:"
           address={wallet.address.toString({ bounceable: true, urlSafe: true })}
@@ -90,6 +107,12 @@ function HighloadWalletRow({
           address={wallet.address.toString({ bounceable: false, urlSafe: true })}
         />
         <AddressRow text="Raw:" address={wallet.address.toRawString()} />
+      </div>
+
+      <div className="px-2 mt-1">
+        <div className="cursor-pointer text-highlight" onClick={deleteWallet}>
+          Disconnect
+        </div>
       </div>
     </div>
   )

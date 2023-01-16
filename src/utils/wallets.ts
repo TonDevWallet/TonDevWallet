@@ -48,7 +48,7 @@ export function getWalletFromKey(
   if (wallet.type === 'highload') {
     const tonWallet = new HighloadWalletV2({
       publicKey: keyPair.publicKey,
-      subwalletId: 1,
+      subwalletId: wallet.subwallet_id,
       workchain: 0,
     })
     const result: ITonHighloadWalletV2 = {
@@ -58,7 +58,7 @@ export function getWalletFromKey(
       getExternalMessageCell: getExternalMessageCellFromHighload(tonWallet),
       key: keyPair,
       id: wallet.id,
-      subwalletId: 0,
+      subwalletId: wallet.subwallet_id,
     }
     return result
   } else if (wallet.type === 'v3R2') {
@@ -77,7 +77,7 @@ export function getWalletFromKey(
       getExternalMessageCell: getExternalMessageCellFromTonWallet(tonWallet),
       key: keyPair,
       id: wallet.id,
-      subwalletId: 0,
+      subwalletId: wallet.subwallet_id,
     }
     return result
   } else {
@@ -96,7 +96,7 @@ export function getWalletFromKey(
       getExternalMessageCell: getExternalMessageCellFromTonWallet(tonWallet),
       key: keyPair,
       id: wallet.id,
-      subwalletId: 0,
+      subwalletId: wallet.subwallet_id,
     }
     return result
   }
