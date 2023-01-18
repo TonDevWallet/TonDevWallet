@@ -273,7 +273,7 @@ const CreateSaleModal = ({
       .transfer({
         secretKey: wallet.key.secretKey,
         toAddress: new TonWeb.utils.Address(marketAddress),
-        amount: amount,
+        amount,
         seqno: parseInt(seqno),
         payload: cell,
         sendMode: 3,
@@ -298,13 +298,13 @@ const CreateSaleModal = ({
           <div className="mt-4">Are you sure?</div>
           <div className="flex mt-2">
             <div
-              className="bg-highlight rounded px-2 py-2 text-white cursor-pointer"
+              className="bg-accent rounded px-2 py-2 text-white cursor-pointer"
               onClick={() => sendMoney(close)}
             >
               Yes
             </div>
             <div
-              className="bg-highlight rounded px-2 py-2 text-white cursor-pointer ml-8"
+              className="bg-accent rounded px-2 py-2 text-white cursor-pointer ml-8"
               onClick={() => close()}
             >
               Cancel
@@ -336,12 +336,12 @@ const getGetgemsNFTSaleBody = (
       marketplaceFeeAddress: marketplaceAddress,
       marketplaceFee: marketFee,
       royaltyAddress: collectionAddress,
-      royaltyAmount: royaltyAmount,
+      royaltyAmount,
       createdAt: created,
-      marketplaceAddress: marketplaceAddress,
+      marketplaceAddress,
       nftItemAddress: nftAddress,
-      ownerAddress: ownerAddress,
-      fullPrice: fullPrice,
+      ownerAddress,
+      fullPrice,
       marketplaceSignatureHex: signature,
 
       saleMessageBocHex: '',

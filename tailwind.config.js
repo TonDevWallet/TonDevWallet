@@ -10,9 +10,11 @@ module.exports = {
       },
 
       colors: {
-        accent: '#34495e',
+        // accent: '#34495e',
+        accent: 'var(--color-accent)',
         highlight: '#0088CC',
         white: '#ffffff',
+        'foreground-element': 'rgb(var(--color-foreground-rgb) / <alpha-value>)',
       },
     },
   },

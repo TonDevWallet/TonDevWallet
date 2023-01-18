@@ -8,10 +8,6 @@ import { AddressRow } from './AddressRow'
 // const defaultTonWalletId = 698983191
 
 function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: boolean }) {
-  const deleteWallet = () => {
-    DeleteKeyWallet(wallet.id)
-  }
-
   return (
     <div
       className="my-2 flex flex-col border"
@@ -33,7 +29,7 @@ function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: 
         {isSelected ? (
           <div>Selected</div>
         ) : (
-          <div className="cursor-pointer text-highlight" onClick={() => setSelectedWallet(wallet)}>
+          <div className="cursor-pointer text-accent" onClick={() => setSelectedWallet(wallet)}>
             Use this wallet
           </div>
         )}
@@ -52,12 +48,16 @@ function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: 
       </div>
 
       <div className="px-2 mt-1">
-        <div className="cursor-pointer text-highlight" onClick={deleteWallet}>
+        <div className="cursor-pointer text-accent" onClick={() => deleteWallet(wallet.id)}>
           Disconnect
         </div>
       </div>
     </div>
   )
+}
+
+const deleteWallet = (walletId: number) => {
+  // DeleteKeyWallet(walletId)
 }
 
 function HighloadWalletRow({
@@ -67,9 +67,6 @@ function HighloadWalletRow({
   wallet: ITonHighloadWalletV2
   isSelected: boolean
 }) {
-  const deleteWallet = () => {
-    DeleteKeyWallet(wallet.id)
-  }
   return (
     <div
       className="my-2 flex flex-col border"
@@ -91,7 +88,7 @@ function HighloadWalletRow({
         {isSelected ? (
           <div>Selected</div>
         ) : (
-          <div className="cursor-pointer text-highlight" onClick={() => setSelectedWallet(wallet)}>
+          <div className="cursor-pointer text-accent" onClick={() => setSelectedWallet(wallet)}>
             Use this wallet
           </div>
         )}
@@ -110,7 +107,7 @@ function HighloadWalletRow({
       </div>
 
       <div className="px-2 mt-1">
-        <div className="cursor-pointer text-highlight" onClick={deleteWallet}>
+        <div className="cursor-pointer text-accent" onClick={() => deleteWallet(wallet.id)}>
           Disconnect
         </div>
       </div>
@@ -136,7 +133,7 @@ function HighloadWalletRow({
 //         {isSelected ? (
 //           <div>Selected</div>
 //         ) : (
-//           <div className="cursor-pointer text-highlight" onClick={() => setWallet(wallet.id)}>
+//           <div className="cursor-pointer text-accent" onClick={() => setWallet(wallet.id)}>
 //             Use this wallet
 //           </div>
 //         )}

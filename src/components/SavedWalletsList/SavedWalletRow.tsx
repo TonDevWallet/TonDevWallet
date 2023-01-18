@@ -21,7 +21,7 @@ export function SavedWalletRow({ walletKey }: { walletKey: State<Key> }) {
 
   // const route = useRoute
   // const isSelected =
-  const activeStyle = 'bg-gray-200'
+  const activeStyle = 'bg-foreground-element/5'
 
   return (
     <NavLink

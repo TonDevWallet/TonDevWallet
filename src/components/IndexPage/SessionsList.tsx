@@ -12,7 +12,7 @@ export function SessionsList() {
 
   return (
     <div className="overflow-x-hidden gap-2 flex flex-col">
-      <h3 className="text-lg mb-2">Sessions:</h3>
+      <h3 className="text-lg mb-2 text-accent">Sessions:</h3>
       {sessions.map((s) => {
         const key = keys.find((k) => k.id.get() === s.keyId.get())
         if (!key) {
@@ -27,7 +27,7 @@ export function SessionsList() {
         const tonWallet = getWalletFromKey(liteClient, key, wallet)
 
         return (
-          <div className="bg-slate-100 rounded shadow p-2" key={s.id.get()}>
+          <div className="bg-foreground-element/5 rounded shadow p-2" key={s.id.get()}>
             <div className="flex items-center">
               <img src={s.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
               <div className="ml-2">{s.name.get()}</div>

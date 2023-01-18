@@ -174,13 +174,13 @@ export {}
 //           <div className="mt-4">Are you sure?</div>
 //           <div className="flex mt-2">
 //             <div
-//               className="bg-highlight rounded px-2 py-2 text-white cursor-pointer"
+//               className="bg-accent rounded px-2 py-2 text-white cursor-pointer"
 //               onClick={() => sendMoney(close)}
 //             >
 //               Yes
 //             </div>
 //             <div
-//               className="bg-highlight rounded px-2 py-2 text-white cursor-pointer ml-8"
+//               className="bg-accent rounded px-2 py-2 text-white cursor-pointer ml-8"
 //               onClick={() => close()}
 //             >
 //               Cancel

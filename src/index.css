@@ -7,21 +7,21 @@
 @import 'reactjs-popup/dist/index.css';
 
 :root {
-  --color-main: #000000;
-  --color-highlight: #0088CC;
+  --color-main: #ffffff;
+  /* --color-highlight: #0088CC; */
   --color-accent: #34495e;
   --color-highlight-text: #ffffff;
 }
 
 body {
-  color: var(--color-main);
+  color: var(--color-foreground);
   font-family: Mulish, "Open Sans", sans-serif;
   overflow-y: scroll;
   /* overflow-x: hidden; */
 }
 
 a {
-  color: var(--color-highlight);
+  color: var(--color-accent-light-3);
   text-decoration: none;
 }
 

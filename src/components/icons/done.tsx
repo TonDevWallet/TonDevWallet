@@ -1,4 +1,4 @@
-export default function Done() {
+export default function Done({ className }: { className: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -10,6 +10,7 @@ export default function Done() {
       viewBox="0 0 490.4 490.4"
       // style="enable-background:new 0 0 490.4 490.4;"
       xmlSpace="preserve"
+      className={className}
     >
       <g>
         <g>

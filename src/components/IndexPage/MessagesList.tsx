@@ -134,7 +134,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
   }
 
   return (
-    <div className="bg-slate-100 rounded shadow p-2">
+    <div className="bg-foreground-element/5 rounded shadow p-2">
       <div className="flex items-center">
         <img src={session?.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
         <div className="ml-2">{session?.name.get()}</div>
@@ -184,7 +184,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
           {/* {JSON.stringify(txInfo)} */}
           {txInfo?.actions?.map((action, i) => {
             return (
-              <div key={i} className="bg-slate-200 p-1">
+              <div key={i} className="bg-foreground-element/5 p-1">
                 <div>Name: {action.type}</div>
                 {/* <div>Description: {action?.simplePreview?.fullDescription}</div>
                 <div>Description: {action?.simplePreview?.image}</div> */}

@@ -46,14 +46,14 @@ export function SavedWalletsList() {
       <div className="p-2">
         <div className="cursor-pointer rounded p-1 flex flex-col items-center my-2">
           <label
-            className="rounded-full w-16 h-16 bg-gray-300
+            className="rounded-full w-16 h-16 bg-foreground-element/5
             flex flex-col items-center justify-center text-sm"
             htmlFor="apiKeyInput"
           >
             {/* <label>Testnet:</label> */}
             <div>Testnet:</div>
             <input
-              className="bg-gray-200 rounded"
+              className="bg-foreground-element/5 rounded"
               type="checkbox"
               id="apiKeyInput"
               checked={liteClientState.testnet.get()}
@@ -76,11 +76,11 @@ export function SavedWalletsList() {
           to="/"
           className={({ isActive }) =>
             'cursor-pointer rounded p-1 flex flex-col items-center my-2 ' +
-            (isActive ? 'bg-gray-200' : '')
+            (isActive ? 'bg-foreground-element/5' : '')
           }
         >
           <div
-            className="rounded-full w-16 h-16 bg-gray-300
+            className="rounded-full w-16 h-16 bg-foreground-element/5
             flex items-center justify-center text-[32px]"
           >
             /
@@ -95,11 +95,11 @@ export function SavedWalletsList() {
           to="/new_wallet"
           className={({ isActive }) =>
             'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center ' +
-            (isActive ? 'bg-gray-200' : '')
+            (isActive ? 'bg-foreground-element/5' : '')
           }
         >
           <div
-            className="rounded-full w-16 h-16 bg-gray-300
+            className="rounded-full w-16 h-16 bg-foreground-element/5
             flex items-center justify-center text-[32px]"
           >
             +

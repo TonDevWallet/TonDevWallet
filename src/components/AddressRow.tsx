@@ -42,7 +42,9 @@ export function AddressRow({
       <div className="text-xs mr-4">{addressString.substring(addressString.length - 4)}</div>
 
       <div className="ml-auto">
-        <button className="w-6 h-6">{copied ? <DoneSvg /> : <CopySvg />}</button>
+        <button className="w-6 h-6">
+          {copied ? <DoneSvg className="fill-current" /> : <CopySvg className="fill-current" />}
+        </button>
       </div>
     </div>
   )
