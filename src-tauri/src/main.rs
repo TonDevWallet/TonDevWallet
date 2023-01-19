@@ -55,6 +55,10 @@ fn change_transparent_effect(effect: String, window: tauri::Window) {
     }
 }
 
+#[cfg(not(target_os = "windows"))]
+fn change_transparent_effect(effect: String, window: tauri::Window) {
+}
+
 #[derive(serde::Serialize, Clone, Debug)]
 pub struct SystemColorsList {
   background: Option<u64>,
@@ -113,7 +117,7 @@ fn get_element_color(settings: UISettings , color_type: UIElementType) -> Option
   return Some(u64::from_be_bytes([0, 0, 0, 0, c.R, c.G, c.B, c.A]))
 }
 
-
+#[cfg(target_os = "windows")]
 #[tauri::command]
 fn get_system_colors() -> Result<SystemColorsList, String> {
   let settings = match UISettings::new() {
@@ -160,6 +164,52 @@ fn get_system_colors() -> Result<SystemColorsList, String> {
     page_background: get_element_color(settings.clone(), UIElementType::PageBackground),
     popup_background: get_element_color(settings.clone(), UIElementType::PopupBackground),
     overlay_outside_popup: get_element_color(settings.clone(), UIElementType::OverlayOutsidePopup),
+  };
+  return Ok(list);
+}
+
+#[cfg(not(target_os = "windows"))]
+#[tauri::command]
+fn get_system_colors() -> Result<SystemColorsList, String> {
+  let list = SystemColorsList {
+    background: None,
+    foreground: None,
+    accent_dark_3: None,
+    accent_dark_2: None,
+    accent_dark_1: None,
+    accent: None,
+    accent_light_1: None,
+    accent_light_2: None,
+    accent_light_3: None,
+    // complement: rgba_to_u64(settings.GetColorValue(UIColorType::AccentLight3).unwrap()),
+    complement:  None,
+
+    active_caption: None,
+    el_background: None,
+    button_face: None,
+    button_text: None,
+    caption_text: None,
+    gray_text: None,
+    highlight: None,
+    highlight_text: None,
+    hotlight: None,
+    inactive_caption: None,
+    inactive_caption_text: None,
+    window: None,
+    window_text:None,
+    accent_color: None,
+    text_high: None,
+    text_medium: None,
+    text_low: None,
+    text_contrast_with_high: None,
+    non_text_high: None,
+    non_text_medium_high:None,
+    non_text_medium: None,
+    non_text_medium_low: None,
+    non_text_low: None,
+    page_background: None,
+    popup_background: None,
+    overlay_outside_popup: None,
   };
   return Ok(list);
 }
