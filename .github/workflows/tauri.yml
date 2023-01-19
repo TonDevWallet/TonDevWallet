@@ -62,7 +62,7 @@ jobs:
         run: pnpm install
 
       - name: use mold
-      - uses: rui314/setup-mold@v1
+        uses: rui314/setup-mold@v1
 
       - name: tauri
         uses: tauri-apps/tauri-action@v0
