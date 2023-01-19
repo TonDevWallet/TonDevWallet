@@ -102,6 +102,7 @@ pub struct SystemColorsList {
   overlay_outside_popup: Option<u64>,
 }
 
+#[cfg(target_os = "windows")]
 fn rgba_to_u64(settings: UISettings , color_type: UIColorType) -> Option<u64> { //r: u8, g: u8, b: u8, a: u8) -> u64 {
   let c  = match settings.GetColorValue(color_type) {
     Ok(v) => v,
@@ -111,6 +112,7 @@ fn rgba_to_u64(settings: UISettings , color_type: UIColorType) -> Option<u64> { 
   // return ((u64{r}&0x0ff)<<24)|((g&0x0ff)<<16)|((b&0x0ff)<<8)|(a&0x0ff);
 }
 
+#[cfg(target_os = "windows")]
 fn get_element_color(settings: UISettings , color_type: UIElementType) -> Option<u64> {
   let c  = match settings.UIElementColor(color_type) {
     Ok(v) => v,
