@@ -1,7 +1,7 @@
 import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import { BlueButton } from '../../UI'
+import { BlueButton } from '../../ui/BlueButton'
 
 export default function SendMessage() {
   const [recepient, setRecepient] = useState('')

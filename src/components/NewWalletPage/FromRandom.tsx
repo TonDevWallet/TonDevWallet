@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { mnemonicValidate, mnemonicToSeed, keyPairFromSeed, mnemonicNew } from 'ton-crypto'
 import Copier from '../copier'
-import { BlueButton } from '../UI'
+import { BlueButton } from '../ui/BlueButton'
 
 export function FromRandom() {
   const navigate = useNavigate()

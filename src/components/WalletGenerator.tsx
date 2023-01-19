@@ -1,4 +1,4 @@
-import { BlueButton } from './UI'
+import { BlueButton } from './ui/BlueButton'
 import Copier from './copier'
 import { useDatabase } from '@/db'
 import { deleteWallet } from '@/store/walletsListState'
@@ -44,7 +44,7 @@ export function WalletGenerator() {
           </>
         )}
 
-        {key.keyPair && key.seed && (
+        {key.seed && (
           <>
             <div>
               <div className="text-accent text-lg font-medium my-2 flex items-center">Seed:</div>

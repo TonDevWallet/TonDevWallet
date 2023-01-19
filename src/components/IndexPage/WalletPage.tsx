@@ -18,7 +18,7 @@ import { LiteClient } from 'ton-lite-client'
 import { useParams } from 'react-router-dom'
 import { CreateNewKeyWallet, useWalletListState } from '@/store/walletsListState'
 import { getWalletFromKey } from '@/utils/wallets'
-import { BlueButton } from '../UI'
+import { BlueButton } from '../ui/BlueButton'
 import Popup from 'reactjs-popup'
 import { keyPairFromSeed } from 'ton-crypto'
 

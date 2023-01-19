@@ -12,7 +12,7 @@ import { useEffect, useMemo } from 'react'
 import { Address, Cell } from 'ton-core'
 import { keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
-import { BlueButton } from '../UI'
+import { BlueButton } from '../ui/BlueButton'
 import { AddressRow } from '../AddressRow'
 import {
   SendTransactionRpcResponseError,

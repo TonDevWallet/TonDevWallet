@@ -5,7 +5,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { keyPairFromSeed } from 'ton-crypto'
 import Copier from '../copier'
-import { BlueButton } from '../UI'
+import { BlueButton } from '../ui/BlueButton'
 
 export function FromSeed() {
   const navigate = useNavigate()

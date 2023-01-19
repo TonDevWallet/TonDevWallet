@@ -7,7 +7,7 @@ import nacl from 'tweetnacl'
 // import nacl from 'tweetnacl'
 import { ITonWallet } from '../types'
 import { TxResponseOptions } from '../types/TxRequest'
-import { BlueButton } from './UI'
+import { BlueButton } from './ui/BlueButton'
 import BN from 'bn.js'
 
 import { Cell as TonCell, Address as TonAddress } from 'ton'

@@ -3,13 +3,14 @@ import { setSelectedWallet } from '@/store/walletState'
 import { useSelectedTonWallet } from '@/utils/wallets'
 import { ITonHighloadWalletV2, ITonWallet, IWallet } from '../types'
 import { AddressRow } from './AddressRow'
+import { Block } from './ui/Block'
 
 // const defaultHighloadId = 1
 // const defaultTonWalletId = 698983191
 
 function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: boolean }) {
   return (
-    <div
+    <Block
       className="my-2 flex flex-col border"
       key={wallet.address.toString({ bounceable: true, urlSafe: true })}
     >
@@ -52,7 +53,7 @@ function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: 
           Disconnect
         </div>
       </div>
-    </div>
+    </Block>
   )
 }
 
@@ -68,7 +69,7 @@ function HighloadWalletRow({
   isSelected: boolean
 }) {
   return (
-    <div
+    <Block
       className="my-2 flex flex-col border"
       key={wallet.address.toString({ bounceable: true, urlSafe: true })}
     >
@@ -111,7 +112,7 @@ function HighloadWalletRow({
           Disconnect
         </div>
       </div>
-    </div>
+    </Block>
   )
 }
 

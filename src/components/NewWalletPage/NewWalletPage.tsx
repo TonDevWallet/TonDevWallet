@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BlueButton } from '../UI'
+import { BlueButton } from '../ui/BlueButton'
 import { FromMnemonic } from './FromMnemonic'
 import { FromRandom } from './FromRandom'
 import { FromSeed } from './FromSeed'

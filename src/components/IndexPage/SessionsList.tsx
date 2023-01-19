@@ -3,7 +3,8 @@ import { useTonConnectSessions, deleteTonConnectSession } from '@/store/tonConne
 import { useWalletListState } from '@/store/walletsListState'
 import { getWalletFromKey } from '@/utils/wallets'
 import { LiteClient } from 'ton-lite-client'
-import { BlueButton } from '../UI'
+import { Block } from '../ui/Block'
+import { BlueButton } from '../ui/BlueButton'
 
 export function SessionsList() {
   const sessions = useTonConnectSessions()
@@ -11,7 +12,7 @@ export function SessionsList() {
   const liteClient = useLiteclient() as unknown as LiteClient
 
   return (
-    <div className="overflow-x-hidden gap-2 flex flex-col">
+    <div className="gap-2 flex flex-col">
       <h3 className="text-lg mb-2 text-accent">Sessions:</h3>
       {sessions.map((s) => {
         const key = keys.find((k) => k.id.get() === s.keyId.get())
@@ -27,7 +28,11 @@ export function SessionsList() {
         const tonWallet = getWalletFromKey(liteClient, key, wallet)
 
         return (
-          <div className="bg-foreground-element/5 rounded shadow p-2" key={s.id.get()}>
+          <Block
+            // className="dark:bg-foreground-element/5 bg-background rounded dark:shadow border-2 dark:border-none p-2"
+            className="overflow-hidden"
+            key={s.id.get()}
+          >
             <div className="flex items-center">
               <img src={s.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
               <div className="ml-2">{s.name.get()}</div>
@@ -60,7 +65,7 @@ export function SessionsList() {
                 Delete
               </BlueButton>
             </div>
-          </div>
+          </Block>
         )
       })}
     </div>

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import { Address, beginCell, Builder, Cell, storeMessage } from 'ton'
 import { ITonHighloadWalletV2 } from '../../../types'
-import { BlueButton } from './../../UI'
+import { BlueButton } from '../../ui/BlueButton'
 
 export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
   const [amount, setAmount] = useState('0')
