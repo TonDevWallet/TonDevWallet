@@ -218,6 +218,19 @@ fn get_system_colors() -> Result<SystemColorsList, String> {
   return Ok(list);
 }
 
+// #[cfg(not(target_os = "windows"))]
+#[tauri::command]
+fn get_os_name() -> Result<String, String> {
+  #[cfg(target_os = "windows")]
+  return Ok("windows".to_string());
+
+  #[cfg(target_os = "macos")]
+  return Ok("macos".to_string());
+
+  #[cfg(target_os = "linux")]
+  return Ok("linux".to_string());
+}
+
 fn main() {
   let _ = env_logger::try_init();
   let context = tauri::generate_context!();
@@ -236,7 +249,7 @@ fn main() {
       change_transparent_effect("mica".to_owned(), window.clone());
       Ok(())
     })
-    .invoke_handler(tauri::generate_handler![get_ws_port, get_system_colors])
+    .invoke_handler(tauri::generate_handler![get_ws_port, get_system_colors, get_os_name])
     .build(context)
     .expect("error while running tauri application")
     .run(|app_handle, event| match event {

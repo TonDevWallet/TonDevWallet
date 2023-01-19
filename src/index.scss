@@ -30,12 +30,29 @@ input {
   background: white;
 }
 
+html {
+  --color-foreground: black;
+  --color-foreground-rgb: 0 0 0;
+}
+
 html.dark {
   input {
     @apply shadow-md;
     color: white;
     background: rgb(255 255 255 / 0.05);
     border: none
+  }
+}
+
+html.linux {
+  &.dark {
+    body {
+      background: rgb(255 255 255 / 0.95);
+    }
+  }
+
+  body {
+    background: white;
   }
 }
 
