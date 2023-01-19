@@ -12,8 +12,10 @@ use proxy::spawn_proxy;
 use tauri::Manager;
 use tauri_plugin_sql::TauriSql;
 use tokio::net::TcpListener;
-use windows::UI::{ViewManagement::{UISettings, UIColorType, UIElementType}};
 use sysinfo::{System, SystemExt};
+
+#[cfg(target_os = "windows")]
+use windows::UI::{ViewManagement::{UISettings, UIColorType, UIElementType}};
 
 #[cfg(not(target_os = "linux"))]
 use window_vibrancy::{
