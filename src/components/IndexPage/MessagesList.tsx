@@ -82,13 +82,20 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
   const messageCell = useWalletExternalMessageCell(
     tonWallet,
     walletKeyPair,
-    s.payload.messages.map((m) => ({
-      body: m.payload.get() ? Cell.fromBase64(m.payload.get()!) : undefined,
-      destination: Address.parse(m.address.get()),
-      amount: BigInt(m.amount.get()),
-      mode: 3,
-      state: m.stateInit.get() ? Cell.fromBase64(m.stateInit.get()!) : undefined,
-    }))
+    s.payload.messages.map((m) => {
+      let destination
+      try {
+        destination = Address.parse(m.address.get() || '')
+      } catch (e) {}
+
+      return {
+        body: m.payload.get() ? Cell.fromBase64(m.payload.get()!) : undefined,
+        destination,
+        amount: BigInt(m.amount.get()),
+        mode: 3,
+        state: m.stateInit.get() ? Cell.fromBase64(m.stateInit.get()!) : undefined,
+      }
+    })
   )
 
   const amountOut =

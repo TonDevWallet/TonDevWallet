@@ -17,12 +17,14 @@ export default function SendTon({
   const [recepient, setRecepient] = useState('')
   const [message, setMessage] = useState('')
   const [stateInit, setStateInit] = useState('')
+  const [message64, setMessage64] = useState(false)
 
   useEffect(() => {
     setAmount('0')
     setRecepient('')
     setMessage('')
     setStateInit('')
+    setMessage64(false)
   }, [wallet])
 
   return (
@@ -55,6 +57,20 @@ export default function SendTon({
 
       <div className="mt-2 flex flex-col">
         <label htmlFor="amountInput">Message:</label>
+        <div>
+          <label htmlFor="base64Check" className="text-gray-600 text-sm my-1">
+            Base64 cell?
+          </label>
+          <input
+            id="base64Check"
+            type="checkbox"
+            checked={message64}
+            onChange={(e: any) => {
+              console.log('change', e)
+              setMessage64((c) => !c)
+            }}
+          />
+        </div>
         <input
           className="border rounded p-2"
           id="amountInput"
@@ -88,6 +104,7 @@ export default function SendTon({
         message={message}
         stateInit={stateInit}
         updateBalance={updateBalance}
+        isBase64={message64}
       />
     </div>
   )
@@ -100,6 +117,7 @@ const SendModal = ({
   seqno,
   stateInit,
   message: sendMessage,
+  isBase64,
   updateBalance,
 }: {
   amount: string
@@ -108,6 +126,7 @@ const SendModal = ({
   seqno: string
   message: string
   stateInit: string
+  isBase64: boolean
   updateBalance: () => void
 }) => {
   const [open, setOpen] = useState(false)
@@ -149,13 +168,14 @@ const SendModal = ({
 
   const sendMoney = async () => {
     const { address: rAddress, isBounceable: bounce } = Address.parseFriendly(recepient)
+
     const params: TonWalletTransferArg = {
       seqno: parseInt(seqno),
       secretKey: wallet.key.secretKey,
       sendMode: 3,
       messages: [
         internal({
-          body: sendMessage ? Cell.fromBase64(sendMessage) : new Cell(),
+          body: isBase64 ? Cell.fromBase64(sendMessage) : sendMessage,
           bounce,
           value: BigInt(amount),
           to: rAddress,
