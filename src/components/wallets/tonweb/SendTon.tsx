@@ -84,7 +84,7 @@ export default function SendTon({
 
       <div className="mt-2 flex flex-col">
         <label htmlFor="amountInput">StateInit:</label>
-        <p className="text-gray-600 text-sm my-1">Base64url encoded state init cell</p>
+        <p className="text-gray-600 text-sm my-1">Base64 encoded state init cell</p>
         <input
           className="border rounded p-2"
           id="amountInput"
