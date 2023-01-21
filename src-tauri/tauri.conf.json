@@ -115,6 +115,7 @@
         "transparent": true,
         "decorations": false
       }
-    ]
+    ],
+    "macOSPrivateApi": true
   }
 }

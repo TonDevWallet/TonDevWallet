@@ -93,6 +93,18 @@ html.linux {
   }
 }
 
+html.macos {
+  &.dark {
+    body {
+      background: transparent;
+    }
+  }
+
+  body {
+    background: rgba(255, 255, 255, 1);
+  }
+}
+
 button {
   outline: none;
 }

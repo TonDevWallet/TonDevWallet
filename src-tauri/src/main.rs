@@ -3,25 +3,33 @@
   windows_subsystem = "windows"
 )]
 
+#[cfg(target_os = "macos")]
+#[macro_use]
+extern crate objc;
+
 mod proxy;
 
 use std::{sync::atomic::{Ordering, AtomicU16}};
 
-use log::info;
 use proxy::spawn_proxy;
 use tauri::Manager;
 use tauri_plugin_sql::TauriSql;
 use tokio::net::TcpListener;
 use sysinfo::{System, SystemExt};
 
+use objc_id::Id;
+
+use objc::{msg_send};
+use core_graphics::base::CGFloat;
+
 #[cfg(target_os = "windows")]
 use windows::UI::{ViewManagement::{UISettings, UIColorType, UIElementType}};
 
 #[cfg(not(target_os = "linux"))]
 use window_vibrancy::{
-    apply_acrylic, apply_blur, clear_acrylic, clear_blur
+    apply_acrylic, apply_blur, clear_acrylic, clear_blur, apply_vibrancy, NSVisualEffectMaterial
 };
-
+use std::sync::{RwLock};
 
 static PORT: AtomicU16 = AtomicU16::new(0);
 
@@ -57,9 +65,15 @@ fn change_transparent_effect(effect: String, window: tauri::Window) {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "linux")]
 fn change_transparent_effect(effect: String, window: tauri::Window) {
 }
+
+#[cfg(target_os = "macos")]
+fn change_transparent_effect(effect: String, window: tauri::Window) {
+  apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, None).expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
+}
+
 
 #[derive(serde::Serialize, Clone, Debug)]
 pub struct SystemColorsList {
@@ -172,7 +186,7 @@ fn get_system_colors() -> Result<SystemColorsList, String> {
   return Ok(list);
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "linux")]
 #[tauri::command]
 fn get_system_colors() -> Result<SystemColorsList, String> {
   let list = SystemColorsList {
@@ -186,6 +200,64 @@ fn get_system_colors() -> Result<SystemColorsList, String> {
     accent_light_2: None,
     accent_light_3: None,
     // complement: rgba_to_u64(settings.GetColorValue(UIColorType::AccentLight3).unwrap()),
+    complement:  None,
+
+    active_caption: None,
+    el_background: None,
+    button_face: None,
+    button_text: None,
+    caption_text: None,
+    gray_text: None,
+    highlight: None,
+    highlight_text: None,
+    hotlight: None,
+    inactive_caption: None,
+    inactive_caption_text: None,
+    window: None,
+    window_text:None,
+    accent_color: None,
+    text_high: None,
+    text_medium: None,
+    text_low: None,
+    text_contrast_with_high: None,
+    non_text_high: None,
+    non_text_medium_high:None,
+    non_text_medium: None,
+    non_text_medium_low: None,
+    non_text_low: None,
+    page_background: None,
+    popup_background: None,
+    overlay_outside_popup: None,
+  };
+  return Ok(list);
+}
+
+fn nscolor_to_rgb(color: cacao::color::Color) -> u64 {
+  let cg_color = color.cg_color();
+  let colorId: cocoa::base::id  = unsafe { msg_send![class!(CIColor), colorWithCGColor:cg_color] };
+  let r: CGFloat = unsafe { msg_send![colorId, red] };
+  let g: CGFloat = unsafe { msg_send![colorId, green] };
+  let b: CGFloat = unsafe { msg_send![colorId, blue] };
+  let a: CGFloat = unsafe { msg_send![colorId, alpha] };
+
+  return u64::from_be_bytes([0, 0, 0, 0, (r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8, (a * 255.0) as u8])
+}
+#[cfg(target_os = "macos")]
+#[tauri::command]
+fn get_system_colors() -> Result<SystemColorsList, String> {
+  let accent_color = unsafe { Id::from_ptr(msg_send![class!(NSColor), controlAccentColor]) };
+  let accent_color_class = cacao::color::Color::Custom(std::sync::Arc::new(RwLock::new(accent_color)) );
+
+  let list = SystemColorsList {
+    background: None,
+    foreground: Some(nscolor_to_rgb(cacao::color::Color::Label)),
+    accent_dark_3: None,
+    accent_dark_2: None,
+    accent_dark_1: None,
+    accent: Some(nscolor_to_rgb(accent_color_class)),
+    accent_light_1: None,
+    accent_light_2: None,
+    accent_light_3: None,
     complement:  None,
 
     active_caption: None,
