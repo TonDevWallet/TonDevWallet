@@ -33,7 +33,7 @@ function Wallet() {
     <div className="flex flex-col gap-2">
       <Block>
         <div className="flex flex-col">
-          <div className="font-medium text-lg text-accent my-2">Wallet:</div>
+          <div className="font-medium text-lg">Wallet:</div>
           <div>Type: {wallet.type}</div>
           <div>
             <AddressRow
