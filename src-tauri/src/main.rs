@@ -17,9 +17,11 @@ use tauri_plugin_sql::TauriSql;
 use tokio::net::TcpListener;
 use sysinfo::{System, SystemExt};
 
+#[cfg(target_os = "macos")]
 use objc_id::Id;
-
+#[cfg(target_os = "macos")]
 use objc::{msg_send};
+#[cfg(target_os = "macos")]
 use core_graphics::base::CGFloat;
 
 #[cfg(target_os = "windows")]
@@ -232,6 +234,7 @@ fn get_system_colors() -> Result<SystemColorsList, String> {
   return Ok(list);
 }
 
+#[cfg(target_os = "macos")]
 fn nscolor_to_rgb(color: cacao::color::Color) -> u64 {
   let cg_color = color.cg_color();
   let colorId: cocoa::base::id  = unsafe { msg_send![class!(CIColor), colorWithCGColor:cg_color] };

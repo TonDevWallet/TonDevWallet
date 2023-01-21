@@ -29,11 +29,13 @@ env_logger = "0.10.0"
 windows = { version = "0.44.0", features = ["UI", "UI_ViewManagement"] }
 sysinfo = "0.27.7"
 window-vibrancy = "0.3.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-graphics = "0.22.3"
 objc = "0.2.7"
 cocoa = "0.24.1"
 cacao = { version = "0.3.2", features = ["appkit"] }
 objc_id = "0.1.1"
-core-graphics = "0.22.3"
 
 [features]
 # by default Tauri runs in production mode
