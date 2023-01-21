@@ -22,6 +22,7 @@ import {
 import { ConnectMessageStatus } from '@/types/connect'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { Block } from '../ui/Block'
+import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 
 export function MessagesList() {
   // const sessions = useTonConnectSessions()
@@ -83,26 +84,32 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
   const messageCell = useWalletExternalMessageCell(
     tonWallet,
     walletKeyPair,
-    s.payload.messages.map((m) => {
-      let destination
-      try {
-        destination = Address.parse(m.address.get() || '')
-      } catch (e) {}
+    s.payload.messages
+      .map((m) => {
+        if (!m.address.get() || !m.amount.get()) {
+          return undefined
+        }
 
-      const p = m.payload.get()
-      const payload = p ? Cell.fromBase64(p) : undefined
+        let destination
+        try {
+          destination = Address.parse(m.address.get() || '')
+        } catch (e) {}
 
-      const stateInitData = m.stateInit.get()
-      const state = stateInitData ? Cell.fromBase64(stateInitData) : undefined
+        const p = m.payload.get()
+        const payload = p ? Cell.fromBase64(p) : undefined
 
-      return {
-        body: payload,
-        destination,
-        amount: BigInt(m.amount.get()),
-        mode: 3,
-        state,
-      }
-    })
+        const stateInitData = m.stateInit.get()
+        const state = stateInitData ? Cell.fromBase64(stateInitData) : undefined
+
+        return {
+          body: payload,
+          destination,
+          amount: BigInt(m.amount.get()),
+          mode: 3,
+          state,
+        }
+      })
+      .filter((m) => m) as WalletTransfer[]
   )
 
   const amountOut =
