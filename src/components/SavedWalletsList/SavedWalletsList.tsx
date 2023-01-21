@@ -17,6 +17,20 @@ export function SavedWalletsList() {
   const sessions = useTonConnectSessions()
   const liteClient = useLiteclient() as LiteClient
 
+  // const [themeDark, setThemeDarkValue] = useState(false)
+
+  // const changeThemeDark = () => {
+  //   setThemeDarkValue((v) => {
+  //     if (v) {
+  //       document.documentElement.classList.add('dark')
+  //     } else {
+  //       document.documentElement.classList.remove('dark')
+  //     }
+
+  //     return !v
+  //   })
+  // }
+
   const changeLiteClientNetwork = () => {
     changeLiteClient(!liteClientState.testnet.get())
     for (const s of sessions.get()) {
@@ -46,14 +60,14 @@ export function SavedWalletsList() {
       <div className="p-2">
         <div className="cursor-pointer rounded p-1 flex flex-col items-center my-2">
           <label
-            className="rounded-full w-16 h-16 bg-foreground-element/5
+            className="rounded-full w-16 h-16 bg-foreground/5
             flex flex-col items-center justify-center text-sm"
             htmlFor="apiKeyInput"
           >
             {/* <label>Testnet:</label> */}
             <div>Testnet:</div>
             <input
-              className="bg-foreground-element/5 rounded"
+              className="bg-foreground/5 rounded"
               type="checkbox"
               id="apiKeyInput"
               checked={liteClientState.testnet.get()}
@@ -61,6 +75,23 @@ export function SavedWalletsList() {
             />
           </label>
         </div>
+
+        {/* <div className="cursor-pointer rounded p-1 flex flex-col items-center my-2">
+          <label
+            className="rounded-full w-16 h-16 bg-foreground/5
+            flex flex-col items-center justify-center text-sm"
+            htmlFor="themeInput"
+          >
+            <div>Dark:</div>
+            <input
+              className="bg-foreground/5 rounded"
+              type="checkbox"
+              id="themeInput"
+              checked={themeDark}
+              onChange={changeThemeDark}
+            />
+          </label>
+        </div> */}
 
         {/* <div className="cursor-pointer rounded p-1 flex flex-col items-center my-2">
           <label
@@ -76,16 +107,16 @@ export function SavedWalletsList() {
           to="/"
           className={({ isActive }) =>
             'cursor-pointer rounded p-1 flex flex-col items-center my-2 ' +
-            (isActive ? 'bg-foreground-element/5' : '')
+            (isActive ? 'bg-foreground/5' : '')
           }
         >
           <div
-            className="rounded-full w-16 h-16 bg-foreground-element/5
-            flex items-center justify-center text-[32px]"
+            className="rounded-full w-16 h-16 bg-foreground/5
+            flex items-center justify-center text-[32px] text-foreground"
           >
             /
           </div>
-          <div>Home</div>
+          <div className="text-foreground">Home</div>
         </NavLink>
 
         {keys &&
@@ -95,16 +126,16 @@ export function SavedWalletsList() {
           to="/new_wallet"
           className={({ isActive }) =>
             'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center ' +
-            (isActive ? 'bg-foreground-element/5' : '')
+            (isActive ? 'bg-foreground/5' : '')
           }
         >
           <div
-            className="rounded-full w-16 h-16 bg-foreground-element/5
-            flex items-center justify-center text-[32px]"
+            className="rounded-full w-16 h-16 bg-foreground/5
+            flex items-center justify-center text-[32px] text-foreground"
           >
             +
           </div>
-          <div>New wallet</div>
+          <div className="text-foreground">New Key</div>
         </NavLink>
 
         {/* <BlueButton

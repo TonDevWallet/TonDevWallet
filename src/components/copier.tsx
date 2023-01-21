@@ -23,7 +23,7 @@ export default function Copier({
 
   return (
     <button className={className} onClick={pressCopy}>
-      {copied ? <DoneSvg /> : <CopySvg />}
+      {copied ? <DoneSvg /> : <CopySvg className="text-red" />}
     </button>
   )
 }

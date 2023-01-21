@@ -1,13 +1,19 @@
 // interface
+import clsx from 'clsx'
 
-export function Block({ children, className, ...options }: React.HTMLProps<HTMLDivElement>) {
+interface BlockParams extends React.HTMLProps<HTMLDivElement> {
+  bg?: string | boolean
+}
+
+export function Block({ children, className, bg, ...options }: BlockParams) {
   return (
     <div
       {...options}
-      className={
-        'dark:bg-foreground-element/5 bg-background \
-      rounded dark:shadow border-2 dark:border-none p-2 ' + className
-      }
+      className={clsx(
+        className,
+        bg || 'dark:bg-foreground/5 bg-background',
+        'rounded dark:shadow border dark:border-none p-2'
+      )}
     >
       {children}
     </div>

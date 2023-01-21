@@ -14,7 +14,13 @@ module.exports = {
         accent: 'var(--color-accent)',
         highlight: '#0088CC',
         white: '#ffffff',
-        'foreground-element': 'rgb(var(--color-foreground-rgb) / <alpha-value>)',
+        foreground: 'rgb(var(--color-foreground-rgb) / <alpha-value>)',
+        background: 'rgb(var(--color-background-rgb) / <alpha-value>)',
+        'accent-light': 'rgb(var(--color-accent-light-3-rgb) / <alpha-value>)',
+      },
+
+      opacity: {
+        15: '.15',
       },
     },
   },

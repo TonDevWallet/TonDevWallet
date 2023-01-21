@@ -11,28 +11,45 @@
   /* --color-highlight: #0088CC; */
   --color-accent: #34495e;
   --color-highlight-text: #ffffff;
+  --color-accent-light: var(--color-accent-light-3);
 }
 
 body {
   color: var(--color-foreground);
   font-family: Mulish, "Open Sans", sans-serif;
   overflow-y: scroll;
+  user-select: none;
+  margin-top: 2px;
   /* overflow-x: hidden; */
 }
 
-a {
-  color: var(--color-accent-light-3);
-  text-decoration: none;
-}
 
-input {
-  color: black;
-  background: white;
-}
+
 
 html {
   --color-foreground: black;
   --color-foreground-rgb: 0 0 0;
+
+  input {
+    color: black;
+    background: white;
+  }
+
+  textarea {
+    color: black;
+    background: white;
+  }
+
+  .popup-content {
+    width: auto;
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
 }
 
 html.dark {
@@ -40,7 +57,27 @@ html.dark {
     @apply shadow-md;
     color: white;
     background: rgb(255 255 255 / 0.05);
-    border: none
+    border: none;
+  }
+
+  textarea {
+    @apply shadow-md;
+    color: white;
+    background: rgb(255 255 255 / 0.05);
+    border: none;
+  }
+
+  .popup-content {
+    @apply rounded;
+    width: auto;
+    background: rgb(55 55 55);
+    color: var(--color-foreground);
+    border: none;
+  }
+
+  a {
+    color: var(--color-accent-light);
+    text-decoration: none;
   }
 }
 
@@ -56,9 +93,10 @@ html.linux {
   }
 }
 
-.popup-content {
-  width: auto;
+button {
+  outline: none;
 }
+
 
 
 ::-webkit-scrollbar {
@@ -81,10 +119,10 @@ html.linux {
 ::-webkit-scrollbar-thumb:active {
   background: #333333;
 }
-::-webkit-scrollbar-track {
+// ::-webkit-scrollbar-track {
   /* background: #12151a; */
   /* border-radius: 0 20px 0 0; */
-}
+// }
 ::-webkit-scrollbar-track:hover {
   background: #1c2129;
 }

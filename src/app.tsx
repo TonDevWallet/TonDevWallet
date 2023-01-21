@@ -8,13 +8,8 @@ import { useTonConnectSessions } from './store/tonConnect'
 import { useWalletListState } from './store/walletsListState'
 import { useTauriState } from './store/tauri'
 import { appWindow } from '@tauri-apps/api/window'
-import { invoke } from '@tauri-apps/api'
 import { useTheme } from './hooks/useTheme'
 import { useOs } from './hooks/useOs'
-
-function numberToRgba(x: number) {
-  return [(x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, (x & 0xff) / 255]
-}
 
 export function App({ db }: { db: Knex }) {
   const connectSessions = useTonConnectSessions()

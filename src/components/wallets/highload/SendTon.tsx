@@ -1,3 +1,4 @@
+import { Block } from '@/components/ui/Block'
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import { SignCell } from '@/contracts/utils/SignExternalMessage'
 import { useLiteclient } from '@/store/liteClient'
@@ -20,8 +21,8 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
   }, [wallet, liteClient])
 
   return (
-    <div className="flex flex-col p-4 border rounded shadow">
-      <div className="font-medium text-lg text-accent my-2">Send TON:</div>
+    <Block className="flex flex-col p-4 border rounded shadow">
+      <div className="font-medium text-lg">Send TON:</div>
 
       <div className="mt-2 flex flex-col">
         <label htmlFor="toInput">Recepient:</label>
@@ -61,7 +62,7 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
       </div> */}
 
       <SendModal amount={amount} recepient={recepient} wallet={wallet} message={message} />
-    </div>
+    </Block>
   )
 }
 
@@ -94,7 +95,7 @@ const SendModal = ({
   const sendMoney = async () => {
     const params: WalletTransfer = {
       destination: Address.parse(recepient),
-      amount: BigInt(parseFloat(amount) * 10 ** 9),
+      amount: BigInt(Math.floor(parseFloat(amount) * 10 ** 9)),
       mode: 3,
       body: sendMessage
         ? new Builder().storeUint(0, 32).storeBuffer(Buffer.from(sendMessage)).endCell()

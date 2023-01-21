@@ -21,6 +21,7 @@ import {
 } from '@tonconnect/protocol'
 import { ConnectMessageStatus } from '@/types/connect'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
+import { Block } from '../ui/Block'
 
 export function MessagesList() {
   // const sessions = useTonConnectSessions()
@@ -88,12 +89,18 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
         destination = Address.parse(m.address.get() || '')
       } catch (e) {}
 
+      const p = m.payload.get()
+      const payload = p ? Cell.fromBase64(p) : undefined
+
+      const stateInitData = m.stateInit.get()
+      const state = stateInitData ? Cell.fromBase64(stateInitData) : undefined
+
       return {
-        body: m.payload.get() ? Cell.fromBase64(m.payload.get()!) : undefined,
+        body: payload,
         destination,
         amount: BigInt(m.amount.get()),
         mode: 3,
-        state: m.stateInit.get() ? Cell.fromBase64(m.stateInit.get()!) : undefined,
+        state,
       }
     })
   )
@@ -141,7 +148,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
   }
 
   return (
-    <div className="bg-foreground-element/5 rounded shadow p-2">
+    <Block className="">
       <div className="flex items-center">
         <img src={session?.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
         <div className="ml-2">{session?.name.get()}</div>
@@ -154,7 +161,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
         {
           <AddressRow
             text={<div className="w-40">{`Wallet (${wallet.type}): `}</div>}
-            address={tonWallet!.address}
+            address={tonWallet?.address}
           />
         }
       </div>
@@ -191,7 +198,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
           {/* {JSON.stringify(txInfo)} */}
           {txInfo?.actions?.map((action, i) => {
             return (
-              <div key={i} className="bg-foreground-element/5 p-1">
+              <Block key={i} className="flex flex-col">
                 <div>Name: {action.type}</div>
                 {/* <div>Description: {action?.simplePreview?.fullDescription}</div>
                 <div>Description: {action?.simplePreview?.image}</div> */}
@@ -201,8 +208,14 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
                 )}
                 {action.type === 'TonTransfer' && (
                   <>
-                    <AddressRow text="From:" rawAddress={action?.tonTransfer?.sender.address} />
-                    <AddressRow text="To:" rawAddress={action?.tonTransfer?.recipient.address} />
+                    <AddressRow
+                      text={<span className="w-16">From:</span>}
+                      rawAddress={action?.tonTransfer?.sender.address}
+                    />
+                    <AddressRow
+                      text={<span className="w-16">To:</span>}
+                      rawAddress={action?.tonTransfer?.recipient.address}
+                    />
                   </>
                 )}
                 {action.type === 'JettonTransfer' && (
@@ -213,14 +226,17 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
                         10 ** (action.jettonTransfer?.jetton.decimals || 0)}{' '}
                       {action.jettonTransfer?.jetton.symbol} Jettons
                     </div>
-                    <AddressRow text="From:" rawAddress={action?.jettonTransfer?.sender?.address} />
                     <AddressRow
-                      text="To:"
+                      text={<span className="w-16">From:</span>}
+                      rawAddress={action?.jettonTransfer?.sender?.address}
+                    />
+                    <AddressRow
+                      text={<span className="w-16">To:</span>}
                       rawAddress={action?.jettonTransfer?.recipient?.address}
                     />
                   </>
                 )}
-              </div>
+              </Block>
             )
           })}
         </div>
@@ -251,6 +267,6 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
           Delete
         </BlueButton>
       </div> */}
-    </div>
+    </Block>
   )
 }

@@ -1,6 +1,7 @@
 import { setSelectedWallet, setWalletKey } from '@/store/walletState'
 import { Key } from '@/types/Key'
 import { State } from '@hookstate/core'
+import clsx from 'clsx'
 import { useState, useCallback, useEffect } from 'react'
 import Jazzicon from 'react-jazzicon'
 import { NavLink } from 'react-router-dom'
@@ -21,13 +22,16 @@ export function SavedWalletRow({ walletKey }: { walletKey: State<Key> }) {
 
   // const route = useRoute
   // const isSelected =
-  const activeStyle = 'bg-foreground-element/5'
+  const activeStyle = 'bg-foreground/5'
 
   return (
     <NavLink
       to={`/wallets/${walletKey.get().id}`}
       className={({ isActive }) =>
-        'rounded p-1 flex flex-col items-center my-2 select-none ' + (isActive ? activeStyle : '')
+        clsx(
+          'rounded p-1 flex flex-col items-center my-2 select-none text-foreground ',
+          isActive ? activeStyle : ''
+        )
       }
       onClick={() => {
         setWalletKey(walletKey.get().id)
@@ -36,7 +40,7 @@ export function SavedWalletRow({ walletKey }: { walletKey: State<Key> }) {
     >
       {jazzNumber ? <Jazzicon diameter={64} seed={jazzNumber} /> : <div className="w-16 h-16" />}
 
-      <div>{walletKey.get().name}</div>
+      <div className="text-foreground mt-2">{walletKey.get().name}</div>
     </NavLink>
   )
 }

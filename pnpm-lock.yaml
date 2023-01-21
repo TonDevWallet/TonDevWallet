@@ -19,6 +19,7 @@ specifiers:
   buffer: ^6.0.3
   camelcase-keys: ^8.0.2
   clipboardy: ^3.0.0
+  clsx: ^1.2.1
   eslint: ^8.12.0
   eslint-config-prettier: ^8.5.0
   eslint-config-standard: ^17.0.0
@@ -62,6 +63,7 @@ dependencies:
   buffer: 6.0.3
   camelcase-keys: 8.0.2
   clipboardy: 3.0.0
+  clsx: 1.2.1
   express: 4.18.2
   knex: /@truecarry/knex/2.3.0
   postcss: 8.4.20
@@ -1386,6 +1388,11 @@ packages:
       arch: 2.2.0
       execa: 5.1.1
       is-wsl: 2.2.0
+    dev: false
+
+  /clsx/1.2.1:
+    resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
+    engines: {node: '>=6'}
     dev: false
 
   /color-convert/1.9.3:

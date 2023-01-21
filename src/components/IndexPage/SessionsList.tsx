@@ -3,6 +3,8 @@ import { useTonConnectSessions, deleteTonConnectSession } from '@/store/tonConne
 import { useWalletListState } from '@/store/walletsListState'
 import { getWalletFromKey } from '@/utils/wallets'
 import { LiteClient } from 'ton-lite-client'
+import { AddressRow } from '../AddressRow'
+import { ReactPopup } from '../Popup'
 import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
 
@@ -12,8 +14,8 @@ export function SessionsList() {
   const liteClient = useLiteclient() as unknown as LiteClient
 
   return (
-    <div className="gap-2 flex flex-col">
-      <h3 className="text-lg mb-2 text-accent">Sessions:</h3>
+    <div className="gap-2 flex flex-col mb-8">
+      <h3 className="text-lg">Sessions:</h3>
       {sessions.map((s) => {
         const key = keys.find((k) => k.id.get() === s.keyId.get())
         if (!key) {
@@ -29,33 +31,66 @@ export function SessionsList() {
 
         return (
           <Block
-            // className="dark:bg-foreground-element/5 bg-background rounded dark:shadow border-2 dark:border-none p-2"
-            className="overflow-hidden"
+            // className="dark:bg-foreground/5 bg-background rounded dark:shadow border-2 dark:border-none p-2"
+            className="overflow-hidden flex flex-col gap-2"
             key={s.id.get()}
           >
-            <div className="flex items-center">
-              <img src={s.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
-              <div className="ml-2">{s.name.get()}</div>
-              <a href={s.url.get()} target="_blank" className="ml-2" rel="noopener noreferrer">
-                {s.url.get()}
-              </a>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <img src={s.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
+                <div className="ml-2">{s.name.get()}</div>
+              </div>
+
+              <ReactPopup
+                trigger={
+                  <button className="cursor-pointer text-accent dark:text-accent-light">
+                    &#x1F5D9;
+                  </button>
+                }
+              >
+                {(close: () => void) => {
+                  return (
+                    <div className="flex gap-2">
+                      <BlueButton
+                        className="bg-red-500"
+                        onClick={async () => {
+                          await deleteTonConnectSession(s.id.get())
+                          close()
+                        }}
+                        // onClick={async () => {
+                        //   await deleteWallet(wallet.id)
+                        //   close()
+                        // }}
+                      >
+                        Confirm
+                      </BlueButton>
+                      <BlueButton className="" onClick={close}>
+                        Cancel
+                      </BlueButton>
+                    </div>
+                  )
+                }}
+              </ReactPopup>
             </div>
 
-            <div className="flex">
-              <div>WalletInfo:&nbsp;</div>
-              <div>{tonWallet?.type}</div>
-            </div>
-            <div className="flex">
-              <div>SubwalletId:&nbsp;</div>
-              <div>{tonWallet?.subwalletId || 'Default'}</div>
+            <a href={s.url.get()} target="_blank" className="" rel="noopener noreferrer">
+              {s.url.get()}
+            </a>
+
+            <div className="flex justify-between">
+              <div className="flex">
+                <div>WalletInfo:&nbsp;</div>
+                <div>{tonWallet?.type}</div>
+              </div>
+              <div className="flex">
+                <div>SubwalletId:&nbsp;</div>
+                <div>{tonWallet?.subwalletId || 'Default'}</div>
+              </div>
             </div>
 
-            <div className="flex">
-              <div>Address:&nbsp;</div>
-              <div>{tonWallet?.address.toString()}</div>
-            </div>
+            <AddressRow text={<span>Address:</span>} address={tonWallet?.address} />
 
-            <div className="flex items-center">
+            {/* <div className="flex items-center">
               <div>Delete:&nbsp;</div>
               <BlueButton
                 onClick={() => {
@@ -64,7 +99,7 @@ export function SessionsList() {
               >
                 Delete
               </BlueButton>
-            </div>
+            </div> */}
           </Block>
         )
       })}

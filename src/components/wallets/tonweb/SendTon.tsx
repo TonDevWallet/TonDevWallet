@@ -1,3 +1,4 @@
+import { Block } from '@/components/ui/Block'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import { Address, Cell, internal, loadStateInit } from 'ton'
@@ -28,8 +29,8 @@ export default function SendTon({
   }, [wallet])
 
   return (
-    <div className="flex flex-col p-4 border rounded shadow">
-      <div className="font-medium text-lg text-accent my-2">Send TON:</div>
+    <Block className="flex flex-col p-4 border rounded shadow">
+      <div className="font-medium text-lg">Send TON:</div>
 
       <div className="mt-2 flex flex-col">
         <label htmlFor="toInput">Recepient:</label>
@@ -57,8 +58,8 @@ export default function SendTon({
 
       <div className="mt-2 flex flex-col">
         <label htmlFor="amountInput">Message:</label>
-        <div>
-          <label htmlFor="base64Check" className="text-gray-600 text-sm my-1">
+        <div className="flex items-center">
+          <label htmlFor="base64Check" className="text-sm text-foreground/75 my-1">
             Base64 cell?
           </label>
           <input
@@ -69,6 +70,7 @@ export default function SendTon({
               console.log('change', e)
               setMessage64((c) => !c)
             }}
+            className="ml-2"
           />
         </div>
         <input
@@ -84,7 +86,7 @@ export default function SendTon({
 
       <div className="mt-2 flex flex-col">
         <label htmlFor="amountInput">StateInit:</label>
-        <p className="text-gray-600 text-sm my-1">Base64 encoded state init cell</p>
+        <p className="text-foreground/75 text-sm my-1">Base64 encoded state init cell</p>
         <input
           className="border rounded p-2"
           id="amountInput"
@@ -106,7 +108,7 @@ export default function SendTon({
         updateBalance={updateBalance}
         isBase64={message64}
       />
-    </div>
+    </Block>
   )
 }
 
@@ -177,7 +179,7 @@ const SendModal = ({
         internal({
           body: isBase64 ? Cell.fromBase64(sendMessage) : sendMessage,
           bounce,
-          value: BigInt(amount),
+          value: BigInt(Math.floor(parseFloat(amount) * 10 ** 9)),
           to: rAddress,
         }),
       ],

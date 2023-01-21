@@ -11,7 +11,7 @@ export function AddressRow({
   rawAddress,
 }: {
   address?: string | Address
-  text: string | ReactNode | undefined
+  text?: string | ReactNode | undefined
   rawAddress?: string
 }) {
   const [copied, setCopied] = useState(false)
@@ -39,12 +39,10 @@ export function AddressRow({
       <div className="text-xs overflow-hidden text-ellipsis whitespace-nowrap">
         {addressString.substring(0, addressString.length - 4)}
       </div>
-      <div className="text-xs mr-4">{addressString.substring(addressString.length - 4)}</div>
+      <div className="text-xs mr-4 w-10">{addressString.substring(addressString.length - 4)}</div>
 
-      <div className="ml-auto">
-        <button className="w-6 h-6">
-          {copied ? <DoneSvg className="fill-current" /> : <CopySvg className="fill-current" />}
-        </button>
+      <div className="ml-auto flex items-center">
+        <button className="w-6 h-6">{copied ? <DoneSvg /> : <CopySvg />}</button>
       </div>
     </div>
   )

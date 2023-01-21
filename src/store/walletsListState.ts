@@ -139,6 +139,16 @@ export async function CreateNewKeyWallet({
 
 export async function DeleteKeyWallet(walletId: number) {
   const db = await getDatabase()
+
+  const sessionsCount = await db('connect_sessions').where({ wallet_id: walletId }).count()
+  const transactionsCount = await db('connect_message_transactions')
+    .where({ wallet_id: walletId })
+    .count()
+
+  if (sessionsCount || transactionsCount) {
+    throw new Error('Wallet already used')
+  }
+
   await db<SavedWallet>('wallets')
     .where({
       id: walletId,

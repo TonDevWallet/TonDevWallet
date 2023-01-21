@@ -14,6 +14,7 @@ import { BlueButton } from '../ui/BlueButton'
 import { fetch as tFetch } from '@tauri-apps/api/http'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { IWallet } from '@/types'
+import { Block } from '../ui/Block'
 
 export function TonConnect() {
   const nameRef = useRef<HTMLInputElement | null>(null)
@@ -77,10 +78,19 @@ export function TonConnect() {
   }
 
   return (
-    <div>
-      <BlueButton onClick={() => doBridgeAuth()}>DO auth</BlueButton>
-      <input type="text" ref={nameRef} id="nameRef" className="border w-3/4 outline-none" />
-    </div>
+    <Block className="flex flex-col gap-2">
+      {/* <div className="flex"> */}
+      <label htmlFor="tonconnectLink">Enter your Ton Connect link</label>
+      <input
+        type="text"
+        ref={nameRef}
+        id="tonconnectLink"
+        autoComplete="off"
+        className="border w-full outline-none rounded p-2"
+      />
+      <BlueButton onClick={() => doBridgeAuth()}>Connect</BlueButton>
+      {/* </div> */}
+    </Block>
   )
 }
 

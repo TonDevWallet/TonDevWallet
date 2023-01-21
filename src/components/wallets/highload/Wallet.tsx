@@ -7,6 +7,7 @@ import { BlueButton } from '../../ui/BlueButton'
 import { useLiteclient } from '@/store/liteClient'
 import { TonConnect } from '@/components/TonConnect/TonConnect'
 import { useSelectedTonWallet } from '@/utils/wallets'
+import { Block } from '@/components/ui/Block'
 
 function Wallet() {
   const wallet = useSelectedTonWallet() as ITonHighloadWalletV2
@@ -30,25 +31,26 @@ function Wallet() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-col">
-        <div className="font-medium text-lg text-accent my-2">Wallet:</div>
-        <div>Type: {wallet.type}</div>
-        <div>
-          <AddressRow
-            text="Address:"
-            address={wallet.address.toString({ bounceable: true, urlSafe: true })}
-          />
+      <Block>
+        <div className="flex flex-col">
+          <div className="font-medium text-lg text-accent my-2">Wallet:</div>
+          <div>Type: {wallet.type}</div>
+          <div>
+            <AddressRow
+              text="Address:"
+              address={wallet.address.toString({ bounceable: true, urlSafe: true })}
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center">
-        <div>Balance: {balance && balance.toString()}</div>
-        <BlueButton onClick={updateBalance} className="ml-2 px-2 py-0 w-auto">
-          Refresh Balance
-        </BlueButton>
-      </div>
+        <div className="flex items-center">
+          <div>Balance: {balance && parseFloat(balance) / 10 ** 9}</div>
+          <BlueButton onClick={updateBalance} className="ml-2 px-2 py-0 w-auto">
+            Refresh Balance
+          </BlueButton>
+        </div>
 
-      {/* <div className="mt-2 flex flex-col">
+        {/* <div className="mt-2 flex flex-col">
         <label htmlFor="amountInput">Seqno:</label>
         <div>
           <input
@@ -65,6 +67,7 @@ function Wallet() {
           </BlueButton>
         </div>
       </div> */}
+      </Block>
 
       <TonConnect />
 

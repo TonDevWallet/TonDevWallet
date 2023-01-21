@@ -1,24 +1,33 @@
+import { useLiteclientState } from '@/store/liteClient'
 import { DeleteKeyWallet } from '@/store/walletsListState'
 import { setSelectedWallet } from '@/store/walletState'
 import { useSelectedTonWallet } from '@/utils/wallets'
+import { useMemo } from 'react'
 import { ITonHighloadWalletV2, ITonWallet, IWallet } from '../types'
 import { AddressRow } from './AddressRow'
+import { ReactPopup } from './Popup'
 import { Block } from './ui/Block'
+import { BlueButton } from './ui/BlueButton'
 
 // const defaultHighloadId = 1
 // const defaultTonWalletId = 698983191
+
+const deleteWallet = (walletId: number) => {
+  return DeleteKeyWallet(walletId)
+}
 
 function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: boolean }) {
   return (
     <Block
       className="my-2 flex flex-col border"
+      bg={isSelected && 'dark:bg-foreground/15 bg-background border-accent dark:border-none'}
       key={wallet.address.toString({ bounceable: true, urlSafe: true })}
     >
-      <div className="flex justify-between border-b px-1">
+      <div className="flex justify-between">
         <div className="">
           Wallet {wallet.type} ({wallet.subwalletId})
           <a
-            href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }), false)}
+            href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }))}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-2"
@@ -27,16 +36,17 @@ function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: 
           </a>
         </div>
 
-        {isSelected ? (
-          <div>Selected</div>
-        ) : (
-          <div className="cursor-pointer text-accent" onClick={() => setSelectedWallet(wallet)}>
+        {!isSelected && (
+          <div
+            className="cursor-pointer text-accent dark:text-accent-light"
+            onClick={() => setSelectedWallet(wallet)}
+          >
             Use this wallet
           </div>
         )}
       </div>
 
-      <div className="px-2 mt-2">
+      <div className="mt-2">
         <AddressRow
           text="Bouncable:"
           address={wallet.address.toString({ bounceable: true, urlSafe: true })}
@@ -48,17 +58,34 @@ function TonWalletRow({ wallet, isSelected }: { wallet: ITonWallet; isSelected: 
         <AddressRow text="Raw:" address={wallet.address.toRawString()} />
       </div>
 
-      <div className="px-2 mt-1">
-        <div className="cursor-pointer text-accent" onClick={() => deleteWallet(wallet.id)}>
-          Disconnect
-        </div>
+      <div className="mt-1">
+        <ReactPopup
+          trigger={
+            <button className="cursor-pointer text-accent dark:text-accent-light">Delete</button>
+          }
+        >
+          {(close: () => void) => {
+            return (
+              <div className="flex gap-2">
+                <BlueButton
+                  className="bg-red-500"
+                  onClick={async () => {
+                    await deleteWallet(wallet.id)
+                    close()
+                  }}
+                >
+                  Confirm
+                </BlueButton>
+                <BlueButton className="" onClick={close}>
+                  Cancel
+                </BlueButton>
+              </div>
+            )
+          }}
+        </ReactPopup>
       </div>
     </Block>
   )
-}
-
-const deleteWallet = (walletId: number) => {
-  // DeleteKeyWallet(walletId)
 }
 
 function HighloadWalletRow({
@@ -71,13 +98,14 @@ function HighloadWalletRow({
   return (
     <Block
       className="my-2 flex flex-col border"
+      bg={isSelected && 'dark:bg-foreground/15 bg-background border-accent dark:border-none'}
       key={wallet.address.toString({ bounceable: true, urlSafe: true })}
     >
-      <div className="flex justify-between border-b px-1">
+      <div className="flex justify-between">
         <div className="">
           Wallet {wallet.type} ({wallet.subwalletId})
           <a
-            href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }), false)}
+            href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }))}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-2"
@@ -86,16 +114,17 @@ function HighloadWalletRow({
           </a>
         </div>
 
-        {isSelected ? (
-          <div>Selected</div>
-        ) : (
-          <div className="cursor-pointer text-accent" onClick={() => setSelectedWallet(wallet)}>
+        {!isSelected && (
+          <div
+            className="cursor-pointer text-accent dark:text-accent-light"
+            onClick={() => setSelectedWallet(wallet)}
+          >
             Use this wallet
           </div>
         )}
       </div>
 
-      <div className="px-2 mt-2 border-b">
+      <div className="mt-2">
         <AddressRow
           text="Bouncable:"
           address={wallet.address.toString({ bounceable: true, urlSafe: true })}
@@ -107,10 +136,31 @@ function HighloadWalletRow({
         <AddressRow text="Raw:" address={wallet.address.toRawString()} />
       </div>
 
-      <div className="px-2 mt-1">
-        <div className="cursor-pointer text-accent" onClick={() => deleteWallet(wallet.id)}>
-          Disconnect
-        </div>
+      <div className="mt-1">
+        <ReactPopup
+          trigger={
+            <button className="cursor-pointer text-accent dark:text-accent-light">Delete</button>
+          }
+        >
+          {(close: () => void) => {
+            return (
+              <div className="flex gap-2">
+                <BlueButton
+                  className="bg-red-500"
+                  onClick={async () => {
+                    await deleteWallet(wallet.id)
+                    close()
+                  }}
+                >
+                  Confirm
+                </BlueButton>
+                <BlueButton className="" onClick={close}>
+                  Cancel
+                </BlueButton>
+              </div>
+            )
+          }}
+        </ReactPopup>
       </div>
     </Block>
   )
@@ -159,7 +209,7 @@ export function WalletsTable({
 
   return (
     <>
-      <div className="font-medium text-lg text-accent my-2">Wallets:</div>
+      {/* <div className="font-medium text-lg text-accent my-2">Wallets:</div> */}
 
       {walletsToShow?.map((wallet) =>
         wallet.type === 'highload' ? (
@@ -190,6 +240,10 @@ export function WalletsTable({
   )
 }
 
-function getScanLink(address: string, testnet: boolean): string {
-  return `https://${testnet ? 'testnet.' : ''}tonscan.org/address/${address}`
+function getScanLink(address: string): string {
+  const isTestnet = useLiteclientState().testnet.get()
+  return useMemo(
+    () => `https://${isTestnet ? 'testnet.' : ''}tonscan.org/address/${address}`,
+    [isTestnet]
+  )
 }

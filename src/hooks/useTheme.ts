@@ -22,7 +22,7 @@ async function setColors() {
       console.log(
         `SystemColor ${key}: ${r.toString(16)}${g.toString(16)}${b.toString(16)}${a.toString(16)}`
       )
-      const cssKey = key.replace(/_/, '-')
+      const cssKey = key.replace(/_/g, '-')
 
       root.style.setProperty(`--color-${cssKey}`, `rgba(${r}, ${g}, ${b}, ${a})`)
       root.style.setProperty(`--color-${cssKey}-rgb`, `${r} ${g} ${b}`)
