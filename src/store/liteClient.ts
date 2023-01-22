@@ -130,7 +130,7 @@ function getLiteClient(isTestnet: boolean): LiteClient {
     }
 
     const engines: LiteSingleEngine[] = []
-    for (const ls of data.liteservers.slice(1, 2)) {
+    for (const ls of data.liteservers.slice(0, 3)) {
       const pubkey = encodeURIComponent(ls.id.key)
       engines.push(
         new LiteSingleEngine({
