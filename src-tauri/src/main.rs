@@ -59,7 +59,6 @@ fn change_transparent_effect(effect: String, window: tauri::Window) {
         "mica" => {
             use window_vibrancy::apply_mica;
             if is_win_11(){
-                info!("Apply mica!");
                 apply_mica(&window).unwrap()
             }
         },
