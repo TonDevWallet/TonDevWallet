@@ -2,8 +2,8 @@ import { Block } from '@/components/ui/Block'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import { Address, Cell, internal, loadStateInit } from 'ton'
-import { ITonWallet, TonWalletTransferArg } from '../../../types'
-import { BlueButton } from '../../ui/BlueButton'
+import { ITonWallet, TonWalletTransferArg } from '@/types'
+import { BlueButton } from '@/components/ui/BlueButton'
 
 export default function SendTon({
   seqno,

@@ -5,19 +5,24 @@ import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
 import { Address, beginCell, Builder, Cell, storeMessage } from 'ton'
-import { ITonHighloadWalletV2 } from '../../../types'
-import { BlueButton } from '../../ui/BlueButton'
+import { ITonHighloadWalletV2 } from '@/types'
+import { BlueButton } from '@/components/ui/BlueButton'
 
 export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
   const [amount, setAmount] = useState('0')
   const [recepient, setRecepient] = useState('')
   const [message, setMessage] = useState('')
+  const [stateInit, setStateInit] = useState('')
+  const [message64, setMessage64] = useState(false)
+
   const liteClient = useLiteclient()
 
   useEffect(() => {
     setAmount('0')
     setRecepient('')
     setMessage('')
+    setStateInit('')
+    setMessage64(false)
   }, [wallet, liteClient])
 
   return (
@@ -48,20 +53,56 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
         />
       </div>
 
-      {/* <div className="mt-2 flex flex-col">
-        <label htmlFor="amountInput">Message:</label>
+      <div className="mt-2 flex flex-col">
+        <label htmlFor="messageInput">Message:</label>
+        <div className="flex items-center">
+          <label htmlFor="base64Check" className="text-sm text-foreground/75 my-1">
+            Base64 cell?
+          </label>
+          <input
+            id="base64Check"
+            type="checkbox"
+            checked={message64}
+            onChange={(e: any) => {
+              console.log('change', e)
+              setMessage64((c) => !c)
+            }}
+            className="ml-2"
+          />
+        </div>
         <input
           className="border rounded p-2"
-          id="amountInput"
+          id="messageInput"
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
           value={message}
           onChange={(e: any) => setMessage(e.target.value)}
         />
-      </div> */}
+      </div>
 
-      <SendModal amount={amount} recepient={recepient} wallet={wallet} message={message} />
+      <div className="mt-2 flex flex-col">
+        <label htmlFor="amountInput">StateInit:</label>
+        <p className="text-foreground/75 text-sm my-1">Base64 encoded state init cell</p>
+        <input
+          className="border rounded p-2"
+          id="amountInput"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={stateInit}
+          onChange={(e: any) => setStateInit(e.target.value)}
+        />
+      </div>
+
+      <SendModal
+        amount={amount}
+        recepient={recepient}
+        wallet={wallet}
+        message={message}
+        stateInit={stateInit}
+        isBase64={message64}
+      />
     </Block>
   )
 }
@@ -71,11 +112,15 @@ const SendModal = ({
   recepient,
   wallet,
   message: sendMessage,
+  isBase64,
+  stateInit,
 }: {
   amount: string
   recepient: string
   wallet: ITonHighloadWalletV2
   message: string
+  stateInit: string
+  isBase64: boolean
 }) => {
   const liteClient = useLiteclient()
 
@@ -93,13 +138,24 @@ const SendModal = ({
   }
 
   const sendMoney = async () => {
+    const body = isBase64
+      ? Cell.fromBase64(sendMessage)
+      : sendMessage
+      ? new Builder().storeUint(0, 32).storeBuffer(Buffer.from(sendMessage)).endCell()
+      : undefined
+
     const params: WalletTransfer = {
       destination: Address.parse(recepient),
       amount: BigInt(Math.floor(parseFloat(amount) * 10 ** 9)),
       mode: 3,
-      body: sendMessage
-        ? new Builder().storeUint(0, 32).storeBuffer(Buffer.from(sendMessage)).endCell()
-        : new Cell(),
+      body,
+    }
+
+    if (stateInit) {
+      const parsed = Cell.fromBoc(Buffer.from(stateInit, 'base64'))[0] // TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(stateInit))
+      if (parsed) {
+        params.state = parsed
+      }
     }
 
     try {
