@@ -57,12 +57,18 @@ export function TonConnect() {
       url: string
     }>(r.manifestUrl)
 
-    if (!metaInfo.url || !metaInfo.name) {
+    if (!metaInfo.name) {
+      console.log('No connect meta', metaInfo)
       return
     }
 
-    const serviceUrl = new URL(metaInfo.url)
-    const host = serviceUrl.host
+    let host = ''
+    try {
+      const serviceUrl = new URL(metaInfo.url)
+      host = serviceUrl.host || ''
+    } catch (e) {
+      console.log('Service url error')
+    }
 
     await sendTonConnectStartMessage(wallet, host, sessionKeypair, clientId, r)
 
