@@ -45,7 +45,7 @@ specifiers:
   ton: ^13.3.0
   ton-core: ^0.44.0
   ton-crypto: ^3.2.0
-  ton-lite-client: npm:@truecarry/ton-lite-client@2.0.0-beta.0
+  ton-lite-client: npm:@truecarry/ton-lite-client@2.0.0-beta.2
   tonapi-sdk-js: ^0.24.0
   tweetnacl: ^1.0.3
   typescript: ^4.8.3
@@ -80,7 +80,7 @@ dependencies:
   ton: 13.3.0_l74i2356aoedurpqlhrqpgf3um
   ton-core: 0.44.0_ton-crypto@3.2.0
   ton-crypto: 3.2.0
-  ton-lite-client: /@truecarry/ton-lite-client/2.0.0-beta.0_l74i2356aoedurpqlhrqpgf3um
+  ton-lite-client: /@truecarry/ton-lite-client/2.0.0-beta.2_l74i2356aoedurpqlhrqpgf3um
   tonapi-sdk-js: 0.24.0_t7pnv3kwdsdbqh77ffh5angucm
   tweetnacl: 1.0.3
 
@@ -841,13 +841,13 @@ packages:
       - supports-color
     dev: false
 
-  /@truecarry/ton-lite-client/2.0.0-beta.0_l74i2356aoedurpqlhrqpgf3um:
-    resolution: {integrity: sha512-DQ8lxrToYVr5UxvMnwhY7aWwtJ9Fn6qjdG4QOWn4iU0iLmFolMcy+xRu2iLPf/cNImaZBy6Ix6UBPbAfeAbB8w==}
+  /@truecarry/ton-lite-client/2.0.0-beta.2_l74i2356aoedurpqlhrqpgf3um:
+    resolution: {integrity: sha512-qH+ZZhWTYQ238H2ma5XLgmMLPOB8xJCgST1wvC0EWeyvD4pC9aryeOdIrmaKrStqCeMl0F7TTPlSLEK7YEeCHQ==}
     peerDependencies:
       ton-core: ^0.41.0
       ton-crypto: ^3.2.0
     dependencies:
-      adnl: 0.0.12
+      adnl: 0.0.13
       dataloader: 2.1.0
       teslabot: 1.5.0
       ton-core: 0.44.0_ton-crypto@3.2.0
@@ -1089,8 +1089,8 @@ packages:
     hasBin: true
     dev: true
 
-  /adnl/0.0.12:
-    resolution: {integrity: sha512-YaVjFFcTHXIGKgzQZXEbFhjJxEKrHYn32h2xSdc3fW61laFcokhqAiUxSNBOKQjGk0cWlI6BRZz6UCTgNNUMRQ==}
+  /adnl/0.0.13:
+    resolution: {integrity: sha512-PEq3yrrsEfVO2PuvueyD77aV9JWUy2l74jKOL6HPMbFeE5ofUPXaKhKIBle4MVsL+XSQIb8n1sA2DQRikQaLJg==}
     dependencies:
       '@noble/ed25519': 1.7.1
       aes-js: 3.1.2

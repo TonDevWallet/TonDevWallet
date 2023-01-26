@@ -130,7 +130,7 @@ function getLiteClient(isTestnet: boolean): LiteClient {
     }
 
     const engines: LiteSingleEngine[] = []
-    for (const ls of data.liteservers.slice(0, 3)) {
+    for (const ls of shuffle(data.liteservers).slice(0, 3)) {
       const pubkey = encodeURIComponent(ls.id.key)
       engines.push(
         new LiteSingleEngine({
@@ -149,6 +149,23 @@ function getLiteClient(isTestnet: boolean): LiteClient {
     endWait(client)
   }, 0)
   return tmpClient
+}
+
+function shuffle(array) {
+  let currentIndex = array.length
+  let randomIndex
+
+  // While there remain elements to shuffle.
+  while (currentIndex !== 0) {
+    // Pick a remaining element.
+    randomIndex = Math.floor(Math.random() * currentIndex)
+    currentIndex--
+
+    // And swap it with the current element.
+    ;[array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]]
+  }
+
+  return array
 }
 
 export { LiteClientState }

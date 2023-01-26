@@ -38,7 +38,7 @@
     "ton": "^13.3.0",
     "ton-core": "^0.44.0",
     "ton-crypto": "^3.2.0",
-    "ton-lite-client": "npm:@truecarry/ton-lite-client@2.0.0-beta.0",
+    "ton-lite-client": "npm:@truecarry/ton-lite-client@2.0.0-beta.2",
     "tonapi-sdk-js": "^0.24.0",
     "tweetnacl": "^1.0.3"
   },
