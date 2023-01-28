@@ -6,9 +6,11 @@ import { tauriState } from './tauri'
 const LiteClientState = hookstate<{
   liteClient: LiteClient
   testnet: boolean
-}>({
-  testnet: false,
-  liteClient: getLiteClient(false),
+}>(async () => {
+  return {
+    testnet: false,
+    liteClient: await getLiteClientAsync(false),
+  }
 })
 
 export function useLiteclient() {
@@ -19,9 +21,9 @@ export function useLiteclientState() {
   return useHookstate(LiteClientState)
 }
 
-export function changeLiteClient(testnet: boolean) {
+export async function changeLiteClient(testnet: boolean) {
   console.log('changeLiteClient', testnet)
-  const newLiteClient = getLiteClient(testnet)
+  const newLiteClient = await getLiteClientAsync(testnet)
 
   if (LiteClientState.liteClient.get()) {
     LiteClientState.liteClient.get().engine.close()
@@ -149,6 +151,36 @@ function getLiteClient(isTestnet: boolean): LiteClient {
     endWait(client)
   }, 0)
   return tmpClient
+}
+
+export async function getLiteClientAsync(isTestnet: boolean): Promise<LiteClient> {
+  const data = isTestnet ? networkConfig.testnetConfig : networkConfig.mainnetConfig
+
+  const tauri = (await tauriState.promise) || tauriState
+  if (!tauri) {
+    console.log('no tauri', tauri)
+    throw new Error('no tauri')
+    // return
+  }
+
+  const engines: LiteSingleEngine[] = []
+  for (const ls of shuffle(data.liteservers).slice(0, 3)) {
+    const pubkey = encodeURIComponent(ls.id.key)
+    engines.push(
+      new LiteSingleEngine({
+        // host: `wss://ws.tonlens.com/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`,
+        host: `ws://localhost:${tauri.port.get()}/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`,
+        publicKey: Buffer.from(ls.id.key, 'base64'),
+        client: 'ws',
+      })
+    )
+  }
+
+  const engine = new LiteRoundRobinEngine(engines)
+  const client = new LiteClient({ engine })
+
+  await client.getMasterchainInfo()
+  return client
 }
 
 function shuffle(array) {

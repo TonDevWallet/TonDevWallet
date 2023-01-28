@@ -5,6 +5,7 @@ specifiers:
   '@hookstate/devtools': ^4.0.0-rc21
   '@tauri-apps/api': ^1.2.0
   '@tauri-apps/cli': ^1.2.2
+  '@ton-community/sandbox': ^0.2.0
   '@tonconnect/protocol': ^2.0.1
   '@tonconnect/sdk': ^2.0.5
   '@types/bn.js': ^5.1.0
@@ -55,6 +56,7 @@ dependencies:
   '@hookstate/core': 4.0.0_react@18.2.0
   '@hookstate/devtools': 4.0.0_@hookstate+core@4.0.0
   '@tauri-apps/api': 1.2.0
+  '@ton-community/sandbox': 0.2.0_otphrpghf2ugbazebzcwiaxcqa
   '@tonconnect/protocol': 2.0.1
   '@tonconnect/sdk': 2.0.5
   '@types/bn.js': 5.1.1
@@ -776,6 +778,18 @@ packages:
       '@tauri-apps/cli-win32-ia32-msvc': 1.2.2
       '@tauri-apps/cli-win32-x64-msvc': 1.2.2
     dev: true
+
+  /@ton-community/sandbox/0.2.0_otphrpghf2ugbazebzcwiaxcqa:
+    resolution: {integrity: sha512-pG9F/8mkw8cwC7c2eRAa9byXTDWFohMhT+7d0a61WA1tp/68lXk6anhftnY/y8viAcXoHRsjcKja36EVjm49FQ==}
+    peerDependencies:
+      ton: '>=13.0.0'
+      ton-core: '>=0.36.1'
+      ton-crypto: '>=3.2.0'
+    dependencies:
+      ton: 13.3.0_l74i2356aoedurpqlhrqpgf3um
+      ton-core: 0.44.0_ton-crypto@3.2.0
+      ton-crypto: 3.2.0
+    dev: false
 
   /@tonconnect/protocol/2.0.1:
     resolution: {integrity: sha512-jkSj6EKjIlHnJxrtxdlO7KqVJe41yrIgqamGZiqziKH6iwx0m9YyKvuIREd6CmWY2jbsev3BvBWqPp9KH6HrRw==}

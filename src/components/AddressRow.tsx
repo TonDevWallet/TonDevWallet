@@ -1,4 +1,5 @@
 import clipboard from 'clipboardy'
+import clsx from 'clsx'
 import { ReactNode, useState } from 'react'
 import { Address } from 'ton-core'
 
@@ -9,10 +10,14 @@ export function AddressRow({
   address,
   text,
   rawAddress,
+
+  addressClassName,
 }: {
   address?: string | Address
   text?: string | ReactNode | undefined
   rawAddress?: string
+
+  addressClassName?: string
 }) {
   const [copied, setCopied] = useState(false)
 
@@ -36,10 +41,17 @@ export function AddressRow({
     <div className="flex justify-start items-center cursor-pointer" onClick={pressCopy}>
       {text && (typeof text === 'string' ? <div>{text}</div> : text)}
       {/* <div className="">{text}</div> */}
-      <div className="text-xs overflow-hidden text-ellipsis whitespace-nowrap">
+      <div
+        className={clsx(
+          'text-xs overflow-hidden text-ellipsis whitespace-nowrap',
+          addressClassName
+        )}
+      >
         {addressString.substring(0, addressString.length - 4)}
       </div>
-      <div className="text-xs mr-4 w-10">{addressString.substring(addressString.length - 4)}</div>
+      <div className={clsx('text-xs mr-4 w-10', addressClassName)}>
+        {addressString.substring(addressString.length - 4)}
+      </div>
 
       <div className="ml-auto flex items-center">
         <button className="w-6 h-6">{copied ? <DoneSvg /> : <CopySvg />}</button>

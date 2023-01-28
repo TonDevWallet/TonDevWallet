@@ -76,41 +76,40 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
     () => keyPairFromSeed(Buffer.from(key.seed.get() || '', 'hex')),
     [key.seed]
   )
-  const tonWallet = useMemo(
-    () => getWalletFromKey(liteClient, key, wallet),
-    [liteClient, key, wallet]
+  const tonWallet = useMemo(() => getWalletFromKey(liteClient, key, wallet), [liteClient, wallet])
+
+  const transfers = useMemo(
+    () =>
+      s.payload.messages
+        .map((m) => {
+          if (!m.address.get() || !m.amount.get()) {
+            return undefined
+          }
+
+          let destination
+          try {
+            destination = Address.parse(m.address.get() || '')
+          } catch (e) {}
+
+          const p = m.payload.get()
+          const payload = p ? Cell.fromBase64(p) : undefined
+
+          const stateInitData = m.stateInit.get()
+          const state = stateInitData ? Cell.fromBase64(stateInitData) : undefined
+
+          return {
+            body: payload,
+            destination,
+            amount: BigInt(m.amount.get()),
+            mode: 3,
+            state,
+          }
+        })
+        .filter((m) => m) as WalletTransfer[],
+    [s.payload.messages]
   )
 
-  const messageCell = useWalletExternalMessageCell(
-    tonWallet,
-    walletKeyPair,
-    s.payload.messages
-      .map((m) => {
-        if (!m.address.get() || !m.amount.get()) {
-          return undefined
-        }
-
-        let destination
-        try {
-          destination = Address.parse(m.address.get() || '')
-        } catch (e) {}
-
-        const p = m.payload.get()
-        const payload = p ? Cell.fromBase64(p) : undefined
-
-        const stateInitData = m.stateInit.get()
-        const state = stateInitData ? Cell.fromBase64(stateInitData) : undefined
-
-        return {
-          body: payload,
-          destination,
-          amount: BigInt(m.amount.get()),
-          mode: 3,
-          state,
-        }
-      })
-      .filter((m) => m) as WalletTransfer[]
-  )
+  const messageCell = useWalletExternalMessageCell(tonWallet, walletKeyPair, transfers)
 
   const amountOut =
     Number(s.payload.get().messages.reduce((acc, c) => acc + BigInt(c.amount), 0n)) / 10 ** 9
@@ -203,14 +202,33 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
         <div>Tx Actions:</div>
         <div className="break-words break-all flex flex-col gap-2">
           {/* {JSON.stringify(txInfo)} */}
-          {txInfo?.actions?.map((action, i) => {
+          {txInfo?.events?.map((action, i) => {
             return (
               <Block key={i} className="flex flex-col">
                 <div>Name: {action.type}</div>
+                {action.type === 'message_sent' && (
+                  <>
+                    <div>Amount: {Number(action.value) / 10 ** 9} TON</div>
+                    <AddressRow
+                      text={<span className="w-16">From:</span>}
+                      address={action.from}
+                      addressClassName={
+                        tonWallet?.address.equals(action.from) ? 'text-red-500' : undefined
+                      }
+                    />
+                    <AddressRow
+                      text={<span className="w-16">To:</span>}
+                      address={action.to}
+                      addressClassName={
+                        tonWallet?.address.equals(action.to) ? 'text-green-500' : undefined
+                      }
+                    />
+                  </>
+                )}
                 {/* <div>Description: {action?.simplePreview?.fullDescription}</div>
                 <div>Description: {action?.simplePreview?.image}</div> */}
                 {/* <div>Description: {action?.simplePreview?.name}</div> */}
-                {action.type !== 'JettonTransfer' && (
+                {/* {action.type !== 'JettonTransfer' && (
                   <div>Description: {action?.simplePreview?.shortDescription}</div>
                 )}
                 {action.type === 'TonTransfer' && (
@@ -242,7 +260,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
                       rawAddress={action?.jettonTransfer?.recipient?.address}
                     />
                   </>
-                )}
+                )} */}
               </Block>
             )
           })}

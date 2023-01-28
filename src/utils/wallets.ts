@@ -1,7 +1,7 @@
 import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import { SignCell } from '@/contracts/utils/SignExternalMessage'
-import { useLiteclient, useLiteclientState } from '@/store/liteClient'
+import { useLiteclient } from '@/store/liteClient'
 import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
 import {
   GetExternalMessageCell,
@@ -24,13 +24,13 @@ import {
   internal,
   Cell,
   loadStateInit,
+  loadMessage,
 } from 'ton'
 import { KeyPair, keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import { openLiteClient } from './liteClientProvider'
-import { Body, fetch as tFetch } from '@tauri-apps/api/http'
-import { AccountEvent } from 'tonapi-sdk-js'
-import camelcaseKeys from 'camelcase-keys'
+import { Blockchain, SendMessageResult } from '@ton-community/sandbox'
+import { LiteClientBlockchainStorage } from './liteClientBlockchainStorage'
 
 export function getWalletFromKey(
   liteClient: LiteClient,
@@ -172,38 +172,57 @@ export function useWalletExternalMessageCell(
   transfers: WalletTransfer[]
 ) {
   const [cell, setCell] = useState<Cell | undefined>()
+  const liteClient = useLiteclient()
 
+  console.log('useWalletExternalMessageCell')
   useEffect(() => {
+    console.log('useWalletExternalMessageCell effect', wallet, transfers)
     if (wallet) {
       wallet.getExternalMessageCell(keyPair, transfers).then(setCell)
     }
-  }, [wallet])
+  }, [wallet?.id, transfers, liteClient])
 
   return cell
 }
 
 export function useTonapiTxInfo(cell: Cell | undefined) {
-  const [response, setResponse] = useState<AccountEvent | undefined>()
-  const liteClientState = useLiteclientState()
+  const [response, setResponse] = useState<SendMessageResult | undefined>()
+  const liteClient = useLiteclient() as LiteClient
 
+  console.log('useTonapiTxInfo', cell?.hash())
   useEffect(() => {
+    console.log('useTonapiTxInfo effect', cell?.hash())
     if (cell) {
-      tFetch<AccountEvent>(
-        `https://${liteClientState.testnet.get() ? 'testnet.' : ''}tonapi.io/v1/send/estimateTx`,
-        {
-          method: 'POST',
-          body: Body.json({
-            boc: cell.toBoc().toString('base64'),
-          }),
-        }
-      ).then((txInfo) => {
-        console.log('useTonapiTxInfo', cell.toBoc().toString('base64'), txInfo)
-        setResponse(camelcaseKeys(txInfo.data, { deep: true }))
+      setTimeout(async () => {
+        setResponse(undefined)
+        const storage = new LiteClientBlockchainStorage(liteClient)
+        const blockchain = await Blockchain.create({
+          storage,
+        })
+        const msg = loadMessage(cell.beginParse())
+        const start = Date.now()
+        const res = await blockchain.sendMessage(msg)
+
+        console.log('res', res, Date.now() - start)
+        setResponse(res)
       })
+
+      // tFetch<AccountEvent>(
+      //   `https://${liteClientState.testnet.get() ? 'testnet.' : ''}tonapi.io/v1/send/estimateTx`,
+      //   {
+      //     method: 'POST',
+      //     body: Body.json({
+      //       boc: cell.toBoc().toString('base64'),
+      //     }),
+      //   }
+      // ).then((txInfo) => {
+      //   console.log('useTonapiTxInfo', cell.toBoc().toString('base64'), txInfo)
+      //   setResponse(camelcaseKeys(txInfo.data, { deep: true }))
+      // })
     } else {
       setResponse(undefined)
     }
-  }, [cell, liteClientState.testnet])
+  }, [cell])
 
   return response
 }
