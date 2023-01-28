@@ -7,8 +7,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "ton-dev-wallet",
-    "version": "0.1.0"
+    "productName": "TonDevWallet",
+    "version": "0.1.12"
   },
   "tauri": {
     "allowlist": {
@@ -102,7 +102,12 @@
       "csp": null
     },
     "updater": {
-      "active": false
+      "active": true,
+      "endpoints": [
+        "https://github.com/TonDevWallet/TonDevWallet/releases/latest/download/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJEQzFCOTdCRDM0ODc3RjUKUldUMWQwalRlN25CdllLZW9vOU95T3hMOU41SFJFelVLUmhoN3NIRmYrRFpZQXMwN091V3I2NjIK"
     },
     "windows": [
       {

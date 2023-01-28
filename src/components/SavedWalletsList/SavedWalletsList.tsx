@@ -10,12 +10,14 @@ import { getWalletFromKey } from '@/utils/wallets'
 import { KeyPair } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import { IWallet } from '@/types'
+import { useAppInfo } from '@/hooks/useAppInfo'
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
   const liteClientState = useLiteclientState()
   const sessions = useTonConnectSessions()
   const liteClient = useLiteclient() as LiteClient
+  const { version } = useAppInfo()
 
   // const [themeDark, setThemeDarkValue] = useState(false)
 
@@ -137,6 +139,8 @@ export function SavedWalletsList() {
           </div>
           <div className="text-foreground">New Key</div>
         </NavLink>
+
+        <div className="text-center mt-4 text-sm text-gray-400">v{version}</div>
 
         {/* <BlueButton
           onClick={async () => {
