@@ -1,7 +1,7 @@
 {
   "name": "ton_address_generator",
   "private": true,
-  "version": "0.1.12",
+  "version": "0.2.0",
   "scripts": {
     "dev": "vite",
     "serve:tauri": "cross-env VITE_NETWORK_PROCESSOR=tauri vite",
