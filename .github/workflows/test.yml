@@ -36,4 +36,4 @@ jobs:
 
       - name: tauri build
         run: |
-          pnpm tauri build
+          pnpm tauri build -b none
