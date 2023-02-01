@@ -102,12 +102,10 @@ async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
     let addr_str = format!("{}:{}", ip, port);
     info!("addr_str {}", addr_str);
     let addr = addr_str.parse::<SocketAddr>()?;
-    let mut stream = TcpStream::connect(&addr).await?;
+    let  stream = TcpStream::connect(&addr).await?;
 
-    let (mut ri, mut wi) = stream.into_split();
-    let (mut wo, mut ro) = ws_stream.split();
-
-    info!("hello");
+    let ( ri, wi) = stream.into_split();
+    let ( wo, ro) = ws_stream.split();
 
     tokio::spawn(ws_to_tcp(ro, wi));
     tokio::spawn(tcp_to_ws(ri, wo));
@@ -139,7 +137,7 @@ async fn ws_to_tcp(
 }
 
 async fn tcp_to_ws(
-    mut ri: OwnedReadHalf,
+    ri: OwnedReadHalf,
     mut wo: SplitSink<WebSocketStream<TcpStream>, Message>,
 ) -> Result<(), Box<dyn stdError + Send + Sync>> {
     info!("tcp_to_ws start");

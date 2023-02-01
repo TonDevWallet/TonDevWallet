@@ -1,14 +1,14 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "build": {
-    "beforeBuildCommand": "npm run build",
-    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npx --no-install vite build",
+    "beforeDevCommand": "npx --no-install vite dev",
     "devPath": "http://localhost:3003",
     "distDir": "../dist"
   },
   "package": {
     "productName": "TonDevWallet",
-    "version": "0.2.0"
+    "version": "../package.json"
   },
   "tauri": {
     "allowlist": {

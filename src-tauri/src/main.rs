@@ -27,11 +27,14 @@ use core_graphics::base::CGFloat;
 #[cfg(target_os = "windows")]
 use windows::UI::{ViewManagement::{UISettings, UIColorType, UIElementType}};
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "windows")]
 use window_vibrancy::{
-    apply_acrylic, apply_blur, clear_acrylic, clear_blur, apply_vibrancy, NSVisualEffectMaterial
+    apply_acrylic, apply_blur, clear_acrylic, clear_blur
 };
-use std::sync::{RwLock};
+#[cfg(target_os = "macos")]
+use window_vibrancy::{
+  apply_vibrancy, NSVisualEffectMaterial
+};
 
 static PORT: AtomicU16 = AtomicU16::new(0);
 
@@ -316,7 +319,11 @@ fn main() {
         let mut lst = TcpListener::bind("127.0.0.1:0").await.unwrap();
         // port = lst.local_addr().unwrap().port();
         PORT.store(lst.local_addr().unwrap().port(), Ordering::Relaxed);
-        spawn_proxy(&mut lst).await;
+        
+        match spawn_proxy(&mut lst).await {
+          Ok(_) => (),
+          Err(e) => panic!("Listener Error {}", e)
+        };
       });
 
       let window = app.get_window("main").unwrap();
@@ -326,7 +333,7 @@ fn main() {
     .invoke_handler(tauri::generate_handler![get_ws_port, get_system_colors, get_os_name])
     .build(context)
     .expect("error while running tauri application")
-    .run(|app_handle, event| match event {
+    .run(|_app_handle, event| match event {
           // tauri::RunEvent::Ready {} => {
           //     let window = app_handle.get_window("main").unwrap();
 
