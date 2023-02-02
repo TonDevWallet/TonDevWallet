@@ -114,7 +114,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
   const amountOut =
     Number(s.payload.get().messages.reduce((acc, c) => acc + BigInt(c.amount), 0n)) / 10 ** 9
 
-  const txInfo = useTonapiTxInfo(messageCell)
+  const { response: txInfo, progress, isLoading } = useTonapiTxInfo(messageCell)
 
   const approveMessage = async () => {
     console.log('do approve')
@@ -201,7 +201,15 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
       <div className="flex flex-col">
         <div>Tx Actions:</div>
         <div className="break-words break-all flex flex-col gap-2">
-          {/* {JSON.stringify(txInfo)} */}
+          {/* {isLoading ? (
+            <>
+              Progress: {progress.done} / {progress.total}
+            </>
+          ) : ( */}
+          <div>
+            Progress: {progress.done} / {progress.total}
+          </div>
+          {isLoading && <div>Emulating...</div>}
           {txInfo?.events?.map((action, i) => {
             return (
               <Block key={i} className="flex flex-col">
@@ -225,42 +233,6 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
                     />
                   </>
                 )}
-                {/* <div>Description: {action?.simplePreview?.fullDescription}</div>
-                <div>Description: {action?.simplePreview?.image}</div> */}
-                {/* <div>Description: {action?.simplePreview?.name}</div> */}
-                {/* {action.type !== 'JettonTransfer' && (
-                  <div>Description: {action?.simplePreview?.shortDescription}</div>
-                )}
-                {action.type === 'TonTransfer' && (
-                  <>
-                    <AddressRow
-                      text={<span className="w-16">From:</span>}
-                      rawAddress={action?.tonTransfer?.sender.address}
-                    />
-                    <AddressRow
-                      text={<span className="w-16">To:</span>}
-                      rawAddress={action?.tonTransfer?.recipient.address}
-                    />
-                  </>
-                )}
-                {action.type === 'JettonTransfer' && (
-                  <>
-                    <div>
-                      Description: Transfer{' '}
-                      {Number(action.jettonTransfer?.amount) /
-                        10 ** (action.jettonTransfer?.jetton.decimals || 0)}{' '}
-                      {action.jettonTransfer?.jetton.symbol} Jettons
-                    </div>
-                    <AddressRow
-                      text={<span className="w-16">From:</span>}
-                      rawAddress={action?.jettonTransfer?.sender?.address}
-                    />
-                    <AddressRow
-                      text={<span className="w-16">To:</span>}
-                      rawAddress={action?.jettonTransfer?.recipient?.address}
-                    />
-                  </>
-                )} */}
               </Block>
             )
           })}

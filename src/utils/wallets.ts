@@ -29,8 +29,9 @@ import {
 import { KeyPair, keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import { openLiteClient } from './liteClientProvider'
-import { Blockchain, SendMessageResult } from '@ton-community/sandbox'
+import { SendMessageResult } from '@ton-community/sandbox'
 import { LiteClientBlockchainStorage } from './liteClientBlockchainStorage'
+import { ManagedBlockchain } from './ManagedBlockchain'
 
 export function getWalletFromKey(
   liteClient: LiteClient,
@@ -187,42 +188,44 @@ export function useWalletExternalMessageCell(
 
 export function useTonapiTxInfo(cell: Cell | undefined) {
   const [response, setResponse] = useState<SendMessageResult | undefined>()
+  const [progress, setProgress] = useState<{ total: number; done: number }>({ done: 0, total: 0 })
+  const [isLoading, setIsLoading] = useState(false)
   const liteClient = useLiteclient() as LiteClient
 
-  console.log('useTonapiTxInfo', cell?.hash())
   useEffect(() => {
-    console.log('useTonapiTxInfo effect', cell?.hash())
     if (cell) {
       setTimeout(async () => {
-        setResponse(undefined)
-        const storage = new LiteClientBlockchainStorage(liteClient)
-        const blockchain = await Blockchain.create({
-          storage,
-        })
-        const msg = loadMessage(cell.beginParse())
-        const start = Date.now()
-        const res = await blockchain.sendMessage(msg)
+        try {
+          setResponse(undefined)
+          setProgress({ done: 0, total: 0 })
+          setIsLoading(true)
+          const storage = new LiteClientBlockchainStorage(liteClient)
+          const blockchain = await ManagedBlockchain.create({
+            storage,
+          })
+          const msg = loadMessage(cell.beginParse())
+          const start = Date.now()
+          const { result, emitter } = await blockchain.sendMessageWithProgress(msg)
+          emitter.on('add_message', () => {
+            setProgress((p) => ({ ...p, total: p.total + 1 }))
+          })
+          emitter.on('complete_message', () => {
+            setProgress((p) => ({ ...p, done: p.done + 1 }))
+          })
+          const res = await result
 
-        console.log('res', res, Date.now() - start)
-        setResponse(res)
+          console.log('b res', res.events.length, Date.now() - start)
+          setResponse(res)
+          setIsLoading(false)
+        } catch (err) {
+          console.log('b err', err)
+          setIsLoading(false)
+        }
       })
-
-      // tFetch<AccountEvent>(
-      //   `https://${liteClientState.testnet.get() ? 'testnet.' : ''}tonapi.io/v1/send/estimateTx`,
-      //   {
-      //     method: 'POST',
-      //     body: Body.json({
-      //       boc: cell.toBoc().toString('base64'),
-      //     }),
-      //   }
-      // ).then((txInfo) => {
-      //   console.log('useTonapiTxInfo', cell.toBoc().toString('base64'), txInfo)
-      //   setResponse(camelcaseKeys(txInfo.data, { deep: true }))
-      // })
     } else {
       setResponse(undefined)
     }
   }, [cell])
 
-  return response
+  return { response, progress, isLoading }
 }
