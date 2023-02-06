@@ -74,7 +74,7 @@ fn change_transparent_effect(effect: String, window: tauri::Window) {
 }
 
 #[cfg(target_os = "macos")]
-fn change_transparent_effect(effect: String, window: tauri::Window) {
+fn change_transparent_effect(_effect: String, window: tauri::Window) {
   apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, None).expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
 }
 
@@ -239,11 +239,11 @@ fn get_system_colors() -> Result<SystemColorsList, String> {
 #[cfg(target_os = "macos")]
 fn nscolor_to_rgb(color: cacao::color::Color) -> u64 {
   let cg_color = color.cg_color();
-  let colorId: cocoa::base::id  = unsafe { msg_send![class!(CIColor), colorWithCGColor:cg_color] };
-  let r: CGFloat = unsafe { msg_send![colorId, red] };
-  let g: CGFloat = unsafe { msg_send![colorId, green] };
-  let b: CGFloat = unsafe { msg_send![colorId, blue] };
-  let a: CGFloat = unsafe { msg_send![colorId, alpha] };
+  let color_id: cocoa::base::id  = unsafe { msg_send![class!(CIColor), colorWithCGColor:cg_color] };
+  let r: CGFloat = unsafe { msg_send![color_id, red] };
+  let g: CGFloat = unsafe { msg_send![color_id, green] };
+  let b: CGFloat = unsafe { msg_send![color_id, blue] };
+  let a: CGFloat = unsafe { msg_send![color_id, alpha] };
 
   return u64::from_be_bytes([0, 0, 0, 0, (r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8, (a * 255.0) as u8])
 }
@@ -251,7 +251,7 @@ fn nscolor_to_rgb(color: cacao::color::Color) -> u64 {
 #[tauri::command]
 fn get_system_colors() -> Result<SystemColorsList, String> {
   let accent_color = unsafe { Id::from_ptr(msg_send![class!(NSColor), controlAccentColor]) };
-  let accent_color_class = cacao::color::Color::Custom(std::sync::Arc::new(RwLock::new(accent_color)) );
+  let accent_color_class = cacao::color::Color::Custom(std::sync::Arc::new(std::sync::RwLock::new(accent_color)) );
 
   let list = SystemColorsList {
     background: None,
