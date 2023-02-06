@@ -2669,8 +2669,7 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 [[package]]
 name = "screenshots"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "754c2681206775dad41ce04b0e16c01f423ae86950ab5ed0cb95b0f62c9acc19"
+source = "git+https://github.com/TrueCarry/screenshots-rs?rev=2a38359f456ba686e5817b16af1f22a7070e372d#2a38359f456ba686e5817b16af1f22a7070e372d"
 dependencies = [
  "anyhow",
  "core-graphics",
