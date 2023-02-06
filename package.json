@@ -22,6 +22,7 @@
     "clsx": "^1.2.1",
     "events": "^3.3.0",
     "express": "^4.18.1",
+    "jsqr": "^1.4.0",
     "knex": "npm:@truecarry/knex@^2.3.0",
     "postcss": "^8.4.16",
     "react": "^18.1.0",

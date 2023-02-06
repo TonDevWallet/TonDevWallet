@@ -5,7 +5,7 @@ import { CreateMessage, createTonProofMessage, SignatureCreate } from '@/utils/t
 import { getWalletFromKey } from '@/utils/wallets'
 // import { useWallet } from '@/store/walletState'
 import { ConnectEventSuccess, CHAIN, ConnectRequest, TonProofItem } from '@tonconnect/protocol'
-import { useRef } from 'react'
+import { useCallback, useState } from 'react'
 import { Cell, beginCell, storeStateInit, StateInit } from 'ton-core'
 import { KeyPair } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
@@ -15,14 +15,47 @@ import { fetch as tFetch } from '@tauri-apps/api/http'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { IWallet } from '@/types'
 import { Block } from '../ui/Block'
+import { invoke } from '@tauri-apps/api'
+import jsQR from 'jsqr'
+import clsx from 'clsx'
 
 export function TonConnect() {
-  const nameRef = useRef<HTMLInputElement | null>(null)
+  const [connectLink, setConnectLink] = useState('')
+  const [isDetecting, setIsDetecting] = useState(false)
   // const wallet = useWallet()
   const liteClient = useLiteclient() as unknown as LiteClient
 
   const selectedWallet = useSelectedWallet()
   const selectedKey = useSelectedKey()
+
+  const detect = async () => {
+    try {
+      setIsDetecting(true)
+      const res = (await invoke('detect_qr_code')) as string[]
+
+      for (const data of res) {
+        const image = await getImageFromBase64(data)
+        const canvas = document.createElement('canvas')
+        canvas.width = image.width
+        canvas.height = image.height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          throw new Error('no canvas')
+        }
+
+        ctx.drawImage(image, 0, 0)
+        const imageData = ctx.getImageData(0, 0, image.width, image.height)
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {})
+
+        if (code) {
+          console.log('Found QR code', code)
+          setConnectLink(code.data)
+        }
+      }
+    } finally {
+      setIsDetecting(false)
+    }
+  }
 
   if (!selectedKey || !selectedWallet) {
     return <></>
@@ -34,11 +67,11 @@ export function TonConnect() {
     return <></>
   }
 
-  const doBridgeAuth = async () => {
+  const doBridgeAuth = useCallback(async () => {
     if (!selectedWallet) {
       return
     }
-    const input = nameRef.current?.value || ''
+    const input = connectLink
     const parsed = new URL(input)
     console.log('parse', parsed, parsed.searchParams.get('id'))
 
@@ -81,7 +114,9 @@ export function TonConnect() {
       name: metaInfo.name,
       url: metaInfo.url,
     })
-  }
+
+    setConnectLink('')
+  }, [connectLink])
 
   return (
     <Block className="flex flex-col gap-2">
@@ -89,12 +124,18 @@ export function TonConnect() {
       <label htmlFor="tonconnectLink">Enter your Ton Connect link</label>
       <input
         type="text"
-        ref={nameRef}
         id="tonconnectLink"
         autoComplete="off"
         className="border w-full outline-none rounded p-2"
+        value={connectLink}
+        onChange={(e) => setConnectLink(e.target.value)}
       />
-      <BlueButton onClick={() => doBridgeAuth()}>Connect</BlueButton>
+      <div className="flex gap-2">
+        <BlueButton onClick={() => doBridgeAuth()}>Connect</BlueButton>
+        <BlueButton onClick={() => detect()} className={clsx(isDetecting && 'bg-gray-400')}>
+          Detect Code
+        </BlueButton>
+      </div>
       {/* </div> */}
     </Block>
   )
@@ -177,4 +218,17 @@ export async function sendTonConnectStartMessage(
   }
 
   await sendTonConnectMessage(data, sessionKeyPair.secretKey, sessionClientId)
+}
+
+function getImageFromBase64(data: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image()
+    image.onload = function () {
+      resolve(image)
+    }
+    image.onerror = (e) => {
+      reject(e)
+    }
+    image.src = `data:image/png;base64,${data}`
+  })
 }

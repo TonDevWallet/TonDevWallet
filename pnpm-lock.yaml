@@ -31,6 +31,7 @@ specifiers:
   eslint-plugin-react: ^7.29.4
   events: ^3.3.0
   express: ^4.18.1
+  jsqr: ^1.4.0
   knex: npm:@truecarry/knex@^2.3.0
   postcss: ^8.4.16
   prettier: ^2.6.2
@@ -69,6 +70,7 @@ dependencies:
   clsx: 1.2.1
   events: 3.3.0
   express: 4.18.2
+  jsqr: 1.4.0
   knex: /@truecarry/knex/2.3.0
   postcss: 8.4.20
   react: 18.2.0
@@ -2680,6 +2682,10 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
     dev: true
+
+  /jsqr/1.4.0:
+    resolution: {integrity: sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A==}
+    dev: false
 
   /jssha/3.2.0:
     resolution: {integrity: sha512-QuruyBENDWdN4tZwJbQq7/eAK85FqrI4oDbXjy5IBhYD+2pTJyBUWZe8ctWaCkrV0gy6AaelgOZZBMeswEa/6Q==}

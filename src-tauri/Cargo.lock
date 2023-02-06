@@ -45,14 +45,15 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.68"
+version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cb2f989d18dd141ab8ae82f64d1a8cdd37e0840f73a406896cf5e99502fab61"
+checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
 
 [[package]]
 name = "app"
 version = "0.1.0"
 dependencies = [
+ "base64 0.21.0",
  "cacao",
  "cocoa",
  "core-graphics",
@@ -62,6 +63,7 @@ dependencies = [
  "log",
  "objc",
  "objc_id",
+ "screenshots",
  "serde",
  "serde_json",
  "sysinfo",
@@ -645,6 +647,20 @@ name = "dispatch"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
+
+[[package]]
+name = "display-info"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bec0af2a453c6a390cbc7aaaaedf86996819a09a3c3aa0a5072e44bea878cac4"
+dependencies = [
+ "anyhow",
+ "core-graphics",
+ "sfhash",
+ "widestring",
+ "windows 0.44.0",
+ "xcb",
+]
 
 [[package]]
 name = "dotenvy"
@@ -2318,6 +2334,15 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8533f14c8382aaad0d592c812ac3b826162128b65662331e1127b45c3d18536b"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
+name = "quick-xml"
 version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "11bafc859c6815fbaffbbbf4229ecb767ac913fecb27f9ad4343662e9ef099ea"
@@ -2642,6 +2667,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
+name = "screenshots"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "754c2681206775dad41ce04b0e16c01f423ae86950ab5ed0cb95b0f62c9acc19"
+dependencies = [
+ "anyhow",
+ "core-graphics",
+ "dbus",
+ "display-info",
+ "png",
+ "sfhash",
+ "widestring",
+ "windows 0.44.0",
+ "xcb",
+]
+
+[[package]]
 name = "sct"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2828,6 +2870,12 @@ dependencies = [
  "nodrop",
  "stable_deref_trait",
 ]
+
+[[package]]
+name = "sfhash"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c72019dd341c01ac4abd5a7065bbae73f5009f9c97677c8200521218c961c19a"
 
 [[package]]
 name = "sha1"
@@ -3428,7 +3476,7 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c58de036c4d2e20717024de2a3c4bf56c301f07b21bc8ef9b57189fce06f1f3b"
 dependencies = [
- "quick-xml",
+ "quick-xml 0.23.1",
  "strum",
  "windows 0.39.0",
 ]
@@ -4026,6 +4074,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "widestring"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "653f141f39ec16bba3c5abe400a0c60da7468261cc2cbf36805022876bc721a8"
+
+[[package]]
 name = "winapi"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4343,6 +4397,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d1526bbe5aaeb5eb06885f4d987bcdfa5e23187055de9b83fe00156a821fabc"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "xcb"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0faeb4d7e2d54fff4a0584f61297e86b106914af2029778de7b427f72564d6c5"
+dependencies = [
+ "bitflags",
+ "libc",
+ "quick-xml 0.22.0",
 ]
 
 [[package]]

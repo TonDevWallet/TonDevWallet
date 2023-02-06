@@ -10,6 +10,7 @@ extern crate objc;
 mod proxy;
 
 use std::{sync::atomic::{Ordering, AtomicU16}};
+use base64;
 
 use proxy::spawn_proxy;
 use tauri::Manager;
@@ -36,6 +37,8 @@ use window_vibrancy::{
   apply_vibrancy, NSVisualEffectMaterial
 };
 
+use screenshots::Screen;
+
 static PORT: AtomicU16 = AtomicU16::new(0);
 
 pub fn is_win_11() -> bool {
@@ -44,6 +47,25 @@ pub fn is_win_11() -> bool {
   let version = version.split('(').collect::<Vec<&str>>()[1].split(')').collect::<Vec<&str>>()[0];
   let version: u32 = version.split('.').collect::<Vec<&str>>()[0].parse().unwrap();
   version >= 22000
+}
+
+use base64::{Engine as _, engine::general_purpose};
+
+#[tauri::command]
+fn detect_qr_code() -> Result<Vec<String>, String> {
+  let screens = Screen::all().unwrap();
+
+  let mut images: Vec<String> = Vec::new(); // = vec![String];
+  for screen in screens {
+    let image = screen.capture().unwrap();
+    let buffer = image.buffer();
+    let encoded: String = general_purpose::STANDARD_NO_PAD.encode(&buffer); // ::encode(input); //::STANDARD::encode(&buffer);
+    images.push(encoded);
+  }
+
+  Ok(images)
+
+  // Ok("ok".to_string())
 }
 
 #[cfg(target_os = "windows")]
@@ -330,7 +352,7 @@ fn main() {
       change_transparent_effect("mica".to_owned(), window.clone());
       Ok(())
     })
-    .invoke_handler(tauri::generate_handler![get_ws_port, get_system_colors, get_os_name])
+    .invoke_handler(tauri::generate_handler![get_ws_port, get_system_colors, get_os_name, detect_qr_code])
     .build(context)
     .expect("error while running tauri application")
     .run(|_app_handle, event| match event {
