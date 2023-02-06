@@ -55,7 +55,7 @@ export class ManagedBlockchain extends Blockchain {
     const result: Transaction[] = []
 
     while (this.messageQueue.length > 0) {
-      console.log('process message')
+      // console.log('process message')
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const message = this.messageQueue.shift()!
 
@@ -80,6 +80,10 @@ export class ManagedBlockchain extends Blockchain {
           emitter.emit('add_message')
         }
         this.messageQueue.push(message)
+
+        if (message.info.type === 'internal') {
+          this.getContract(message.info.dest)
+        }
       }
     }
 
