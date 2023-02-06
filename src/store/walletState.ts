@@ -2,7 +2,6 @@ import { hookstate, useHookstate } from '@hookstate/core'
 
 import { IWallet } from '@/types'
 
-import { keyPairFromSeed } from 'ton-crypto'
 import { getWalletListState, useWalletListState } from './walletsListState'
 import { useMemo } from 'react'
 
