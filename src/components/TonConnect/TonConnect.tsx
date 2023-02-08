@@ -18,6 +18,7 @@ import { Block } from '../ui/Block'
 import { invoke } from '@tauri-apps/api'
 import jsQR from 'jsqr'
 import clsx from 'clsx'
+import { appWindow } from '@tauri-apps/api/window'
 
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
@@ -31,6 +32,8 @@ export function TonConnect() {
   const detect = async () => {
     try {
       setIsDetecting(true)
+      await appWindow.setDecorations(false)
+      await appWindow.hide()
       const res = (await invoke('detect_qr_code')) as string[]
 
       for (const data of res) {
@@ -54,6 +57,9 @@ export function TonConnect() {
       }
     } finally {
       setIsDetecting(false)
+
+      await appWindow.show()
+      await appWindow.setDecorations(true)
     }
   }
 
