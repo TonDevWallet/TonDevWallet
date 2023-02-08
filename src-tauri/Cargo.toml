@@ -52,3 +52,7 @@ git = "https://github.com/tauri-apps/tauri-plugin-sql"
 rev = "5379183f139625ca6c6660e2f17afa6f250066ef"
 features = ["sqlite"] # or "postgres", or "mysql"
 #branch = "main"
+
+[profile.dev.package.screenshots]
+opt-level = 3
+debug = false

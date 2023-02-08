@@ -52,7 +52,7 @@ pub fn is_win_11() -> bool {
 use base64::{Engine as _, engine::general_purpose};
 
 #[tauri::command]
-fn detect_qr_code() -> Result<Vec<String>, String> {
+async fn detect_qr_code() -> Result<Vec<String>, String> {
   let screens = Screen::all().unwrap();
 
   let mut images: Vec<String> = Vec::new(); // = vec![String];
