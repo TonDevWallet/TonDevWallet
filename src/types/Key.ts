@@ -1,4 +1,3 @@
-import { KeyPair } from 'ton-crypto'
 import { SavedWallet } from '.'
 
 export interface Key {

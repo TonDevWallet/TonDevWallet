@@ -56,7 +56,17 @@ export class ManagedBlockchain extends Blockchain {
     console.log('process queue')
     const result: Transaction[] = []
 
+    let stopped = false
+    if (emitter) {
+      emitter.addListener('stop', () => {
+        stopped = true
+      })
+    }
+
     while (this.messageQueue.length > 0) {
+      if (stopped) {
+        break
+      }
       // console.log('process message')
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const message = this.messageQueue.shift()!

@@ -39,7 +39,6 @@ export function getWalletFromKey(
   wallet: SavedWallet
 ): IWallet | undefined {
   const seed = key.seed.get()
-  console.log('keypair', wallet.type)
   if (!seed) {
     return
   }
@@ -175,9 +174,7 @@ export function useWalletExternalMessageCell(
   const [cell, setCell] = useState<Cell | undefined>()
   const liteClient = useLiteclient()
 
-  console.log('useWalletExternalMessageCell')
   useEffect(() => {
-    console.log('useWalletExternalMessageCell effect', wallet, transfers)
     if (wallet) {
       wallet.getExternalMessageCell(keyPair, transfers).then(setCell)
     }
@@ -193,37 +190,65 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
   const liteClient = useLiteclient() as LiteClient
 
   useEffect(() => {
-    if (cell) {
-      setTimeout(async () => {
-        try {
-          setResponse(undefined)
-          setProgress({ done: 0, total: 0 })
-          setIsLoading(true)
-          const storage = new LiteClientBlockchainStorage(liteClient)
-          const blockchain = await ManagedBlockchain.create({
-            storage,
-          })
-          const msg = loadMessage(cell.beginParse())
-          const start = Date.now()
-          const { result, emitter } = await blockchain.sendMessageWithProgress(msg)
-          emitter.on('add_message', () => {
-            setProgress((p) => ({ ...p, total: p.total + 1 }))
-          })
-          emitter.on('complete_message', () => {
-            setProgress((p) => ({ ...p, done: p.done + 1 }))
-          })
-          const res = await result
-
-          console.log('b res', res.events.length, Date.now() - start)
-          setResponse(res)
-          setIsLoading(false)
-        } catch (err) {
-          console.log('b err', err)
-          setIsLoading(false)
-        }
-      })
-    } else {
+    if (!cell) {
       setResponse(undefined)
+      return
+    }
+
+    let stopEmulator = () => {
+      // do nothing
+    }
+    const startEmulator = async () => {
+      try {
+        setResponse(undefined)
+        setProgress({ done: 0, total: 0 })
+        setIsLoading(true)
+
+        const onAddMessage = () => {
+          setProgress((p) => ({ ...p, total: p.total + 1 }))
+        }
+        const onCompleteMessage = () => {
+          setProgress((p) => ({ ...p, done: p.done + 1 }))
+        }
+        const storage = new LiteClientBlockchainStorage(liteClient)
+        const blockchain = await ManagedBlockchain.create({
+          storage,
+        })
+        const msg = loadMessage(cell.beginParse())
+        const start = Date.now()
+        const { result, emitter } = blockchain.sendMessageWithProgress(msg)
+
+        let isStopped = false
+        stopEmulator = () => {
+          isStopped = true
+          emitter.emit('stop')
+
+          emitter.removeListener('add_message', onAddMessage)
+          emitter.removeListener('complete_message', onCompleteMessage)
+        }
+
+        emitter.on('add_message', onAddMessage)
+        emitter.on('complete_message', onCompleteMessage)
+        const res = await result
+
+        console.log('b res', res.events.length, Date.now() - start, isStopped)
+
+        if (isStopped) {
+          return
+        }
+        setResponse(res)
+        setIsLoading(false)
+      } catch (err) {
+        console.log('b err', err)
+        setIsLoading(false)
+      }
+    }
+
+    startEmulator()
+
+    return () => {
+      console.log('unmount effect')
+      stopEmulator()
     }
   }, [cell])
 

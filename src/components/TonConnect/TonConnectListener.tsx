@@ -24,9 +24,7 @@ export function TonConnectListener() {
     const bridgeUrl = 'https://bridge.tonapi.io/bridge'
     const listeners: EventSource[] = []
 
-    // sessions.map
     for (const s of sessions.get()) {
-      console.log('listen to s', s)
       const keyPair = nacl.box.keyPair.fromSecretKey(s.secretKey)
       const session = new SessionCrypto({
         publicKey: Buffer.from(keyPair.publicKey).toString('hex'),

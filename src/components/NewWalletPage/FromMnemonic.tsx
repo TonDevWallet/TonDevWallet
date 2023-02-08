@@ -1,9 +1,10 @@
 import { useDatabase } from '@/db'
+import { useKeyPair } from '@/hooks/useKeyPair'
 import { saveKeyAndWallets } from '@/store/walletsListState'
 import { Key } from '@/types/Key'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mnemonicValidate, mnemonicToSeed, keyPairFromSeed } from 'ton-crypto'
+import { mnemonicValidate, mnemonicToSeed } from 'ton-crypto'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
 
@@ -19,7 +20,6 @@ export function FromMnemonic() {
     seed: undefined,
     wallet_id: 0,
     words: '', // target.value,
-    keyPair: undefined,
   })
 
   const onWordsChange = async (e: any) => {
@@ -36,7 +36,6 @@ export function FromMnemonic() {
           seed: Buffer.from(ls).toString('hex'),
           wallet_id: 0,
           words: mnemonic.join(' '),
-          keyPair: keyPairFromSeed(ls),
         })
         // setSelectedWallet(null)
       } else {
@@ -46,7 +45,6 @@ export function FromMnemonic() {
           seed: undefined,
           wallet_id: 0,
           words: mnemonic.join(' '), // target.value,
-          keyPair: undefined,
         })
         // setSelectedWallet(null)
       }
@@ -54,6 +52,8 @@ export function FromMnemonic() {
       console.log('onWordsChange error', e)
     }
   }
+
+  const keyPair = useKeyPair(mnemonicKey.seed)
 
   return (
     <div>
@@ -68,40 +68,36 @@ export function FromMnemonic() {
         {/* <input type="text" id="mnemonicInput" className="border rounded p-2 w-96" /> */}
       </div>
 
-      {mnemonicKey.keyPair && mnemonicKey.seed && (
+      {mnemonicKey.seed && (
         <>
           <div>
-            <div className="text-accent text-lg font-medium my-2 flex items-center">Seed:</div>
+            <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
             <div className="flex">
               <div className="w-96 overflow-hidden text-ellipsis text-xs">{mnemonicKey.seed}</div>
               <Copier className="w-6 h-6 ml-2" text={mnemonicKey.seed || ''} />
             </div>
           </div>
           <div>
-            <div className="text-accent text-lg font-medium my-2 flex items-center">
-              Public key:
-            </div>
+            <div className="text-lg font-medium my-2 flex items-center">Public key:</div>
             <div className="flex">
               <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                {Buffer.from(mnemonicKey.keyPair?.publicKey || []).toString('hex')}
+                {Buffer.from(keyPair?.publicKey || []).toString('hex')}
               </div>
               <Copier
                 className="w-6 h-6 ml-2"
-                text={Buffer.from(mnemonicKey.keyPair?.publicKey || []).toString('hex')}
+                text={Buffer.from(keyPair?.publicKey || []).toString('hex')}
               />
             </div>
           </div>
           <div>
-            <div className="text-accent text-lg font-medium my-2 flex items-center">
-              Secret key:
-            </div>
+            <div className="text-lg font-medium my-2 flex items-center">Secret key:</div>
             <div className="flex">
               <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                {Buffer.from(mnemonicKey.keyPair?.secretKey || []).toString('hex')}
+                {Buffer.from(keyPair?.secretKey || []).toString('hex')}
               </div>
               <Copier
                 className="w-6 h-6 ml-2"
-                text={Buffer.from(mnemonicKey.keyPair?.secretKey || []).toString('hex')}
+                text={Buffer.from(keyPair?.secretKey || []).toString('hex')}
               />
             </div>
           </div>

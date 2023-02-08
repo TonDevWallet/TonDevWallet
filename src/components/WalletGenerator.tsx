@@ -19,85 +19,92 @@ export function WalletGenerator() {
   const seed = key?.seed.get() || ''
   const keyPair = useKeyPair(key?.seed.get())
 
-  console.log('generator', words, key)
-
   if (!key) {
     return <></>
   }
 
-  console.log('generator ok')
-
-  return !isInfoOpened ? (
-    <div className="flex gap-2">
-      <BlueButton className="mb-2" onClick={() => setIsInfoOpened(true)}>
-        Open wallet key info
-      </BlueButton>
-      <AddWalletPopup />
-    </div>
-  ) : (
-    <div>
-      <div className="flex gap-2">
-        <BlueButton className="mb-2" onClick={() => setIsInfoOpened(false)}>
-          Close wallet key info
-        </BlueButton>
-        <AddWalletPopup />
-      </div>
-      <div className="my-2">
-        {key.words && (
-          <>
-            <label htmlFor="wordsInput" className="text-lg font-medium my-2 flex items-center">
-              Words
-              <Copier className="w-6 h-6 ml-2" text={words} />
-            </label>
-            <textarea className="w-full h-24 outline-none" id="wordsInput" defaultValue={words} />
-          </>
-        )}
-
-        {key.seed && (
-          <>
-            <div>
-              <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
-              <div className="flex">
-                <div className="w-96 overflow-hidden text-ellipsis text-xs">{key.get().seed}</div>
-                <Copier className="w-6 h-6 ml-2" text={seed} />
-              </div>
-            </div>
-            <div>
-              <div className="text-lg font-medium my-2 flex items-center">Public key:</div>
-              <div className="flex">
-                <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                  {Buffer.from(keyPair?.publicKey || []).toString('hex')}
-                </div>
-                <Copier
-                  className="w-6 h-6 ml-2"
-                  text={Buffer.from(keyPair?.publicKey || []).toString('hex')}
+  return (
+    <>
+      {!isInfoOpened ? (
+        <div className="flex gap-2">
+          <BlueButton className="mb-2" onClick={() => setIsInfoOpened(true)}>
+            Show wallet key info
+          </BlueButton>
+          <AddWalletPopup />
+        </div>
+      ) : (
+        <div>
+          <div className="flex gap-2">
+            <BlueButton className="mb-2" onClick={() => setIsInfoOpened(false)}>
+              Close wallet key info
+            </BlueButton>
+            <AddWalletPopup />
+          </div>
+          <div className="my-2">
+            {key.words && (
+              <>
+                <label htmlFor="wordsInput" className="text-lg font-medium my-2 flex items-center">
+                  Words
+                  <Copier className="w-6 h-6 ml-2" text={words} />
+                </label>
+                <textarea
+                  className="w-full h-24 outline-none"
+                  id="wordsInput"
+                  value={words}
+                  readOnly
                 />
-              </div>
-            </div>
-            <div>
-              <div className="text-lg font-medium my-2 flex items-center">Secret key:</div>
-              <div className="flex">
-                <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                  {Buffer.from(keyPair?.secretKey || []).toString('hex')}
+              </>
+            )}
+
+            {key.seed && (
+              <>
+                <div>
+                  <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
+                  <div className="flex">
+                    <div className="w-96 overflow-hidden text-ellipsis text-xs">
+                      {key.get().seed}
+                    </div>
+                    <Copier className="w-6 h-6 ml-2" text={seed} />
+                  </div>
                 </div>
-                <Copier
-                  className="w-6 h-6 ml-2"
-                  text={Buffer.from(keyPair?.secretKey || []).toString('hex')}
-                />
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-      <BlueButton
-        onClick={() => {
-          deleteWallet(db, key.id.get())
-          navigate('/')
-        }}
-      >
-        Delete seed
-      </BlueButton>
-    </div>
+                <div>
+                  <div className="text-lg font-medium my-2 flex items-center">Public key:</div>
+                  <div className="flex">
+                    <div className="w-96 overflow-hidden text-ellipsis text-xs">
+                      {Buffer.from(keyPair?.publicKey || []).toString('hex')}
+                    </div>
+                    <Copier
+                      className="w-6 h-6 ml-2"
+                      text={Buffer.from(keyPair?.publicKey || []).toString('hex')}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-lg font-medium my-2 flex items-center">Secret key:</div>
+                  <div className="flex">
+                    <div className="w-96 overflow-hidden text-ellipsis text-xs">
+                      {Buffer.from(keyPair?.secretKey || []).toString('hex')}
+                    </div>
+                    <Copier
+                      className="w-6 h-6 ml-2"
+                      text={Buffer.from(keyPair?.secretKey || []).toString('hex')}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <BlueButton
+            onClick={() => {
+              deleteWallet(db, key.id.get())
+              navigate('/')
+            }}
+          >
+            Delete seed
+          </BlueButton>
+        </div>
+      )}
+    </>
   )
 }
 

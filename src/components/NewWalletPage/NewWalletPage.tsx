@@ -8,8 +8,8 @@ export function NewWalletPage() {
   const [createMode, setCreateMode] = useState<'random' | 'mnemonic' | 'seed'>('random')
 
   return (
-    <div className="mt-8">
-      <h1 className="font-bold text-xl text-accent">New Wallet</h1>
+    <div className="mt-2">
+      <h1 className="font-bold text-xl">New Wallet</h1>
       <div className="flex gap-2 mt-4">
         <BlueButton onClick={() => setCreateMode('random')}>Create random wallet</BlueButton>
         <BlueButton onClick={() => setCreateMode('mnemonic')}>From Mnemonic</BlueButton>

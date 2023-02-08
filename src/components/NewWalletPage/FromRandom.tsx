@@ -2,9 +2,9 @@ import { useDatabase } from '@/db'
 import { useKeyPair } from '@/hooks/useKeyPair'
 import { saveKeyAndWallets } from '@/store/walletsListState'
 import { Key } from '@/types/Key'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mnemonicValidate, mnemonicToSeed, keyPairFromSeed, mnemonicNew } from 'ton-crypto'
+import { mnemonicValidate, mnemonicToSeed, mnemonicNew } from 'ton-crypto'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
 
@@ -42,9 +42,7 @@ export function FromRandom() {
           seed: Buffer.from(ls).toString('hex'),
           wallet_id: 0,
           words: mnemonic.join(' '),
-          // keyPair: keyPairFromSeed(ls),
         })
-        // setSelectedWallet(null)
       } else {
         setMnemonicKey({
           id: 0,
@@ -52,9 +50,7 @@ export function FromRandom() {
           seed: undefined,
           wallet_id: 0,
           words: mnemonic.join(' '), // target.value,
-          // keyPair: undefined,
         })
-        // setSelectedWallet(null)
       }
     } catch (e) {
       console.log('onWordsChange error', e)
@@ -77,23 +73,21 @@ export function FromRandom() {
 
       {mnemonicKey.seed && (
         <>
-          <div className="text-accent text-lg font-medium my-2 flex items-center">Mnemonic:</div>
+          <div className="text-lg font-medium my-2 flex items-center">Mnemonic:</div>
           <div>
             <textarea
               className="w-3/4 h-24 outline-none border p-1"
               id="mnemonicInput"
               value={words}
             />
-            <div className="text-accent text-lg font-medium my-2 flex items-center">Seed:</div>
+            <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
             <div className="flex">
               <div className="w-96 overflow-hidden text-ellipsis text-xs">{mnemonicKey.seed}</div>
               <Copier className="w-6 h-6 ml-2" text={mnemonicKey.seed || ''} />
             </div>
           </div>
           <div>
-            <div className="text-accent text-lg font-medium my-2 flex items-center">
-              Public key:
-            </div>
+            <div className="text-lg font-medium my-2 flex items-center">Public key:</div>
             <div className="flex">
               <div className="w-96 overflow-hidden text-ellipsis text-xs">
                 {Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
@@ -105,9 +99,7 @@ export function FromRandom() {
             </div>
           </div>
           <div>
-            <div className="text-accent text-lg font-medium my-2 flex items-center">
-              Secret key:
-            </div>
+            <div className="text-lg font-medium my-2 flex items-center">Secret key:</div>
             <div className="flex">
               <div className="w-96 overflow-hidden text-ellipsis text-xs">
                 {Buffer.from(walletKeyPair?.secretKey || []).toString('hex')}

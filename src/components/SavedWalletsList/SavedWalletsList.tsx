@@ -11,6 +11,8 @@ import { KeyPair } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import { IWallet } from '@/types'
 import { useAppInfo } from '@/hooks/useAppInfo'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
@@ -135,7 +137,7 @@ export function SavedWalletsList() {
             className="rounded-full w-16 h-16 bg-foreground/5
             flex items-center justify-center text-[32px] text-foreground"
           >
-            +
+            <FontAwesomeIcon icon={faPlus} size="xs" />
           </div>
           <div className="text-foreground">New Key</div>
         </NavLink>

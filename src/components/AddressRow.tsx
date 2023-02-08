@@ -54,7 +54,7 @@ export function AddressRow({
       </div>
 
       <div className="ml-auto flex items-center">
-        <button className="w-6 h-6">{copied ? <DoneSvg /> : <CopySvg />}</button>
+        <button className="w-5 h-5">{copied ? <DoneSvg /> : <CopySvg />}</button>
       </div>
     </div>
   )

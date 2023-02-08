@@ -2,11 +2,15 @@ import { useLiteclient } from '@/store/liteClient'
 import { useTonConnectSessions, deleteTonConnectSession } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
 import { getWalletFromKey } from '@/utils/wallets'
+import { faClose, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
+import { KeyJazzicon } from '../KeyJazzicon'
 import { ReactPopup } from '../Popup'
 import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
+import { WalletJazzicon } from '../WalletJazzicon'
 
 export function SessionsList() {
   const sessions = useTonConnectSessions()
@@ -39,12 +43,15 @@ export function SessionsList() {
               <div className="flex items-center">
                 <img src={s.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
                 <div className="ml-2">{s.name.get()}</div>
+                <FontAwesomeIcon icon={faPlus} className="mx-1" />
+                <KeyJazzicon walletKey={key} diameter={32} />
+                <WalletJazzicon wallet={tonWallet} className="-ml-2" />
               </div>
 
               <ReactPopup
                 trigger={
                   <button className="cursor-pointer text-accent dark:text-accent-light">
-                    &#x1F5D9;
+                    <FontAwesomeIcon icon={faClose} className="mx-1" />
                   </button>
                 }
               >
@@ -88,7 +95,10 @@ export function SessionsList() {
               </div>
             </div>
 
-            <AddressRow text={<span>Address:</span>} address={tonWallet?.address} />
+            <AddressRow
+              text={<span className="w-24 flex-shrink-0">Address:</span>}
+              address={tonWallet?.address}
+            />
 
             {/* <div className="flex items-center">
               <div>Delete:&nbsp;</div>

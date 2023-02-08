@@ -100,6 +100,8 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
 
   const rejectMessage = async () => {
     console.log('do reject')
+    changeConnectMessageStatus(s.id.get(), ConnectMessageStatus.REJECTED)
+
     const msg: SendTransactionRpcResponseError = {
       id: s.connect_event_id.get().toString(),
       error: {
@@ -113,8 +115,6 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
       session?.secretKey.get() || Buffer.from(''),
       session?.userId?.get() || ''
     )
-
-    changeConnectMessageStatus(s.id.get(), ConnectMessageStatus.REJECTED)
   }
 
   return (
@@ -130,7 +130,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
       <div className="break-keep">
         {
           <AddressRow
-            text={<div className="w-40">{`Wallet (${wallet.type}): `}</div>}
+            text={<div className="w-40 flex-shrink-0">{`Wallet (${wallet.type}): `}</div>}
             address={tonWallet?.address}
           />
         }
@@ -203,14 +203,14 @@ export function MessageEmulationResult({
                   <>
                     <div>Amount: {Number(action.value) / 10 ** 9} TON</div>
                     <AddressRow
-                      text={<span className="w-16">From:</span>}
+                      text={<span className="w-16 flex-shrink-0">From:</span>}
                       address={action.from}
                       addressClassName={
                         tonWallet?.address.equals(action.from) ? 'text-red-500' : undefined
                       }
                     />
                     <AddressRow
-                      text={<span className="w-16">To:</span>}
+                      text={<span className="w-16 flex-shrink-0">To:</span>}
                       address={action.to}
                       addressClassName={
                         tonWallet?.address.equals(action.to) ? 'text-green-500' : undefined

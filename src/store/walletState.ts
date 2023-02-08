@@ -24,7 +24,6 @@ export function useSelectedKey() {
 
   return useMemo(() => {
     const wallet = walletsList.find((k) => k.id.get() === s.keyId.get())
-    console.log('useSelectedKey update', s.keyId.get(), walletsList, wallet, wallet?.id.get())
     return wallet
   }, [s.keyId, walletsList])
 }

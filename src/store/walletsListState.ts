@@ -5,6 +5,7 @@ import { Knex } from 'knex'
 import { getWalletState, setWalletKey } from './walletState'
 import { NavigateFunction } from 'react-router-dom'
 import { SavedWallet, WalletType } from '@/types'
+import { ConnectMessageTransaction } from '@/types/connect'
 
 const state = hookstate<Key[]>(() => getWallets())
 
@@ -15,7 +16,6 @@ async function getWallets() {
 
   for (let i = 0; i < res.length; i++) {
     for (const w of wallets) {
-      console.log('w', w, res[i].id)
       if (w.key_id === res[i].id) {
         if (res[i].wallets) {
           res[i].wallets?.push(w)
@@ -25,8 +25,6 @@ async function getWallets() {
       }
     }
   }
-
-  console.log('res', res)
 
   return res
 }
@@ -59,7 +57,6 @@ export async function saveKey(db: Knex, key: Key, walletName: string) {
     `INSERT INTO keys(words,seed,wallet_id,name) VALUES(?,?,?,?) RETURNING *`,
     [key.words, key.seed, key.wallet_id, walletName]
   )
-  console.log('insert res', res)
   updateWalletsList()
 
   return res[0]
@@ -140,12 +137,17 @@ export async function CreateNewKeyWallet({
 export async function DeleteKeyWallet(walletId: number) {
   const db = await getDatabase()
 
-  const sessionsCount = await db('connect_sessions').where({ wallet_id: walletId }).count()
-  const transactionsCount = await db('connect_message_transactions')
+  const sessionsCount = await db('connect_sessions')
     .where({ wallet_id: walletId })
-    .count()
+    .count({ count: '*' })
+    .first()
+  const transactionsCount = await db<ConnectMessageTransaction>('connect_message_transactions')
+    .where({ wallet_id: walletId, status: 0 })
+    .count({ count: '*' })
+    .first()
 
-  if (sessionsCount || transactionsCount) {
+  if (sessionsCount?.count || transactionsCount?.count) {
+    console.log(sessionsCount, transactionsCount)
     throw new Error('Wallet already used')
   }
 
