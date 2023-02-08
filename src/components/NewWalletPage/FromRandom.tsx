@@ -79,6 +79,7 @@ export function FromRandom() {
               className="w-3/4 h-24 outline-none border p-1"
               id="mnemonicInput"
               value={words}
+              readOnly
             />
             <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
             <div className="flex">

@@ -1,6 +1,7 @@
 import { getDatabase } from '@/db'
 import { ConnectSession } from '@/types/connect'
-import { hookstate, useHookstate } from '@hookstate/core'
+import { sendTonConnectMessage } from '@/utils/tonConnect'
+import { hookstate, State, useHookstate } from '@hookstate/core'
 
 export interface TonConnectSession {
   id: number
@@ -93,11 +94,21 @@ export async function addTonConnectSession({
   state.merge([session])
 }
 
-export async function deleteTonConnectSession(id: number) {
+export async function deleteTonConnectSession(session: State<TonConnectSession>) {
+  // const session =
+  sendTonConnectMessage(
+    {
+      event: 'disconnect',
+      payload: {},
+    },
+    session?.secretKey.get() || Buffer.from(''),
+    session?.userId?.get() || ''
+  )
+
   const db = await getDatabase()
   await db<ConnectSession>('connect_sessions')
     .where({
-      id,
+      id: session.id.get(),
     })
     .delete()
 

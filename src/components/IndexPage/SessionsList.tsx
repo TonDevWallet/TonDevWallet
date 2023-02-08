@@ -61,7 +61,7 @@ export function SessionsList() {
                       <BlueButton
                         className="bg-red-500"
                         onClick={async () => {
-                          await deleteTonConnectSession(s.id.get())
+                          await deleteTonConnectSession(s)
                           close()
                         }}
                         // onClick={async () => {
