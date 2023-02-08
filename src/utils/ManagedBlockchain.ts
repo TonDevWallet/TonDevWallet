@@ -3,16 +3,18 @@ import {
   BlockchainStorage,
   LocalBlockchainStorage,
   SendMessageResult,
+  SmartContract,
 } from '@ton-community/sandbox'
 import { extractEvents } from '@ton-community/sandbox/dist/event/Event'
 import { Executor } from '@ton-community/sandbox/dist/executor/Executor'
 import { EventEmitter } from 'events'
-import { Cell, Message, Transaction } from 'ton-core'
+import { Address, Cell, Message, Transaction } from 'ton-core'
 
 const LT_ALIGN = 1000000n
 
 export class ManagedBlockchain extends Blockchain {
   #lt = 0n
+  #contractFetches = new Map<string, Promise<SmartContract>>()
 
   constructor(opts: { executor: Executor; config?: Cell; storage: BlockchainStorage }) {
     super(opts)
@@ -82,12 +84,29 @@ export class ManagedBlockchain extends Blockchain {
         this.messageQueue.push(message)
 
         if (message.info.type === 'internal') {
-          this.getContract(message.info.dest)
+          this.startFetchingContract(message.info.dest)
         }
       }
     }
 
     return result
+  }
+
+  private startFetchingContract(address: Address) {
+    const addrString = address.toRawString()
+    let promise = this.#contractFetches.get(addrString)
+    if (promise !== undefined) {
+      return promise
+    }
+    promise = this.storage.getContract(this, address)
+    this.#contractFetches.set(addrString, promise)
+    return promise
+  }
+
+  async getContract(address: Address) {
+    const contract = await this.startFetchingContract(address)
+    this.#contractFetches.delete(address.toRawString())
+    return contract
   }
 
   static async create(opts?: { config?: Cell; storage?: BlockchainStorage }) {

@@ -40,7 +40,7 @@ export function SavedWalletRow({ walletKey }: { walletKey: State<Key> }) {
     >
       {jazzNumber ? <Jazzicon diameter={64} seed={jazzNumber} /> : <div className="w-16 h-16" />}
 
-      <div className="text-foreground mt-2">{walletKey.get().name}</div>
+      <div className="text-foreground mt-2 text-center">{walletKey.get().name}</div>
     </NavLink>
   )
 }
