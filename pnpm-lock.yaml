@@ -6,6 +6,7 @@ specifiers:
   '@fortawesome/react-fontawesome': ^0.2.0
   '@hookstate/core': ^4.0.0-rc21
   '@hookstate/devtools': ^4.0.0-rc21
+  '@hookstate/subscribable': ^4.0.0
   '@tauri-apps/api': ^1.2.0
   '@tauri-apps/cli': ^1.2.3
   '@ton-community/sandbox': ^0.2.0
@@ -47,6 +48,7 @@ specifiers:
   reactjs-popup: ^2.0.5
   sass: ^1.57.1
   scrypt-js: ^3.0.1
+  tailwind-merge: ^1.9.1
   tailwindcss: ^3.1.8
   tauri-plugin-sql-api: github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9
   ton: ^13.3.0
@@ -64,6 +66,7 @@ dependencies:
   '@fortawesome/react-fontawesome': 0.2.0_d5rbrisxfyemehbvmdbryvgjte
   '@hookstate/core': 4.0.0_react@18.2.0
   '@hookstate/devtools': 4.0.0_@hookstate+core@4.0.0
+  '@hookstate/subscribable': 4.0.0_@hookstate+core@4.0.0
   '@tauri-apps/api': 1.2.0
   '@ton-community/sandbox': 0.2.0_otphrpghf2ugbazebzcwiaxcqa
   '@tonconnect/protocol': 2.0.1
@@ -89,6 +92,7 @@ dependencies:
   reactjs-popup: 2.0.5_biqbaboplfbrettd7655fr4n2y
   sass: 1.57.1
   scrypt-js: 3.0.1
+  tailwind-merge: 1.9.1
   tailwindcss: 3.2.4_postcss@8.4.20
   tauri-plugin-sql-api: github.com/tauri-apps/tauri-plugin-sql/013b002d72dde1a77ce6cda60007adbe36e146c9
   ton: 13.3.0_l74i2356aoedurpqlhrqpgf3um
@@ -618,6 +622,14 @@ packages:
       '@hookstate/core': 4.0.0_react@18.2.0
       redux: 4.2.0
       redux-devtools-extension: 2.13.9_redux@4.2.0
+    dev: false
+
+  /@hookstate/subscribable/4.0.0_@hookstate+core@4.0.0:
+    resolution: {integrity: sha512-IBvb4sfQ99cUmHpPjLbM0u4jluU6Ou0e9hUGvk9vHYPK8zbQmvUV+uz0KfV1wqGow3YqIrtiUJ4Jjebeg57JVw==}
+    peerDependencies:
+      '@hookstate/core': ^4.0.0
+    dependencies:
+      '@hookstate/core': 4.0.0_react@18.2.0
     dev: false
 
   /@humanwhocodes/config-array/0.11.8:
@@ -3692,6 +3704,10 @@ packages:
 
   /symbol.inspect/1.0.1:
     resolution: {integrity: sha512-YQSL4duoHmLhsTD1Pw8RW6TZ5MaTX5rXJnqacJottr2P2LZBF/Yvrc3ku4NUpMOm8aM0KOCqM+UAkMA5HWQCzQ==}
+    dev: false
+
+  /tailwind-merge/1.9.1:
+    resolution: {integrity: sha512-ED9MkiUHlmfh58EC1xHRqXcH1IQyRtmDP0AmXlugYkP2tvfu7ejtjFEHJLJt93mQ7ZJkcqSIgm9M394bq5vOJg==}
     dev: false
 
   /tailwindcss/3.2.4_postcss@8.4.20:

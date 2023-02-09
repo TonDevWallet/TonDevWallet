@@ -1,6 +1,7 @@
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import { TonConnectMessageTransaction, changeConnectMessageStatus } from '@/store/connectMessages'
 import { useLiteclient } from '@/store/liteClient'
+import { openPasswordPopup, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
 import { IWallet } from '@/types'
@@ -25,6 +26,10 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
   const keys = useWalletListState()
   const liteClient = useLiteclient() as unknown as LiteClient
   const sessions = useTonConnectSessions()
+  const password = usePassword().password.get()
+
+  const amountOut =
+    Number(s.payload.get().messages.reduce((acc, c) => acc + BigInt(c.amount), 0n)) / 10 ** 9
 
   const key = keys.find((k) => k.id.get() === s.key_id.get())
   if (!key) {
@@ -41,10 +46,15 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
     [sessions]
   )
 
-  const walletKeyPair = useMemo(
-    () => keyPairFromSeed(Buffer.from(key.seed.get() || '', 'hex')),
-    [key.seed]
-  )
+  const decryptedData = useDecryptWalletData(password, key.encrypted.get())
+
+  const walletKeyPair = useMemo(() => {
+    if (!decryptedData) {
+      return undefined
+    }
+    const keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+    return keyPair
+  }, [key.encrypted, decryptedData])
   const tonWallet = useMemo(() => getWalletFromKey(liteClient, key, wallet), [liteClient, wallet])
 
   const transfers = useMemo(
@@ -81,7 +91,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
   const messageCell = useWalletExternalMessageCell(tonWallet, walletKeyPair, transfers)
 
   const approveMessage = async () => {
-    console.log('do approve')
+    console.log('do approve', messageCell)
     const msg: SendTransactionRpcResponseSuccess = {
       id: s.connect_event_id.get().toString(),
       result: messageCell?.toBoc().toString('base64') || '',
@@ -135,54 +145,55 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
           />
         }
       </div>
-
-      <div className="flex items-center gap-2 my-2">
-        <BlueButton
-          onClick={() => {
-            rejectMessage()
-          }}
-        >
-          Reject
-        </BlueButton>
-        <BlueButton
-          onClick={() => {
-            // deleteConnectMessage(s.id.get())
-            approveMessage()
-          }}
-          className="bg-green-500"
-        >
-          Approve
-        </BlueButton>
+      <div className="flex">
+        <div>Messages count:&nbsp;</div>
+        <div className="break-words break-all">
+          {s.payload.get().messages.length} ({amountOut.toString()} TON)
+        </div>
       </div>
 
-      <MessageEmulationResult s={s} messageCell={messageCell} tonWallet={tonWallet} />
+      {password ? (
+        <>
+          <div className="flex items-center gap-2 my-2">
+            <BlueButton
+              onClick={() => {
+                rejectMessage()
+              }}
+            >
+              Reject
+            </BlueButton>
+            <BlueButton
+              onClick={() => {
+                approveMessage()
+              }}
+              className="bg-green-500"
+            >
+              Approve
+            </BlueButton>
+          </div>
+
+          <MessageEmulationResult messageCell={messageCell} tonWallet={tonWallet} />
+        </>
+      ) : (
+        <BlueButton onClick={openPasswordPopup} className="mt-2">
+          Unlock wallet
+        </BlueButton>
+      )}
     </Block>
   )
 }
 
 export function MessageEmulationResult({
-  s,
   messageCell,
   tonWallet,
 }: {
-  s: State<ImmutableObject<TonConnectMessageTransaction>>
   messageCell?: Cell
   tonWallet?: IWallet
 }) {
-  const amountOut =
-    Number(s.payload.get().messages.reduce((acc, c) => acc + BigInt(c.amount), 0n)) / 10 ** 9
-
   const { response: txInfo, progress, isLoading } = useTonapiTxInfo(messageCell)
 
   return (
     <>
-      <div className="flex">
-        <div>Messages count:&nbsp;</div>
-        <div className="break-words break-all">
-          {s.payload.get().messages.length} ({amountOut.toString()})
-        </div>
-      </div>
-
       <div className="flex flex-col">
         <div>Tx Actions:</div>
         <div className="break-words break-all flex flex-col gap-2">

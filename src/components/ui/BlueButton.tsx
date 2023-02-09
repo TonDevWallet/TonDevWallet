@@ -1,3 +1,4 @@
+import { cn } from '@/utils/cn'
 import React from 'react'
 
 export const BlueButton = React.forwardRef<
@@ -11,7 +12,7 @@ export const BlueButton = React.forwardRef<
 >(({ onClick, children, className, disabled, ...props }, ref) => {
   return (
     <button
-      className={' bg-accent rounded px-2 py-2 w-48 text-white ' + className}
+      className={cn('bg-accent rounded px-2 py-2 w-48 text-white', className)}
       onClick={onClick}
       disabled={disabled}
       ref={ref}

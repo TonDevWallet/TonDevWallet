@@ -12,11 +12,9 @@ import { LiteClient } from 'ton-lite-client'
 import { IWallet } from '@/types'
 import { useAppInfo } from '@/hooks/useAppInfo'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
-import { ReactPopup } from '../Popup'
-import { useState } from 'react'
-import { BlueButton } from '../ui/BlueButton'
-import { setPassword, usePassword } from '@/store/passwordManager'
+import { faLock, faLockOpen, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { cleanPassword, openPasswordPopup, usePassword } from '@/store/passwordManager'
+import { PasswordPopup } from './PasswordPopup'
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
@@ -24,7 +22,7 @@ export function SavedWalletsList() {
   const sessions = useTonConnectSessions()
   const liteClient = useLiteclient() as LiteClient
   const { version } = useAppInfo()
-  const [pass, setPass] = useState('')
+
   const passwordState = usePassword()
 
   // const [themeDark, setThemeDarkValue] = useState(false)
@@ -148,47 +146,37 @@ export function SavedWalletsList() {
           <div className="text-foreground">New Key</div>
         </NavLink>
 
-        <ReactPopup
-          modal
-          trigger={
+        {passwordState.password.get() ? (
+          <div
+            onClick={cleanPassword}
+            className={'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center '}
+          >
             <div
-              className={'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center '}
-            >
-              <div
-                className="rounded-full w-16 h-16 bg-foreground/5
+              className="rounded-full w-16 h-16 bg-foreground/5
             flex items-center justify-center text-[32px] text-foreground"
-              >
-                <FontAwesomeIcon icon={faPlus} size="xs" />
-              </div>
-              <div className="text-foreground">Set password</div>
+            >
+              <FontAwesomeIcon icon={faLockOpen} size="xs" />
             </div>
-          }
-        >
-          {(close) => (
-            <div>
-              <label htmlFor="passwordInput">Password</label>
-              <input type="text" value={pass} onChange={(e) => setPass(e.target.value)} />
-
-              <BlueButton
-                onClick={async () => {
-                  try {
-                    await setPassword(pass)
-                    close()
-                  } catch (e) {
-                    console.log('wrong')
-                  }
-                }}
-              >
-                Save
-              </BlueButton>
+            <div className="text-foreground">Lock wallet</div>
+          </div>
+        ) : (
+          <div
+            onClick={openPasswordPopup}
+            className={'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center '}
+          >
+            <div
+              className="rounded-full w-16 h-16 bg-foreground/5
+            flex items-center justify-center text-[32px] text-foreground"
+            >
+              <FontAwesomeIcon icon={faLock} size="xs" />
             </div>
-          )}
-        </ReactPopup>
+            <div className="text-foreground">Unlock wallet</div>
+          </div>
+        )}
 
         <div className="text-center mt-4 text-sm text-gray-400">v{version}</div>
-        <div className="text-center mt-4 text-sm text-gray-400">
-          Locked? {passwordState.password.get() ? 'false' : 'true'}
-        </div>
+
+        <PasswordPopup />
 
         {/* <BlueButton
           onClick={async () => {

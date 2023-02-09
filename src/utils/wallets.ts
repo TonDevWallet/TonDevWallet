@@ -38,7 +38,7 @@ export function getWalletFromKey(
   key: State<Key>,
   wallet: SavedWallet
 ): IWallet | undefined {
-  const encryptedData = key.encryptedData.get()
+  const encryptedData = JSON.parse(key.encrypted.get())
   if (!encryptedData) {
     return
   }
@@ -166,17 +166,20 @@ function getExternalMessageCellFromTonWallet(
 
 export function useWalletExternalMessageCell(
   wallet: IWallet | undefined,
-  keyPair: KeyPair,
+  keyPair: KeyPair | undefined,
   transfers: WalletTransfer[]
 ) {
   const [cell, setCell] = useState<Cell | undefined>()
   const liteClient = useLiteclient()
 
   useEffect(() => {
-    if (wallet) {
-      wallet.getExternalMessageCell(keyPair, transfers).then(setCell)
+    if (!keyPair || !wallet) {
+      setCell(undefined)
+      return
     }
-  }, [wallet?.id, transfers, liteClient])
+
+    wallet.getExternalMessageCell(keyPair, transfers).then(setCell)
+  }, [wallet?.id, transfers, liteClient, keyPair])
 
   return cell
 }

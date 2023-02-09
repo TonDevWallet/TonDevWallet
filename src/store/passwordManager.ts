@@ -3,9 +3,12 @@ import { hookstate, useHookstate } from '@hookstate/core'
 import { useEffect, useState } from 'react'
 import { scrypt } from 'scrypt-js'
 import nacl from 'tweetnacl'
+import { subscribable } from '@hookstate/subscribable'
 
 export interface PasswordInfo {
   password?: string
+
+  popupOpen: boolean
 }
 
 export interface EncryptedWalletData {
@@ -35,12 +38,24 @@ interface SensitiveWalletData {
   mnemonic?: string // string + box
 }
 
-const passwordState = hookstate<PasswordInfo>({
-  password: undefined,
-})
+const passwordState = hookstate(
+  {
+    password: '',
+    popupOpen: false,
+  },
+  subscribable()
+)
 
 export function usePassword() {
   return useHookstate(passwordState)
+}
+
+export function openPasswordPopup() {
+  passwordState.popupOpen.set(true)
+}
+
+export function closePasswordPopup() {
+  passwordState.popupOpen.set(false)
 }
 
 export async function getPasswordInteractive(): Promise<string> {
@@ -49,7 +64,37 @@ export async function getPasswordInteractive(): Promise<string> {
     return existing
   }
 
-  throw new Error('no password for now')
+  openPasswordPopup()
+
+  return new Promise<string>((resolve, reject) => {
+    // const subState = (passwordState)
+    let cleanup = () => {
+      // nothing
+    }
+    const unsubPass = passwordState.password.subscribe((e) => {
+      console.log('password sub', e)
+      cleanup()
+    })
+    const unsubOpen = passwordState.popupOpen.subscribe((e) => {
+      console.log('popup sub', e)
+      cleanup()
+    })
+    cleanup = () => {
+      unsubPass()
+      unsubOpen()
+
+      if (passwordState.password) {
+        resolve(passwordState.password.get())
+      } else {
+        reject(new Error('No password'))
+      }
+    }
+  })
+
+  // subscribable()
+  // passwordState.
+
+  // throw new Error('no password for now')
 }
 
 export async function setPassword(password: string) {
@@ -90,7 +135,7 @@ export async function setPassword(password: string) {
 }
 
 export async function cleanPassword() {
-  passwordState.password.set(undefined)
+  passwordState.password.set('')
 }
 
 export async function encryptWalletData(password: string, data: SensitiveWalletData) {
@@ -132,9 +177,9 @@ export async function encryptWalletData(password: string, data: SensitiveWalletD
 
 export async function decryptWalletData(
   password: string,
-  data: string
+  data: string | EncryptedWalletData
 ): Promise<DecryptedWalletData> {
-  const encrypted = JSON.parse(data) as EncryptedWalletData
+  const encrypted = typeof data === 'string' ? (JSON.parse(data) as EncryptedWalletData) : data
   if (!encrypted.N || !encrypted.p || !encrypted.r || !encrypted.salt) {
     throw new Error('Unknown box')
   }

@@ -12,7 +12,7 @@ export function KeyJazzicon({
   className?: string
   diameter?: number
 }) {
-  const buffer = Buffer.from(walletKey?.seed?.get() || '', 'hex')
+  const buffer = Buffer.from(walletKey?.public_key?.get() || '', 'base64')
   const jazzNumber = buffer.length >= 4 ? buffer.readUint32BE(0) : 0 // key..toRaw().readUint32BE(0)
   return (
     <div className={clsx(className, 'flex')}>

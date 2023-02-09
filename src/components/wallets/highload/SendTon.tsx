@@ -7,6 +7,8 @@ import Popup from 'reactjs-popup'
 import { Address, beginCell, Builder, Cell, storeMessage } from 'ton'
 import { ITonHighloadWalletV2 } from '@/types'
 import { BlueButton } from '@/components/ui/BlueButton'
+import { getPasswordInteractive, decryptWalletData, usePassword } from '@/store/passwordManager'
+import { keyPairFromSeed } from 'ton-crypto'
 
 export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
   const [amount, setAmount] = useState('0')
@@ -130,11 +132,19 @@ const SendModal = ({
   const [status, setStatus] = useState(0) // 0 before send, 1 sending, 2 success, 3 error
   const [seconds, setSeconds] = useState(0)
   const [message, setMessage] = useState('')
+  const passwordState = usePassword()
 
   const clearPopup = () => {
     setStatus(0)
     setSeconds(0)
     setMessage('')
+  }
+
+  const clickOpenModal = async () => {
+    const password = await getPasswordInteractive()
+    if (password) {
+      setOpen(true)
+    }
   }
 
   const sendMoney = async () => {
@@ -159,8 +169,17 @@ const SendModal = ({
     }
 
     try {
+      const password = passwordState.password.get()
+
+      if (!password) {
+        throw new Error(`Invalid password`)
+      }
+
+      const decrypted = await decryptWalletData(password, wallet.key)
+      const keyPair = keyPairFromSeed(decrypted.seed || Buffer.from([]))
+
       const message = wallet.wallet.CreateTransferMessage([params])
-      const signedBody = SignCell(wallet.key.secretKey, message.body)
+      const signedBody = SignCell(keyPair.secretKey, message.body)
       message.body = signedBody
 
       const payload = beginCell().store(storeMessage(message)).endCell()
@@ -187,12 +206,20 @@ const SendModal = ({
 
   return (
     <>
-      {!open && (
-        <BlueButton className="mt-2" onClick={() => setOpen(true)}>
-          Send
-        </BlueButton>
-      )}
-      <Popup onOpen={clearPopup} onClose={clearPopup} open={open} closeOnDocumentClick modal>
+      <BlueButton className="mt-2" onClick={clickOpenModal}>
+        Send1
+      </BlueButton>
+
+      <Popup
+        onOpen={clearPopup}
+        onClose={() => {
+          setOpen(false)
+          clearPopup()
+        }}
+        open={open}
+        closeOnDocumentClick
+        modal
+      >
         <div className="p-4">
           {status === 0 && (
             <div className="flex flex-col">
