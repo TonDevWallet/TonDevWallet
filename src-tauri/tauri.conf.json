@@ -63,6 +63,16 @@
         "startDragging": true,
         "unmaximize": false,
         "unminimize": false
+      },
+      "fs": {
+        "exists": true,
+        "removeFile": true,
+        "createDir": true,
+        "scope": [
+          "$APPDATA/test.db*",
+          "$APPDATA/databases/*",
+          "$APPDATA/databases"
+        ]
       }
     },
     "bundle": {

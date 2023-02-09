@@ -1,10 +1,11 @@
 import { useDatabase } from '@/db'
-import { useKeyPair } from '@/hooks/useKeyPair'
+import { useSeed } from '@/hooks/useKeyPair'
+import { getPasswordInteractive, encryptWalletData } from '@/store/passwordManager'
 import { saveKeyAndWallets } from '@/store/walletsListState'
 import { Key } from '@/types/Key'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mnemonicValidate, mnemonicToSeed } from 'ton-crypto'
+import { mnemonicValidate, mnemonicToSeed, keyPairFromSeed } from 'ton-crypto'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
 
@@ -14,13 +15,7 @@ export function FromMnemonic() {
 
   const nameRef = useRef<HTMLInputElement | null>(null)
   const [words, setWords] = useState('')
-  const [mnemonicKey, setMnemonicKey] = useState<Key>({
-    id: 0,
-    name: '',
-    seed: undefined,
-    wallet_id: 0,
-    words: '', // target.value,
-  })
+  const [seed, setSeed] = useState<Buffer | undefined>()
 
   const onWordsChange = async (e: any) => {
     try {
@@ -29,31 +24,33 @@ export function FromMnemonic() {
 
       if (await mnemonicValidate(mnemonic)) {
         const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
-
-        setMnemonicKey({
-          id: 0,
-          name: '',
-          seed: Buffer.from(ls).toString('hex'),
-          wallet_id: 0,
-          words: mnemonic.join(' '),
-        })
-        // setSelectedWallet(null)
-      } else {
-        setMnemonicKey({
-          id: 0,
-          name: '',
-          seed: undefined,
-          wallet_id: 0,
-          words: mnemonic.join(' '), // target.value,
-        })
-        // setSelectedWallet(null)
+        setSeed(ls)
       }
     } catch (e) {
       console.log('onWordsChange error', e)
     }
   }
 
-  const keyPair = useKeyPair(mnemonicKey.seed)
+  const walletKeyPair = useSeed(seed)
+
+  const saveSeed = async () => {
+    if (!seed || seed.length !== 32) {
+      throw new Error('Seed must be 64 characters')
+    }
+    const password = await getPasswordInteractive()
+    const encrypted = await encryptWalletData(password, {
+      mnemonic: words,
+      seed,
+    })
+    const keyPair = await keyPairFromSeed(seed)
+    const key: Key = {
+      id: 0,
+      name: '',
+      encrypted,
+      public_key: keyPair.publicKey.toString('base64'),
+    }
+    saveKeyAndWallets(db, key, nameRef.current?.value || '', navigate)
+  }
 
   return (
     <div>
@@ -68,24 +65,26 @@ export function FromMnemonic() {
         {/* <input type="text" id="mnemonicInput" className="border rounded p-2 w-96" /> */}
       </div>
 
-      {mnemonicKey.seed && (
+      {seed && (
         <>
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
             <div className="flex">
-              <div className="w-96 overflow-hidden text-ellipsis text-xs">{mnemonicKey.seed}</div>
-              <Copier className="w-6 h-6 ml-2" text={mnemonicKey.seed || ''} />
+              <div className="w-96 overflow-hidden text-ellipsis text-xs">
+                {seed.toString('base64')}
+              </div>
+              <Copier className="w-6 h-6 ml-2" text={seed.toString('base64') || ''} />
             </div>
           </div>
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Public key:</div>
             <div className="flex">
               <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                {Buffer.from(keyPair?.publicKey || []).toString('hex')}
+                {Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
               </div>
               <Copier
                 className="w-6 h-6 ml-2"
-                text={Buffer.from(keyPair?.publicKey || []).toString('hex')}
+                text={Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
               />
             </div>
           </div>
@@ -93,25 +92,26 @@ export function FromMnemonic() {
             <div className="text-lg font-medium my-2 flex items-center">Secret key:</div>
             <div className="flex">
               <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                {Buffer.from(keyPair?.secretKey || []).toString('hex')}
+                {Buffer.from(walletKeyPair?.secretKey || []).toString('hex')}
               </div>
               <Copier
                 className="w-6 h-6 ml-2"
-                text={Buffer.from(keyPair?.secretKey || []).toString('hex')}
+                text={Buffer.from(walletKeyPair?.secretKey || []).toString('hex')}
               />
             </div>
           </div>
 
           <div className="py-4 flex flex-col">
             <label htmlFor="nameRef">Name:</label>
-            <input type="text" ref={nameRef} id="nameRef" className="border w-3/4 outline-none" />
+            <input
+              type="text"
+              ref={nameRef}
+              id="nameRef"
+              autoComplete="off"
+              className="border w-3/4 outline-none"
+            />
 
-            <BlueButton
-              onClick={async () =>
-                saveKeyAndWallets(db, mnemonicKey, nameRef.current?.value || '', navigate)
-              }
-              className="mt-2"
-            >
+            <BlueButton onClick={saveSeed} className="mt-2">
               Save
             </BlueButton>
           </div>

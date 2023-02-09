@@ -1,10 +1,11 @@
 import { useDatabase } from '@/db'
-import { useKeyPair } from '@/hooks/useKeyPair'
+import { useSeed } from '@/hooks/useKeyPair'
+import { getPasswordInteractive, encryptWalletData } from '@/store/passwordManager'
 import { saveKeyAndWallets } from '@/store/walletsListState'
 import { Key } from '@/types/Key'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mnemonicValidate, mnemonicToSeed, mnemonicNew } from 'ton-crypto'
+import { mnemonicValidate, mnemonicToSeed, mnemonicNew, keyPairFromSeed } from 'ton-crypto'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
 
@@ -14,14 +15,7 @@ export function FromRandom() {
 
   const nameRef = useRef<HTMLInputElement | null>(null)
   const [words, setWords] = useState('')
-  const [mnemonicKey, setMnemonicKey] = useState<Key>({
-    id: 0,
-    name: '',
-    seed: undefined,
-    wallet_id: 0,
-    words: '', // target.value,
-    // keyPair: undefined,
-  })
+  const [seed, setSeed] = useState<Buffer | undefined>()
 
   const generateNewMnemonic = async () => {
     const mnemonic = await mnemonicNew()
@@ -31,26 +25,12 @@ export function FromRandom() {
   const onWordsChange = async (value: string) => {
     try {
       setWords(value)
+      setSeed(undefined)
       const mnemonic = value.split(' ')
 
       if (await mnemonicValidate(mnemonic)) {
         const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
-
-        setMnemonicKey({
-          id: 0,
-          name: '',
-          seed: Buffer.from(ls).toString('hex'),
-          wallet_id: 0,
-          words: mnemonic.join(' '),
-        })
-      } else {
-        setMnemonicKey({
-          id: 0,
-          name: '',
-          seed: undefined,
-          wallet_id: 0,
-          words: mnemonic.join(' '), // target.value,
-        })
+        setSeed(ls)
       }
     } catch (e) {
       console.log('onWordsChange error', e)
@@ -63,7 +43,26 @@ export function FromRandom() {
     }
   }, [])
 
-  const walletKeyPair = useKeyPair(mnemonicKey.seed)
+  const walletKeyPair = useSeed(seed)
+
+  const saveSeed = async () => {
+    if (!seed || seed.length !== 32) {
+      throw new Error('Seed must be 64 characters')
+    }
+    const password = await getPasswordInteractive()
+    const encrypted = await encryptWalletData(password, {
+      mnemonic: words,
+      seed,
+    })
+    const keyPair = await keyPairFromSeed(seed)
+    const key: Key = {
+      id: 0,
+      name: '',
+      encrypted,
+      public_key: keyPair.publicKey.toString('base64'),
+    }
+    saveKeyAndWallets(db, key, nameRef.current?.value || '', navigate)
+  }
 
   return (
     <div>
@@ -71,7 +70,7 @@ export function FromRandom() {
         <BlueButton onClick={generateNewMnemonic}>Generate mnemonic</BlueButton>
       </div>
 
-      {mnemonicKey.seed && (
+      {seed && (
         <>
           <div className="text-lg font-medium my-2 flex items-center">Mnemonic:</div>
           <div>
@@ -83,8 +82,10 @@ export function FromRandom() {
             />
             <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
             <div className="flex">
-              <div className="w-96 overflow-hidden text-ellipsis text-xs">{mnemonicKey.seed}</div>
-              <Copier className="w-6 h-6 ml-2" text={mnemonicKey.seed || ''} />
+              <div className="w-96 overflow-hidden text-ellipsis text-xs">
+                {seed.toString('hex')}
+              </div>
+              <Copier className="w-6 h-6 ml-2" text={seed.toString('hex') || ''} />
             </div>
           </div>
           <div>
@@ -114,14 +115,15 @@ export function FromRandom() {
 
           <div className="py-4 flex flex-col">
             <label htmlFor="nameRef">Name:</label>
-            <input type="text" ref={nameRef} id="nameRef" className="border w-3/4 outline-none" />
+            <input
+              type="text"
+              ref={nameRef}
+              id="nameRef"
+              autoComplete="off"
+              className="border w-3/4 outline-none"
+            />
 
-            <BlueButton
-              onClick={async () =>
-                saveKeyAndWallets(db, mnemonicKey, nameRef.current?.value || '', navigate)
-              }
-              className="mt-2"
-            >
+            <BlueButton onClick={saveSeed} className="mt-2">
               Save
             </BlueButton>
           </div>

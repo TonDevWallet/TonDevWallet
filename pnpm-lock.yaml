@@ -46,6 +46,7 @@ specifiers:
   react-router-dom: ^6.6.1
   reactjs-popup: ^2.0.5
   sass: ^1.57.1
+  scrypt-js: ^3.0.1
   tailwindcss: ^3.1.8
   tauri-plugin-sql-api: github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9
   ton: ^13.3.0
@@ -87,6 +88,7 @@ dependencies:
   react-router-dom: 6.6.1_biqbaboplfbrettd7655fr4n2y
   reactjs-popup: 2.0.5_biqbaboplfbrettd7655fr4n2y
   sass: 1.57.1
+  scrypt-js: 3.0.1
   tailwindcss: 3.2.4_postcss@8.4.20
   tauri-plugin-sql-api: github.com/tauri-apps/tauri-plugin-sql/013b002d72dde1a77ce6cda60007adbe36e146c9
   ton: 13.3.0_l74i2356aoedurpqlhrqpgf3um
@@ -3528,6 +3530,10 @@ packages:
     resolution: {integrity: sha512-CtuThmgHNg7zIZWAXi3AsyIzA3n4xx7aNyjwC2VJldO2LMVDhFK+63xGqq6CsJH4rTAt6/M+N4GhZiDYPx9eUw==}
     dependencies:
       loose-envify: 1.4.0
+    dev: false
+
+  /scrypt-js/3.0.1:
+    resolution: {integrity: sha512-cdwTTnqPu0Hyvf5in5asVdZocVDTNRmR7XEcJuIzMjJeSHybHl7vpB66AzwTaIg6CLSbtjcxc8fqcySfnTkccA==}
     dev: false
 
   /semver/6.3.0:

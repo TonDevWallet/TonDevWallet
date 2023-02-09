@@ -41,26 +41,31 @@ export function getWalletListState() {
   return state
 }
 
-export async function saveKey(db: Knex, key: Key, walletName: string) {
+export async function saveKey(db: Knex, key: Key, walletName: string): Promise<Key> {
   // const key = wallet.key.get()
-  if (!key?.seed) {
-    throw new Error('no seed')
+  if (!key?.encrypted) {
+    throw new Error('no encrypted')
   }
 
-  const existing = await db('keys').where('seed', key.seed).first()
-  console.log('existing', existing, key.seed)
+  const existing = await db('keys').where('public_key', key.public_key).first()
+  console.log('existing', existing, key.public_key)
   if (existing) {
     throw new Error('Seed exists')
   }
 
-  const res = await db.raw<Key[]>(
-    `INSERT INTO keys(words,seed,wallet_id,name) VALUES(?,?,?,?) RETURNING *`,
-    [key.words, key.seed, key.wallet_id, walletName]
-  )
+  const res = await db<Key>('keys')
+    .insert({
+      encrypted: key.encrypted,
+      public_key: key.public_key,
+      name: walletName,
+    })
+    .returning('*')
+
   updateWalletsList()
 
   return res[0]
 }
+
 export async function deleteWallet(db: Knex, key: number) {
   await db.raw(`DELETE FROM keys WHERE id = ?`, [key])
   updateWalletsList()

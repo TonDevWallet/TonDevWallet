@@ -8,7 +8,9 @@ export function up(knex) {
       id integer PRIMARY KEY,
       type text,
       key_id integer,
-      subwallet_id integer
+      subwallet_id integer,
+
+      FOREIGN KEY(key_id) REFERENCES keys(id)
     )
   `)
 }

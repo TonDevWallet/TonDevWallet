@@ -11,7 +11,11 @@ export function up(knex) {
       key_id integer,
       wallet_id integer,
       status integer,
-      payload text
+      payload text,
+
+      FOREIGN KEY(key_id) REFERENCES keys(id),
+      FOREIGN KEY(wallet_id) REFERENCES wallets(id),
+      FOREIGN KEY(connect_session_id) REFERENCES connect_sessions(id)
     )
   `)
 }
