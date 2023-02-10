@@ -4,6 +4,8 @@ import Popup from 'reactjs-popup'
 import { Address, Cell, internal, loadStateInit } from 'ton'
 import { ITonWallet, TonWalletTransferArg } from '@/types'
 import { BlueButton } from '@/components/ui/BlueButton'
+import { decryptWalletData, getPasswordInteractive, usePassword } from '@/store/passwordManager'
+import { keyPairFromSeed } from 'ton-crypto'
 
 export default function SendTon({
   seqno,
@@ -137,6 +139,7 @@ const SendModal = ({
   const [status, setStatus] = useState(0) // 0 before send, 1 sending, 2 success, 3 error
   const [seconds, setSeconds] = useState(0)
   const [message, setMessage] = useState('')
+  const passwordState = usePassword()
   // const liteClient = useLiteclient()
 
   const clearPopup = () => {
@@ -168,12 +171,27 @@ const SendModal = ({
     }
   }
 
+  const clickOpenModal = async () => {
+    const password = await getPasswordInteractive()
+    if (password) {
+      setOpen(true)
+    }
+  }
+
   const sendMoney = async () => {
     const { address: rAddress, isBounceable: bounce } = Address.parseFriendly(recepient)
+    const password = passwordState.password.get()
+
+    if (!password) {
+      throw new Error(`Invalid password`)
+    }
+
+    const decrypted = await decryptWalletData(password, wallet.key)
+    const keyPair = keyPairFromSeed(decrypted.seed || Buffer.from([]))
 
     const params: TonWalletTransferArg = {
       seqno: parseInt(seqno),
-      secretKey: wallet.key.secretKey,
+      secretKey: keyPair.secretKey,
       sendMode: 3,
       messages: [
         internal({
@@ -240,11 +258,20 @@ const SendModal = ({
 
   return (
     <>
-      <BlueButton className="mt-2" onClick={() => setOpen(true)}>
+      <BlueButton className="mt-2" onClick={() => clickOpenModal()}>
         Send
       </BlueButton>
 
-      <Popup onOpen={clearPopup} onClose={clearPopup} open={open} closeOnDocumentClick modal>
+      <Popup
+        onOpen={clearPopup}
+        onClose={() => {
+          setOpen(false)
+          clearPopup()
+        }}
+        open={open}
+        closeOnDocumentClick
+        modal
+      >
         <div className="p-4">
           {status === 0 && (
             <div className="flex flex-col">

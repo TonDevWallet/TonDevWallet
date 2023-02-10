@@ -10,7 +10,10 @@ export function up(knex) {
       user_id text,
       key_id integer,
       wallet_id integer,
-      last_event_id integer
+      last_event_id integer,
+
+      FOREIGN KEY(key_id) REFERENCES keys(id),
+      FOREIGN KEY(wallet_id) REFERENCES wallets(id)
     )
   `)
 }

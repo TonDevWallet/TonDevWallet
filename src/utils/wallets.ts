@@ -26,7 +26,7 @@ import {
   loadStateInit,
   loadMessage,
 } from 'ton'
-import { KeyPair, keyPairFromSeed } from 'ton-crypto'
+import { KeyPair } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import { openLiteClient } from './liteClientProvider'
 import { SendMessageResult } from '@ton-community/sandbox'
@@ -38,16 +38,14 @@ export function getWalletFromKey(
   key: State<Key>,
   wallet: SavedWallet
 ): IWallet | undefined {
-  const seed = key.seed.get()
-  if (!seed) {
+  const encryptedData = JSON.parse(key.encrypted.get())
+  if (!encryptedData) {
     return
   }
 
-  const keyPair = keyPairFromSeed(Buffer.from(seed, 'hex'))
-
   if (wallet.type === 'highload') {
     const tonWallet = new HighloadWalletV2({
-      publicKey: keyPair.publicKey,
+      publicKey: Buffer.from(key.public_key.get(), 'base64'),
       subwalletId: wallet.subwallet_id,
       workchain: 0,
     })
@@ -56,7 +54,7 @@ export function getWalletFromKey(
       address: tonWallet.address,
       wallet: tonWallet,
       getExternalMessageCell: getExternalMessageCellFromHighload(tonWallet),
-      key: keyPair,
+      key: encryptedData,
       id: wallet.id,
       subwalletId: wallet.subwallet_id,
     }
@@ -66,7 +64,7 @@ export function getWalletFromKey(
       liteClient,
       WalletContractV3R2.create({
         workchain: 0,
-        publicKey: keyPair.publicKey,
+        publicKey: Buffer.from(key.public_key.get(), 'base64'),
         walletId: wallet.subwallet_id,
       })
     )
@@ -75,7 +73,7 @@ export function getWalletFromKey(
       address: tonWallet.address,
       wallet: tonWallet,
       getExternalMessageCell: getExternalMessageCellFromTonWallet(tonWallet),
-      key: keyPair,
+      key: encryptedData,
       id: wallet.id,
       subwalletId: wallet.subwallet_id,
     }
@@ -85,7 +83,7 @@ export function getWalletFromKey(
       liteClient,
       WalletContractV4.create({
         workchain: 0,
-        publicKey: keyPair.publicKey,
+        publicKey: Buffer.from(key.public_key.get(), 'base64'),
         walletId: wallet.subwallet_id,
       })
     )
@@ -94,7 +92,7 @@ export function getWalletFromKey(
       address: tonWallet.address,
       wallet: tonWallet,
       getExternalMessageCell: getExternalMessageCellFromTonWallet(tonWallet),
-      key: keyPair,
+      key: encryptedData,
       id: wallet.id,
       subwalletId: wallet.subwallet_id,
     }
@@ -168,17 +166,20 @@ function getExternalMessageCellFromTonWallet(
 
 export function useWalletExternalMessageCell(
   wallet: IWallet | undefined,
-  keyPair: KeyPair,
+  keyPair: KeyPair | undefined,
   transfers: WalletTransfer[]
 ) {
   const [cell, setCell] = useState<Cell | undefined>()
   const liteClient = useLiteclient()
 
   useEffect(() => {
-    if (wallet) {
-      wallet.getExternalMessageCell(keyPair, transfers).then(setCell)
+    if (!keyPair || !wallet) {
+      setCell(undefined)
+      return
     }
-  }, [wallet?.id, transfers, liteClient])
+
+    wallet.getExternalMessageCell(keyPair, transfers).then(setCell)
+  }, [wallet?.id, transfers, liteClient, keyPair])
 
   return cell
 }

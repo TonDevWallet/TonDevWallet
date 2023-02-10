@@ -6,6 +6,8 @@ import { getWalletState, setWalletKey } from './walletState'
 import { NavigateFunction } from 'react-router-dom'
 import { SavedWallet, WalletType } from '@/types'
 import { ConnectMessageTransaction } from '@/types/connect'
+import { keyPairFromSeed } from 'ton-crypto'
+import { encryptWalletData, getPasswordInteractive } from './passwordManager'
 
 const state = hookstate<Key[]>(() => getWallets())
 
@@ -41,31 +43,65 @@ export function getWalletListState() {
   return state
 }
 
-export async function saveKey(db: Knex, key: Key, walletName: string) {
+export async function saveKey(db: Knex, key: Key, walletName: string): Promise<Key> {
   // const key = wallet.key.get()
-  if (!key?.seed) {
-    throw new Error('no seed')
+  if (!key?.encrypted) {
+    throw new Error('no encrypted')
   }
 
-  const existing = await db('keys').where('seed', key.seed).first()
-  console.log('existing', existing, key.seed)
+  const existing = await db('keys').where('public_key', key.public_key).first()
+  console.log('existing', existing, key.public_key)
   if (existing) {
     throw new Error('Seed exists')
   }
 
-  const res = await db.raw<Key[]>(
-    `INSERT INTO keys(words,seed,wallet_id,name) VALUES(?,?,?,?) RETURNING *`,
-    [key.words, key.seed, key.wallet_id, walletName]
-  )
+  const res = await db<Key>('keys')
+    .insert({
+      encrypted: key.encrypted,
+      public_key: key.public_key,
+      name: walletName,
+    })
+    .returning('*')
+
   updateWalletsList()
 
   return res[0]
 }
+
 export async function deleteWallet(db: Knex, key: number) {
-  await db.raw(`DELETE FROM keys WHERE id = ?`, [key])
+  await db.transaction(async (tx) => {
+    await tx.raw(`DELETE FROM connect_message_transactions WHERE key_id = ?`, [key])
+    await tx.raw(`DELETE FROM connect_sessions WHERE key_id = ?`, [key])
+    await tx.raw(`DELETE FROM wallets WHERE key_id = ?`, [key])
+    await tx.raw(`DELETE FROM keys WHERE id = ?`, [key])
+  })
+
   updateWalletsList()
 }
 
+export async function saveKeyFromData(
+  name: string,
+  navigate: NavigateFunction,
+  seed: Buffer,
+  words?: string
+) {
+  const password = await getPasswordInteractive()
+
+  const encrypted = await encryptWalletData(password, {
+    mnemonic: words,
+    seed,
+  })
+  const keyPair = await keyPairFromSeed(seed)
+  const key: Key = {
+    id: 0,
+    name: '',
+    encrypted,
+    public_key: keyPair.publicKey.toString('base64'),
+  }
+
+  const db = await getDatabase()
+  await saveKeyAndWallets(db, key, name, navigate)
+}
 export async function saveKeyAndWallets(
   db: Knex,
   key: Key,
@@ -95,6 +131,7 @@ export async function saveKeyAndWallets(
   setWalletKey(newWallet.id)
 
   const wallets = await db<SavedWallet>('wallets').insert(defaultWallets).returning('*')
+  await updateWalletsList()
 
   const walletState = getWalletState()
   const stateKey = state.find((k) => k.id === walletState.keyId)

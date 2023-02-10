@@ -40,12 +40,13 @@ export function WalletPage() {
   const selectedWallet = useSelectedWallet()
 
   const wallets = useMemo<IWallet[]>(() => {
-    if (!key?.seed) {
+    if (!key?.public_key) {
       return []
     }
 
     const wallets: IWallet[] =
       key.wallets.get()?.map((w) => {
+        console.log('get wallet from key', liteClient, key, w)
         const newWallet = getWalletFromKey(liteClient, key, w)
         if (!newWallet) {
           throw new Error('no wallet')

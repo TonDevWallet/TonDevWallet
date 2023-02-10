@@ -1,7 +1,5 @@
-import { useDatabase } from '@/db'
-import { useKeyPair } from '@/hooks/useKeyPair'
-import { saveKeyAndWallets } from '@/store/walletsListState'
-import { Key } from '@/types/Key'
+import { useSeed } from '@/hooks/useKeyPair'
+import { saveKeyFromData } from '@/store/walletsListState'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Copier from '../copier'
@@ -9,17 +7,9 @@ import { BlueButton } from '../ui/BlueButton'
 
 export function FromSeed() {
   const navigate = useNavigate()
-  const db = useDatabase()
 
   const nameRef = useRef<HTMLInputElement | null>(null)
   const [seed, setSeed] = useState('')
-  const [mnemonicKey, setMnemonicKey] = useState<Key>({
-    id: 0,
-    name: '',
-    seed: undefined,
-    wallet_id: 0,
-    words: '', // target.value,
-  })
 
   const onWordsChange = async (e: any) => {
     try {
@@ -27,29 +17,21 @@ export function FromSeed() {
       // const mnemonic = e.target.value.split(' ')
       const data = e.target.value
       if (data.length !== 64) {
-        setMnemonicKey({
-          id: 0,
-          name: '',
-          seed: undefined,
-          wallet_id: 0,
-          words: '', // target.value,
-        })
         return
       }
-
-      setMnemonicKey({
-        id: 0,
-        name: '',
-        seed: data,
-        wallet_id: 0,
-        words: '',
-      })
     } catch (e) {
       console.log('onWordsChange error', e)
     }
   }
 
-  const keyPair = useKeyPair(mnemonicKey.seed)
+  const saveSeed = async () => {
+    if (seed.length !== 64) {
+      throw new Error('Seed must be 64 characters')
+    }
+    await saveKeyFromData(nameRef.current?.value || '', navigate, Buffer.from(seed, 'hex'))
+  }
+
+  const keyPair = useSeed(seed)
 
   return (
     <div>
@@ -64,13 +46,13 @@ export function FromSeed() {
         {/* <input type="text" id="mnemonicInput" className="border rounded p-2 w-96" /> */}
       </div>
 
-      {mnemonicKey.seed && (
+      {seed && (
         <>
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
             <div className="flex">
-              <div className="w-96 overflow-hidden text-ellipsis text-xs">{mnemonicKey.seed}</div>
-              <Copier className="w-6 h-6 ml-2" text={mnemonicKey.seed || ''} />
+              <div className="w-96 overflow-hidden text-ellipsis text-xs">{seed}</div>
+              <Copier className="w-6 h-6 ml-2" text={seed || ''} />
             </div>
           </div>
           <div>
@@ -102,12 +84,7 @@ export function FromSeed() {
             <label htmlFor="nameRef">Name:</label>
             <input type="text" ref={nameRef} id="nameRef" className="border w-3/4 outline-none" />
 
-            <BlueButton
-              onClick={async () =>
-                saveKeyAndWallets(db, mnemonicKey, nameRef.current?.value || '', navigate)
-              }
-              className="mt-2"
-            >
+            <BlueButton onClick={saveSeed} className="mt-2">
               Save
             </BlueButton>
           </div>

@@ -12,7 +12,10 @@ import { LiteClient } from 'ton-lite-client'
 import { IWallet } from '@/types'
 import { useAppInfo } from '@/hooks/useAppInfo'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faLock, faLockOpen, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { cleanPassword, openPasswordPopup, usePassword } from '@/store/passwordManager'
+import { PasswordPopup } from './PasswordPopup'
+import { ChangePasswordPopup } from './ChangePasswordPopup'
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
@@ -20,6 +23,8 @@ export function SavedWalletsList() {
   const sessions = useTonConnectSessions()
   const liteClient = useLiteclient() as LiteClient
   const { version } = useAppInfo()
+
+  const passwordState = usePassword()
 
   // const [themeDark, setThemeDarkValue] = useState(false)
 
@@ -142,7 +147,39 @@ export function SavedWalletsList() {
           <div className="text-foreground">New Key</div>
         </NavLink>
 
+        {passwordState.password.get() ? (
+          <div
+            onClick={cleanPassword}
+            className={'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center '}
+          >
+            <div
+              className="rounded-full w-16 h-16 bg-foreground/5
+            flex items-center justify-center text-[32px] text-foreground"
+            >
+              <FontAwesomeIcon icon={faLockOpen} size="xs" />
+            </div>
+            <div className="text-foreground">Lock wallet</div>
+          </div>
+        ) : (
+          <div
+            onClick={openPasswordPopup}
+            className={'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center '}
+          >
+            <div
+              className="rounded-full w-16 h-16 bg-foreground/5
+            flex items-center justify-center text-[32px] text-foreground"
+            >
+              <FontAwesomeIcon icon={faLock} size="xs" />
+            </div>
+            <div className="text-foreground">Unlock wallet</div>
+          </div>
+        )}
+
+        <ChangePasswordPopup />
+
         <div className="text-center mt-4 text-sm text-gray-400">v{version}</div>
+
+        <PasswordPopup />
 
         {/* <BlueButton
           onClick={async () => {

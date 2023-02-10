@@ -6,9 +6,8 @@ export function up(knex) {
   return knex.schema.raw(`
     CREATE TABLE keys (
       id integer PRIMARY KEY,
-      words text,
-      seed text,
-      wallet_id integer,
+      encrypted text,
+      public_key text UNIQUE,
       name text
     )
   `)

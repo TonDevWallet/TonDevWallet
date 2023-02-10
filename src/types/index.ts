@@ -1,6 +1,7 @@
 // import { Address } from 'tonweb/dist/types/utils/address'
 import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
+import { EncryptedWalletData } from '@/store/passwordManager'
 import {
   Address,
   MessageRelaxed,
@@ -33,7 +34,7 @@ export interface ITonWalletV3 {
   address: Address
   wallet: OpenedContract<WalletContractV3R2>
   getExternalMessageCell: GetExternalMessageCell
-  key: KeyPair
+  key: EncryptedWalletData
   id: number
   subwalletId: number
 }
@@ -43,7 +44,7 @@ export interface ITonWalletV4 {
   address: Address
   wallet: OpenedContract<WalletContractV4>
   getExternalMessageCell: GetExternalMessageCell
-  key: KeyPair
+  key: EncryptedWalletData
   id: number
   subwalletId: number
 }
@@ -53,7 +54,7 @@ export interface ITonHighloadWalletV2 {
   address: Address
   wallet: HighloadWalletV2
   getExternalMessageCell: GetExternalMessageCell
-  key: KeyPair
+  key: EncryptedWalletData
   id: number
   subwalletId: number
 }
