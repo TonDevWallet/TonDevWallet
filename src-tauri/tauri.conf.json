@@ -71,6 +71,7 @@
         "scope": [
           "$APPDATA/test.db*",
           "$APPDATA/databases/*",
+          "$APPDATA/databases/data.db",
           "$APPDATA/databases"
         ]
       }

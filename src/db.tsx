@@ -2,13 +2,15 @@ import KnexDb, { Knex } from 'knex'
 import { createContext, useContext } from 'react'
 import { ImportMigrations } from './utils/getMigrations'
 import { ClientSqliteWasm } from './utils/knexSqliteDialect'
-import { BaseDirectory } from '@tauri-apps/api/path'
+import { appDataDir, BaseDirectory } from '@tauri-apps/api/path'
 import { removeFile, exists, createDir } from '@tauri-apps/api/fs'
+
+const dataDir = await appDataDir()
 
 const db = KnexDb({
   client: ClientSqliteWasm as any,
   connection: {
-    filename: 'sqlite:databases/data.db',
+    filename: `sqlite:${dataDir}/databases/data.db`,
   },
 })
 
@@ -24,11 +26,16 @@ export const DbContext = createContext<Knex>(db)
 export const useDatabase = () => useContext(DbContext)
 
 export async function InitDB() {
-  await checkFs()
+  try {
+    await checkFs()
 
-  await db.migrate.latest({
-    migrationSource: new ImportMigrations(),
-  })
+    await db.migrate.latest({
+      migrationSource: new ImportMigrations(),
+    })
+  } catch (e) {
+    console.log('migrate error', e)
+    throw e
+  }
 }
 
 async function checkFs() {

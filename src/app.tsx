@@ -27,12 +27,6 @@ export function App({ db }: { db: Knex }) {
     appWindow.setDecorations(true)
   }, [])
 
-  // useEffect(() => {
-  //   setTimeout(async () => {
-
-  //   }, 1)
-  // }, [])
-
   return (
     <DbContext.Provider value={db}>
       <React.Suspense>
