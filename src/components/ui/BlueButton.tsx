@@ -8,7 +8,7 @@ export const BlueButton = React.forwardRef<
     children?: any
     className?: React.ReactNode
     disabled?: boolean
-  }
+  } & React.ButtonHTMLAttributes<HTMLButtonElement>
 >(({ onClick, children, className, disabled, ...props }, ref) => {
   return (
     <button

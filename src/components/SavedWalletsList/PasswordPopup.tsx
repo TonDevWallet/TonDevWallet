@@ -1,4 +1,5 @@
 import { closePasswordPopup, setPassword, usePassword } from '@/store/passwordManager'
+import { cn } from '@/utils/cn'
 import { useState } from 'react'
 import { ReactPopup } from '../Popup'
 import { BlueButton } from '../ui/BlueButton'
@@ -8,6 +9,23 @@ export function PasswordPopup() {
 
   const [pass, setPass] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  const onSubmit = async (e, close) => {
+    e.preventDefault()
+    try {
+      setIsUpdating(true)
+      setErrorMessage('')
+      await setPassword(pass)
+      setPass('')
+      close()
+    } catch (e) {
+      console.log('wrong')
+      setErrorMessage('Wrong password')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   return (
     <ReactPopup
@@ -17,7 +35,7 @@ export function PasswordPopup() {
       onClose={closePasswordPopup}
     >
       {(close) => (
-        <div className="flex flex-col w-64 p-4">
+        <form className="flex flex-col w-64 p-4" onSubmit={(e) => onSubmit(e, close)}>
           <label htmlFor="passwordInput">Enter your password</label>
           <input
             type="password"
@@ -29,22 +47,13 @@ export function PasswordPopup() {
           <div className="text-sm text-red-500 h-4">{errorMessage}</div>
 
           <BlueButton
-            className="w-full mt-2"
-            onClick={async () => {
-              try {
-                setErrorMessage('')
-                await setPassword(pass)
-                setPass('')
-                close()
-              } catch (e) {
-                console.log('wrong')
-                setErrorMessage('Wrong password')
-              }
-            }}
+            disabled={isUpdating}
+            className={cn('w-full mt-2', isUpdating && 'bg-gray-500')}
+            type="submit"
           >
             Open
           </BlueButton>
-        </div>
+        </form>
       )}
     </ReactPopup>
   )
