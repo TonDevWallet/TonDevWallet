@@ -6,6 +6,7 @@ import nacl from 'tweetnacl'
 import { subscribable } from '@hookstate/subscribable'
 import { Setting } from '@/types/settings'
 import { Key } from '@/types/Key'
+import { updateWalletsList } from './walletsListState'
 
 export interface PasswordInfo {
   password?: string
@@ -179,7 +180,9 @@ export async function setNewPassword(oldPassword: string, newPassword: string) {
 
     await tx.commit()
 
+    console.log('set new password', newPassword)
     passwordState.password.set(newPassword)
+    updateWalletsList()
   } finally {
     if (!tx.isCompleted()) {
       await tx.rollback()
@@ -256,6 +259,7 @@ export async function decryptWalletData(
   password: string,
   data: string | EncryptedWalletData
 ): Promise<DecryptedWalletData> {
+  console.log('decrypting', password)
   const encrypted = typeof data === 'string' ? (JSON.parse(data) as EncryptedWalletData) : data
   if (!encrypted.N || !encrypted.p || !encrypted.r || !encrypted.salt) {
     throw new Error('Unknown box')

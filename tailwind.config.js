@@ -18,6 +18,7 @@ module.exports = {
         background: 'rgb(var(--color-background-rgb) / <alpha-value>)',
         // 'accent-light': 'var(--color-accent-light)',
         'accent-light': 'rgb(var(--color-accent-light-rgb) / <alpha-value>)',
+        'window-background': 'var(--color-window-background)',
       },
 
       opacity: {
