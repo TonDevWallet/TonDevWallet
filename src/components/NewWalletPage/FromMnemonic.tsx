@@ -1,17 +1,13 @@
-import { useDatabase } from '@/db'
 import { useSeed } from '@/hooks/useKeyPair'
-import { getPasswordInteractive, encryptWalletData } from '@/store/passwordManager'
-import { saveKeyAndWallets } from '@/store/walletsListState'
-import { Key } from '@/types/Key'
+import { saveKeyFromData } from '@/store/walletsListState'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mnemonicValidate, mnemonicToSeed, keyPairFromSeed } from 'ton-crypto'
+import { mnemonicValidate, mnemonicToSeed } from 'ton-crypto'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
 
 export function FromMnemonic() {
   const navigate = useNavigate()
-  const db = useDatabase()
 
   const nameRef = useRef<HTMLInputElement | null>(null)
   const [words, setWords] = useState('')
@@ -37,19 +33,8 @@ export function FromMnemonic() {
     if (!seed || seed.length !== 32) {
       throw new Error('Seed must be 64 characters')
     }
-    const password = await getPasswordInteractive()
-    const encrypted = await encryptWalletData(password, {
-      mnemonic: words,
-      seed,
-    })
-    const keyPair = await keyPairFromSeed(seed)
-    const key: Key = {
-      id: 0,
-      name: '',
-      encrypted,
-      public_key: keyPair.publicKey.toString('base64'),
-    }
-    saveKeyAndWallets(db, key, nameRef.current?.value || '', navigate)
+
+    await saveKeyFromData(nameRef.current?.value || '', navigate, seed, words)
   }
 
   return (

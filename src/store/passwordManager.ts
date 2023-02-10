@@ -4,9 +4,12 @@ import { useEffect, useState } from 'react'
 import { scrypt } from 'scrypt-js'
 import nacl from 'tweetnacl'
 import { subscribable } from '@hookstate/subscribable'
+import { Setting } from '@/types/settings'
+import { Key } from '@/types/Key'
 
 export interface PasswordInfo {
   password?: string
+  passwordExists: boolean
 
   popupOpen: boolean
 }
@@ -18,8 +21,8 @@ export interface EncryptedWalletData {
   cypher: 'encrypted-scrypt-tweetnacl'
   salt: string // base64
   N: number
-  r: 8
-  p: 1
+  r: number
+  p: number
 }
 
 interface DecryptedWalletData {
@@ -29,8 +32,8 @@ interface DecryptedWalletData {
   cypher: 'encrypted-scrypt-tweetnacl'
   salt: string // base64
   N: number
-  r: 8
-  p: 1
+  r: number
+  p: number
 }
 
 interface SensitiveWalletData {
@@ -38,13 +41,21 @@ interface SensitiveWalletData {
   mnemonic?: string // string + box
 }
 
-const passwordState = hookstate(
-  {
+const defaultScryptSettings = {
+  N: 16384, // 16K*128*8 = 16 Mb of memory
+  r: 8,
+  p: 1,
+}
+
+const passwordState = hookstate(async () => {
+  const db = await getDatabase()
+  const exists = await db('settings').where({ name: 'password' }).first()
+  return {
     password: '',
     popupOpen: false,
-  },
-  subscribable()
-)
+    passwordExists: !!exists,
+  }
+}, subscribable())
 
 export function usePassword() {
   return useHookstate(passwordState)
@@ -58,6 +69,7 @@ export function closePasswordPopup() {
   passwordState.popupOpen.set(false)
 }
 
+// This function opens password popup and returns password if user unlocked it
 export async function getPasswordInteractive(): Promise<string> {
   const existing = passwordState.password.get()
   if (existing) {
@@ -67,16 +79,13 @@ export async function getPasswordInteractive(): Promise<string> {
   openPasswordPopup()
 
   return new Promise<string>((resolve, reject) => {
-    // const subState = (passwordState)
     let cleanup = () => {
       // nothing
     }
-    const unsubPass = passwordState.password.subscribe((e) => {
-      console.log('password sub', e)
+    const unsubPass = passwordState.password.subscribe(() => {
       cleanup()
     })
-    const unsubOpen = passwordState.popupOpen.subscribe((e) => {
-      console.log('popup sub', e)
+    const unsubOpen = passwordState.popupOpen.subscribe(() => {
       cleanup()
     })
     cleanup = () => {
@@ -90,48 +99,114 @@ export async function getPasswordInteractive(): Promise<string> {
       }
     }
   })
-
-  // subscribable()
-  // passwordState.
-
-  // throw new Error('no password for now')
 }
 
-export async function setPassword(password: string) {
-  // scrypt()
-  const N = 16384 // 16K*128*8 = 16 Mb of memory
-  const r = 8
-  const p = 1
-
+export async function checkPassword(password: string) {
   const db = await getDatabase()
   const existingPasword = await db<{ name: string; value: string }>('settings')
     .where('name', 'password')
     .first()
 
   if (!existingPasword) {
-    const salt = Buffer.from(nacl.randomBytes(32))
-    const key = Buffer.from(await scrypt(Buffer.from(password, 'utf8'), salt, N, r, p, 32))
-
-    await db<{ name: string; value: string }>('settings').insert({
-      name: 'password',
-      value: `${salt.toString('base64')}:${key.toString('base64')}`,
-    })
-
-    passwordState.password.set(password)
-    return
+    throw new Error('Password not exists')
   }
 
   const [sSalt, sKey] = existingPasword.value.split(':')
   const salt = Buffer.from(sSalt, 'base64')
   const key = Buffer.from(sKey, 'base64')
 
-  const enc = Buffer.from(await scrypt(Buffer.from(password, 'utf8'), salt, N, r, p, 32))
+  const enc = Buffer.from(
+    await scrypt(
+      Buffer.from(password, 'utf8'),
+      salt,
+      defaultScryptSettings.N,
+      defaultScryptSettings.r,
+      defaultScryptSettings.p,
+      32
+    )
+  )
 
   if (!enc.equals(key)) {
+    return false
+  }
+
+  return true
+}
+
+export async function setPassword(password: string) {
+  const passwordOk = await checkPassword(password)
+  if (!passwordOk) {
     throw new Error('Password not match')
   }
 
   passwordState.password.set(password)
+}
+
+export async function setNewPassword(oldPassword: string, newPassword: string) {
+  const passwordOk = await checkPassword(oldPassword)
+  if (!passwordOk) {
+    throw new Error('Old Password not ok')
+  }
+
+  const database = await getDatabase()
+  const tx = await database.transaction()
+  try {
+    const salt = Buffer.from(nacl.randomBytes(32))
+    const key = Buffer.from(
+      await scrypt(
+        Buffer.from(newPassword, 'utf8'),
+        salt,
+        defaultScryptSettings.N,
+        defaultScryptSettings.r,
+        defaultScryptSettings.p,
+        32
+      )
+    )
+    await tx<Setting>('settings')
+      .where({ name: 'password' })
+      .update({
+        value: `${salt.toString('base64')}:${key.toString('base64')}`,
+      })
+
+    const walletKeys = await tx<Key>('keys').select()
+    for (const key of walletKeys) {
+      const decrypted = await decryptWalletData(oldPassword, key.encrypted)
+      const encrypted = await encryptWalletData(newPassword, decrypted)
+
+      await tx<Key>('keys').where({ id: key.id }).update({ encrypted })
+      console.log('updating', key, encrypted)
+    }
+
+    await tx.commit()
+
+    passwordState.password.set(newPassword)
+  } finally {
+    if (!tx.isCompleted()) {
+      await tx.rollback()
+    }
+  }
+}
+
+export async function setFirstPassword(password: string) {
+  const db = await getDatabase()
+
+  const salt = Buffer.from(nacl.randomBytes(32))
+  const key = Buffer.from(
+    await scrypt(
+      Buffer.from(password, 'utf8'),
+      salt,
+      defaultScryptSettings.N,
+      defaultScryptSettings.r,
+      defaultScryptSettings.p,
+      32
+    )
+  )
+  await db<Setting>('settings').insert({
+    name: 'password',
+    value: `${salt.toString('base64')}:${key.toString('base64')}`,
+  })
+  passwordState.password.set(password)
+  passwordState.passwordExists.set(true)
 }
 
 export async function cleanPassword() {
@@ -139,20 +214,22 @@ export async function cleanPassword() {
 }
 
 export async function encryptWalletData(password: string, data: SensitiveWalletData) {
-  // default parameters
-  const N = 16384 // 16K*128*8 = 16 Mb of memory
-  const r = 8
-  const p = 1
-
   const salt = Buffer.from(await nacl.randomBytes(32))
-  const enckey = await scrypt(Buffer.from(password, 'utf8'), salt, N, r, p, 32)
+  const enckey = await scrypt(
+    Buffer.from(password, 'utf8'),
+    salt,
+    defaultScryptSettings.N,
+    defaultScryptSettings.r,
+    defaultScryptSettings.p,
+    32
+  )
   const nonce = salt.slice(0, 24)
 
   const encrypted: EncryptedWalletData = {
     cypher: 'encrypted-scrypt-tweetnacl',
-    N,
-    p,
-    r,
+    N: defaultScryptSettings.N,
+    p: defaultScryptSettings.p,
+    r: defaultScryptSettings.r,
     salt: salt.toString('base64'),
   }
 
@@ -205,6 +282,7 @@ export async function decryptWalletData(
   }
 
   if (encrypted.mnemonic) {
+    console.log('mnemonic:', encrypted.mnemonic)
     const inside = nacl.secretbox.open(Buffer.from(encrypted.mnemonic, 'base64'), nonce, enckey)
     if (!inside) {
       throw new Error("Can't open box")
@@ -228,8 +306,12 @@ export async function decryptWalletData(
 export function useDecryptWalletData(
   password: string | undefined,
   data: string | undefined
-): DecryptedWalletData | undefined {
+): {
+  decryptedData: DecryptedWalletData | undefined
+  isLoading: boolean
+} {
   const [decryptedData, setDecryptedData] = useState<DecryptedWalletData | undefined>()
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     setDecryptedData(undefined)
@@ -237,8 +319,13 @@ export function useDecryptWalletData(
       return
     }
 
-    decryptWalletData(password, data).then(setDecryptedData)
+    setIsLoading(true)
+    decryptWalletData(password, data)
+      .then(setDecryptedData)
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [password, data])
 
-  return decryptedData
+  return { decryptedData, isLoading }
 }

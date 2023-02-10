@@ -15,6 +15,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLock, faLockOpen, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { cleanPassword, openPasswordPopup, usePassword } from '@/store/passwordManager'
 import { PasswordPopup } from './PasswordPopup'
+import { ChangePasswordPopup } from './ChangePasswordPopup'
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
@@ -173,6 +174,8 @@ export function SavedWalletsList() {
             <div className="text-foreground">Unlock wallet</div>
           </div>
         )}
+
+        <ChangePasswordPopup />
 
         <div className="text-center mt-4 text-sm text-gray-400">v{version}</div>
 

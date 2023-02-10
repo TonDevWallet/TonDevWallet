@@ -1,17 +1,12 @@
-import { useDatabase } from '@/db'
 import { useSeed } from '@/hooks/useKeyPair'
-import { encryptWalletData, getPasswordInteractive } from '@/store/passwordManager'
-import { saveKeyAndWallets } from '@/store/walletsListState'
-import { Key } from '@/types/Key'
+import { saveKeyFromData } from '@/store/walletsListState'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { keyPairFromSeed } from 'ton-crypto'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
 
 export function FromSeed() {
   const navigate = useNavigate()
-  const db = useDatabase()
 
   const nameRef = useRef<HTMLInputElement | null>(null)
   const [seed, setSeed] = useState('')
@@ -33,18 +28,7 @@ export function FromSeed() {
     if (seed.length !== 64) {
       throw new Error('Seed must be 64 characters')
     }
-    const password = await getPasswordInteractive()
-    const encrypted = await encryptWalletData(password, {
-      seed: Buffer.from(seed, 'hex'),
-    })
-    const keyPair = await keyPairFromSeed(Buffer.from(seed, 'hex'))
-    const key: Key = {
-      id: 0,
-      name: '',
-      encrypted,
-      public_key: keyPair.publicKey.toString('base64'),
-    }
-    saveKeyAndWallets(db, key, nameRef.current?.value || '', navigate)
+    await saveKeyFromData(nameRef.current?.value || '', navigate, Buffer.from(seed, 'hex'))
   }
 
   const keyPair = useSeed(seed)
