@@ -17,7 +17,7 @@ tauri-build = { version = "1.2.1", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.2.3", features = ["devtools", "fs-create-dir", "fs-exists", "fs-remove-file", "http-all", "macos-private-api", "notification-all", "path-all", "shell-open", "updater", "window-hide", "window-set-decorations", "window-show", "window-start-dragging"] }
+tauri = { version = "1.2.3", features = ["devtools", "fs-create-dir", "fs-exists", "fs-remove-file", "http-all", "macos-private-api", "notification-all", "path-all", "shell-open", "updater", "window-hide", "window-set-decorations", "window-set-focus", "window-show", "window-start-dragging"] }
 libsqlite3-sys = { version = "0.24.0", features = ["bundled-sqlcipher-vendored-openssl"] }
 tokio = { version = "1.24.1", features = ["full"] }
 futures-util = "0.3.25"
@@ -26,11 +26,11 @@ tokio-tungstenite = "0.18.0"
 url = "2.3.1"
 tungstenite = "0.18.0"
 env_logger = "0.10.0"
-windows = { version = "0.44.0", features = ["UI", "UI_ViewManagement"] }
 sysinfo = "0.27.7"
 window-vibrancy = "0.3.2"
 screenshots = { git = "https://github.com/TrueCarry/screenshots-rs", rev = "2a38359f456ba686e5817b16af1f22a7070e372d"}
 base64 = "0.21.0"
+tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/tauri-plugin-single-instance", rev = "74c698987b0bcc1472e0a9f0260ea089f38bc531" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.22.3"
@@ -38,6 +38,10 @@ objc = "0.2.7"
 cocoa = "0.24.1"
 cacao = { version = "0.3.2", features = ["appkit"] }
 objc_id = "0.1.1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winreg = "0.10.1"
+windows = { version = "0.44.0", features = ["UI", "UI_ViewManagement"] }
 
 [features]
 # by default Tauri runs in production mode

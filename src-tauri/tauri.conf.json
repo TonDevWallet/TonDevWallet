@@ -48,7 +48,7 @@
         "setCursorPosition": false,
         "setCursorVisible": false,
         "setDecorations": true,
-        "setFocus": false,
+        "setFocus": true,
         "setFullscreen": false,
         "setIcon": false,
         "setIgnoreCursorEvents": false,

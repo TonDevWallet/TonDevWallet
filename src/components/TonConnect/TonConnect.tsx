@@ -7,7 +7,7 @@ import { getWalletFromKey } from '@/utils/wallets'
 import { ConnectEventSuccess, CHAIN, ConnectRequest, TonProofItem } from '@tonconnect/protocol'
 import { useCallback, useState } from 'react'
 import { Cell, beginCell, storeStateInit, StateInit } from 'ton-core'
-import { KeyPair } from 'ton-crypto'
+import { KeyPair, keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import nacl from 'tweetnacl'
 import { BlueButton } from '../ui/BlueButton'
@@ -19,6 +19,7 @@ import { invoke } from '@tauri-apps/api'
 import jsQR from 'jsqr'
 import clsx from 'clsx'
 import { appWindow } from '@tauri-apps/api/window'
+import { DecryptedWalletData, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
@@ -28,6 +29,12 @@ export function TonConnect() {
 
   const selectedWallet = useSelectedWallet()
   const selectedKey = useSelectedKey()
+
+  const passwrodState = usePassword()
+  const decryptedData = useDecryptWalletData(
+    passwrodState.password.get(),
+    selectedKey?.encrypted.get()
+  )
 
   const detect = async () => {
     try {
@@ -109,7 +116,14 @@ export function TonConnect() {
       console.log('Service url error')
     }
 
-    await sendTonConnectStartMessage(wallet, host, sessionKeypair, clientId, r)
+    await sendTonConnectStartMessage(
+      wallet,
+      decryptedData.decryptedData,
+      host,
+      sessionKeypair,
+      clientId,
+      r
+    )
 
     await addTonConnectSession({
       secretKey: Buffer.from(sessionKeypair.secretKey),
@@ -122,7 +136,7 @@ export function TonConnect() {
     })
 
     setConnectLink('')
-  }, [connectLink])
+  }, [connectLink, decryptedData.decryptedData])
 
   return (
     <Block className="flex flex-col gap-2">
@@ -149,6 +163,7 @@ export function TonConnect() {
 
 export async function sendTonConnectStartMessage(
   wallet: IWallet,
+  decryptedData: DecryptedWalletData | undefined,
   host: string,
   sessionKeyPair: KeyPair,
   sessionClientId: string,
@@ -169,8 +184,6 @@ export async function sendTonConnectStartMessage(
       .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
       .endCell()
   }
-
-  const walletKeyPair = wallet.key
 
   const proof = connectRequest?.items.find((i) => i.name === 'ton_proof') as TonProofItem
   const timestamp = Math.floor(Date.now())
@@ -201,6 +214,12 @@ export async function sendTonConnectStartMessage(
   }
 
   if (proof) {
+    if (!decryptedData?.seed) {
+      throw new Error('no wallet seed')
+    }
+
+    const walletKeyPair = keyPairFromSeed(decryptedData.seed)
+
     const signMessage = createTonProofMessage({
       address: wallet.address,
       domain,

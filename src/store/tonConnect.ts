@@ -1,5 +1,5 @@
 import { getDatabase } from '@/db'
-import { ConnectSession } from '@/types/connect'
+import { ConnectMessageTransaction, ConnectSession } from '@/types/connect'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { hookstate, State, useHookstate } from '@hookstate/core'
 
@@ -14,8 +14,21 @@ export interface TonConnectSession {
   name: string
   iconUrl: string
 }
+export interface TonConnectState {
+  sessions: TonConnectSession[]
 
-const state = hookstate<TonConnectSession[]>(getSessions)
+  popupOpen: boolean
+  connectArg: string
+}
+
+const state = hookstate<TonConnectState>(async () => {
+  return {
+    sessions: await getSessions(),
+
+    popupOpen: false,
+    connectArg: '',
+  }
+})
 
 async function getSessions() {
   const db = await getDatabase()
@@ -39,6 +52,11 @@ async function getSessions() {
 }
 
 export function useTonConnectSessions() {
+  const hook = useHookstate(state)
+  return hook.sessions
+}
+
+export function useTonConnectState() {
   return useHookstate(state)
 }
 
@@ -91,7 +109,9 @@ export async function addTonConnectSession({
     url,
   }
 
-  state.merge([session])
+  state.merge({
+    sessions: [session],
+  })
 }
 
 export async function deleteTonConnectSession(session: State<TonConnectSession>) {
@@ -106,17 +126,22 @@ export async function deleteTonConnectSession(session: State<TonConnectSession>)
   )
 
   const db = await getDatabase()
+  await db<ConnectMessageTransaction>('connect_message_transactions')
+    .where({
+      connect_session_id: session.id.get(),
+    })
+    .delete()
   await db<ConnectSession>('connect_sessions')
     .where({
       id: session.id.get(),
     })
     .delete()
 
-  state.set(await getSessions())
+  state.sessions.set(await getSessions())
 }
 export async function updateSessionEventId(id: number, eventId: number) {
   const db = await getDatabase()
-  const session = state.find((s) => s.get().id === id)
+  const session = state.sessions.find((s) => s.get().id === id)
   if (!session) {
     throw new Error('session not found')
   }
@@ -132,4 +157,8 @@ export async function updateSessionEventId(id: number, eventId: number) {
       last_event_id: eventId,
     })
   console.log('updated', session, eventId)
+}
+
+export function closeTonConnectPopup() {
+  state.popupOpen.set(false)
 }

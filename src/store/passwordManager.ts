@@ -26,7 +26,7 @@ export interface EncryptedWalletData {
   p: number
 }
 
-interface DecryptedWalletData {
+export interface DecryptedWalletData {
   seed?: Buffer // base64 + box
   mnemonic?: string // string + box
 

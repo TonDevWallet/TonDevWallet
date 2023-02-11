@@ -4,7 +4,7 @@ import React, { useEffect } from 'react'
 import { DbContext } from './db'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
-import { useTonConnectSessions } from './store/tonConnect'
+import { useTonConnectState } from './store/tonConnect'
 import { useWalletListState } from './store/walletsListState'
 import { useTauriState } from './store/tauri'
 import { appWindow } from '@tauri-apps/api/window'
@@ -14,11 +14,11 @@ import { useLiteclientState } from './store/liteClient'
 import { usePassword } from './store/passwordManager'
 
 export function App({ db }: { db: Knex }) {
-  const connectSessions = useTonConnectSessions()
   const keysList = useWalletListState()
   const tauriState = useTauriState()
   const liteClientState = useLiteclientState()
   const passwordState = usePassword()
+  const tonConnectState = useTonConnectState()
 
   useTheme()
   useOs()
@@ -31,10 +31,10 @@ export function App({ db }: { db: Knex }) {
     <DbContext.Provider value={db}>
       <React.Suspense>
         {suspend(tauriState) ||
-          suspend(connectSessions) ||
           suspend(keysList) ||
           suspend(liteClientState) ||
-          suspend(passwordState) || <RouterProvider router={router} />}
+          suspend(passwordState) ||
+          suspend(tonConnectState) || <RouterProvider router={router} />}
         {/* {suspend(wallet) || <IndexPage />} */}
       </React.Suspense>
     </DbContext.Provider>

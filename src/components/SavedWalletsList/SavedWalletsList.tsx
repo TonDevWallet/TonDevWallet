@@ -60,7 +60,7 @@ export function SavedWalletsList() {
       const serviceUrl = new URL(s.url)
       const host = serviceUrl.host
 
-      sendTonConnectStartMessage(tonWallet, host, sessionKeyPair, s.userId)
+      sendTonConnectStartMessage(tonWallet, undefined, host, sessionKeyPair, s.userId)
     }
   }
 

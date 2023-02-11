@@ -1,3 +1,4 @@
+import { cn } from '@/utils/cn'
 import clipboard from 'clipboardy'
 import clsx from 'clsx'
 import { ReactNode, useState } from 'react'
@@ -12,12 +13,16 @@ export function AddressRow({
   rawAddress,
 
   addressClassName,
+  containerClassName,
+  disableCopy,
 }: {
   address?: string | Address
   text?: string | ReactNode | undefined
   rawAddress?: string
 
   addressClassName?: string
+  containerClassName?: string
+  disableCopy?: boolean
 }) {
   const [copied, setCopied] = useState(false)
 
@@ -38,7 +43,10 @@ export function AddressRow({
   }
 
   return (
-    <div className="flex justify-start items-center cursor-pointer" onClick={pressCopy}>
+    <div
+      className={cn('flex justify-start items-center cursor-pointer', containerClassName)}
+      onClick={pressCopy}
+    >
       {text && (typeof text === 'string' ? <div>{text}</div> : text)}
       {/* <div className="">{text}</div> */}
       <div
@@ -53,9 +61,11 @@ export function AddressRow({
         {addressString.substring(addressString.length - 4)}
       </div>
 
-      <div className="ml-auto flex items-center">
-        <button className="w-5 h-5">{copied ? <DoneSvg /> : <CopySvg />}</button>
-      </div>
+      {!disableCopy && (
+        <div className="ml-auto flex items-center">
+          <button className="w-5 h-5">{copied ? <DoneSvg /> : <CopySvg />}</button>
+        </div>
+      )}
     </div>
   )
 }

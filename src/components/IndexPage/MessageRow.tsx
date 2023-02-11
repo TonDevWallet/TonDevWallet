@@ -46,7 +46,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
     [sessions]
   )
 
-  const decryptedData = useDecryptWalletData(password, key.encrypted.get())
+  const { decryptedData } = useDecryptWalletData(password, key.encrypted.get())
 
   const walletKeyPair = useMemo(() => {
     if (!decryptedData) {
@@ -128,7 +128,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
   }
 
   return (
-    <Block className="">
+    <Block className="mt-2">
       <div className="flex items-center">
         <img src={session?.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
         <div className="ml-2">{session?.name.get()}</div>
@@ -175,9 +175,18 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
           <MessageEmulationResult messageCell={messageCell} tonWallet={tonWallet} />
         </>
       ) : (
-        <BlueButton onClick={openPasswordPopup} className="mt-2">
-          Unlock wallet
-        </BlueButton>
+        <>
+          <BlueButton
+            onClick={() => {
+              rejectMessage()
+            }}
+          >
+            Reject
+          </BlueButton>
+          <BlueButton onClick={openPasswordPopup} className="ml-2 mt-2 bg-green-500">
+            Unlock wallet
+          </BlueButton>
+        </>
       )}
     </Block>
   )

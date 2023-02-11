@@ -8,11 +8,13 @@
 extern crate objc;
 
 mod proxy;
+mod register_uri;
 
 use std::{sync::atomic::{Ordering, AtomicU16}};
 use base64;
 
 use proxy::spawn_proxy;
+use register_uri::register_urlhandler;
 use tauri::Manager;
 use tauri_plugin_sql::TauriSql;
 use tokio::net::TcpListener;
@@ -330,12 +332,23 @@ fn get_os_name() -> Result<String, String> {
   return Ok("linux".to_string());
 }
 
+#[derive(Clone, serde::Serialize)]
+struct Payload {
+  args: Vec<String>,
+  cwd: String,
+}
+
 fn main() {
+  register_urlhandler(None).unwrap();
   let _ = env_logger::try_init();
   let context = tauri::generate_context!();
 
   tauri::Builder::default()
     .plugin(TauriSql::default())
+    .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+      println!("{}, {argv:?}, {cwd}", app.package_info().name);
+      app.emit_all("single-instance", Payload { args: argv, cwd }).unwrap();
+    }))
     .setup(move |app| {
       tauri::async_runtime::spawn(async move {
         let mut lst = TcpListener::bind("127.0.0.1:0").await.unwrap();
