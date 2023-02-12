@@ -19,7 +19,9 @@ export function SessionsList() {
 
   return (
     <div className="gap-2 flex flex-col mb-8">
-      <h3 className="text-lg">Sessions:</h3>
+      <div className="flex justify-between">
+        <h3 className="text-lg">Active Sessions:</h3>
+      </div>
       {sessions.map((s) => {
         const key = keys.find((k) => k.id.get() === s.keyId.get())
         if (!key) {

@@ -39,34 +39,14 @@ export function TonConnect() {
   const detect = async () => {
     try {
       setIsDetecting(true)
-      await appWindow.setDecorations(false)
-      await appWindow.hide()
-      const res = (await invoke('detect_qr_code')) as string[]
+      const code = await getQrcodeFromScreen()
 
-      for (const data of res) {
-        const image = await getImageFromBase64(data)
-        const canvas = document.createElement('canvas')
-        canvas.width = image.width
-        canvas.height = image.height
-        const ctx = canvas.getContext('2d')
-        if (!ctx) {
-          throw new Error('no canvas')
-        }
-
-        ctx.drawImage(image, 0, 0)
-        const imageData = ctx.getImageData(0, 0, image.width, image.height)
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {})
-
-        if (code) {
-          console.log('Found QR code', code)
-          setConnectLink(code.data)
-        }
+      if (code) {
+        console.log('Found QR code', code)
+        setConnectLink(code)
       }
     } finally {
       setIsDetecting(false)
-
-      await appWindow.show()
-      await appWindow.setDecorations(true)
     }
   }
 
@@ -245,7 +225,7 @@ export async function sendTonConnectStartMessage(
   await sendTonConnectMessage(data, sessionKeyPair.secretKey, sessionClientId)
 }
 
-function getImageFromBase64(data: string) {
+export function getImageFromBase64(data: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
     image.onload = function () {
@@ -256,4 +236,37 @@ function getImageFromBase64(data: string) {
     }
     image.src = `data:image/png;base64,${data}`
   })
+}
+
+export async function getQrcodeFromScreen(): Promise<string | undefined> {
+  try {
+    await appWindow.setDecorations(false)
+    await appWindow.hide()
+    const res = (await invoke('detect_qr_code')) as string[]
+
+    for (const data of res) {
+      const image = await getImageFromBase64(data)
+      const canvas = document.createElement('canvas')
+      canvas.width = image.width
+      canvas.height = image.height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        throw new Error('no canvas')
+      }
+
+      ctx.drawImage(image, 0, 0)
+      const imageData = ctx.getImageData(0, 0, image.width, image.height)
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {})
+
+      if (code) {
+        console.log('Found QR code', code)
+        return code.data
+      }
+    }
+  } finally {
+    await appWindow.show()
+    await appWindow.setDecorations(true)
+  }
+
+  return undefined
 }

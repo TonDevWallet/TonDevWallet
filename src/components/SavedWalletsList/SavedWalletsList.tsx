@@ -16,6 +16,7 @@ import { faLock, faLockOpen, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { cleanPassword, openPasswordPopup, usePassword } from '@/store/passwordManager'
 import { PasswordPopup } from './PasswordPopup'
 import { ChangePasswordPopup } from './ChangePasswordPopup'
+import { DetectTonConnect } from './DetectTonConnect'
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
@@ -111,6 +112,8 @@ export function SavedWalletsList() {
             <div>Listeners: {sessions.length}</div>
           </label>
         </div> */}
+
+        <DetectTonConnect />
 
         <NavLink
           to="/"
