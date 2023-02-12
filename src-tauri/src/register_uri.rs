@@ -1,13 +1,10 @@
 use std::{
   io,
 };
-use winreg::{enums::*, RegKey};
 
-const PROGID_PATH: &str = r"SOFTWARE\Classes\tondevwallet";
-const DISPLAY_NAME: &str = "tondevwallet";
 
 #[cfg(not(target_os = "windows"))]
-pub fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
+pub fn register_urlhandler(_extra_args: Option<&str>) -> io::Result<()> {
   Ok(())
 }
 
@@ -15,8 +12,12 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
 pub fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
   // This is used both by initial registration and OS-invoked reinstallation.
   // The expectations for the latter are documented here: https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#the-reinstall-command
+  use winreg::{enums::*, RegKey};
+  use std::env::current_exe;
 
-use std::env::current_exe;
+  const PROGID_PATH: &str = r"SOFTWARE\Classes\tondevwallet";
+  const DISPLAY_NAME: &str = "tondevwallet";
+
   let exe_path = current_exe()?;
   let exe_path = exe_path.to_str().unwrap_or_default().to_owned();
   let icon_path = format!("\"{}\",0", exe_path);
