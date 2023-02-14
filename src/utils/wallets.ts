@@ -217,7 +217,8 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
         })
         const msg = loadMessage(cell.beginParse())
         const start = Date.now()
-        const { result, emitter } = blockchain.sendMessageWithProgress(msg)
+        const { result, emitter, gasMap } = blockchain.sendMessageWithProgress(msg)
+        console.log('gasmap', gasMap)
 
         let isStopped = false
         stopEmulator = () => {

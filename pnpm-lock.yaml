@@ -9,7 +9,7 @@ specifiers:
   '@hookstate/subscribable': ^4.0.0
   '@tauri-apps/api': ^1.2.0
   '@tauri-apps/cli': ^1.2.3
-  '@ton-community/sandbox': ^0.2.0
+  '@ton-community/sandbox': ^0.4.0
   '@tonconnect/protocol': ^2.0.1
   '@tonconnect/sdk': ^2.0.5
   '@types/bn.js': ^5.1.0
@@ -68,7 +68,7 @@ dependencies:
   '@hookstate/devtools': 4.0.0_@hookstate+core@4.0.0
   '@hookstate/subscribable': 4.0.0_@hookstate+core@4.0.0
   '@tauri-apps/api': 1.2.0
-  '@ton-community/sandbox': 0.2.0_otphrpghf2ugbazebzcwiaxcqa
+  '@ton-community/sandbox': 0.4.0_otphrpghf2ugbazebzcwiaxcqa
   '@tonconnect/protocol': 2.0.1
   '@tonconnect/sdk': 2.0.5
   '@types/bn.js': 5.1.1
@@ -836,8 +836,8 @@ packages:
       '@tauri-apps/cli-win32-x64-msvc': 1.2.3
     dev: true
 
-  /@ton-community/sandbox/0.2.0_otphrpghf2ugbazebzcwiaxcqa:
-    resolution: {integrity: sha512-pG9F/8mkw8cwC7c2eRAa9byXTDWFohMhT+7d0a61WA1tp/68lXk6anhftnY/y8viAcXoHRsjcKja36EVjm49FQ==}
+  /@ton-community/sandbox/0.4.0_otphrpghf2ugbazebzcwiaxcqa:
+    resolution: {integrity: sha512-V2PI4hwAN+yw0esfbzD+jHYhBx9wwcj3LFc5rO8Dyth2rl7btudDAQoV9Lkc03cnlwVOSuJAXS+0w95ThnXxOA==}
     peerDependencies:
       ton: '>=13.0.0'
       ton-core: '>=0.36.1'
