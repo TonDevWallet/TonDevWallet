@@ -67,10 +67,21 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
             return undefined
           }
 
+          let bounce: boolean | undefined
+
           let destination
+
           try {
-            destination = Address.parse(m.address.get() || '')
-          } catch (e) {}
+            if (Address.isFriendly(m.address.get() || '')) {
+              const { isBounceable, address } = Address.parseFriendly(m.address.get() || '')
+              destination = address
+              bounce = isBounceable
+            } else {
+              destination = Address.parseRaw(m.address.get() || '')
+            }
+          } catch (e) {
+            throw new Error('Wrong address')
+          }
 
           const p = m.payload.get()
           const payload = p ? Cell.fromBase64(p) : undefined
@@ -84,6 +95,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
             amount: BigInt(m.amount.get()),
             mode: 3,
             state,
+            bounce: bounce ?? true,
           }
         })
         .filter((m) => m) as WalletTransfer[],
