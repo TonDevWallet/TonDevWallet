@@ -28,9 +28,9 @@ tungstenite = "0.18.0"
 env_logger = "0.10.0"
 sysinfo = "0.27.7"
 window-vibrancy = "0.3.2"
-screenshots = { git = "https://github.com/TrueCarry/screenshots-rs", rev = "2a38359f456ba686e5817b16af1f22a7070e372d"}
 base64 = "0.21.0"
 tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/tauri-plugin-single-instance", rev = "74c698987b0bcc1472e0a9f0260ea089f38bc531" }
+screenshots = "0.5.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.22.3"

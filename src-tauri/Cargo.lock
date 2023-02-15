@@ -775,13 +775,13 @@ checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 
 [[package]]
 name = "display-info"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bec0af2a453c6a390cbc7aaaaedf86996819a09a3c3aa0a5072e44bea878cac4"
+checksum = "15453e90755c09fc70a6dbc9a307b0d4ec0fa65c5e36fb7cf8246109c442c331"
 dependencies = [
  "anyhow",
  "core-graphics",
- "sfhash",
+ "fxhash",
  "widestring",
  "windows 0.44.0",
  "xcb",
@@ -2873,15 +2873,16 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "screenshots"
-version = "0.5.0"
-source = "git+https://github.com/TrueCarry/screenshots-rs?rev=2a38359f456ba686e5817b16af1f22a7070e372d#2a38359f456ba686e5817b16af1f22a7070e372d"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "496b23b6d19d356fbf12b0c2052dd729c2f9bdd1d1306d5cf4a80bc87b534c32"
 dependencies = [
  "anyhow",
  "core-graphics",
  "dbus",
  "display-info",
+ "fxhash",
  "png",
- "sfhash",
  "widestring",
  "windows 0.44.0",
  "xcb",
@@ -3074,12 +3075,6 @@ dependencies = [
  "nodrop",
  "stable_deref_trait",
 ]
-
-[[package]]
-name = "sfhash"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c72019dd341c01ac4abd5a7065bbae73f5009f9c97677c8200521218c961c19a"
 
 [[package]]
 name = "sha1"
