@@ -29,9 +29,9 @@ import {
 import { KeyPair } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import { openLiteClient } from './liteClientProvider'
-import { SendMessageResult } from '@ton-community/sandbox'
 import { LiteClientBlockchainStorage } from './liteClientBlockchainStorage'
-import { ManagedBlockchain } from './ManagedBlockchain'
+import { ManagedBlockchain, ManagedSendMessageResult } from './ManagedBlockchain'
+import { formatGasInfo } from './formatNumbers'
 
 export function getWalletFromKey(
   liteClient: LiteClient,
@@ -185,7 +185,7 @@ export function useWalletExternalMessageCell(
 }
 
 export function useTonapiTxInfo(cell: Cell | undefined) {
-  const [response, setResponse] = useState<SendMessageResult | undefined>()
+  const [response, setResponse] = useState<ManagedSendMessageResult | undefined>()
   const [progress, setProgress] = useState<{ total: number; done: number }>({ done: 0, total: 0 })
   const [isLoading, setIsLoading] = useState(false)
   const liteClient = useLiteclient() as LiteClient
@@ -218,7 +218,6 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
         const msg = loadMessage(cell.beginParse())
         const start = Date.now()
         const { result, emitter, gasMap } = blockchain.sendMessageWithProgress(msg)
-        console.log('gasmap', gasMap)
 
         let isStopped = false
         stopEmulator = () => {
@@ -232,6 +231,9 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
         emitter.on('add_message', onAddMessage)
         emitter.on('complete_message', onCompleteMessage)
         const res = await result
+        console.log('gasmap', gasMap)
+        console.log('emulate res', res)
+        formatGasInfo(gasMap)
 
         console.log('b res', res.events.length, Date.now() - start, isStopped)
 

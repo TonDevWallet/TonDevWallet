@@ -6,6 +6,7 @@ import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
 import { IWallet } from '@/types'
 import { ConnectMessageStatus } from '@/types/connect'
+import { formatTon } from '@/utils/formatNumbers'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { getWalletFromKey, useWalletExternalMessageCell, useTonapiTxInfo } from '@/utils/wallets'
 import { State, ImmutableObject } from '@hookstate/core'
@@ -21,6 +22,7 @@ import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
+import { BlockchainTransaction } from '../../utils/ManagedBlockchain'
 
 export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTransaction>> }) {
   const keys = useWalletListState()
@@ -215,6 +217,11 @@ export function MessageEmulationResult({
             Progress: {progress.done} / {progress.total}
           </div>
           {isLoading && <div>Emulating...</div>}
+
+          {txInfo?.transactions.map((tx, i) => {
+            return !tx.parent && <TxRow key={i} tx={tx} />
+          })}
+
           {txInfo?.events?.map((action, i) => {
             return (
               <Block key={i} className="flex flex-col">
@@ -244,5 +251,21 @@ export function MessageEmulationResult({
         </div>
       </div>
     </>
+  )
+}
+
+function TxRow({ tx }: { tx: BlockchainTransaction }) {
+  return (
+    <Block className="flex flex-col">
+      TxInfo
+      <div>Fee: {formatTon(tx.gasSelf)}</div>
+      <div>Total Fee: {formatTon(tx.gasFull)}</div>
+      <div>
+        Children:
+        {tx.children.map((c, i) => (
+          <TxRow key={i} tx={c} />
+        ))}
+      </div>
+    </Block>
   )
 }

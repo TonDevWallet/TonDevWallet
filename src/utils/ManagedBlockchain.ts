@@ -2,18 +2,34 @@ import {
   Blockchain,
   BlockchainStorage,
   LocalBlockchainStorage,
-  SendMessageResult,
   SmartContract,
+  Event,
 } from '@ton-community/sandbox'
 import { extractEvents } from '@ton-community/sandbox/dist/event/Event'
 import { Executor } from '@ton-community/sandbox/dist/executor/Executor'
 import { EventEmitter } from 'events'
-import { Address, Cell, Message, Transaction } from 'ton-core'
+import { Cell, Message, Transaction } from 'ton-core'
 
 const LT_ALIGN = 1000000n
 
-interface GasInfo {
-  calls: number[]
+export interface GasInfo {
+  calls: {
+    lt: bigint
+    gasSelf: number
+    gasFull: number
+  }[]
+}
+
+export interface BlockchainTransaction extends Transaction {
+  parent?: BlockchainTransaction
+  children: BlockchainTransaction[]
+  gasSelf: number
+  gasFull: number
+}
+
+export type ManagedSendMessageResult = {
+  transactions: BlockchainTransaction[]
+  events: Event[]
 }
 
 export class ManagedBlockchain extends Blockchain {
@@ -32,7 +48,7 @@ export class ManagedBlockchain extends Blockchain {
 
   sendMessageWithProgress(message: Message): {
     emitter: EventEmitter
-    result: Promise<SendMessageResult>
+    result: Promise<ManagedSendMessageResult>
     gasMap?: Map<string, GasInfo>
   } {
     this.pushMessage(message)
@@ -62,9 +78,9 @@ export class ManagedBlockchain extends Blockchain {
     this.messageQueue.push(message)
   }
 
-  async processQueue(emitter?: EventEmitter) {
+  async processQueue(emitter?: EventEmitter): Promise<BlockchainTransaction[]> {
     console.log('process queue')
-    const result: Transaction[] = []
+    const result: BlockchainTransaction[] = []
 
     let stopped = false
     if (emitter) {
@@ -97,9 +113,9 @@ export class ManagedBlockchain extends Blockchain {
       }
 
       const newContract = await this.getContract(message.info.dest)
+      const fee = Number(transaction.totalFees.coins)
 
       if (newContract.accountState?.type === 'active' && newContract.accountState.state.code) {
-        const fee = transaction.totalFees.coins
         let opcode = ''
         const body = message.body.asSlice()
         if (body.remainingBits >= 32) {
@@ -109,15 +125,94 @@ export class ManagedBlockchain extends Blockchain {
         const existing = this.#gasMap.get(key)
         if (existing) {
           this.#gasMap.set(key, {
-            calls: existing.calls.concat([Number(fee)]),
+            calls: existing.calls.concat([
+              {
+                lt: transaction.lt,
+                gasSelf: fee,
+                gasFull: fee,
+              },
+            ]),
           })
         } else {
           this.#gasMap.set(key, {
-            calls: [Number(fee)],
+            calls: [
+              {
+                lt: transaction.lt,
+                gasSelf: fee,
+                gasFull: fee,
+              },
+            ],
           })
         }
       }
-      result.push(transaction)
+
+      let parent: BlockchainTransaction | undefined
+      if (message.info.type === 'internal') {
+        for (const tx of result) {
+          // Ignore already matched children
+          if (tx.outMessagesCount === 0) {
+            continue
+          }
+
+          if (tx.children.length === tx.outMessagesCount) {
+            continue
+          }
+
+          for (const outMessage of tx.outMessages.values()) {
+            if (outMessage.info.type === 'internal') {
+              if (outMessage.info.createdLt === message.info.createdLt) {
+                parent = tx
+                break
+              }
+            }
+          }
+
+          if (parent) {
+            break
+          }
+        }
+      }
+
+      const resultTx: BlockchainTransaction = {
+        ...transaction,
+        children: [],
+        gasSelf: fee,
+        gasFull: fee,
+      }
+
+      if (parent) {
+        parent.children.push(resultTx)
+        // parent.gasFull += fee
+        resultTx.parent = parent
+
+        let parentParent: BlockchainTransaction | undefined = resultTx.parent
+        while (parentParent) {
+          parentParent.gasFull += fee
+
+          for (const [key, mapVal] of this.#gasMap.entries()) {
+            const calls = mapVal.calls
+
+            let found = false
+            for (let i = 0; i < calls.length; i++) {
+              const call = calls[i]
+              if (call.lt === parentParent.lt) {
+                call.gasFull += fee
+                calls[i] = call
+                found = true
+                break
+              }
+            }
+
+            if (found) {
+              this.#gasMap.set(key, { calls })
+            }
+          }
+
+          parentParent = parentParent.parent
+        }
+      }
+
+      result.push(resultTx)
 
       for (const message of transaction.outMessages.values()) {
         if (emitter && message.info.type !== 'external-out') {
