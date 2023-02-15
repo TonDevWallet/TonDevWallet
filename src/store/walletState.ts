@@ -56,6 +56,6 @@ export async function setWalletKey(keyId: number /* key: Key */) {
   state.keyId.set(key.id.get())
 }
 
-export function setSelectedWallet(v: IWallet | null) {
+export function setSelectedWallet(v: IWallet | null | undefined) {
   state.selectedWalletId.set(v?.id || 0)
 }

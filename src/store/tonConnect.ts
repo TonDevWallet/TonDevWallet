@@ -109,9 +109,7 @@ export async function addTonConnectSession({
     url,
   }
 
-  state.merge({
-    sessions: [session],
-  })
+  state.sessions.merge([session])
 }
 
 export async function deleteTonConnectSession(session: State<TonConnectSession>) {

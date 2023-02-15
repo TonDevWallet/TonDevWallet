@@ -262,6 +262,7 @@ export async function getQrcodeFromScreen(): Promise<string | undefined> {
         console.log('Found QR code', code)
         return code.data
       }
+      console.log('no qr code')
     }
   } finally {
     await appWindow.show()

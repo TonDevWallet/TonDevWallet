@@ -21,6 +21,16 @@ import { KeyPair } from 'ton-crypto'
 
 export function TonConnectPopup() {
   const tonConnectState = useTonConnectState()
+
+  return (
+    <ReactPopup modal open={tonConnectState.popupOpen.get()} onClose={closeTonConnectPopup}>
+      <ConnectPopupContent />
+    </ReactPopup>
+  )
+}
+
+function ConnectPopupContent() {
+  const tonConnectState = useTonConnectState()
   const keys = useWalletListState()
   const liteClient = useLiteclient() as unknown as LiteClient
   const connectLinkInfo = useConnectLink(tonConnectState.connectArg.get())
@@ -37,7 +47,6 @@ export function TonConnectPopup() {
 
     const wallets: IWallet[] =
       chosenKey.wallets.get()?.map((w) => {
-        console.log('get wallet from key', liteClient, chosenKey, w)
         const newWallet = getWalletFromKey(liteClient, chosenKey, w)
         if (!newWallet) {
           throw new Error('no wallet')
@@ -59,13 +68,6 @@ export function TonConnectPopup() {
   }
 
   const isButtonDisabled = isLoading || !chosenKeyId || !chosenWalletId
-
-  console.log('connectLinkInfo', connectLinkInfo)
-
-  const onPopupOpen = () => {
-    setChosenWalletId(undefined)
-    setChosenKeyId(undefined)
-  }
 
   const doBridgeAuth = useCallback(async () => {
     try {
@@ -105,81 +107,77 @@ export function TonConnectPopup() {
   }, [chosenKey, chosenWallet, connectLinkInfo])
 
   return (
-    <ReactPopup
-      modal
-      open={tonConnectState.popupOpen.get()}
-      onOpen={onPopupOpen}
-      onClose={closeTonConnectPopup}
-    >
-      <div className="p-4">
-        {connectLinkInfo && (
-          <div className="flex flex-col w-[400px] items-center">
-            <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
-            <div className="mt-2">
-              <b>{connectLinkInfo.name}</b> wants to connect to your wallet
-            </div>
-            <a href={connectLinkInfo.url} target="_blank">
-              {connectLinkInfo.url}
-            </a>
-
-            <div>Choose wallet to connect</div>
-
-            <div>Key:</div>
-            <Block className="flex flex-wrap p-2">
-              {keys.map((k) => {
-                return (
-                  <div
-                    onClick={() => setChosenKeyId(k.id.get())}
-                    className={cn(
-                      'flex flex-col flex-shrink-0 flex-wrap w-32 items-center p-2 rounded',
-                      k.id.get() === chosenKeyId && 'bg-gray-500'
-                    )}
-                  >
-                    <KeyJazzicon walletKey={k} />
-                    <div className="text-foreground mt-2">{k.name.get()}</div>
-                  </div>
-                )
-              })}
-            </Block>
-
-            {chosenKeyId && (
-              <>
-                <div>Wallet:</div>
-                <Block className="flex flex-wrap p-2">
-                  {wallets?.map((w) => {
-                    return (
-                      <div
-                        onClick={() => setChosenWalletId(w.id)}
-                        className={cn(
-                          'flex flex-col flex-shrink-0 flex-wrap w-32 items-center justify-center p-2 rounded',
-                          w.id === chosenWalletId && 'bg-gray-500'
-                        )}
-                      >
-                        <WalletJazzicon wallet={w} />
-                        <div className="text-foreground mt-2">{w.type}</div>
-                        <AddressRow
-                          containerClassName="w-28"
-                          address={w.address}
-                          disableCopy={true}
-                        />
-                      </div>
-                    )
-                  })}
-                </Block>
-              </>
-            )}
-
-            <BlueButton
-              className={cn('mt-4 mx-auto', isButtonDisabled && 'bg-gray-500')}
-              onClick={doBridgeAuth}
-              disabled={isButtonDisabled}
-            >
-              Connect
-            </BlueButton>
+    <div className="p-4">
+      {connectLinkInfo && (
+        <div className="flex flex-col w-[400px] items-center">
+          <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
+          <div className="mt-2">
+            <b>{connectLinkInfo.name}</b> wants to connect to your wallet
           </div>
-        )}
-      </div>
-    </ReactPopup>
+          <a href={connectLinkInfo.url} target="_blank">
+            {connectLinkInfo.url}
+          </a>
+
+          <div>Choose wallet to connect</div>
+
+          <div>Key:</div>
+          <Block className="flex flex-wrap p-2">
+            {keys.map((k) => {
+              return (
+                <div
+                  onClick={() => setChosenKeyId(k.id.get())}
+                  className={cn(
+                    'flex flex-col flex-shrink-0 flex-wrap w-32 items-center p-2 rounded',
+                    'text-center',
+                    k.id.get() === chosenKeyId && 'bg-gray-500'
+                  )}
+                  key={k.id.get()}
+                >
+                  <KeyJazzicon walletKey={k} />
+                  <div className="text-foreground mt-2">{k.name.get()}</div>
+                </div>
+              )
+            })}
+          </Block>
+
+          {chosenKeyId && (
+            <>
+              <div>Wallet:</div>
+              <Block className="flex flex-wrap p-2">
+                {wallets?.map((w) => {
+                  return (
+                    <div
+                      onClick={() => setChosenWalletId(w.id)}
+                      className={cn(
+                        'flex flex-col flex-shrink-0 flex-wrap w-32 items-center justify-center p-2 rounded',
+                        w.id === chosenWalletId && 'bg-gray-500'
+                      )}
+                      key={w.id}
+                    >
+                      <WalletJazzicon wallet={w} />
+                      <div className="text-foreground mt-2">{w.type}</div>
+                      <AddressRow
+                        containerClassName="w-28"
+                        address={w.address}
+                        disableCopy={true}
+                      />
+                    </div>
+                  )
+                })}
+              </Block>
+            </>
+          )}
+
+          <BlueButton
+            className={cn('mt-4 mx-auto', isButtonDisabled && 'bg-gray-500')}
+            onClick={doBridgeAuth}
+            disabled={isButtonDisabled}
+          >
+            Connect
+          </BlueButton>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -198,6 +196,9 @@ function useConnectLink(link: string) {
 
   useEffect(() => {
     const getData = async () => {
+      if (!link) {
+        return
+      }
       const parsed = new URL(link.replace('--url=', ''))
       const clientId = parsed.searchParams.get('id') || ''
       const rString = parsed.searchParams.get('r')

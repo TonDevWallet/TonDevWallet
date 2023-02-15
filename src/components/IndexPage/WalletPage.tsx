@@ -46,7 +46,6 @@ export function WalletPage() {
 
     const wallets: IWallet[] =
       key.wallets.get()?.map((w) => {
-        console.log('get wallet from key', liteClient, key, w)
         const newWallet = getWalletFromKey(liteClient, key, w)
         if (!newWallet) {
           throw new Error('no wallet')

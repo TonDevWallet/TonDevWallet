@@ -1,9 +1,11 @@
 import { useLiteclient } from '@/store/liteClient'
 import { useTonConnectSessions, deleteTonConnectSession } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
+import { setWalletKey, setSelectedWallet } from '@/store/walletState'
 import { getWalletFromKey } from '@/utils/wallets'
 import { faClose, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { NavLink } from 'react-router-dom'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { KeyJazzicon } from '../KeyJazzicon'
@@ -46,8 +48,18 @@ export function SessionsList() {
                 <img src={s.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
                 <div className="ml-2">{s.name.get()}</div>
                 <FontAwesomeIcon icon={faPlus} className="mx-1" />
-                <KeyJazzicon walletKey={key} diameter={32} />
-                <WalletJazzicon wallet={tonWallet} className="-ml-2" />
+
+                <NavLink
+                  className="flex"
+                  to={`/wallets/${s.id.get()}`}
+                  onClick={() => {
+                    setWalletKey(key.id.get())
+                    setSelectedWallet(tonWallet)
+                  }}
+                >
+                  <KeyJazzicon walletKey={key} diameter={32} />
+                  <WalletJazzicon wallet={tonWallet} className="-ml-2" />
+                </NavLink>
               </div>
 
               <ReactPopup
