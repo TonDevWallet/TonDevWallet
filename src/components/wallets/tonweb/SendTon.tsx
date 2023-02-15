@@ -6,6 +6,7 @@ import { ITonWallet, TonWalletTransferArg } from '@/types'
 import { BlueButton } from '@/components/ui/BlueButton'
 import { decryptWalletData, getPasswordInteractive, usePassword } from '@/store/passwordManager'
 import { keyPairFromSeed } from 'ton-crypto'
+import { textToWalletBody } from '@/utils/textToWalletBody'
 
 export default function SendTon({
   seqno,
@@ -195,7 +196,7 @@ const SendModal = ({
       sendMode: 3,
       messages: [
         internal({
-          body: isBase64 ? Cell.fromBase64(sendMessage) : sendMessage,
+          body: textToWalletBody(sendMessage, isBase64),
           bounce,
           value: BigInt(Math.floor(parseFloat(amount) * 10 ** 9)),
           to: rAddress,

@@ -4,11 +4,12 @@ import { SignCell } from '@/contracts/utils/SignExternalMessage'
 import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import { Address, beginCell, Builder, Cell, storeMessage } from 'ton'
+import { Address, beginCell, Cell, storeMessage } from 'ton'
 import { ITonHighloadWalletV2 } from '@/types'
 import { BlueButton } from '@/components/ui/BlueButton'
 import { getPasswordInteractive, decryptWalletData, usePassword } from '@/store/passwordManager'
 import { keyPairFromSeed } from 'ton-crypto'
+import { textToWalletBody } from '@/utils/textToWalletBody'
 
 export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
   const [amount, setAmount] = useState('0')
@@ -148,17 +149,11 @@ const SendModal = ({
   }
 
   const sendMoney = async () => {
-    const body = isBase64
-      ? Cell.fromBase64(sendMessage)
-      : sendMessage
-      ? new Builder().storeUint(0, 32).storeBuffer(Buffer.from(sendMessage)).endCell()
-      : undefined
-
     const params: WalletTransfer = {
       destination: Address.parse(recepient),
       amount: BigInt(Math.floor(parseFloat(amount) * 10 ** 9)),
       mode: 3,
-      body,
+      body: textToWalletBody(sendMessage, isBase64),
     }
 
     if (stateInit) {
