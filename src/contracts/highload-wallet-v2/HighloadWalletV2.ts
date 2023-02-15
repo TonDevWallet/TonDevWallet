@@ -69,7 +69,7 @@ export class HighloadWalletV2 {
       const v = transfers[i]
       const internalMsg = internal({
         to: v.destination,
-        bounce: v.bounce || false,
+        bounce: v.bounce ?? true,
         value: v.amount,
         body: v.body,
       })
