@@ -91,7 +91,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.truecarry.ton-wallet-generator",
+      "identifier": "com.tondevwallet.tondevwallet",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
