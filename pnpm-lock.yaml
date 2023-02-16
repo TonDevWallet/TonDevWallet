@@ -54,7 +54,7 @@ specifiers:
   ton: ^13.3.0
   ton-core: ^0.44.0
   ton-crypto: ^3.2.0
-  ton-lite-client: npm:@truecarry/ton-lite-client@2.0.0-beta.2
+  ton-lite-client: npm:@truecarry/ton-lite-client@2.0.0-beta.4
   tonapi-sdk-js: ^0.24.0
   tweetnacl: ^1.0.3
   typescript: ^4.8.3
@@ -98,7 +98,7 @@ dependencies:
   ton: 13.3.0_l74i2356aoedurpqlhrqpgf3um
   ton-core: 0.44.0_ton-crypto@3.2.0
   ton-crypto: 3.2.0
-  ton-lite-client: /@truecarry/ton-lite-client/2.0.0-beta.2_l74i2356aoedurpqlhrqpgf3um
+  ton-lite-client: /@truecarry/ton-lite-client/2.0.0-beta.4_l74i2356aoedurpqlhrqpgf3um
   tonapi-sdk-js: 0.24.0_t7pnv3kwdsdbqh77ffh5angucm
   tweetnacl: 1.0.3
 
@@ -912,8 +912,8 @@ packages:
       - supports-color
     dev: false
 
-  /@truecarry/ton-lite-client/2.0.0-beta.2_l74i2356aoedurpqlhrqpgf3um:
-    resolution: {integrity: sha512-qH+ZZhWTYQ238H2ma5XLgmMLPOB8xJCgST1wvC0EWeyvD4pC9aryeOdIrmaKrStqCeMl0F7TTPlSLEK7YEeCHQ==}
+  /@truecarry/ton-lite-client/2.0.0-beta.4_l74i2356aoedurpqlhrqpgf3um:
+    resolution: {integrity: sha512-OJZ7AN2w38Nae1f4nA56qNFAZvz0IHVPvcfdAWkLDR2RodhnT25ja9s6xG9govYz3ZMVhDAwNKr9r7RVyU18QQ==}
     peerDependencies:
       ton-core: ^0.41.0
       ton-crypto: ^3.2.0

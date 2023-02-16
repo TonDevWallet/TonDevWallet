@@ -247,12 +247,16 @@ export async function getQrcodeFromScreen(): Promise<string | undefined> {
     for (const data of res) {
       const image = await getImageFromBase64(data)
       const canvas = document.createElement('canvas')
+
       canvas.width = image.width
       canvas.height = image.height
       const ctx = canvas.getContext('2d')
+
       if (!ctx) {
         throw new Error('no canvas')
       }
+
+      ctx.filter = 'grayscale(1)'
 
       ctx.drawImage(image, 0, 0)
       const imageData = ctx.getImageData(0, 0, image.width, image.height)

@@ -3,6 +3,7 @@ import networkConfig from '@/networkConfig'
 import { hookstate, useHookstate } from '@hookstate/core'
 import { tauriState } from './tauri'
 import { getDatabase } from '@/db'
+import { delay } from '@/utils'
 
 const LiteClientState = hookstate<{
   liteClient: LiteClient
@@ -61,22 +62,32 @@ export async function getLiteClientAsync(isTestnet: boolean): Promise<LiteClient
 
   const tauri = (await tauriState.promise) || tauriState
   if (!tauri) {
-    console.log('no tauri', tauri)
     throw new Error('no tauri')
-    // return
   }
 
   const engines: LiteSingleEngine[] = []
-  for (const ls of shuffle(data.liteservers).slice(0, 3)) {
+  const shuffledEngines = shuffle(data.liteservers)
+  while (shuffledEngines.length > 0) {
+    const ls = shuffledEngines.pop()
+    if (!ls) {
+      break
+    }
+
     const pubkey = encodeURIComponent(ls.id.key)
-    engines.push(
-      new LiteSingleEngine({
-        // host: `wss://ws.tonlens.com/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`,
-        host: `ws://localhost:${tauri.port.get()}/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`,
-        publicKey: Buffer.from(ls.id.key, 'base64'),
-        client: 'ws',
-      })
-    )
+    const singleEngine = new LiteSingleEngine({
+      host: `ws://localhost:${tauri.port.get()}/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`,
+      publicKey: Buffer.from(ls.id.key, 'base64'),
+      client: 'ws',
+    })
+
+    const check = await checkEngine(singleEngine)
+    if (!check) {
+      singleEngine.close()
+      continue
+    }
+
+    engines.push(singleEngine)
+    break
   }
 
   const engine = new LiteRoundRobinEngine(engines)
@@ -86,7 +97,7 @@ export async function getLiteClientAsync(isTestnet: boolean): Promise<LiteClient
   return client
 }
 
-function shuffle(array) {
+function shuffle<T>(array: T[]): T[] {
   let currentIndex = array.length
   let randomIndex
 
@@ -104,3 +115,36 @@ function shuffle(array) {
 }
 
 export { LiteClientState }
+
+async function checkEngine(engine: LiteSingleEngine): Promise<boolean> {
+  let resolve
+  const promise = new Promise<boolean>((_resolve) => {
+    resolve = _resolve
+  })
+
+  const doChecks = async () => {
+    const client = new LiteClient({ engine })
+
+    let rejected = false
+    setTimeout(() => {
+      rejected = true
+      resolve(false)
+    }, 1000)
+
+    while (true) {
+      if (rejected) {
+        break
+      }
+      try {
+        await client.getCurrentTime()
+        resolve(true)
+        break
+      } catch (e) {
+        await delay(16)
+      }
+    }
+  }
+
+  doChecks()
+  return promise
+}
