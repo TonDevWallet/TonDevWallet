@@ -23,6 +23,7 @@ import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
 import { BlockchainTransaction } from '../../utils/ManagedBlockchain'
+import { cn } from '@/utils/cn'
 
 export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTransaction>> }) {
   const keys = useWalletListState()
@@ -180,7 +181,8 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
               onClick={() => {
                 approveMessage()
               }}
-              className="bg-green-500"
+              className={cn('bg-green-500', 'disabled:bg-gray-400')}
+              disabled={!messageCell}
             >
               Approve
             </BlueButton>
