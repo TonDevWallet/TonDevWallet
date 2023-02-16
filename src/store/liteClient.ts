@@ -83,9 +83,6 @@ export async function getLiteClientAsync(isTestnet: boolean): Promise<LiteClient
   const client = new LiteClient({ engine })
 
   await client.getMasterchainInfo()
-  setInterval(() => {
-    client.getMasterchainInfo()
-  }, 30000)
   return client
 }
 

@@ -113,7 +113,6 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
     [s.payload.messages]
   )
 
-  console.log('walletk', walletKeyPair)
   const messageCell = useWalletExternalMessageCell(tonWallet, walletKeyPair, transfers)
   const testMessageCell = useWalletExternalMessageCell(tonWallet, emptyKeyPair, transfers)
 

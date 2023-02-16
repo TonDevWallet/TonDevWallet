@@ -102,7 +102,7 @@ async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
     let addr_str = format!("{}:{}", ip, port);
     info!("addr_str {}", addr_str);
     let addr = addr_str.parse::<SocketAddr>()?;
-    let  stream = TcpStream::connect(&addr).await?;
+    let stream = TcpStream::connect(&addr).await?;
 
     let ( ri, wi) = stream.into_split();
     let ( wo, ro) = ws_stream.split();
@@ -133,13 +133,14 @@ async fn ws_to_tcp(
         }
     }
 
+    wi.shutdown().await?;
     Ok(())
 }
 
 async fn tcp_to_ws(
     ri: OwnedReadHalf,
     mut wo: SplitSink<WebSocketStream<TcpStream>, Message>,
-) -> Result<(), Box<dyn stdError + Send + Sync>> {
+) -> Result<Option<SplitSink<WebSocketStream<TcpStream>, Message>>, Box<dyn stdError + Send + Sync>> {
     info!("tcp_to_ws start");
 
     // ri.readable().await?;
@@ -152,7 +153,9 @@ async fn tcp_to_ws(
         let n = stream.read(&mut byte).await?;
         info!("tcp_to_ws got info {}", n);
         match n {
-            0 => break,
+            0 => {
+                break
+            },
             // 1 => info!("A byte read: {}", byte[0]),
             _ => {
                 let capped = &mut byte[0..n];
@@ -162,5 +165,7 @@ async fn tcp_to_ws(
         }
     }
 
-    Ok(())
+    wo.send(Message::Close(None)).await?;
+    wo.close().await?;
+    Ok(Some(wo))
 }
