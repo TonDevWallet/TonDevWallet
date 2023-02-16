@@ -17,13 +17,23 @@ import {
 } from '@tonconnect/protocol'
 import { useMemo } from 'react'
 import { Address, Cell } from 'ton-core'
-import { keyPairFromSeed } from 'ton-crypto'
+import { KeyPair, keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
 import { BlockchainTransaction } from '../../utils/ManagedBlockchain'
 import { cn } from '@/utils/cn'
+
+const emptyKeyPair: KeyPair = {
+  publicKey: Buffer.from([
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  ]),
+  secretKey: Buffer.from([
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  ]),
+}
 
 export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTransaction>> }) {
   const keys = useWalletListState()
@@ -103,7 +113,9 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
     [s.payload.messages]
   )
 
+  console.log('walletk', walletKeyPair)
   const messageCell = useWalletExternalMessageCell(tonWallet, walletKeyPair, transfers)
+  const testMessageCell = useWalletExternalMessageCell(tonWallet, emptyKeyPair, transfers)
 
   const approveMessage = async () => {
     console.log('do approve', messageCell)
@@ -187,8 +199,6 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
               Approve
             </BlueButton>
           </div>
-
-          <MessageEmulationResult messageCell={messageCell} tonWallet={tonWallet} />
         </>
       ) : (
         <>
@@ -204,6 +214,8 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
           </BlueButton>
         </>
       )}
+
+      <MessageEmulationResult messageCell={testMessageCell} tonWallet={tonWallet} />
     </Block>
   )
 }

@@ -9,6 +9,7 @@ import { extractEvents } from '@ton-community/sandbox/dist/event/Event'
 import { Executor } from '@ton-community/sandbox/dist/executor/Executor'
 import { EventEmitter } from 'events'
 import { Cell, Message, Transaction } from 'ton-core'
+import { ManagedExecutor } from './ManagedExecutor'
 
 const LT_ALIGN = 1000000n
 
@@ -248,7 +249,7 @@ export class ManagedBlockchain extends Blockchain {
 
   static async create(opts?: { config?: Cell; storage?: BlockchainStorage }) {
     return new ManagedBlockchain({
-      executor: await Executor.create(),
+      executor: await ManagedExecutor.create(),
       storage: opts?.storage ?? new LocalBlockchainStorage(),
       ...opts,
     })
