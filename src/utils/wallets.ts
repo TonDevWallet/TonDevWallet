@@ -25,12 +25,18 @@ import {
   Cell,
   loadStateInit,
   loadMessage,
+  Message,
 } from 'ton'
 import { KeyPair } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import { openLiteClient } from './liteClientProvider'
 import { LiteClientBlockchainStorage } from './liteClientBlockchainStorage'
-import { ManagedBlockchain, ManagedSendMessageResult } from './ManagedBlockchain'
+import {
+  BlockchainTransaction,
+  GasInfo,
+  ManagedBlockchain,
+  ManagedSendMessageResult,
+} from './ManagedBlockchain'
 import { formatGasInfo } from './formatNumbers'
 
 export function getWalletFromKey(
@@ -205,31 +211,111 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
         setProgress({ done: 0, total: 0 })
         setIsLoading(true)
 
-        const onAddMessage = () => {
+        let isStopped = false
+        const gasMap = new Map<string, GasInfo>()
+        const onAddMessage = (m) => {
+          if (isStopped) {
+            return
+          }
           setProgress((p) => ({ ...p, total: p.total + 1 }))
+          return m
         }
-        const onCompleteMessage = () => {
+        const onCompleteMessage = async (
+          blockchain: ManagedBlockchain,
+          message: Message,
+          transaction: BlockchainTransaction
+        ): Promise<BlockchainTransaction> => {
+          if (isStopped) {
+            return transaction
+          }
           setProgress((p) => ({ ...p, done: p.done + 1 }))
+
+          if (message.info.type !== 'internal') {
+            return transaction
+          }
+
+          const newContract = await blockchain.getContract(message.info.dest)
+          const fee = Number(transaction.totalFees.coins)
+
+          if (newContract.accountState?.type === 'active' && newContract.accountState.state.code) {
+            let opcode = ''
+            const body = message.body.asSlice()
+            if (body.remainingBits >= 32) {
+              opcode = body.loadUint(32).toString(16)
+            }
+            const key = `${newContract.accountState.state.code.hash().toString('hex')}:${opcode}`
+            const existing = gasMap.get(key)
+            if (existing) {
+              gasMap.set(key, {
+                calls: existing.calls.concat([
+                  {
+                    lt: transaction.lt,
+                    gasSelf: fee,
+                    gasFull: fee,
+                  },
+                ]),
+              })
+            } else {
+              gasMap.set(key, {
+                calls: [
+                  {
+                    lt: transaction.lt,
+                    gasSelf: fee,
+                    gasFull: fee,
+                  },
+                ],
+              })
+            }
+          }
+
+          let parentParent: BlockchainTransaction | undefined = transaction.parent
+          while (parentParent) {
+            parentParent.gasFull += fee
+
+            for (const [key, mapVal] of gasMap.entries()) {
+              const calls = mapVal.calls
+
+              let found = false
+              for (let i = 0; i < calls.length; i++) {
+                const call = calls[i]
+                if (call.lt === parentParent.lt) {
+                  call.gasFull += fee
+                  calls[i] = call
+                  found = true
+                  break
+                }
+              }
+
+              if (found) {
+                gasMap.set(key, { calls })
+              }
+            }
+
+            parentParent = parentParent.parent
+          }
+
+          return transaction
         }
         const storage = new LiteClientBlockchainStorage(liteClient)
         const blockchain = await ManagedBlockchain.create({
           storage,
+          beforePushMessage: onAddMessage,
+          afterRunMessage: onCompleteMessage,
         })
         const msg = loadMessage(cell.beginParse())
         const start = Date.now()
-        const { result, emitter, gasMap } = blockchain.sendMessageWithProgress(msg)
+        const { result } = blockchain.sendMessageWithProgress(msg)
 
-        let isStopped = false
         stopEmulator = () => {
           isStopped = true
-          emitter.emit('stop')
+          // emitter.emit('stop')
 
-          emitter.removeListener('add_message', onAddMessage)
-          emitter.removeListener('complete_message', onCompleteMessage)
+          // emitter.removeListener('add_message', onAddMessage)
+          // emitter.removeListener('complete_message', onCompleteMessage)
         }
 
-        emitter.on('add_message', onAddMessage)
-        emitter.on('complete_message', onCompleteMessage)
+        // emitter.on('add_message', onAddMessage)
+        // emitter.on('complete_message', onCompleteMessage)
         const res = await result
         console.log('gasmap', gasMap)
         console.log('emulate res', res)

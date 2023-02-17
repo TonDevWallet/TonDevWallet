@@ -2,7 +2,6 @@ import {
   Blockchain,
   BlockchainStorage,
   LocalBlockchainStorage,
-  SmartContract,
   Event,
 } from '@ton-community/sandbox'
 import { extractEvents } from '@ton-community/sandbox/dist/event/Event'
@@ -35,16 +34,37 @@ export type ManagedSendMessageResult = {
 
 export class ManagedBlockchain extends Blockchain {
   #lt = 0n
-  #contractFetches = new Map<string, Promise<SmartContract>>()
-  #gasMap = new Map<string, GasInfo>()
   messageQueue: Message[]
 
-  constructor(opts: { executor: Executor; config?: Cell; storage: BlockchainStorage }) {
+  #beforePushMessage?: (message: Message) => Message
+  #beforeReceiveMessage?: (message: Message) => Message
+  #afterRunMessage?: (
+    // eslint-disable-next-line no-use-before-define
+    blockchain: ManagedBlockchain,
+    message: Message,
+    transaction: BlockchainTransaction
+  ) => Promise<BlockchainTransaction>
+
+  constructor(opts: {
+    executor: Executor
+    config?: Cell
+    storage: BlockchainStorage
+    beforePushMessage?(message: Message): Message
+    beforeReceiveMessage?(message: Message): Message
+    afterRunMessage?(
+      blockchain: ManagedBlockchain,
+      message: Message,
+      transaction: BlockchainTransaction
+    ): Promise<BlockchainTransaction>
+  }) {
     super(opts)
     // const b = await Blockchain.create()
     // this = b
 
     this.messageQueue = []
+    this.#beforePushMessage = opts.beforePushMessage
+    this.#beforeReceiveMessage = opts.beforeReceiveMessage
+    this.#afterRunMessage = opts.afterRunMessage
   }
 
   sendMessageWithProgress(message: Message): {
@@ -56,8 +76,8 @@ export class ManagedBlockchain extends Blockchain {
     const emitter = new EventEmitter()
     return {
       emitter,
-      result: this.runQueue(emitter),
-      gasMap: this.#gasMap,
+      result: this.runQueue(),
+      // gasMap: this.#gasMap,
     }
   }
 
@@ -72,11 +92,11 @@ export class ManagedBlockchain extends Blockchain {
     }
   }
 
-  protected pushMessage(message: Message) {
-    if (message.info.type === 'external-out') {
+  protected pushMessage(message: Message, allowExternalOut?: boolean) {
+    if (message.info.type === 'external-out' && !allowExternalOut) {
       throw new Error('Cant send external out message')
     }
-    this.messageQueue.push(message)
+    this.messageQueue.push(this.#beforePushMessage ? this.#beforePushMessage(message) : message)
   }
 
   async processQueue(emitter?: EventEmitter): Promise<BlockchainTransaction[]> {
@@ -107,44 +127,16 @@ export class ManagedBlockchain extends Blockchain {
 
       this.#lt += LT_ALIGN
       const contract = await this.getContract(message.info.dest)
-      const transaction = await contract.receiveMessage(message)
 
-      if (emitter) {
-        emitter.emit('complete_message')
-      }
-
-      const newContract = await this.getContract(message.info.dest)
-      const fee = Number(transaction.totalFees.coins)
-
-      if (newContract.accountState?.type === 'active' && newContract.accountState.state.code) {
-        let opcode = ''
-        const body = message.body.asSlice()
-        if (body.remainingBits >= 32) {
-          opcode = body.loadUint(32).toString(16)
-        }
-        const key = `${newContract.accountState.state.code.hash().toString('hex')}:${opcode}`
-        const existing = this.#gasMap.get(key)
-        if (existing) {
-          this.#gasMap.set(key, {
-            calls: existing.calls.concat([
-              {
-                lt: transaction.lt,
-                gasSelf: fee,
-                gasFull: fee,
-              },
-            ]),
-          })
-        } else {
-          this.#gasMap.set(key, {
-            calls: [
-              {
-                lt: transaction.lt,
-                gasSelf: fee,
-                gasFull: fee,
-              },
-            ],
-          })
-        }
+      const receiveTx = await contract.receiveMessage(
+        this.#beforeReceiveMessage ? this.#beforeReceiveMessage(message) : message
+      )
+      const fee = Number(receiveTx.totalFees.coins)
+      let transaction: BlockchainTransaction = {
+        ...receiveTx,
+        children: [],
+        gasSelf: fee,
+        gasFull: fee,
       }
 
       let parent: BlockchainTransaction | undefined
@@ -173,53 +165,27 @@ export class ManagedBlockchain extends Blockchain {
           }
         }
       }
-
-      const resultTx: BlockchainTransaction = {
-        ...transaction,
-        children: [],
-        gasSelf: fee,
-        gasFull: fee,
-      }
-
       if (parent) {
-        parent.children.push(resultTx)
-        // parent.gasFull += fee
-        resultTx.parent = parent
-
-        let parentParent: BlockchainTransaction | undefined = resultTx.parent
-        while (parentParent) {
-          parentParent.gasFull += fee
-
-          for (const [key, mapVal] of this.#gasMap.entries()) {
-            const calls = mapVal.calls
-
-            let found = false
-            for (let i = 0; i < calls.length; i++) {
-              const call = calls[i]
-              if (call.lt === parentParent.lt) {
-                call.gasFull += fee
-                calls[i] = call
-                found = true
-                break
-              }
-            }
-
-            if (found) {
-              this.#gasMap.set(key, { calls })
-            }
-          }
-
-          parentParent = parentParent.parent
-        }
+        parent.children.push(transaction)
+        transaction.parent = parent
       }
 
-      result.push(resultTx)
+      if (this.#afterRunMessage) {
+        transaction = await this.#afterRunMessage(this, message, transaction)
+      }
+
+      if (emitter) {
+        emitter.emit('complete_message')
+      }
+
+      result.push(transaction)
 
       for (const message of transaction.outMessages.values()) {
         if (emitter && message.info.type !== 'external-out') {
           emitter.emit('add_message')
         }
-        this.messageQueue.push(message)
+        this.pushMessage(message, true)
+        // this.messageQueue.push(message)
 
         if (message.info.type === 'internal') {
           this.startFetchingContract(message.info.dest)
@@ -230,24 +196,17 @@ export class ManagedBlockchain extends Blockchain {
     return result
   }
 
-  // private startFetchingContract(address: Address) {
-  //   const addrString = address.toRawString()
-  //   let promise = this.#contractFetches.get(addrString)
-  //   if (promise !== undefined) {
-  //     return promise
-  //   }
-  //   promise = this.storage.getContract(this, address)
-  //   this.#contractFetches.set(addrString, promise)
-  //   return promise
-  // }
-
-  // async getContract(address: Address) {
-  //   const contract = await this.startFetchingContract(address)
-  //   this.#contractFetches.delete(address.toRawString())
-  //   return contract
-  // }
-
-  static async create(opts?: { config?: Cell; storage?: BlockchainStorage }) {
+  static async create(opts?: {
+    config?: Cell
+    storage?: BlockchainStorage
+    beforePushMessage?(message: Message): Message
+    beforeReceiveMessage?(message: Message): Message
+    afterRunMessage?(
+      blockchain: ManagedBlockchain,
+      message: Message,
+      transaction: BlockchainTransaction
+    ): Promise<BlockchainTransaction>
+  }) {
     return new ManagedBlockchain({
       executor: await ManagedExecutor.create(),
       storage: opts?.storage ?? new LocalBlockchainStorage(),
