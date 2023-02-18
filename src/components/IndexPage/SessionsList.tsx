@@ -51,7 +51,7 @@ export function SessionsList() {
 
                 <NavLink
                   className="flex"
-                  to={`/wallets/${s.id.get()}`}
+                  to={`/wallets/${key.id.get()}`}
                   onClick={() => {
                     setWalletKey(key.id.get())
                     setSelectedWallet(tonWallet)
