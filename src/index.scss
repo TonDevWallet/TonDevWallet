@@ -126,7 +126,6 @@ html.linux {
 html.macos {
   &.dark {
     body {
-      // background: rgb(55 55 55);
       background: transparent;
       --color-window-background: rgb(55 55 55);
       --color-background-rgb: 55 55 55;
@@ -141,6 +140,37 @@ html.macos {
 }
 
 html.windows {
+  &.dark {
+    body {
+      background: rgb(55 55 55);
+      --color-window-background: rgb(55 55 55);
+      --color-background-rgb: 55 55 55;
+    }
+  }
+
+  body {
+    background: rgb(255 255 255);
+    --color-window-background: rgb(255 255 255);
+    --color-background-rgb: 255 255 255;
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #666666;
+    transition: background-color 0.25s ease;
+    border-radius: 20px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-window-background);
+  }
+  ::-webkit-scrollbar-track:active {
+    background: #272d38;
+  }
+}
+
+html.windows11 {
   --color-window-background: transparent;
   ::-webkit-scrollbar {
     width: 9px;

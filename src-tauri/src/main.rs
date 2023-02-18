@@ -92,7 +92,11 @@ fn change_transparent_effect(_effect: String, window: tauri::Window) {
 #[tauri::command]
 fn get_os_name() -> Result<String, String> {
     #[cfg(target_os = "windows")]
-    return Ok("windows".to_string());
+    if is_win_11() {
+      return Ok("windows11".to_string());
+    } else {
+      return Ok("windows".to_string());
+    }
 
     #[cfg(target_os = "macos")]
     return Ok("macos".to_string());
