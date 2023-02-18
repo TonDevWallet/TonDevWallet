@@ -37,9 +37,9 @@
         "center": false,
         "close": false,
         "create": false,
-        "hide": true,
+        "hide": false,
         "maximize": false,
-        "minimize": false,
+        "minimize": true,
         "print": false,
         "requestUserAttention": false,
         "setAlwaysOnTop": false,
@@ -59,10 +59,10 @@
         "setSize": false,
         "setSkipTaskbar": false,
         "setTitle": false,
-        "show": true,
+        "show": false,
         "startDragging": true,
         "unmaximize": false,
-        "unminimize": false
+        "unminimize": true
       },
       "fs": {
         "exists": true,

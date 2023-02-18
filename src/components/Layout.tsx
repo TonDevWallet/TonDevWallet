@@ -19,7 +19,7 @@ export function Layout() {
             <TonConnectListener />
             <SavedWalletsList />
           </div>
-          <div className="w-full bg-window-background px-2 shadow">
+          <div className="w-full bg-window-background px-2 shadow" id="outlet">
             <Outlet />
           </div>
         </div>

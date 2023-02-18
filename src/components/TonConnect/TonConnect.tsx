@@ -20,6 +20,7 @@ import jsQR from 'jsqr'
 import clsx from 'clsx'
 import { appWindow } from '@tauri-apps/api/window'
 import { DecryptedWalletData, useDecryptWalletData, usePassword } from '@/store/passwordManager'
+import { delay } from '@/utils'
 
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
@@ -239,38 +240,39 @@ export function getImageFromBase64(data: string) {
 }
 
 export async function getQrcodeFromScreen(): Promise<string | undefined> {
+  let res: string[] = []
   try {
-    await appWindow.setDecorations(false)
-    await appWindow.hide()
-    const res = (await invoke('detect_qr_code')) as string[]
-
-    for (const data of res) {
-      const image = await getImageFromBase64(data)
-      const canvas = document.createElement('canvas')
-
-      canvas.width = image.width
-      canvas.height = image.height
-      const ctx = canvas.getContext('2d')
-
-      if (!ctx) {
-        throw new Error('no canvas')
-      }
-
-      ctx.filter = 'grayscale(1)'
-
-      ctx.drawImage(image, 0, 0)
-      const imageData = ctx.getImageData(0, 0, image.width, image.height)
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {})
-
-      if (code) {
-        console.log('Found QR code', code)
-        return code.data
-      }
-      console.log('no qr code')
-    }
+    await appWindow.minimize()
+    await delay(64)
+    res = (await invoke('detect_qr_code')) as string[]
   } finally {
-    await appWindow.show()
-    await appWindow.setDecorations(true)
+    await appWindow.unminimize()
+    await appWindow.setFocus()
+  }
+
+  for (const data of res) {
+    const image = await getImageFromBase64(data)
+    const canvas = document.createElement('canvas')
+
+    canvas.width = image.width
+    canvas.height = image.height
+    const ctx = canvas.getContext('2d')
+
+    if (!ctx) {
+      throw new Error('no canvas')
+    }
+
+    ctx.filter = 'grayscale(1)'
+
+    ctx.drawImage(image, 0, 0)
+    const imageData = ctx.getImageData(0, 0, image.width, image.height)
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {})
+
+    if (code) {
+      console.log('Found QR code', code)
+      return code.data
+    }
+    console.log('no qr code')
   }
 
   return undefined

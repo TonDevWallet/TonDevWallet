@@ -17,7 +17,7 @@ tauri-build = { version = "1.2.1", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.2.3", features = ["devtools", "fs-create-dir", "fs-exists", "fs-remove-file", "http-all", "macos-private-api", "notification-all", "path-all", "shell-open", "updater", "window-hide", "window-set-decorations", "window-set-focus", "window-show", "window-start-dragging"] }
+tauri = { version = "1.2.3", features = ["devtools", "fs-create-dir", "fs-exists", "fs-remove-file", "http-all", "macos-private-api", "notification-all", "path-all", "shell-open", "updater", "window-hide", "window-minimize", "window-set-decorations", "window-set-focus", "window-show", "window-start-dragging", "window-unminimize"] }
 libsqlite3-sys = { version = "0.24.0", features = ["bundled-sqlcipher-vendored-openssl"] }
 tokio = { version = "1.24.1", features = ["full"] }
 futures-util = "0.3.25"

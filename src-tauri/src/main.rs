@@ -76,7 +76,7 @@ async fn detect_qr_code() -> Result<Vec<String>, String> {
 fn change_transparent_effect(effect: String, window: tauri::Window) {
     clear_blur(&window).unwrap();
     clear_acrylic(&window).unwrap();
-    if is_win_11(){ 
+    if is_win_11(){
         use window_vibrancy::clear_mica;
         clear_mica(&window).unwrap(); 
     }
@@ -362,7 +362,12 @@ fn main() {
       });
 
       let window = app.get_window("main").unwrap();
-      change_transparent_effect("mica".to_owned(), window.clone());
+
+      if is_win_11(){
+        change_transparent_effect("mica".to_owned(), window.clone());
+      } else {
+        change_transparent_effect("acrylic".to_owned(), window.clone());
+      }
       Ok(())
     })
     .invoke_handler(tauri::generate_handler![get_ws_port, get_system_colors, get_os_name, detect_qr_code])
