@@ -6,6 +6,10 @@
 #[cfg(target_os = "macos")]
 use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
 
+#[cfg(target_os = "macos")]
+#[macro_use]
+extern crate objc;
+
 mod colors;
 mod proxy;
 mod register_uri;
@@ -59,31 +63,19 @@ async fn detect_qr_code() -> Result<Vec<String>, String> {
 #[cfg(target_os = "windows")]
 #[tauri::command]
 #[inline]
-fn change_transparent_effect(effect: String, window: tauri::Window) {
-    // clear_blur(&window).unwrap();
-    // clear_acrylic(&window).unwrap();
+fn change_transparent_effect(window: tauri::Window) {
     if is_win_11() {
-        use window_vibrancy::clear_mica;
+        use window_vibrancy::{apply_mica, clear_mica};
         clear_mica(&window).unwrap();
-    }
-    match effect.as_str() {
-        // "blur" => apply_blur(&window, Some((18, 18, 18, 125))).unwrap(),
-        // "acrylic" => apply_acrylic(&window, Some((18, 18, 18, 125))).unwrap(),
-        "mica" => {
-            use window_vibrancy::apply_mica;
-            if is_win_11() {
-                apply_mica(&window).unwrap()
-            }
-        }
-        _ => (),
+        apply_mica(&window).unwrap()
     }
 }
 
 #[cfg(target_os = "linux")]
-fn change_transparent_effect(effect: String, window: tauri::Window) {}
+fn change_transparent_effect(window: tauri::Window) {}
 
 #[cfg(target_os = "macos")]
-fn change_transparent_effect(_effect: String, window: tauri::Window) {
+fn change_transparent_effect(window: tauri::Window) {
     apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, None)
         .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
 }
@@ -136,11 +128,9 @@ fn main() {
 
             let window = app.get_window("main").unwrap();
 
-            if is_win_11() {
-                change_transparent_effect("mica".to_owned(), window.clone());
-            } else {
-                change_transparent_effect("acrylic".to_owned(), window.clone());
-            }
+
+            change_transparent_effect(window.clone());
+            
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

@@ -2,9 +2,6 @@
 use windows::UI::ViewManagement::{UIColorType, UIElementType, UISettings};
 
 #[cfg(target_os = "macos")]
-#[macro_use]
-extern crate objc;
-#[cfg(target_os = "macos")]
 use core_graphics::base::CGFloat;
 #[cfg(target_os = "macos")]
 use objc::msg_send;
