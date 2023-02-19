@@ -28,7 +28,6 @@ import {
 } from 'ton'
 import { KeyPair } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
-import { openLiteClient } from './liteClientProvider'
 import { LiteClientBlockchainStorage } from './liteClientBlockchainStorage'
 import { ManagedBlockchain, ManagedSendMessageResult } from './ManagedBlockchain'
 import { formatGasInfo } from './formatNumbers'
@@ -60,8 +59,7 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'v3R2') {
-    const tonWallet = openLiteClient(
-      liteClient,
+    const tonWallet = liteClient.open(
       WalletContractV3R2.create({
         workchain: 0,
         publicKey: Buffer.from(key.public_key.get(), 'base64'),
@@ -79,8 +77,7 @@ export function getWalletFromKey(
     }
     return result
   } else {
-    const tonWallet = openLiteClient(
-      liteClient,
+    const tonWallet = liteClient.open(
       WalletContractV4.create({
         workchain: 0,
         publicKey: Buffer.from(key.public_key.get(), 'base64'),

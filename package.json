@@ -42,9 +42,9 @@
     "tailwindcss": "^3.1.8",
     "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9",
     "ton": "^13.3.0",
-    "ton-core": "^0.44.0",
+    "ton-core": "^0.47.1",
     "ton-crypto": "^3.2.0",
-    "ton-lite-client": "npm:@truecarry/ton-lite-client@2.0.0-beta.4",
+    "ton-lite-client": "npm:@truecarry/ton-lite-client@2.0.0-beta.5",
     "tonapi-sdk-js": "^0.24.0",
     "tweetnacl": "^1.0.3"
   },
@@ -55,7 +55,7 @@
     "@types/react-dom": "^18.0.4",
     "@typescript-eslint/eslint-plugin": "^5.18.0",
     "@typescript-eslint/parser": "^5.18.0",
-    "@vitejs/plugin-react": "^3.0.1",
+    "@vitejs/plugin-react-swc": "^3.2.0",
     "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard": "^17.0.0",
@@ -66,6 +66,6 @@
     "eslint-plugin-react": "^7.29.4",
     "prettier": "^2.6.2",
     "typescript": "^4.8.3",
-    "vite": "^4.0.4"
+    "vite": "^4.1.2"
   }
 }

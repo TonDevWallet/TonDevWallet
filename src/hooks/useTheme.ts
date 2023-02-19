@@ -19,9 +19,6 @@ async function setColors() {
     if (colors[key]) {
       const [r, g, b, a] = numberToRgba(colors[key])
 
-      console.log(
-        `SystemColor ${key}: ${r.toString(16)}${g.toString(16)}${b.toString(16)}${a.toString(16)}`
-      )
       const cssKey = key.replace(/_/g, '-')
 
       root.style.setProperty(`--color-${cssKey}`, `rgba(${r}, ${g}, ${b}, ${a})`)

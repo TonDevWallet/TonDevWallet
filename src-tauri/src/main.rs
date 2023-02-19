@@ -85,9 +85,9 @@ fn change_transparent_effect(window: tauri::Window) {
 fn get_os_name() -> Result<String, String> {
     #[cfg(target_os = "windows")]
     if is_win_11() {
-      return Ok("windows11".to_string());
+        return Ok("windows11".to_string());
     } else {
-      return Ok("windows".to_string());
+        return Ok("windows".to_string());
     }
 
     #[cfg(target_os = "macos")]
@@ -128,9 +128,8 @@ fn main() {
 
             let window = app.get_window("main").unwrap();
 
-
             change_transparent_effect(window.clone());
-            
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

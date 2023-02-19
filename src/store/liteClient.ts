@@ -93,7 +93,6 @@ export async function getLiteClientAsync(isTestnet: boolean): Promise<LiteClient
   const engine = new LiteRoundRobinEngine(engines)
   const client = new LiteClient({ engine })
 
-  await client.getMasterchainInfo()
   return client
 }
 
