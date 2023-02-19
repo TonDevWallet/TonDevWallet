@@ -58,15 +58,23 @@ export async function changeLiteClient(testnet: boolean) {
 }
 
 export async function getLiteClientAsync(isTestnet: boolean): Promise<LiteClient> {
+  const engine = new LiteRoundRobinEngine([])
+  const client = new LiteClient({ engine })
+
+  addWorkingEngineToRoundRobin(isTestnet, engine)
+
+  return client
+}
+
+async function addWorkingEngineToRoundRobin(isTestnet: boolean, robin: LiteRoundRobinEngine) {
   const data = isTestnet ? networkConfig.testnetConfig : networkConfig.mainnetConfig
+  const shuffledEngines = shuffle(data.liteservers)
 
   const tauri = (await tauriState.promise) || tauriState
   if (!tauri) {
     throw new Error('no tauri')
   }
 
-  const engines: LiteSingleEngine[] = []
-  const shuffledEngines = shuffle(data.liteservers)
   while (shuffledEngines.length > 0) {
     const ls = shuffledEngines.pop()
     if (!ls) {
@@ -86,14 +94,9 @@ export async function getLiteClientAsync(isTestnet: boolean): Promise<LiteClient
       continue
     }
 
-    engines.push(singleEngine)
+    robin.addSingleEngine(singleEngine)
     break
   }
-
-  const engine = new LiteRoundRobinEngine(engines)
-  const client = new LiteClient({ engine })
-
-  return client
 }
 
 function shuffle<T>(array: T[]): T[] {
