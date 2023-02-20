@@ -25,7 +25,7 @@ const LiteClientState = hookstate<{
 
   return {
     testnet: isTestnet,
-    liteClient: await getLiteClientAsync(isTestnet),
+    liteClient: getLiteClient(isTestnet),
   }
 })
 
@@ -39,7 +39,7 @@ export function useLiteclientState() {
 
 export async function changeLiteClient(testnet: boolean) {
   console.log('changeLiteClient', testnet)
-  const newLiteClient = await getLiteClientAsync(testnet)
+  const newLiteClient = getLiteClient(testnet)
 
   if (LiteClientState.liteClient.get()) {
     LiteClientState.liteClient.get().engine.close()
@@ -57,7 +57,7 @@ export async function changeLiteClient(testnet: boolean) {
   console.log('update done')
 }
 
-export async function getLiteClientAsync(isTestnet: boolean): Promise<LiteClient> {
+export function getLiteClient(isTestnet: boolean): LiteClient {
   const engine = new LiteRoundRobinEngine([])
   const client = new LiteClient({ engine })
 

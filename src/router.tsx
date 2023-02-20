@@ -1,8 +1,20 @@
+import React from 'react'
 import { createBrowserRouter } from 'react-router-dom'
-import { IndexPage } from './components/IndexPage/IndexPage'
-import { NewWalletPage } from './components/NewWalletPage/NewWalletPage'
-import { WalletPage } from './components/IndexPage/WalletPage'
-import { Layout } from './components/Layout'
+
+const IndexPage = React.lazy(() =>
+  import('./components/IndexPage/IndexPage').then((module) => ({ default: module.IndexPage }))
+)
+const NewWalletPage = React.lazy(() =>
+  import('./components/NewWalletPage/NewWalletPage').then((module) => ({
+    default: module.NewWalletPage,
+  }))
+)
+const WalletPage = React.lazy(() =>
+  import('./components/IndexPage/WalletPage').then((module) => ({ default: module.WalletPage }))
+)
+const Layout = React.lazy(() =>
+  import('./components/Layout').then((module) => ({ default: module.Layout }))
+)
 
 export const router = createBrowserRouter([
   {

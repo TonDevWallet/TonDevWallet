@@ -13,6 +13,7 @@
     "@hookstate/core": "^4.0.0-rc21",
     "@hookstate/devtools": "^4.0.0-rc21",
     "@hookstate/subscribable": "^4.0.0",
+    "@rollup/plugin-inject": "^5.0.3",
     "@tauri-apps/api": "^1.2.0",
     "@ton-community/sandbox": "^0.4.0",
     "@tonconnect/protocol": "^2.0.1",

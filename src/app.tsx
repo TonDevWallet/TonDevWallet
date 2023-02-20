@@ -11,12 +11,14 @@ import { appWindow } from '@tauri-apps/api/window'
 import { useTheme } from './hooks/useTheme'
 import { useOs } from './hooks/useOs'
 import { usePassword } from './store/passwordManager'
+import { useLiteclientState } from './store/liteClient'
 
 export function App({ db }: { db: Knex }) {
   const keysList = useWalletListState()
   const tauriState = useTauriState()
   const passwordState = usePassword()
   const tonConnectState = useTonConnectState()
+  const liteClientState = useLiteclientState()
 
   useTheme()
   useOs()
@@ -31,7 +33,8 @@ export function App({ db }: { db: Knex }) {
         {suspend(tauriState) ||
           suspend(keysList) ||
           suspend(passwordState) ||
-          suspend(tonConnectState) || <RouterProvider router={router} />}
+          suspend(tonConnectState) ||
+          suspend(liteClientState) || <RouterProvider router={router} />}
         {/* {suspend(wallet) || <IndexPage />} */}
       </React.Suspense>
     </DbContext.Provider>

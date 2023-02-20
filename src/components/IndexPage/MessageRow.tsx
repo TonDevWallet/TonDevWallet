@@ -8,7 +8,7 @@ import { IWallet } from '@/types'
 import { ConnectMessageStatus } from '@/types/connect'
 import { formatTon } from '@/utils/formatNumbers'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
-import { getWalletFromKey, useWalletExternalMessageCell, useTonapiTxInfo } from '@/utils/wallets'
+import { getWalletFromKey, useWalletExternalMessageCell } from '@/utils/wallets'
 import { State, ImmutableObject } from '@hookstate/core'
 import {
   SendTransactionRpcResponseSuccess,
@@ -24,6 +24,7 @@ import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
 import { BlockchainTransaction } from '../../utils/ManagedBlockchain'
 import { cn } from '@/utils/cn'
+import { useTonapiTxInfo } from '@/hooks/useTonapiTxInfo'
 
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([

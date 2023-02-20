@@ -1,7 +1,7 @@
 import { TonProofItemReplySuccess } from '@tonconnect/protocol'
 import { Wallet } from '@tonconnect/sdk'
 // import { createHash } from 'crypto'
-import { Address } from 'ton'
+import { Address } from 'ton-core'
 // eslint-disable-next-line camelcase
 import { sha256_sync } from 'ton-crypto'
 import nacl from 'tweetnacl'

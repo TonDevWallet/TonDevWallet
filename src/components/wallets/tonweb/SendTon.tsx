@@ -1,7 +1,7 @@
 import { Block } from '@/components/ui/Block'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import { Address, Cell, internal, loadStateInit } from 'ton'
+import { Address, Cell, internal, loadStateInit } from 'ton-core'
 import { ITonWallet, TonWalletTransferArg } from '@/types'
 import { BlueButton } from '@/components/ui/BlueButton'
 import { decryptWalletData, getPasswordInteractive, usePassword } from '@/store/passwordManager'
