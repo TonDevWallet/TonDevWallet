@@ -1,9 +1,7 @@
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-export function up(knex) {
-  return knex.schema.raw(`
+import { Kysely, sql } from 'kysely'
+
+export async function up(kysely: Kysely<any>) {
+  await sql`
     CREATE TABLE wallets (
       id integer PRIMARY KEY,
       type text,
@@ -12,15 +10,11 @@ export function up(knex) {
 
       FOREIGN KEY(key_id) REFERENCES keys(id)
     )
-  `)
+    `.execute(kysely)
 }
 
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-export function down(knex) {
-  return knex.schema.raw(`
+export async function down(kysely: Kysely<any>) {
+  await sql`
     DROP TABLE wallets;
-  `)
+    `.execute(kysely)
 }

@@ -1,16 +1,41 @@
-import KnexDb, { Knex } from 'knex'
 import { createContext, useContext } from 'react'
-import { ImportMigrations } from './utils/getMigrations'
-import { ClientSqliteWasm } from './utils/knexSqliteDialect'
 import { appDataDir, BaseDirectory } from '@tauri-apps/api/path'
 import { removeFile, exists, createDir } from '@tauri-apps/api/fs'
+import { Kysely, Migrator, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler } from 'kysely'
+import Database from 'tauri-plugin-sql-api'
+import { SqliteTauriDriver } from './utils/kysely/kyselySqliteDriver'
+import { StaticMigrationProvider } from './utils/kysely/migrationProvider'
+import { Key } from './types/Key'
+import { SavedWallet } from './types'
+import { ConnectSession, ConnectMessageTransaction } from './types/connect'
 
 const dataDir = await appDataDir()
 
-const db = KnexDb({
-  client: ClientSqliteWasm as any,
-  connection: {
-    filename: `sqlite:${dataDir}/databases/data.db`,
+export interface DbTypes {
+  keys: Key
+  wallets: SavedWallet
+  connect_sessions: ConnectSession
+  connect_message_transactions: ConnectMessageTransaction
+}
+
+export type DB = Kysely<DbTypes>
+
+const db = new Kysely<DbTypes>({
+  dialect: {
+    createAdapter() {
+      return new SqliteAdapter()
+    },
+    createDriver() {
+      return new SqliteTauriDriver({
+        database: Database.get(`sqlite:${dataDir}/databases/data.db`),
+      })
+    },
+    createIntrospector(db: Kysely<unknown>) {
+      return new SqliteIntrospector(db)
+    },
+    createQueryCompiler() {
+      return new SqliteQueryCompiler()
+    },
   },
 })
 
@@ -21,7 +46,7 @@ const db = KnexDb({
 //   },
 // })
 
-export const DbContext = createContext<Knex>(db)
+export const DbContext = createContext<Kysely<DbTypes>>(db)
 
 export const useDatabase = () => useContext(DbContext)
 
@@ -29,9 +54,16 @@ export async function InitDB() {
   try {
     await checkFs()
 
-    await db.migrate.latest({
-      migrationSource: new ImportMigrations(),
+    const migrator = new Migrator({
+      db,
+      provider: new StaticMigrationProvider(),
     })
+    console.log('before migrate')
+    await migrator.migrateToLatest()
+    console.log('after migrate')
+    // await db.migrate.latest({
+    //   migrationSource: new ImportMigrations(),
+    // })
   } catch (e) {
     console.log('migrate error', e)
     throw e

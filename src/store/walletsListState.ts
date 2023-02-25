@@ -1,4 +1,4 @@
-import { getDatabase } from '@/db'
+import { DB, getDatabase } from '@/db'
 import { Key } from '@/types/Key'
 import { hookstate, useHookstate } from '@hookstate/core'
 import { Knex } from 'knex'
@@ -8,13 +8,15 @@ import { SavedWallet, WalletType } from '@/types'
 import { ConnectMessageTransaction } from '@/types/connect'
 import { keyPairFromSeed } from 'ton-crypto'
 import { encryptWalletData, getPasswordInteractive } from './passwordManager'
+import { Selectable } from 'kysely'
 
 const state = hookstate<Key[]>(() => getWallets())
 
 async function getWallets() {
   const db = await getDatabase()
-  const res = await db<Key>('keys')
-  const wallets = await db<SavedWallet>('wallets').select('*')
+
+  const res = await db.selectFrom('keys').selectAll().execute()
+  const wallets = await db.selectFrom('wallets').selectAll().execute()
 
   for (let i = 0; i < res.length; i++) {
     for (const w of wallets) {
@@ -43,25 +45,32 @@ export function getWalletListState() {
   return state
 }
 
-export async function saveKey(db: Knex, key: Key, walletName: string): Promise<Key> {
+export async function saveKey(db: DB, key: Key, walletName: string): Promise<Key> {
   // const key = wallet.key.get()
   if (!key?.encrypted) {
     throw new Error('no encrypted')
   }
 
-  const existing = await db('keys').where('public_key', key.public_key).first()
+  const existing = await db
+    .selectFrom('keys')
+    .where('public_key', '=', key.public_key)
+    .selectAll()
+    .executeTakeFirst()
+
   console.log('existing', existing, key.public_key)
   if (existing) {
     throw new Error('Seed exists')
   }
 
-  const res = await db<Key>('keys')
-    .insert({
+  const res = await db
+    .insertInto('keys')
+    .values({
       encrypted: key.encrypted,
       public_key: key.public_key,
       name: walletName,
     })
-    .returning('*')
+    .returningAll()
+    .execute()
 
   updateWalletsList()
 
@@ -103,14 +112,14 @@ export async function saveKeyFromData(
   await saveKeyAndWallets(db, key, name, navigate)
 }
 export async function saveKeyAndWallets(
-  db: Knex,
-  key: Key,
+  db: DB,
+  key: Selectable<Key>,
   walletName: string,
   navigate: NavigateFunction
 ) {
   const newWallet = await saveKey(db, key, walletName)
 
-  const defaultWallets: Omit<SavedWallet, 'id'>[] = [
+  const defaultWallets: Omit<Selectable<SavedWallet>, 'id'>[] = [
     {
       type: 'v4R2',
       key_id: newWallet.id,

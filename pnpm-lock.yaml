@@ -13,7 +13,6 @@ specifiers:
   '@ton-community/sandbox': ^0.4.0
   '@tonconnect/protocol': ^2.0.1
   '@tonconnect/sdk': ^2.0.5
-  '@types/bn.js': ^5.1.0
   '@types/node': ^17.0.35
   '@types/react': ^18.0.9
   '@types/react-dom': ^18.0.4
@@ -21,7 +20,6 @@ specifiers:
   '@typescript-eslint/parser': ^5.18.0
   '@vitejs/plugin-react-swc': ^3.2.0
   autoprefixer: ^10.4.4
-  bn.js: ^5.2.1
   buffer: ^6.0.3
   camelcase-keys: ^8.0.2
   clipboardy: ^3.0.0
@@ -38,6 +36,7 @@ specifiers:
   express: ^4.18.1
   jsqr: ^1.4.0
   knex: npm:@truecarry/knex@^2.3.0
+  kysely: ^0.23.4
   postcss: ^8.4.16
   prettier: ^2.6.2
   react: ^18.1.0
@@ -55,7 +54,7 @@ specifiers:
   ton: ^13.3.0
   ton-core: ^0.47.1
   ton-crypto: ^3.2.0
-  ton-lite-client: npm:@truecarry/ton-lite-client@2.0.0-beta.7
+  ton-lite-client: npm:@truecarry/ton-lite-client@2.0.0-beta.8
   tonapi-sdk-js: ^0.24.0
   tweetnacl: ^1.0.3
   typescript: ^4.8.3
@@ -73,9 +72,7 @@ dependencies:
   '@ton-community/sandbox': 0.4.0_rral6do646we3xqfn3pnwikufe
   '@tonconnect/protocol': 2.0.1
   '@tonconnect/sdk': 2.0.5
-  '@types/bn.js': 5.1.1
   autoprefixer: 10.4.13_postcss@8.4.20
-  bn.js: 5.2.1
   buffer: 6.0.3
   camelcase-keys: 8.0.2
   clipboardy: 3.0.0
@@ -84,6 +81,7 @@ dependencies:
   express: 4.18.2
   jsqr: 1.4.0
   knex: /@truecarry/knex/2.3.0
+  kysely: 0.23.4
   postcss: 8.4.20
   react: 18.2.0
   react-async-hook: 4.0.0_react@18.2.0
@@ -100,7 +98,7 @@ dependencies:
   ton: 13.3.0_lacyfkn53squeodwcw6xcrkmxa
   ton-core: 0.47.1_ton-crypto@3.2.0
   ton-crypto: 3.2.0
-  ton-lite-client: /@truecarry/ton-lite-client/2.0.0-beta.7_lacyfkn53squeodwcw6xcrkmxa
+  ton-lite-client: /@truecarry/ton-lite-client/2.0.0-beta.8_lacyfkn53squeodwcw6xcrkmxa
   tonapi-sdk-js: 0.24.0_t7pnv3kwdsdbqh77ffh5angucm
   tweetnacl: 1.0.3
 
@@ -433,6 +431,10 @@ packages:
 
   /@noble/ed25519/1.7.3:
     resolution: {integrity: sha512-iR8GBkDt0Q3GyaVcIu7mSsVIqnFbkbRzGLWlvhwunacoLwt4J3swfKhfaM6rN6WY+TBGoYT1GtT1mIh2/jGbRQ==}
+    dev: false
+
+  /@noble/hashes/1.2.0:
+    resolution: {integrity: sha512-FZfhjEDbT5GRswV3C6uvLPHMiVD6lQBmpoX5+eSiPaMTXte/IKqI5dykDxzZB/WBeK/CDuQRBWarPdi3FNY2zQ==}
     dev: false
 
   /@nodelib/fs.scandir/2.1.5:
@@ -788,18 +790,18 @@ packages:
       - supports-color
     dev: false
 
-  /@truecarry/ton-lite-client/2.0.0-beta.7_lacyfkn53squeodwcw6xcrkmxa:
-    resolution: {integrity: sha512-febsZD6DWsd5vAq0fjCJPD7NBzVF41Oqq/ZlQxjsOhq0K5iqcP7OZLPzlWeXITWz27U5x++jmWpBZ8a7/AIt+Q==}
+  /@truecarry/ton-lite-client/2.0.0-beta.8_lacyfkn53squeodwcw6xcrkmxa:
+    resolution: {integrity: sha512-mhZueZN/M+muDuyL4mCsxfORvAjH8vp/tEy9rcT5FVeWBshdfE4td8wfP3PafLV/Lexad0HWfc/z+eCoTU0n9A==}
     peerDependencies:
       ton-core: ^0.47.1
       ton-crypto: ^3.2.0
     dependencies:
-      adnl: 0.0.13
+      adnl: 1.0.3
       dataloader: 2.1.0
       teslabot: 1.5.0
       ton-core: 0.47.1_ton-crypto@3.2.0
       ton-crypto: 3.2.0
-      ton-tl: 0.2.2
+      ton-tl: 1.0.0
       tweetnacl: 1.0.3
     transitivePeerDependencies:
       - bufferutil
@@ -1033,16 +1035,15 @@ packages:
     hasBin: true
     dev: true
 
-  /adnl/0.0.13:
-    resolution: {integrity: sha512-PEq3yrrsEfVO2PuvueyD77aV9JWUy2l74jKOL6HPMbFeE5ofUPXaKhKIBle4MVsL+XSQIb8n1sA2DQRikQaLJg==}
+  /adnl/1.0.3:
+    resolution: {integrity: sha512-P+jGWhWTp0f4EskKie5rUA+EnQINzq0qvu1N3UkNSjynIOWCzl0wOPGUo3IAJ2r9/MI9DnebRYO0e4wyX7qbBw==}
     dependencies:
       '@noble/ed25519': 1.7.3
+      '@noble/hashes': 1.2.0
       aes-js: 3.1.2
       buffer: 6.0.3
-      crypto-js: 4.1.1
       events: 3.3.0
       isomorphic-ws: 5.0.0_ws@8.12.1
-      tweetnacl: 1.0.3
       ws: 8.12.1
     transitivePeerDependencies:
       - bufferutil
@@ -1382,10 +1383,6 @@ packages:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
-
-  /crypto-js/4.1.1:
-    resolution: {integrity: sha512-o2JlM7ydqd3Qk9CA0L4NL6mTzU2sdx96a+oOfPu8Mkl/PK51vSyoi8/rQ8NknZtk44vq15lmhAj9CIAGwgeWKw==}
-    dev: false
 
   /cssesc/3.0.0:
     resolution: {integrity: sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg==}
@@ -2571,6 +2568,11 @@ packages:
       object.assign: 4.1.4
     dev: true
 
+  /kysely/0.23.4:
+    resolution: {integrity: sha512-3icLnj1fahUtZsP9zzOvF4DcdhekGsLX4ZaoBaIz0ZeHegyRDdbwpJD7zezAJ+KwQZNDeKchel6MikFNLsSZIA==}
+    engines: {node: '>=14.0.0'}
+    dev: false
+
   /levn/0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
@@ -3608,8 +3610,8 @@ packages:
       tweetnacl: 1.0.3
     dev: false
 
-  /ton-tl/0.2.2:
-    resolution: {integrity: sha512-7T0QZAyIP3w7xFi2+h3c7VBfBQYem6h8J+bS3F8I04qevT5fa9jMkuh4AzbzGQaH8uCcB2D0zZcH4up19CbtnQ==}
+  /ton-tl/1.0.0:
+    resolution: {integrity: sha512-bzhp1wFIDZ4plwAu2tG5KIh+kpXV0pvkcqv66f9H1ofIvYMElZ3Uy0b44P8iNg6DoHWpESbIiMPiGSAUmLhAvg==}
     dependencies:
       '@types/bn.js': 5.1.1
       '@types/pegjs': 0.10.3

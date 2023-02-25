@@ -1,8 +1,9 @@
 import { EncryptedWalletData } from '@/store/passwordManager'
+import { Generated } from 'kysely'
 import { SavedWallet } from '.'
 
 export interface Key {
-  id: number
+  id: Generated<number>
   // words: string
   // seed: string | undefined
   encrypted: string

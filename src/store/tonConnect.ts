@@ -32,7 +32,7 @@ const state = hookstate<TonConnectState>(async () => {
 
 async function getSessions() {
   const db = await getDatabase()
-  const dbSessions = await db<ConnectSession>('connect_sessions').select('*')
+  const dbSessions = await db.selectFrom('connect_sessions').selectAll().execute()
 
   const sessions: TonConnectSession[] = dbSessions.map((dbSession) => {
     return {
@@ -80,8 +80,9 @@ export async function addTonConnectSession({
   iconUrl: string
 }) {
   const db = await getDatabase()
-  const res = await db<ConnectSession>('connect_sessions')
-    .insert({
+  const res = await db
+    .insertInto('connect_sessions')
+    .values({
       secret_key: secretKey.toString('hex'),
       user_id: userId,
       key_id: keyId,
@@ -91,7 +92,8 @@ export async function addTonConnectSession({
       name,
       icon_url: iconUrl,
     })
-    .returning('*')
+    .returningAll()
+    .execute()
 
   if (res.length < 1) {
     throw new Error("can't add session")
@@ -124,16 +126,11 @@ export async function deleteTonConnectSession(session: State<TonConnectSession>)
   )
 
   const db = await getDatabase()
-  await db<ConnectMessageTransaction>('connect_message_transactions')
-    .where({
-      connect_session_id: session.id.get(),
-    })
-    .delete()
-  await db<ConnectSession>('connect_sessions')
-    .where({
-      id: session.id.get(),
-    })
-    .delete()
+  await db
+    .deleteFrom('connect_message_transactions')
+    .where('connect_session_id', '=', session.id.get())
+    .execute()
+  await db.deleteFrom('connect_sessions').where('id', '=', session.id.get()).execute()
 
   state.sessions.set(await getSessions())
 }
@@ -147,13 +144,13 @@ export async function updateSessionEventId(id: number, eventId: number) {
     lastEventId: eventId,
   })
 
-  await db<ConnectSession>('connect_sessions')
-    .where({
-      secret_key: session.secretKey.get().toString('hex'),
-    })
-    .update({
+  await db
+    .updateTable('connect_sessions')
+    .where('secret_key', '=', session.secretKey.get().toString('hex'))
+    .set({
       last_event_id: eventId,
     })
+
   console.log('updated', session, eventId)
 }
 

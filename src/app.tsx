@@ -1,7 +1,6 @@
 import { suspend } from '@hookstate/core'
-import { Knex } from 'knex'
 import React, { useEffect } from 'react'
-import { DbContext } from './db'
+import { DbContext, DbTypes } from './db'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import { useTonConnectState } from './store/tonConnect'
@@ -12,8 +11,9 @@ import { useTheme } from './hooks/useTheme'
 import { useOs } from './hooks/useOs'
 import { usePassword } from './store/passwordManager'
 import { useLiteclientState } from './store/liteClient'
+import { Kysely } from 'kysely'
 
-export function App({ db }: { db: Knex }) {
+export function App({ db }: { db: Kysely<DbTypes> }) {
   const keysList = useWalletListState()
   const tauriState = useTauriState()
   const passwordState = usePassword()

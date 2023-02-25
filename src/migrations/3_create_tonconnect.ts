@@ -1,9 +1,7 @@
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-export function up(knex) {
-  return knex.schema.raw(`
+import { Kysely, sql } from 'kysely'
+
+export async function up(kysely: Kysely<any>) {
+  await sql`
     CREATE TABLE connect_sessions (
       id integer PRIMARY KEY,
       secret_key text,
@@ -15,15 +13,11 @@ export function up(knex) {
       FOREIGN KEY(key_id) REFERENCES keys(id),
       FOREIGN KEY(wallet_id) REFERENCES wallets(id)
     )
-  `)
+  `.execute(kysely)
 }
 
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-export function down(knex) {
-  return knex.schema.raw(`
+export async function down(kysely: Kysely<any>) {
+  await sql`
     DROP TABLE connect_sessions;
-  `)
+  `.execute(kysely)
 }

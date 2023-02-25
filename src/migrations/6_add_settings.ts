@@ -1,22 +1,16 @@
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-export function up(knex) {
-  return knex.schema.raw(`
+import { Kysely, sql } from 'kysely'
+
+export async function up(kysely: Kysely<any>) {
+  await sql`
     CREATE TABLE settings (
       name text PRIMARY KEY,
       value text
     )
-  `)
+  `.execute(kysely)
 }
 
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-export function down(knex) {
-  return knex.schema.raw(`
+export async function down(kysely: Kysely<any>) {
+  await sql`
     DROP TABLE settings;
-  `)
+  `.execute(kysely)
 }

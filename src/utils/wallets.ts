@@ -17,7 +17,9 @@ import { State } from '@hookstate/core'
 import { useEffect, useMemo, useState } from 'react'
 import { beginCell, storeMessage, external, internal, Cell, loadStateInit } from 'ton-core'
 
-import { WalletContractV3R2, WalletContractV4 } from 'ton'
+// import { WalletContractV3R2, WalletContractV4 } from 'ton'
+import { WalletContractV3R2 } from 'ton/dist/wallets/WalletContractV3R2'
+import { WalletContractV4 } from 'ton/dist/wallets/WalletContractV4'
 import { KeyPair } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 

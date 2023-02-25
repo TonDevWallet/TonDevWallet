@@ -12,7 +12,6 @@ export default defineConfig(({ command }) => ({
   },
   base: '/',
   optimizeDeps: {
-    include: ['bn.js'],
     esbuildOptions: {
       target: 'esnext',
     },
@@ -22,6 +21,9 @@ export default defineConfig(({ command }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
+          buffer: ['buffer'],
+          kysely: ['kysely'],
+          knex: ['knex'],
           'ton-core': ['ton-core'],
           sandbox: ['@ton-community/sandbox'],
         },
