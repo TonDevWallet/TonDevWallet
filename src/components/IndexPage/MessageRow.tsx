@@ -25,6 +25,7 @@ import { BlueButton } from '../ui/BlueButton'
 import { BlockchainTransaction } from '../../utils/ManagedBlockchain'
 import { cn } from '@/utils/cn'
 import { useTonapiTxInfo } from '@/hooks/useTonapiTxInfo'
+import { MessageFlow } from './MessageFlow'
 
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
@@ -43,7 +44,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
   const password = usePassword().password.get()
 
   const amountOut =
-    Number(s.payload.get().messages.reduce((acc, c) => acc + BigInt(c.amount), 0n)) / 10 ** 9
+    Number(s?.payload?.get()?.messages?.reduce((acc, c) => acc + BigInt(c.amount), 0n)) / 10 ** 9
 
   const key = keys.find((k) => k.id.get() === s.key_id.get())
   if (!key) {
@@ -95,7 +96,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
             throw new Error('Wrong address')
           }
 
-          const p = m.payload.get()
+          const p = m?.payload?.get()
           const payload = p ? Cell.fromBase64(p) : undefined
 
           const stateInitData = m.stateInit.get()
@@ -175,7 +176,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
       <div className="flex">
         <div>Messages count:&nbsp;</div>
         <div className="break-words break-all">
-          {s.payload.get().messages.length} ({amountOut.toString()} TON)
+          {s?.payload?.get()?.messages?.length} ({amountOut.toString()} TON)
         </div>
       </div>
 
@@ -244,6 +245,9 @@ export function MessageEmulationResult({
           </div>
           {isLoading && <div>Emulating...</div>}
 
+          {/* <div className="h-[400px]">
+            <MessageFlow transactions={txInfo?.transactions} />
+          </div> */}
           {txInfo?.transactions.map((tx, i) => {
             return !tx.parent && <TxRow key={i} tx={tx} />
           })}
