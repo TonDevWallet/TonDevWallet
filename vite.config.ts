@@ -27,6 +27,7 @@ export default defineConfig(({ command }) => ({
         },
       },
       plugins: [inject({ Buffer: ['Buffer', 'Buffer'] })],
+      external: ['Buffer'],
     },
     modulePreload: false,
   },
