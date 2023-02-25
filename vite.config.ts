@@ -15,6 +15,7 @@ export default defineConfig(({ command }) => ({
     include: ['bn.js'],
     esbuildOptions: {
       target: 'esnext',
+      plugins: [],
     },
   },
   build: {
@@ -26,8 +27,7 @@ export default defineConfig(({ command }) => ({
           sandbox: ['@ton-community/sandbox'],
         },
       },
-      plugins: [inject({ Buffer: ['Buffer', 'Buffer'] })],
-      external: ['Buffer'],
+      plugins: [inject({ Buffer: ['buffer', 'Buffer'] })],
     },
     modulePreload: false,
   },
@@ -37,6 +37,7 @@ export default defineConfig(({ command }) => ({
       '~': resolve(__dirname, './src'),
       util: 'src/util.ts',
       fs: 'src/fs.ts',
+      buffer: 'buffer/index.js', // add buffer
     },
   },
   define: {

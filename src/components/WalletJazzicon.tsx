@@ -11,7 +11,7 @@ export function WalletJazzicon({
   className?: string
   diameter?: number
 }) {
-  const jazzNumber = wallet?.address?.toRaw()?.readUint32BE(0) || 0
+  const jazzNumber = wallet?.address?.toRaw()?.readUInt32BE(0) || 0
   return (
     <div className={clsx(className, 'flex')}>
       <Jazzicon diameter={diameter} seed={jazzNumber} />
