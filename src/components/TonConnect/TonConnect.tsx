@@ -16,11 +16,11 @@ import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { IWallet } from '@/types'
 import { Block } from '../ui/Block'
 import { invoke } from '@tauri-apps/api'
-import jsQR from 'jsqr'
 import clsx from 'clsx'
 import { appWindow } from '@tauri-apps/api/window'
 import { DecryptedWalletData, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 import { delay } from '@/utils'
+import ZXing from '@/utils/zxing/zxing_reader'
 
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
@@ -240,6 +240,8 @@ export function getImageFromBase64(data: string) {
 }
 
 export async function getQrcodeFromScreen(): Promise<string | undefined> {
+  const zxing = await ZXing()
+
   let res: string[] = []
   try {
     await appWindow.minimize()
@@ -251,28 +253,18 @@ export async function getQrcodeFromScreen(): Promise<string | undefined> {
   }
 
   for (const data of res) {
-    const image = await getImageFromBase64(data)
-    const canvas = document.createElement('canvas')
+    const decoded = Buffer.from(data, 'base64')
+    const zxingData = new Uint8Array(decoded)
+    const buffer = zxing._malloc(zxingData.length)
+    zxing.HEAPU8.set(zxingData, buffer)
+    const result = zxing.readBarcodeFromImage(buffer, zxingData.length, true, '')
+    zxing._free(buffer)
 
-    canvas.width = image.width
-    canvas.height = image.height
-    const ctx = canvas.getContext('2d')
-
-    if (!ctx) {
-      throw new Error('no canvas')
+    if (result && result.text) {
+      console.log('Found QR code', result)
+      return result.text
     }
-
-    ctx.filter = 'grayscale(1)'
-
-    ctx.drawImage(image, 0, 0)
-    const imageData = ctx.getImageData(0, 0, image.width, image.height)
-    const code = jsQR(imageData.data, imageData.width, imageData.height, {})
-
-    if (code) {
-      console.log('Found QR code', code)
-      return code.data
-    }
-    console.log('no qr code')
+    console.log('no qr code', result)
   }
 
   return undefined
