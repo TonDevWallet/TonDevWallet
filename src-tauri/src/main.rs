@@ -17,7 +17,6 @@ mod register_uri;
 use base64;
 use base64::{engine::general_purpose, Engine as _};
 use proxy::spawn_proxy;
-use register_uri::register_urlhandler;
 use screenshots::Screen;
 use std::sync::atomic::{AtomicU16, Ordering};
 use sysinfo::{System, SystemExt};
