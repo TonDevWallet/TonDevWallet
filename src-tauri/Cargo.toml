@@ -31,6 +31,7 @@ window-vibrancy = "0.3.2"
 base64 = "0.21.0"
 tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/tauri-plugin-single-instance", rev = "74c698987b0bcc1472e0a9f0260ea089f38bc531" }
 screenshots = "0.5.2"
+tauri-plugin-deep-link = { git="https://github.com/FabianLars/tauri-plugin-deep-link", rev="644046bc08e1066d00fa9be60b46cc6de8f2a901" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.22.3"

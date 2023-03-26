@@ -17,40 +17,58 @@ export function useTauriEventListener() {
         return
       }
 
-      const args = (
-        payload as {
-          args: string[]
-        }
-      ).args
+      let startString: string
 
-      if (args.length < 2) {
-        return
+      if (typeof payload === 'string') {
+        startString = payload
+      } else {
+        const args = (
+          payload as {
+            args: string[]
+          }
+        ).args
+
+        if (args.length < 2) {
+          return
+        }
+
+        const urlArg = args[1]
+        if (!urlArg.startsWith('--url=tondevwallet://connect/')) {
+          return
+        }
+
+        startString = urlArg.replace('--url=', '')
+
+        // if (urlArg === '--url=tondevwallet://connect/?ret=back') {
+        //   navigate('/')
+        //   return
+        // }
       }
 
-      const urlArg = args[1]
-      if (!urlArg.startsWith('--url=tondevwallet://connect/')) {
+      if (startString === 'tondevwallet://connect/?ret=back') {
+        navigate('/')
         return
       }
 
       tWindow.appWindow.setFocus()
 
-      if (urlArg === '--url=tondevwallet://connect/?ret=back') {
-        navigate('/')
-        return
-      }
-
-      console.log('args', args)
+      // console.log('args', args)
 
       const password = await getPasswordInteractive()
 
       if (password) {
-        tonConnectState.connectArg.set(urlArg)
+        tonConnectState.connectArg.set(startString)
         tonConnectState.popupOpen.set(true)
       }
     })
 
+    const l2 = listen('scheme-request-received', (e) => {
+      console.log('got scheme r', e)
+    })
+
     return () => {
       unlisten.then((f) => f())
+      l2.then((f) => f())
     }
   }, [])
 }

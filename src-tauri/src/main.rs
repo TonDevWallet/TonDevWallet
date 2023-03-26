@@ -103,7 +103,8 @@ fn get_ws_port() -> String {
 }
 
 fn main() {
-    register_urlhandler(None).unwrap();
+    tauri_plugin_deep_link::prepare("de.fabianlars.deep-link-test");
+    // register_urlhandler(None).unwrap();
     let _ = env_logger::try_init();
     let context = tauri::generate_context!();
 
@@ -129,6 +130,16 @@ fn main() {
             let window = app.get_window("main").unwrap();
 
             change_transparent_effect(window.clone());
+
+            let handle = app.handle();
+            tauri_plugin_deep_link::register(
+                "tondevwallet",
+                move |request| {
+                dbg!(&request);
+                handle.emit_all("single-instance", request).unwrap();
+                },
+            )
+            .unwrap(/* If listening to the scheme is optional for your app, you don't want to unwrap here. */);
 
             Ok(())
         })
