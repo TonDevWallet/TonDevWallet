@@ -13,9 +13,9 @@ export interface TonConnectMessageTransaction {
   payload: ConnectMessageTransactionPayload
 }
 
-const messagesState = hookstate<TonConnectMessageTransaction[]>(getConnectMessages)
+export const messagesState = hookstate<TonConnectMessageTransaction[]>(getConnectMessages)
 
-async function getConnectMessages() {
+export async function getConnectMessages() {
   const db = await getDatabase()
   const dbMessages = await db<ConnectMessageTransaction>('connect_message_transactions')
     .where({

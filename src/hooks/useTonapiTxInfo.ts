@@ -37,6 +37,12 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
         const blockchain = await ManagedBlockchain.create({
           storage,
         })
+        // blockchain.verbosity = 'vm_logs_full'
+        // blockchain.verbosity = {
+        // blockchainLogs: true,
+        // vmLogs: 'vm_logs_full',
+        // debugLogs: true,
+        // }
         const msg = loadMessage(cell.beginParse())
         const start = Date.now()
         const { result, emitter, gasMap } = blockchain.sendMessageWithProgress(msg)

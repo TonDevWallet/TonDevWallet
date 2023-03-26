@@ -26,6 +26,7 @@ specifiers:
   camelcase-keys: ^8.0.2
   clipboardy: ^3.0.0
   clsx: ^1.2.1
+  elkjs: ^0.8.2
   eslint: ^8.12.0
   eslint-config-prettier: ^8.5.0
   eslint-config-standard: ^17.0.0
@@ -81,6 +82,7 @@ dependencies:
   camelcase-keys: 8.0.2
   clipboardy: 3.0.0
   clsx: 1.2.1
+  elkjs: 0.8.2
   events: 3.3.0
   express: 4.18.2
   jsqr: 1.4.0
@@ -1854,6 +1856,10 @@ packages:
 
   /electron-to-chromium/1.4.284:
     resolution: {integrity: sha512-M8WEXFuKXMYMVr45fo8mq0wUrrJHheiKZf6BArTKk9ZBYCKJEOU5H8cdWgDT+qCVZf7Na4lVUaZsA+h6uA9+PA==}
+    dev: false
+
+  /elkjs/0.8.2:
+    resolution: {integrity: sha512-L6uRgvZTH+4OF5NE/MBbzQx/WYpru1xCBE9respNj6qznEewGUIfhzmm7horWWxbNO2M0WckQypGctR8lH79xQ==}
     dev: false
 
   /encodeurl/1.0.2:

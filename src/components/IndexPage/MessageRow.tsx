@@ -4,9 +4,7 @@ import { useLiteclient } from '@/store/liteClient'
 import { openPasswordPopup, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
-import { IWallet } from '@/types'
 import { ConnectMessageStatus } from '@/types/connect'
-import { formatTon } from '@/utils/formatNumbers'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { getWalletFromKey, useWalletExternalMessageCell } from '@/utils/wallets'
 import { State, ImmutableObject } from '@hookstate/core'
@@ -22,7 +20,6 @@ import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
-import { BlockchainTransaction } from '../../utils/ManagedBlockchain'
 import { cn } from '@/utils/cn'
 import { useTonapiTxInfo } from '@/hooks/useTonapiTxInfo'
 import { MessageFlow } from './MessageFlow'
@@ -216,86 +213,27 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
         </>
       )}
 
-      <MessageEmulationResult messageCell={testMessageCell} tonWallet={tonWallet} />
+      <MessageEmulationResult messageCell={testMessageCell} />
     </Block>
   )
 }
 
-export function MessageEmulationResult({
-  messageCell,
-  tonWallet,
-}: {
-  messageCell?: Cell
-  tonWallet?: IWallet
-}) {
+export function MessageEmulationResult({ messageCell }: { messageCell?: Cell }) {
   const { response: txInfo, progress, isLoading } = useTonapiTxInfo(messageCell)
 
   return (
     <>
       <div className="flex flex-col">
-        <div>Tx Actions:</div>
         <div className="break-words break-all flex flex-col gap-2">
-          {/* {isLoading ? (
-            <>
-              Progress: {progress.done} / {progress.total}
-            </>
-          ) : ( */}
           <div>
             Progress: {progress.done} / {progress.total}
           </div>
-          {isLoading && <div>Emulating...</div>}
 
-          {/* <div className="h-[400px]">
-            <MessageFlow transactions={txInfo?.transactions} />
-          </div> */}
-          {txInfo?.transactions.map((tx, i) => {
-            return !tx.parent && <TxRow key={i} tx={tx} />
-          })}
-
-          {txInfo?.events?.map((action, i) => {
-            return (
-              <Block key={i} className="flex flex-col">
-                <div>Name: {action.type}</div>
-                {action.type === 'message_sent' && (
-                  <>
-                    <div>Amount: {Number(action.value) / 10 ** 9} TON</div>
-                    <AddressRow
-                      text={<span className="w-16 flex-shrink-0">From:</span>}
-                      address={action.from}
-                      addressClassName={
-                        tonWallet?.address.equals(action.from) ? 'text-red-500' : undefined
-                      }
-                    />
-                    <AddressRow
-                      text={<span className="w-16 flex-shrink-0">To:</span>}
-                      address={action.to}
-                      addressClassName={
-                        tonWallet?.address.equals(action.to) ? 'text-green-500' : undefined
-                      }
-                    />
-                  </>
-                )}
-              </Block>
-            )
-          })}
+          <Block className="h-[50vh] w-[90%]">
+            {!isLoading && <MessageFlow transactions={txInfo?.transactions} />}
+          </Block>
         </div>
       </div>
     </>
-  )
-}
-
-function TxRow({ tx }: { tx: BlockchainTransaction }) {
-  return (
-    <Block className="flex flex-col">
-      TxInfo
-      <div>Fee: {formatTon(tx.gasSelf)}</div>
-      <div>Total Fee: {formatTon(tx.gasFull)}</div>
-      <div>
-        Children:
-        {tx.children.map((c, i) => (
-          <TxRow key={i} tx={c} />
-        ))}
-      </div>
-    </Block>
   )
 }

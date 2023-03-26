@@ -2,6 +2,7 @@ import { getDatabase } from '@/db'
 import { ConnectMessageTransaction, ConnectSession } from '@/types/connect'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { hookstate, State, useHookstate } from '@hookstate/core'
+import { getConnectMessages, messagesState } from './connectMessages'
 
 export interface TonConnectSession {
   id: number
@@ -136,6 +137,7 @@ export async function deleteTonConnectSession(session: State<TonConnectSession>)
     .delete()
 
   state.sessions.set(await getSessions())
+  messagesState.set(await getConnectMessages())
 }
 export async function updateSessionEventId(id: number, eventId: number) {
   const db = await getDatabase()
