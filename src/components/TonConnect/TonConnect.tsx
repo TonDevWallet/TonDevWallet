@@ -18,7 +18,12 @@ import { Block } from '../ui/Block'
 import { invoke } from '@tauri-apps/api'
 import clsx from 'clsx'
 import { appWindow } from '@tauri-apps/api/window'
-import { DecryptedWalletData, useDecryptWalletData, usePassword } from '@/store/passwordManager'
+import {
+  DecryptedWalletData,
+  getPasswordInteractive,
+  useDecryptWalletData,
+  usePassword,
+} from '@/store/passwordManager'
 import { delay } from '@/utils'
 import ZXing from '@/utils/zxing/zxing_reader'
 
@@ -65,6 +70,12 @@ export function TonConnect() {
     if (!selectedWallet) {
       return
     }
+
+    const password = await getPasswordInteractive()
+    if (!password) {
+      return
+    }
+
     const input = connectLink
     const parsed = new URL(input)
     console.log('parse', parsed, parsed.searchParams.get('id'))

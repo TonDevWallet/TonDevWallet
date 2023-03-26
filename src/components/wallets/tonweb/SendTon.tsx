@@ -43,6 +43,7 @@ export default function SendTon({
           type="text"
           value={recepient}
           onChange={(e: any) => setRecepient(e.target.value)}
+          autoComplete="off"
         />
       </div>
 
@@ -56,6 +57,7 @@ export default function SendTon({
           pattern="[0-9]*"
           value={amount}
           onChange={(e: any) => setAmount(e.target.value)}
+          autoComplete="off"
         />
       </div>
 
@@ -74,6 +76,7 @@ export default function SendTon({
               setMessage64((c) => !c)
             }}
             className="ml-2"
+            autoComplete="off"
           />
         </div>
         <input
@@ -84,6 +87,7 @@ export default function SendTon({
           pattern="[0-9]*"
           value={message}
           onChange={(e: any) => setMessage(e.target.value)}
+          autoComplete="off"
         />
       </div>
 
@@ -98,6 +102,7 @@ export default function SendTon({
           pattern="[0-9]*"
           value={stateInit}
           onChange={(e: any) => setStateInit(e.target.value)}
+          autoComplete="off"
         />
       </div>
 

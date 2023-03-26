@@ -53,6 +53,7 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
           pattern="[0-9]*"
           value={amount}
           onChange={(e: any) => setAmount(e.target.value)}
+          autoComplete="off"
         />
       </div>
 
@@ -71,6 +72,7 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
               setMessage64((c) => !c)
             }}
             className="ml-2"
+            autoComplete="off"
           />
         </div>
         <input
@@ -81,6 +83,7 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
           pattern="[0-9]*"
           value={message}
           onChange={(e: any) => setMessage(e.target.value)}
+          autoComplete="off"
         />
       </div>
 
@@ -95,6 +98,7 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
           pattern="[0-9]*"
           value={stateInit}
           onChange={(e: any) => setStateInit(e.target.value)}
+          autoComplete="off"
         />
       </div>
 
@@ -181,7 +185,7 @@ const SendModal = ({
       const result = await liteClient.sendMessage(payload.toBoc())
 
       console.log('result:', result)
-      if (result.status !== 0) {
+      if (result.status !== 1) {
         setStatus(3)
         setMessage(`Error occured. Code: ${result.status}. Message:`)
         return
@@ -202,7 +206,7 @@ const SendModal = ({
   return (
     <>
       <BlueButton className="mt-2" onClick={clickOpenModal}>
-        Send1
+        Send
       </BlueButton>
 
       <Popup
