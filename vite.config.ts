@@ -21,12 +21,6 @@ export default defineConfig(({ command }) => ({
   build: {
     target: 'esnext',
     rollupOptions: {
-      output: {
-        manualChunks: {
-          'ton-core': ['ton-core'],
-          sandbox: ['@ton-community/sandbox'],
-        },
-      },
       plugins: [inject({ Buffer: ['buffer', 'Buffer'] })],
     },
     modulePreload: false,

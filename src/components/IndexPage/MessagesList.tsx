@@ -1,9 +1,5 @@
 import { useMessagesState } from '@/store/connectMessages'
-import React from 'react'
-
-const MessageRow = React.lazy(() =>
-  import('./MessageRow').then((module) => ({ default: module.MessageRow }))
-)
+import { MessageRow } from './MessageRow'
 
 export function MessagesList() {
   // const sessions = useTonConnectSessions()
