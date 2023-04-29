@@ -177,7 +177,8 @@ export async function sendTonConnectStartMessage(
       .endCell()
   }
 
-  const publicKey = ''
+  const keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+  const publicKey = keyPair.publicKey.toString('base64')
 
   const proof = connectRequest?.items.find((i) => i.name === 'ton_proof') as TonProofItem
   const timestamp = Math.floor(Date.now())
