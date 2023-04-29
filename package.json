@@ -1,7 +1,7 @@
 {
   "name": "ton_address_generator",
   "private": true,
-  "version": "0.3.7",
+  "version": "0.3.8",
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build"
