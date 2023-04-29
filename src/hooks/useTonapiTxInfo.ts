@@ -59,19 +59,15 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
         emitter.on('add_message', onAddMessage)
         emitter.on('complete_message', onCompleteMessage)
         const res = await result
-        console.log('gasmap', gasMap)
-        console.log('emulate res', res)
+        console.log('emulate res', res, Date.now() - start, isStopped)
         formatGasInfo(gasMap)
-
-        console.log('b res', res.events.length, Date.now() - start, isStopped)
-
         if (isStopped) {
           return
         }
         setResponse(res)
         setIsLoading(false)
       } catch (err) {
-        console.log('b err', err)
+        console.log('emulate err', err)
         setIsLoading(false)
       }
     }

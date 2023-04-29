@@ -8,11 +8,6 @@ function numberToRgba(x: number) {
 
 async function setColors() {
   const colors = (await invoke('get_system_colors')) as { [key: string]: number }
-  console.log('colors', colors)
-  const accent = colors.accent as number
-
-  const [r, g, b, a] = numberToRgba(accent)
-  console.log('accent', r, g, b, a)
 
   const root = document.documentElement
   for (const key of Object.keys(colors)) {
@@ -40,7 +35,6 @@ export const useTheme = () => {
   }
 
   useEffect(() => {
-    console.log('theme effect')
     let unlisten: () => void | undefined
     ;(async () => {
       setTheme((await appWindow.theme()) || 'light')

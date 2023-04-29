@@ -19,7 +19,6 @@ export function formatTon(amount: bigint | number | undefined) {
 }
 
 export function formatGasInfo(gasInfo: Map<string, GasInfo> | undefined) {
-  console.log('gas map')
   if (!gasInfo) {
     return
   }

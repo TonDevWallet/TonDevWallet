@@ -68,7 +68,7 @@ export class ManagedExecutor extends Executor {
         this.invoke('_emulate', [
           this.getEmulatorPointer(args.config, verbosityToNum[args.verbosity]),
           args.libs?.toBoc().toString('base64') ?? 0,
-          args.shardAccount.toBoc().toString('base64'),
+          args.shardAccount,
           args.message.toBoc().toString('base64'),
           JSON.stringify(params),
         ])

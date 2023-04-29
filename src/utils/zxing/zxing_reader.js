@@ -1,7 +1,6 @@
 /* eslint-disable */
 
 import wasmpath from './zxing_reader.wasm?url'
-console.log('wasmpath', wasmpath)
 
 var ZXing = (function() {
     var _scriptDir = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : undefined;
