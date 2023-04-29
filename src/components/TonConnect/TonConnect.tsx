@@ -177,6 +177,8 @@ export async function sendTonConnectStartMessage(
       .endCell()
   }
 
+  const publicKey = ''
+
   const proof = connectRequest?.items.find((i) => i.name === 'ton_proof') as TonProofItem
   const timestamp = Math.floor(Date.now())
   const domain = {
@@ -186,6 +188,7 @@ export async function sendTonConnectStartMessage(
 
   const data: ConnectEventSuccess = {
     event: 'connect',
+    id: Date.now(),
     payload: {
       device: {
         platform: 'windows',
@@ -200,6 +203,7 @@ export async function sendTonConnectStartMessage(
           address: wallet.address.toRawString(),
           network: LiteClientState.testnet.get() ? CHAIN.TESTNET : CHAIN.MAINNET,
           walletStateInit: stateInit.toBoc().toString('base64'),
+          publicKey,
         },
       ],
     },

@@ -119,6 +119,7 @@ export async function deleteTonConnectSession(session: State<TonConnectSession>)
     {
       event: 'disconnect',
       payload: {},
+      id: Date.now(),
     },
     session?.secretKey.get() || Buffer.from(''),
     session?.userId?.get() || ''

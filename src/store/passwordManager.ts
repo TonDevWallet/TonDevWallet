@@ -259,7 +259,6 @@ export async function decryptWalletData(
   password: string,
   data: string | EncryptedWalletData
 ): Promise<DecryptedWalletData> {
-  console.log('decrypting', password)
   const encrypted = typeof data === 'string' ? (JSON.parse(data) as EncryptedWalletData) : data
   if (!encrypted.N || !encrypted.p || !encrypted.r || !encrypted.salt) {
     throw new Error('Unknown box')
@@ -286,7 +285,6 @@ export async function decryptWalletData(
   }
 
   if (encrypted.mnemonic) {
-    console.log('mnemonic:', encrypted.mnemonic)
     const inside = nacl.secretbox.open(Buffer.from(encrypted.mnemonic, 'base64'), nonce, enckey)
     if (!inside) {
       throw new Error("Can't open box")

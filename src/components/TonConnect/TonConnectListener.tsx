@@ -1,8 +1,9 @@
 import { addConnectMessage } from '@/store/connectMessages'
 import { useLiteclient } from '@/store/liteClient'
-import { updateSessionEventId, useTonConnectSessions } from '@/store/tonConnect'
+import { deleteTonConnectSession, updateSessionEventId, useTonConnectSessions } from '@/store/tonConnect'
 import {
   Base64,
+  DisconnectRpcRequest,
   hexToByteArray,
   SendTransactionRpcRequest,
   SessionCrypto,
@@ -24,8 +25,8 @@ export function TonConnectListener() {
     const bridgeUrl = 'https://bridge.tonapi.io/bridge'
     const listeners: EventSource[] = []
 
-    for (const s of sessions.get()) {
-      const keyPair = nacl.box.keyPair.fromSecretKey(s.secretKey)
+    sessions.map(s => {
+      const keyPair = nacl.box.keyPair.fromSecretKey(s.secretKey.get())
       const session = new SessionCrypto({
         publicKey: Buffer.from(keyPair.publicKey).toString('hex'),
         secretKey: Buffer.from(keyPair.secretKey).toString('hex'),
@@ -33,22 +34,28 @@ export function TonConnectListener() {
 
       const sseUrl = new URL(`${bridgeUrl}/events`)
       sseUrl.searchParams.append('client_id', Buffer.from(keyPair.publicKey).toString('hex'))
-      sseUrl.searchParams.append('last_event_id', s.lastEventId.toString())
+      sseUrl.searchParams.append('last_event_id', s.lastEventId.get().toString())
       // url.searchParams.append('to', clientId)
       // url.searchParams.append('ttl', '300')
       const sse = new EventSource(sseUrl)
 
       sse.addEventListener('message', async (e) => {
-        console.log('sse message2', e.data)
+        console.log('sse message', e.data)
 
         const bridgeIncomingMessage = JSON.parse(e.data)
-        const walletMessage: SendTransactionRpcRequest = JSON.parse(
+        const walletMessage: SendTransactionRpcRequest | DisconnectRpcRequest = JSON.parse(
           session.decrypt(
             Base64.decode(bridgeIncomingMessage.message).toUint8Array(),
             hexToByteArray(bridgeIncomingMessage.from)
           )
         )
         console.log('wallet message', walletMessage)
+
+        if (walletMessage.method === 'disconnect') {
+          // disconnect
+          await deleteTonConnectSession(s)
+          return
+        }
 
         if (walletMessage.method !== 'sendTransaction') {
           return
@@ -66,10 +73,10 @@ export function TonConnectListener() {
 
         await addConnectMessage({
           connect_event_id: parseInt(walletMessage.id),
-          connect_session_id: s.id,
+          connect_session_id: s.id.get(),
           payload: info,
-          key_id: s.keyId,
-          wallet_id: s.walletId,
+          key_id: s.keyId.get(),
+          wallet_id: s.walletId.get(),
           status: 0,
         })
         let permissionGranted = await isPermissionGranted()
@@ -82,11 +89,11 @@ export function TonConnectListener() {
         }
 
         console.log('update before', e)
-        updateSessionEventId(s.id, parseInt(e.lastEventId))
+        updateSessionEventId(s.id.get(), parseInt(e.lastEventId))
       })
 
       listeners.push(sse)
-    }
+    })
 
     // setListeners(listeners)
 
