@@ -29,6 +29,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       )}
     >
       <AddressRow address={txAddress} />
+      <div>ID: {tx.id}</div>
       <div>LT: {tx.lt.toString()}</div>
       <div>Self Fees: {tonToNumber(tx.gasSelf)}</div>
       <div>Total Fees: {tonToNumber(tx.gasFull)}</div>
