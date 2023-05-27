@@ -71,9 +71,11 @@ fn change_transparent_effect(window: tauri::Window) {
 }
 
 #[cfg(target_os = "linux")]
+#[tauri::command]
 fn change_transparent_effect(window: tauri::Window) {}
 
 #[cfg(target_os = "macos")]
+#[tauri::command]
 fn change_transparent_effect(window: tauri::Window) {
     apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, None)
         .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
