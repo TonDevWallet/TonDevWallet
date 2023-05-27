@@ -46,7 +46,7 @@ export function useTauriEventListener() {
       }
 
       if (startString === 'tondevwallet://connect/?ret=back') {
-        navigate('/')
+        navigate('/app')
         return
       }
 

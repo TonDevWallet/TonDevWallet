@@ -140,7 +140,7 @@ export async function saveKeyAndWallets(
     stateKey.wallets.set(wallets)
   }
 
-  navigate(`/wallets/${newWallet?.id}`)
+  navigate(`/app/wallets/${newWallet?.id}`)
 }
 
 export async function CreateNewKeyWallet({

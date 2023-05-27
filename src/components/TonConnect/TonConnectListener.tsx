@@ -1,6 +1,10 @@
 import { addConnectMessage } from '@/store/connectMessages'
 import { useLiteclient } from '@/store/liteClient'
-import { deleteTonConnectSession, updateSessionEventId, useTonConnectSessions } from '@/store/tonConnect'
+import {
+  deleteTonConnectSession,
+  updateSessionEventId,
+  useTonConnectSessions,
+} from '@/store/tonConnect'
 import {
   Base64,
   DisconnectRpcRequest,
@@ -16,6 +20,7 @@ import {
   requestPermission,
   sendNotification,
 } from '@tauri-apps/api/notification'
+import { appWindow } from '@tauri-apps/api/window'
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
@@ -25,7 +30,7 @@ export function TonConnectListener() {
     const bridgeUrl = 'https://bridge.tonapi.io/bridge'
     const listeners: EventSource[] = []
 
-    sessions.map(s => {
+    sessions.map((s) => {
       const keyPair = nacl.box.keyPair.fromSecretKey(s.secretKey.get())
       const session = new SessionCrypto({
         publicKey: Buffer.from(keyPair.publicKey).toString('hex'),
@@ -52,6 +57,7 @@ export function TonConnectListener() {
         console.log('wallet message', walletMessage)
 
         if (walletMessage.method === 'disconnect') {
+          console.log('delete session', s)
           // disconnect
           await deleteTonConnectSession(s)
           return
@@ -85,7 +91,8 @@ export function TonConnectListener() {
           permissionGranted = permission === 'granted'
         }
         if (permissionGranted) {
-          sendNotification({ title: 'New message', body: `From ${s.name}` })
+          sendNotification({ title: 'New message', body: `From ${s.name.get()}` })
+          appWindow.setFocus()
         }
 
         console.log('update before', e)
@@ -93,6 +100,8 @@ export function TonConnectListener() {
       })
 
       listeners.push(sse)
+
+      return null
     })
 
     // setListeners(listeners)

@@ -38,11 +38,12 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
           storage,
         })
         // blockchain.verbosity = 'vm_logs_full'
-        // blockchain.verbosity = {
-        // blockchainLogs: true,
-        // vmLogs: 'vm_logs_full',
-        // debugLogs: true,
-        // }
+        blockchain.verbosity = {
+          blockchainLogs: true,
+          vmLogs: 'vm_logs_full',
+          debugLogs: true,
+          print: false,
+        }
         const msg = loadMessage(cell.beginParse())
         const start = Date.now()
         const { result, emitter, gasMap } = blockchain.sendMessageWithProgress(msg)

@@ -13,7 +13,7 @@ import {
   SendTransactionRpcResponseError,
   SEND_TRANSACTION_ERROR_CODES,
 } from '@tonconnect/protocol'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Address, Cell } from 'ton-core'
 import { KeyPair, keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
@@ -90,7 +90,8 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
               destination = Address.parseRaw(m.address.get() || '')
             }
           } catch (e) {
-            throw new Error('Wrong address')
+            return undefined
+            // throw new Error('Wrong address')
           }
 
           const p = m?.payload?.get()
@@ -220,16 +221,24 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
 
 export function MessageEmulationResult({ messageCell }: { messageCell?: Cell }) {
   const { response: txInfo, progress, isLoading } = useTonapiTxInfo(messageCell)
+  const [max, setMax] = useState(false)
 
   return (
     <>
       <div className="flex flex-col">
         <div className="break-words break-all flex flex-col gap-2">
           <div>
-            Progress: {progress.done} / {progress.total}
+            <div>
+              Progress: {progress.done} / {progress.total}
+            </div>
+            <div>
+              <button className="text-accent" onClick={() => setMax((v) => !v)}>
+                Toggle Preview Size
+              </button>
+            </div>
           </div>
 
-          <Block className="h-[50vh] w-[90%]">
+          <Block className={cn('h-[50vh]', max && 'h-[90vh]')}>
             {!isLoading && <MessageFlow transactions={txInfo?.transactions} />}
           </Block>
         </div>

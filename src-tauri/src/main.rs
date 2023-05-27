@@ -146,7 +146,8 @@ fn main() {
             get_ws_port,
             colors::get_system_colors,
             get_os_name,
-            detect_qr_code
+            detect_qr_code,
+            change_transparent_effect
         ])
         .build(context)
         .expect("error while running tauri application")

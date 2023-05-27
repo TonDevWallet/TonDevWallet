@@ -12,6 +12,7 @@ import { useTheme } from './hooks/useTheme'
 import { useOs } from './hooks/useOs'
 import { usePassword } from './store/passwordManager'
 import { useLiteclientState } from './store/liteClient'
+import { invoke } from '@tauri-apps/api'
 
 export function App({ db }: { db: Knex }) {
   const keysList = useWalletListState()
@@ -24,7 +25,11 @@ export function App({ db }: { db: Knex }) {
   useOs()
 
   useEffect(() => {
-    appWindow.setDecorations(true)
+    appWindow.setDecorations(false).then(() => {
+      invoke('change_transparent_effect').then(() => {
+        appWindow.setDecorations(true)
+      })
+    })
   }, [])
 
   return (

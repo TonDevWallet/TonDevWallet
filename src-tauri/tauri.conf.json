@@ -36,7 +36,7 @@
         "all": false,
         "center": false,
         "close": false,
-        "create": false,
+        "create": true,
         "hide": false,
         "maximize": false,
         "minimize": true,
@@ -129,7 +129,8 @@
         "width": 1100,
         "focus": true,
         "transparent": true,
-        "decorations": false
+        "decorations": false,
+        "url": "/app"
       }
     ],
     "macOSPrivateApi": true

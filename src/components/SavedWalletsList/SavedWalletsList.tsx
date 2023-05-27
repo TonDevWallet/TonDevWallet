@@ -116,7 +116,7 @@ export function SavedWalletsList() {
         <DetectTonConnect />
 
         <NavLink
-          to="/"
+          to="/app"
           className={({ isActive }) =>
             'cursor-pointer rounded p-1 flex flex-col items-center my-2 ' +
             (isActive ? 'bg-foreground/5' : '')
@@ -135,7 +135,7 @@ export function SavedWalletsList() {
           keys.map((dbWallet) => <SavedWalletRow walletKey={dbWallet} key={dbWallet.get().id} />)}
 
         <NavLink
-          to="/new_wallet"
+          to="/app/new_wallet"
           className={({ isActive }) =>
             'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center ' +
             (isActive ? 'bg-foreground/5' : '')

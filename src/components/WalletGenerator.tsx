@@ -138,7 +138,7 @@ export function OpenedWalletInfo() {
       <BlueButton
         onClick={() => {
           deleteWallet(db, key.id.get())
-          navigate('/')
+          navigate('/app')
         }}
       >
         Delete seed

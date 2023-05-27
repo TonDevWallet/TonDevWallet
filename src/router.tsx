@@ -4,23 +4,33 @@ import { IndexPage } from './components/IndexPage/IndexPage'
 import { NewWalletPage } from './components/NewWalletPage/NewWalletPage'
 import { WalletPage } from './components/IndexPage/WalletPage'
 import { Layout } from './components/Layout'
+import { TxInfoPage } from './components/TxInfoPage/TxInfoPage'
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: '/app',
     element: <Layout />,
     children: [
       {
-        path: '/',
+        path: '/app',
         element: <IndexPage />,
       },
       {
-        path: '/new_wallet',
+        path: '/app/new_wallet',
         element: <NewWalletPage />,
       },
       {
-        path: '/wallets/:walletId',
+        path: '/app/wallets/:walletId',
         element: <WalletPage />,
+      },
+    ],
+  },
+  {
+    path: '/',
+    children: [
+      {
+        path: '/txinfo',
+        element: <TxInfoPage />,
       },
     ],
   },

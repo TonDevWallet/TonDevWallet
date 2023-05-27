@@ -10,7 +10,7 @@ export function SavedWalletRow({ walletKey }: { walletKey: State<Key> }) {
 
   return (
     <NavLink
-      to={`/wallets/${walletKey.get().id}`}
+      to={`/app/wallets/${walletKey.get().id}`}
       className={({ isActive }) =>
         clsx(
           'rounded p-1 flex flex-col items-center my-2 select-none text-foreground ',

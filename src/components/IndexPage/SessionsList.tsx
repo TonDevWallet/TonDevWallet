@@ -51,7 +51,7 @@ export function SessionsList() {
 
                 <NavLink
                   className="flex"
-                  to={`/wallets/${key.id.get()}`}
+                  to={`/app/wallets/${key.id.get()}`}
                   onClick={() => {
                     setWalletKey(key.id.get())
                     setSelectedWallet(tonWallet)
@@ -63,31 +63,45 @@ export function SessionsList() {
               </div>
 
               <ReactPopup
-                trigger={
-                  <button className="cursor-pointer text-accent dark:text-accent-light">
-                    <FontAwesomeIcon icon={faClose} className="mx-1" />
-                  </button>
-                }
+                trigger={() => (
+                  <div>
+                    <button
+                      className="cursor-pointer text-accent dark:text-accent-light"
+                      onClick={async (e) => {
+                        if (e.ctrlKey) {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          deleteTonConnectSession(s)
+                        }
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faClose} className="mx-1" />
+                    </button>
+                  </div>
+                )}
               >
                 {(close: () => void) => {
                   return (
-                    <div className="flex gap-2">
-                      <BlueButton
-                        className="bg-red-500"
-                        onClick={async () => {
-                          await deleteTonConnectSession(s)
-                          close()
-                        }}
-                        // onClick={async () => {
-                        //   await deleteWallet(wallet.id)
-                        //   close()
-                        // }}
-                      >
-                        Confirm
-                      </BlueButton>
-                      <BlueButton className="" onClick={close}>
-                        Cancel
-                      </BlueButton>
+                    <div className="flex flex-col gap-2 p-2">
+                      <p>To close session without confirm popup use Ctrl + Click</p>
+                      <div className="flex gap-2">
+                        <BlueButton
+                          className="bg-red-500"
+                          onClick={async () => {
+                            await deleteTonConnectSession(s)
+                            close()
+                          }}
+                          // onClick={async () => {
+                          //   await deleteWallet(wallet.id)
+                          //   close()
+                          // }}
+                        >
+                          Confirm
+                        </BlueButton>
+                        <BlueButton className="" onClick={close}>
+                          Cancel
+                        </BlueButton>
+                      </div>
                     </div>
                   )
                 }}
