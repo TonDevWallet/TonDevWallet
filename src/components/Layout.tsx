@@ -15,7 +15,7 @@ export function Layout() {
     <>
       {passworState.passwordExists.get() ? (
         <div className="grid grid-cols-[128px_minmax(128px,_1fr)] h-screen w-full overflow-y-scroll">
-          <div className="h-screen sticky top-0 place-self-start bg-transparent overflow-y-scroll overscroll-contain">
+          <div className="h-screen sticky top-0 place-self-start bg-transparent overflow-y-scroll overscroll-contain w-full">
             <TonConnectListener />
             <SavedWalletsList />
           </div>

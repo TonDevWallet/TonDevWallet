@@ -57,7 +57,7 @@ export function SessionsList() {
                     setSelectedWallet(tonWallet)
                   }}
                 >
-                  <KeyJazzicon walletKey={key} diameter={32} />
+                  <KeyJazzicon walletKey={key} diameter={32} alt={key.name.get()} />
                   <WalletJazzicon wallet={tonWallet} className="-ml-2" />
                 </NavLink>
               </div>
@@ -114,11 +114,11 @@ export function SessionsList() {
 
             <div className="flex justify-between">
               <div className="flex">
-                <div>WalletInfo:&nbsp;</div>
+                <div>Type:&nbsp;</div>
                 <div>{tonWallet?.type}</div>
               </div>
               <div className="flex">
-                <div>SubwalletId:&nbsp;</div>
+                <div>SubId:&nbsp;</div>
                 <div>{tonWallet?.subwalletId || 'Default'}</div>
               </div>
             </div>

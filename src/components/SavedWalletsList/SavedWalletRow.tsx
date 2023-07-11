@@ -13,18 +13,25 @@ export function SavedWalletRow({ walletKey }: { walletKey: State<Key> }) {
       to={`/app/wallets/${walletKey.get().id}`}
       className={({ isActive }) =>
         clsx(
-          'rounded p-1 flex flex-col items-center my-2 select-none text-foreground ',
+          'rounded p-1 flex flex-col items-center my-2 select-none text-foreground overflow-hidden',
           isActive ? activeStyle : ''
         )
       }
       onClick={() => {
         setWalletKey(walletKey.get().id)
-        setSelectedWallet(null)
+        const wallets = walletKey?.wallets?.get()
+        if (wallets && wallets[0]) {
+          setSelectedWallet(wallets[0].id)
+        } else {
+          setSelectedWallet(null)
+        }
       }}
     >
       <KeyJazzicon walletKey={walletKey} />
 
-      <div className="text-foreground mt-2 text-center">{walletKey.get().name}</div>
+      <div className="text-foreground mt-2 text-center break-words w-full">
+        {walletKey.get().name}
+      </div>
     </NavLink>
   )
 }
