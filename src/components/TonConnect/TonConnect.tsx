@@ -25,7 +25,6 @@ import {
   usePassword,
 } from '@/store/passwordManager'
 import { delay } from '@/utils'
-import ZXing from '@/utils/zxing/zxing_reader'
 
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
@@ -256,8 +255,6 @@ export function getImageFromBase64(data: string) {
 }
 
 export async function getQrcodeFromScreen(): Promise<string | undefined> {
-  const zxing = await ZXing()
-
   let res: string[] = []
   try {
     await appWindow.minimize()
@@ -268,19 +265,8 @@ export async function getQrcodeFromScreen(): Promise<string | undefined> {
     await appWindow.setFocus()
   }
 
-  for (const data of res) {
-    const decoded = Buffer.from(data, 'base64')
-    const zxingData = new Uint8Array(decoded)
-    const buffer = zxing._malloc(zxingData.length)
-    zxing.HEAPU8.set(zxingData, buffer)
-    const result = zxing.readBarcodeFromImage(buffer, zxingData.length, true, '')
-    zxing._free(buffer)
-
-    if (result && result.text) {
-      console.log('Found QR code', result)
-      return result.text
-    }
-    console.log('no qr code', result)
+  if (res.length > 0) {
+    return res[0]
   }
 
   return undefined

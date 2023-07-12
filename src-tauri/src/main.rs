@@ -3,6 +3,7 @@
     windows_subsystem = "windows"
 )]
 
+use rxing::multi::MultipleBarcodeReader;
 #[cfg(target_os = "macos")]
 use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
 
@@ -14,15 +15,17 @@ mod colors;
 mod proxy;
 mod register_uri;
 
-use base64;
-use base64::{engine::general_purpose, Engine as _};
 use proxy::spawn_proxy;
 use screenshots::Screen;
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicU16, Ordering};
 use sysinfo::{System, SystemExt};
 use tauri::Manager;
 use tauri_plugin_sql::TauriSql;
 use tokio::net::TcpListener;
+use rxing;
+use image::{self};
+
 
 static PORT: AtomicU16 = AtomicU16::new(0);
 
@@ -46,14 +49,31 @@ pub fn is_win_11() -> bool {
 
 #[tauri::command]
 async fn detect_qr_code() -> Result<Vec<String>, String> {
-    let screens = Screen::all().unwrap();
+    let screens: Vec<Screen> = Screen::all().unwrap();
 
     let mut images: Vec<String> = Vec::new(); // = vec![String];
     for screen in screens {
-        let image = screen.capture().unwrap();
-        let buffer = image.buffer();
-        let encoded: String = general_purpose::STANDARD_NO_PAD.encode(&buffer); // ::encode(input); //::STANDARD::encode(&buffer);
-        images.push(encoded);
+        let captured = screen.capture().unwrap();
+        let mut png = captured.to_png().unwrap();
+        let i = image::load_from_memory_with_format(&mut png, image::ImageFormat::Png).unwrap();
+        let multi_format_reader = rxing::MultiUseMultiFormatReader::default();
+        let mut scanner = rxing::multi::GenericMultipleBarcodeReader::new(multi_format_reader);
+        let mut hints = HashMap::new();
+
+
+        hints
+            .entry(rxing::DecodeHintType::TRY_HARDER)
+            .or_insert(rxing::DecodeHintValue::TryHarder(true));
+    
+        let results = scanner.decode_multiple_with_hints(
+            &mut rxing::BinaryBitmap::new(rxing::common::HybridBinarizer::new(rxing::BufferedImageLuminanceSource::new(i))),
+            &mut hints,
+        ).unwrap_or_default();
+
+        if results.len() > 0 {
+            images.push(results[0].getText().to_string());
+            break;
+        }
     }
 
     Ok(images)
