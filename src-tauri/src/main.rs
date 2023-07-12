@@ -79,6 +79,36 @@ async fn detect_qr_code() -> Result<Vec<String>, String> {
     Ok(images)
 }
 
+use base64::{Engine as _, engine::general_purpose};
+
+#[tauri::command]
+async fn detect_qr_code_from_image(data: String) -> Result<Vec<String>, String> {
+    let mut images: Vec<String> = Vec::new(); // = vec![String];
+
+    let mut image_data = general_purpose::STANDARD
+        .decode(data).unwrap();
+    let i = image::load_from_memory_with_format(&mut image_data, image::ImageFormat::Png).unwrap();
+    let multi_format_reader = rxing::MultiUseMultiFormatReader::default();
+    let mut scanner = rxing::multi::GenericMultipleBarcodeReader::new(multi_format_reader);
+    let mut hints = HashMap::new();
+
+
+    hints
+        .entry(rxing::DecodeHintType::TRY_HARDER)
+        .or_insert(rxing::DecodeHintValue::TryHarder(true));
+
+    let results = scanner.decode_multiple_with_hints(
+        &mut rxing::BinaryBitmap::new(rxing::common::HybridBinarizer::new(rxing::BufferedImageLuminanceSource::new(i))),
+        &mut hints,
+    ).unwrap_or_default();
+
+    if results.len() > 0 {
+        images.push(results[0].getText().to_string());
+    }
+
+    Ok(images)
+}
+
 #[cfg(target_os = "windows")]
 #[tauri::command]
 #[inline]
@@ -169,7 +199,8 @@ fn main() {
             colors::get_system_colors,
             get_os_name,
             detect_qr_code,
-            change_transparent_effect
+            change_transparent_effect,
+            detect_qr_code_from_image,
         ])
         .build(context)
         .expect("error while running tauri application")

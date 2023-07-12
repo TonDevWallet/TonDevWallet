@@ -4,6 +4,7 @@ import {
   deleteTonConnectSession,
   updateSessionEventId,
   useTonConnectSessions,
+  useTonConnectState,
 } from '@/store/tonConnect'
 import {
   Base64,
@@ -21,10 +22,50 @@ import {
   sendNotification,
 } from '@tauri-apps/api/notification'
 import { appWindow } from '@tauri-apps/api/window'
+import { invoke } from '@tauri-apps/api'
+import { getPasswordInteractive } from '@/store/passwordManager'
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
   const liteClient = useLiteclient() as unknown as LiteClient
+  const tonConnectState = useTonConnectState()
+
+  useEffect(() => {
+    const listener = (event) => {
+      const items = event?.clipboardData?.items
+      for (const index in items) {
+        const item = items[index]
+        if (item.kind === 'file') {
+          const blob = item.getAsFile()
+          const reader = new FileReader()
+          reader.onload = async function (event) {
+            if (!event.target?.result) {
+              return
+            }
+            const result = event?.target?.result as string
+            const res = (await invoke('detect_qr_code_from_image', {
+              data: result.split(',')[1],
+            })) as string[]
+
+            if (res.length > 0) {
+              console.log('Found QR code', res)
+
+              const password = await getPasswordInteractive()
+              if (password) {
+                tonConnectState.connectArg.set(res[0])
+                tonConnectState.popupOpen.set(true)
+              }
+            }
+          }
+          reader.readAsDataURL(blob)
+        }
+      }
+    }
+    window.addEventListener('paste', listener)
+    return () => {
+      window.removeEventListener('paste', listener)
+    }
+  }, [])
 
   useEffect(() => {
     const bridgeUrl = 'https://bridge.tonapi.io/bridge'
