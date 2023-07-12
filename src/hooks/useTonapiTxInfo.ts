@@ -46,7 +46,9 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
         }
         const msg = loadMessage(cell.beginParse())
         const start = Date.now()
-        const { result, emitter, gasMap } = blockchain.sendMessageWithProgress(msg)
+        const { result, emitter, gasMap } = await blockchain.sendMessageWithProgress(msg, {
+          ignoreChksig: true,
+        })
 
         let isStopped = false
         stopEmulator = () => {
@@ -60,7 +62,7 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
         emitter.on('add_message', onAddMessage)
         emitter.on('complete_message', onCompleteMessage)
         const res = await result
-        console.log('emulate res', res, Date.now() - start, isStopped)
+        console.log('emulate res', res, Date.now() - start, isStopped, gasMap)
         formatGasInfo(gasMap)
         if (isStopped) {
           return
@@ -79,7 +81,7 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
       console.log('unmount effect')
       stopEmulator()
     }
-  }, [cell])
+  }, [cell, liteClient])
 
   return { response, progress, isLoading }
 }

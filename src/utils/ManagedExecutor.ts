@@ -2,6 +2,7 @@ import {
   EmulationResult,
   Executor,
   ExecutorVerbosity,
+  RunCommonArgs,
   RunTransactionArgs,
 } from '@ton-community/sandbox/dist/executor/Executor'
 
@@ -14,13 +15,18 @@ type EmulationInternalParams = {
   lt: string
   rand_seed: string
   ignore_chksig: boolean
+  debug_enabled: boolean
+  is_tick_tock?: boolean
+  is_tock?: boolean
 }
 
 const verbosityToNum: Record<ExecutorVerbosity, number> = {
   short: 0,
   full: 1,
   full_location: 2,
-  full_location_stack: 3,
+  full_location_gas: 3,
+  full_location_stack: 4,
+  full_location_stack_verbose: 5,
 }
 
 type ResultSuccess = {
@@ -43,6 +49,16 @@ type ResultError = {
   | object
 )
 
+function runCommonArgsToInternalParams(args: RunCommonArgs): EmulationInternalParams {
+  return {
+    utime: args.now,
+    lt: args.lt.toString(),
+    rand_seed: args.randomSeed === null ? '' : args.randomSeed.toString('hex'),
+    ignore_chksig: args.ignoreChksig,
+    debug_enabled: args.debugEnabled ?? false,
+  }
+}
+
 export class ManagedExecutor extends Executor {
   static async create() {
     const ex = new ManagedExecutor(
@@ -54,26 +70,9 @@ export class ManagedExecutor extends Executor {
     return ex
   }
 
-  runTransaction(args: RunTransactionArgs): EmulationResult {
-    const params: EmulationInternalParams = {
-      utime: args.now,
-      lt: args.lt.toString(),
-      rand_seed: args.randomSeed === null ? '' : args.randomSeed.toString('hex'),
-      ignore_chksig: true,
-    }
-
+  private runCommon(args: (string | number)[]): EmulationResult {
     this.debugLogs = []
-    const resp = JSON.parse(
-      this.extractString(
-        this.invoke('_emulate', [
-          this.getEmulatorPointer(args.config, verbosityToNum[args.verbosity]),
-          args.libs?.toBoc().toString('base64') ?? 0,
-          args.shardAccount,
-          args.message.toBoc().toString('base64'),
-          JSON.stringify(params),
-        ])
-      )
-    )
+    const resp = JSON.parse(this.extractString(this.invoke('_emulate', args)))
     const debugLogs = this.debugLogs.join('\n')
 
     if (resp.fail) {
@@ -92,7 +91,6 @@ export class ManagedExecutor extends Executor {
             transaction: result.transaction,
             shardAccount: result.shard_account,
             vmLog: result.vm_log,
-            c7: result.c7,
             actions: result.actions,
           }
         : {
@@ -109,5 +107,26 @@ export class ManagedExecutor extends Executor {
       logs,
       debugLogs,
     }
+  }
+
+  runTransaction(args: RunTransactionArgs): EmulationResult {
+    const params: EmulationInternalParams = runCommonArgsToInternalParams(args)
+
+    const emulator = this.getEmulatorPointer(args.config, verbosityToNum[args.verbosity])
+    console.log('params', [
+      emulator,
+      args.libs?.toBoc().toString('base64') ?? 0,
+      args.shardAccount,
+      args.message.toBoc().toString('base64'),
+      JSON.stringify(params),
+    ])
+
+    return this.runCommon([
+      emulator,
+      args.libs?.toBoc().toString('base64') ?? 0,
+      args.shardAccount,
+      args.message.toBoc().toString('base64'),
+      JSON.stringify(params),
+    ])
   }
 }

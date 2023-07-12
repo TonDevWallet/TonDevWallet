@@ -119,7 +119,7 @@ export function SavedWalletsList() {
           to="/app"
           end
           className={({ isActive }) =>
-            'cursor-pointer rounded p-1 flex flex-col items-center my-2' +
+            'cursor-pointer rounded p-1 flex flex-col items-center my-2 ' +
             (isActive ? 'bg-foreground/5' : '')
           }
         >

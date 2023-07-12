@@ -104,7 +104,7 @@ export function TonConnect() {
       const serviceUrl = new URL(metaInfo.url)
       host = serviceUrl.host || ''
     } catch (e) {
-      console.log('Service url error')
+      console.log('Service url error', metaInfo)
     }
 
     await sendTonConnectStartMessage(

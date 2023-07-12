@@ -14,11 +14,13 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
   }
 
   async getContract(blockchain: Blockchain, address: Address) {
-    // console.log('get address', address.toRaw())
+    console.log('get address', address.toRaw())
     let existing = this.contracts.get(address.toString())
     if (!existing) {
       const lastBlock = await getLastLiteBlock(this.client)
       const account = await this.client.getAccountState(address, lastBlock.last)
+
+      console.log('not existing', account)
 
       if (
         account.state?.storage?.state?.type !== 'active' ||
@@ -39,6 +41,14 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
     }
 
     return existing
+  }
+
+  knownContracts() {
+    return [...this.contracts.values()]
+  }
+
+  clearKnownContracts() {
+    this.contracts = new Map()
   }
 }
 

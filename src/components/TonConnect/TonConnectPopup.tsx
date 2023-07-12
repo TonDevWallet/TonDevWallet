@@ -223,7 +223,7 @@ function useConnectLink(link: string) {
         const serviceUrl = new URL(metaInfo.url)
         host = serviceUrl.host || ''
       } catch (e) {
-        console.log('Service url error')
+        console.log('Service url error popup', metaInfo, r.manifestUrl)
       }
 
       setInfo({
