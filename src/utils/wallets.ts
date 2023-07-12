@@ -15,7 +15,15 @@ import {
 import { Key } from '@/types/Key'
 import { State } from '@hookstate/core'
 import { useEffect, useMemo, useState } from 'react'
-import { beginCell, storeMessage, external, internal, Cell, loadStateInit } from 'ton-core'
+import {
+  beginCell,
+  storeMessage,
+  external,
+  internal,
+  Cell,
+  loadStateInit,
+  SendMode,
+} from 'ton-core'
 
 import { WalletContractV3R2, WalletContractV4 } from 'ton'
 import { KeyPair } from 'ton-crypto'
@@ -124,7 +132,6 @@ function getExternalMessageCellFromTonWallet(
           to: m.destination,
           value: m.amount,
           bounce: m.bounce,
-          // init: m.state,
         })
 
         if (m.state) {
@@ -132,19 +139,14 @@ function getExternalMessageCellFromTonWallet(
         }
         return msg
       }),
-      sendMode: 3,
+      sendMode: SendMode.IGNORE_ERRORS | SendMode.PAY_GAS_SEPARATELY,
     })
     const ext = external({
       to: wallet.address,
       init: wallet.init,
-      // init: neededInit ? { code: neededInit.code, data: neededInit.data } : null,
       body: transfer,
     })
     const messageCell = beginCell().store(storeMessage(ext)).endCell()
-    // const message = wallet.CreateTransferMessage(transfers)
-    // const signedBody = SignCell(keyPair.secretKey, message.body)
-    // message.body = signedBody
-    // const messageCell = beginCell().store(storeMessage(message)).endCell()
 
     return messageCell
   }

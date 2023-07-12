@@ -39,7 +39,7 @@ export function PasswordPopup() {
           <label htmlFor="passwordInput">Enter your password</label>
           <input
             type="password"
-            className="mt-2"
+            className="mt-2 rounded px-2"
             value={pass}
             autoComplete="off"
             onChange={(e) => setPass(e.target.value)}

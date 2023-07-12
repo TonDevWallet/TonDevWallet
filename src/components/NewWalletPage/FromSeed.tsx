@@ -1,44 +1,51 @@
-import { useSeed } from '@/hooks/useKeyPair'
 import { saveKeyFromData } from '@/store/walletsListState'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
+import { KeyPair, keyPairFromSeed } from 'ton-crypto'
+import { cn } from '@/utils/cn'
 
 export function FromSeed() {
   const navigate = useNavigate()
 
-  const nameRef = useRef<HTMLInputElement | null>(null)
   const [seed, setSeed] = useState('')
+  const [keyPair, setParsedSeed] = useState<KeyPair | undefined>(undefined)
+  const [name, setName] = useState('')
 
   const onWordsChange = async (e: any) => {
     try {
-      setSeed(e.target.value)
-      // const mnemonic = e.target.value.split(' ')
       const data = e.target.value
-      if (data.length !== 64) {
-        return
-      }
+      setSeed(data)
+      setParsedSeed(undefined)
+
+      try {
+        const parsed = keyPairFromSeed(Buffer.from(data, 'hex'))
+        if (parsed) {
+          setParsedSeed(parsed)
+        }
+      } catch (e) {}
     } catch (e) {
       console.log('onWordsChange error', e)
     }
   }
 
   const saveSeed = async () => {
+    if (!name) {
+      return
+    }
     if (seed.length !== 64) {
       throw new Error('Seed must be 64 characters')
     }
-    await saveKeyFromData(nameRef.current?.value || '', navigate, Buffer.from(seed, 'hex'))
+    await saveKeyFromData(name || '', navigate, Buffer.from(seed, 'hex'))
   }
-
-  const keyPair = useSeed(seed)
 
   return (
     <div>
       <div className="flex flex-col">
         <label htmlFor="seedInput">Seed</label>
         <input
-          className="w-3/4 outline-none border p-1"
+          className="border w-3/4 outline-none rounded px-2 py-1"
           id="seedInput"
           onChange={onWordsChange}
           value={seed}
@@ -46,7 +53,7 @@ export function FromSeed() {
         {/* <input type="text" id="mnemonicInput" className="border rounded p-2 w-96" /> */}
       </div>
 
-      {seed && (
+      {keyPair && (
         <>
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
@@ -82,9 +89,19 @@ export function FromSeed() {
 
           <div className="py-4 flex flex-col">
             <label htmlFor="nameRef">Name:</label>
-            <input type="text" ref={nameRef} id="nameRef" className="border w-3/4 outline-none" />
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              id="nameRef"
+              className="border w-3/4 outline-none rounded px-2 py-1"
+            />
 
-            <BlueButton onClick={saveSeed} className="mt-2">
+            <BlueButton
+              onClick={saveSeed}
+              className={cn('mt-2', !name && 'opacity-50')}
+              disabled={!name}
+            >
               Save
             </BlueButton>
           </div>

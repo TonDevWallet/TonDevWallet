@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { mnemonicValidate, mnemonicToSeed, mnemonicNew } from 'ton-crypto'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
+import { cn } from '@/utils/cn'
 
 export function FromRandom() {
   const navigate = useNavigate()
@@ -12,6 +13,7 @@ export function FromRandom() {
   const nameRef = useRef<HTMLInputElement | null>(null)
   const [words, setWords] = useState('')
   const [seed, setSeed] = useState<Buffer | undefined>()
+  const [name, setName] = useState('')
 
   const generateNewMnemonic = async () => {
     const mnemonic = await mnemonicNew()
@@ -102,13 +104,17 @@ export function FromRandom() {
             <label htmlFor="nameRef">Name:</label>
             <input
               type="text"
-              ref={nameRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               id="nameRef"
-              autoComplete="off"
-              className="border w-3/4 outline-none"
+              className="border w-3/4 outline-none rounded px-2 py-1"
             />
 
-            <BlueButton onClick={saveSeed} className="mt-2">
+            <BlueButton
+              onClick={saveSeed}
+              className={cn('mt-2', !name && 'opacity-50')}
+              disabled={!name}
+            >
               Save
             </BlueButton>
           </div>

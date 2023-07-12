@@ -1,15 +1,16 @@
 import { useSeed } from '@/hooks/useKeyPair'
 import { saveKeyFromData } from '@/store/walletsListState'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { mnemonicValidate, mnemonicToSeed } from 'ton-crypto'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
+import { cn } from '@/utils/cn'
 
 export function FromMnemonic() {
   const navigate = useNavigate()
 
-  const nameRef = useRef<HTMLInputElement | null>(null)
+  const [name, setName] = useState('')
   const [words, setWords] = useState('')
   const [seed, setSeed] = useState<Buffer | undefined>()
 
@@ -34,7 +35,7 @@ export function FromMnemonic() {
       throw new Error('Seed must be 64 characters')
     }
 
-    await saveKeyFromData(nameRef.current?.value || '', navigate, seed, words)
+    await saveKeyFromData(name || '', navigate, seed, words)
   }
 
   return (
@@ -90,13 +91,17 @@ export function FromMnemonic() {
             <label htmlFor="nameRef">Name:</label>
             <input
               type="text"
-              ref={nameRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               id="nameRef"
-              autoComplete="off"
-              className="border w-3/4 outline-none"
+              className="border w-3/4 outline-none rounded px-2 py-1"
             />
 
-            <BlueButton onClick={saveSeed} className="mt-2">
+            <BlueButton
+              onClick={saveSeed}
+              className={cn('mt-2', !name && 'opacity-50')}
+              disabled={!name}
+            >
               Save
             </BlueButton>
           </div>
