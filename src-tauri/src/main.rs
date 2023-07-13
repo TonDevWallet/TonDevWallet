@@ -191,7 +191,6 @@ fn main() {
                 },
             )
             .unwrap(/* If listening to the scheme is optional for your app, you don't want to unwrap here. */);
-
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

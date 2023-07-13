@@ -11,6 +11,15 @@
     "version": "../package.json"
   },
   "tauri": {
+    "cli": {
+      "args": [
+        {
+          "name": "start",
+          "index": 1,
+          "takesValue": true
+        }
+      ]
+    },
     "allowlist": {
       "http": {
         "all": true,

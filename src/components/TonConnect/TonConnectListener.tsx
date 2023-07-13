@@ -126,6 +126,9 @@ export function TonConnectListener() {
           wallet_id: s.walletId.get(),
           status: 0,
         })
+        appWindow.unminimize()
+        appWindow.setFocus()
+
         let permissionGranted = await isPermissionGranted()
         if (!permissionGranted) {
           const permission = await requestPermission()
@@ -133,7 +136,6 @@ export function TonConnectListener() {
         }
         if (permissionGranted) {
           sendNotification({ title: 'New message', body: `From ${s.name.get()}` })
-          appWindow.setFocus()
         }
 
         console.log('update before', e)
