@@ -18,6 +18,8 @@ import { sendTonConnectStartMessage } from './TonConnect'
 import { decryptWalletData, getPasswordInteractive } from '@/store/passwordManager'
 import nacl from 'tweetnacl'
 import { KeyPair } from 'ton-crypto'
+import { getDatabase } from '@/db'
+import { LastSelectedWallets } from '@/types/connect'
 
 export function TonConnectPopup() {
   const tonConnectState = useTonConnectState()
@@ -44,6 +46,31 @@ function ConnectPopupContent() {
   const [chosenKeyId, setChosenKeyIdValue] = useState<number | undefined>()
   const [chosenWalletId, setChosenWalletId] = useState<number | undefined>()
 
+  useEffect(() => {
+    ;(async () => {
+      if (!connectLinkInfo?.url) {
+        return
+      }
+      const db = await getDatabase()
+      const savedInfo = await db<LastSelectedWallets>('last_selected_wallets')
+        .where({
+          url: connectLinkInfo?.url,
+        })
+        .first()
+
+      if (!savedInfo) {
+        return
+      }
+
+      const key = keys.find((k) => k.id.get() === savedInfo.key_id)
+      const wallet = key?.wallets.get()?.find((w) => w.id === savedInfo.wallet_id)
+
+      if (key && wallet) {
+        setChosenKeyId(key.id.get(), wallet.id)
+      }
+    })()
+  }, [connectLinkInfo])
+
   const chosenKey = useMemo(() => keys.find((k) => k.id.get() === chosenKeyId), [chosenKeyId, keys])
   const wallets = useMemo<IWallet[]>(() => {
     if (!chosenKey?.public_key) {
@@ -67,9 +94,12 @@ function ConnectPopupContent() {
     [wallets, chosenWalletId]
   )
 
-  const setChosenKeyId = (v: number | undefined) => {
-    setChosenWalletId(undefined)
+  const setChosenKeyId = (v: number | undefined, walletId?: number) => {
     setChosenKeyIdValue(v)
+
+    const chosenKey = keys.find((k) => k.id.get() === v)
+    const wallets = chosenKey?.wallets?.get() || []
+    setChosenWalletId(walletId || wallets[0]?.id)
   }
 
   const isButtonDisabled = isLoading || !chosenKeyId || !chosenWalletId
@@ -86,6 +116,18 @@ function ConnectPopupContent() {
 
       const sessionKeypair = nacl.box.keyPair() as KeyPair
 
+      console.log('start connect, ', connectLinkInfo, tonConnectState.connectArg.get())
+
+      await addTonConnectSession({
+        secretKey: Buffer.from(sessionKeypair.secretKey),
+        userId: connectLinkInfo.clientId,
+        keyId: chosenKey.id.get(),
+        walletId: chosenWallet.id,
+        iconUrl: connectLinkInfo.iconUrl || '',
+        name: connectLinkInfo.name,
+        url: connectLinkInfo.url,
+      })
+
       await sendTonConnectStartMessage(
         chosenWallet,
         decryptedData,
@@ -94,16 +136,6 @@ function ConnectPopupContent() {
         connectLinkInfo.clientId,
         connectLinkInfo.r
       )
-
-      await addTonConnectSession({
-        secretKey: Buffer.from(sessionKeypair.secretKey),
-        userId: connectLinkInfo.clientId,
-        keyId: chosenKey.id.get(),
-        walletId: chosenWallet.id,
-        iconUrl: connectLinkInfo.iconUrl,
-        name: connectLinkInfo.name,
-        url: connectLinkInfo.url,
-      })
 
       closeTonConnectPopup()
     } finally {
@@ -116,7 +148,11 @@ function ConnectPopupContent() {
       <div className="w-full flex flex-col items-center pt-4 pb-4 border-b border-gray-500/50">
         {connectLinkInfo ? (
           <>
-            <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
+            {connectLinkInfo.iconUrl ? (
+              <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
+            ) : (
+              <div className="blur-sm w-16 h-16 rounded-full bg-stone-800" />
+            )}
             <div className="mt-2">
               <b>{connectLinkInfo.name}</b> wants to connect to your wallet
             </div>
@@ -164,7 +200,7 @@ function ConnectPopupContent() {
                     onClick={() => setChosenWalletId(w.id)}
                     className={cn(
                       'flex flex-shrink-0 flex-wrap items-center justify-start',
-                      'p-2 rounded gap-2 hover:bg-gray-600 h-12',
+                      'p-2 rounded gap-2 hover:bg-gray-600 h-12 cursor-pointer',
                       w.id === chosenWalletId && '!bg-gray-500'
                     )}
                     key={w.id}
@@ -228,6 +264,19 @@ function useConnectLink(link: string) {
 
       if (!metaInfo.name) {
         console.log('No connect meta', metaInfo)
+      }
+
+      if (!metaInfo.url) {
+        const parsedJsonLink = new URL(r.manifestUrl)
+        setInfo({
+          iconUrl: metaInfo?.iconUrl,
+          name: metaInfo?.name || parsedJsonLink.host,
+          url: metaInfo?.url || parsedJsonLink.origin,
+          host: parsedJsonLink.host,
+          clientId,
+          r,
+        })
+        return
       }
 
       let host = ''

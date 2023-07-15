@@ -5,7 +5,7 @@ import { Knex } from 'knex'
 import { getWalletState, setWalletKey } from './walletState'
 import { NavigateFunction } from 'react-router-dom'
 import { SavedWallet, WalletType } from '@/types'
-import { ConnectMessageTransaction } from '@/types/connect'
+import { ConnectMessageTransaction, LastSelectedWallets } from '@/types/connect'
 import { keyPairFromSeed } from 'ton-crypto'
 import { encryptWalletData, getPasswordInteractive } from './passwordManager'
 
@@ -72,6 +72,7 @@ export async function deleteWallet(db: Knex, key: number) {
   await db.transaction(async (tx) => {
     await tx.raw(`DELETE FROM connect_message_transactions WHERE key_id = ?`, [key])
     await tx.raw(`DELETE FROM connect_sessions WHERE key_id = ?`, [key])
+    await tx.raw(`DELETE FROM last_selected_wallets WHERE key_id = ?`, [key])
     await tx.raw(`DELETE FROM wallets WHERE key_id = ?`, [key])
     await tx.raw(`DELETE FROM keys WHERE id = ?`, [key])
   })
@@ -187,6 +188,12 @@ export async function DeleteKeyWallet(walletId: number) {
     console.log(sessionsCount, transactionsCount)
     throw new Error('Wallet already used')
   }
+
+  await db<LastSelectedWallets>('last_selected_wallets')
+    .where({
+      wallet_id: walletId,
+    })
+    .delete()
 
   await db<SavedWallet>('wallets')
     .where({

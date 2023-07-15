@@ -36,3 +36,10 @@ export interface ConnectSession {
   name: string
   icon_url: string
 }
+
+// last_selected_wallets
+export interface LastSelectedWallets {
+  url: string
+  key_id: number
+  wallet_id: number
+}

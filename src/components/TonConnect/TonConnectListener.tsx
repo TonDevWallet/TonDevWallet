@@ -8,6 +8,7 @@ import {
 } from '@/store/tonConnect'
 import {
   Base64,
+  ConnectRequest,
   DisconnectRpcRequest,
   hexToByteArray,
   SendTransactionRpcRequest,
@@ -31,7 +32,7 @@ export function TonConnectListener() {
   const tonConnectState = useTonConnectState()
 
   useEffect(() => {
-    const listener = (event) => {
+    const listener = (event: ClipboardEvent) => {
       const items = event?.clipboardData?.items
       for (const index in items) {
         const item = items[index]
@@ -58,6 +59,33 @@ export function TonConnectListener() {
             }
           }
           reader.readAsDataURL(blob)
+        } else if (item.kind === 'string' && item.type === 'text/plain') {
+          item.getAsString(async (pastedString: string) => {
+            if (
+              !pastedString ||
+              !pastedString.includes('id') ||
+              !pastedString.includes('manifestUrl')
+            ) {
+              return
+            }
+            try {
+              const input = pastedString
+              const parsed = new URL(input)
+
+              const clientId = parsed.searchParams.get('id') || '' // '230f1e4df32364888a5dbd92a410266fcb974b73e30ff3e546a654fc8ee2c953'
+              const rString = parsed.searchParams.get('r')
+              const r = rString ? (JSON.parse(rString) as ConnectRequest) : undefined
+              if (r?.manifestUrl && clientId) {
+                const password = await getPasswordInteractive()
+                if (password) {
+                  tonConnectState.connectArg.set(input)
+                  tonConnectState.popupOpen.set(true)
+                }
+              }
+            } catch (e) {
+              // it's ok
+            }
+          })
         }
       }
     }

@@ -198,8 +198,9 @@ button {
 
 html {
   .connect-modal-overlay {
+    animation: appear 0.25s ease-in-out;
     .connect-modal-content {
-      animation: appear 0.375s ease-in-out;
+      animation: appear 0.25s ease-in-out;
       width: 75%;
       max-width: min(100%, 600px);
       overflow: hidden;
@@ -207,5 +208,15 @@ html {
       height: min(90%, 600px);
       padding: 0;
     }
+  }
+}
+
+
+@keyframes appear {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
   }
 }

@@ -1,5 +1,5 @@
 import { getDatabase } from '@/db'
-import { ConnectMessageTransaction, ConnectSession } from '@/types/connect'
+import { ConnectMessageTransaction, ConnectSession, LastSelectedWallets } from '@/types/connect'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { hookstate, State, useHookstate } from '@hookstate/core'
 import { getConnectMessages, messagesState } from './connectMessages'
@@ -97,6 +97,15 @@ export async function addTonConnectSession({
   if (res.length < 1) {
     throw new Error("can't add session")
   }
+
+  await db<LastSelectedWallets>('last_selected_wallets')
+    .insert({
+      url,
+      key_id: keyId,
+      wallet_id: walletId,
+    })
+    .onConflict('url')
+    .merge()
 
   const session: TonConnectSession = {
     secretKey,

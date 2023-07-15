@@ -18,9 +18,7 @@ function Wallet() {
   const updateBalance = async () => {
     const state = await liteClient.getAccountState(
       wallet.address,
-      (
-        await liteClient.getMasterchainInfo()
-      ).last
+      (await liteClient.getMasterchainInfo()).last
     )
     setBalance(state.balance.coins.toString())
   }
