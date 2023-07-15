@@ -24,6 +24,13 @@ module.exports = {
       opacity: {
         15: '.15',
       },
+
+      keyframes: {
+        appear: {
+          '0%': { opacity: 0 },
+          '100%': { opacity: 1 },
+        },
+      },
     },
   },
   variants: {},

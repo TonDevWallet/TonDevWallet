@@ -23,7 +23,12 @@ export function TonConnectPopup() {
   const tonConnectState = useTonConnectState()
 
   return (
-    <ReactPopup modal open={tonConnectState.popupOpen.get()} onClose={closeTonConnectPopup}>
+    <ReactPopup
+      modal
+      open={tonConnectState.popupOpen.get()}
+      onClose={closeTonConnectPopup}
+      className="connect-modal"
+    >
       <ConnectPopupContent />
     </ReactPopup>
   )
@@ -107,76 +112,83 @@ function ConnectPopupContent() {
   }, [chosenKey, chosenWallet, connectLinkInfo])
 
   return (
-    <div className="p-4">
-      {connectLinkInfo && (
-        <div className="flex flex-col w-[400px] items-center">
-          <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
-          <div className="mt-2">
-            <b>{connectLinkInfo.name}</b> wants to connect to your wallet
-          </div>
-          <a href={connectLinkInfo.url} target="_blank">
-            {connectLinkInfo.url}
-          </a>
+    <div className="flex flex-col items-center h-full">
+      <div className="w-full flex flex-col items-center pt-4 pb-4 border-b border-gray-500/50">
+        {connectLinkInfo ? (
+          <>
+            <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
+            <div className="mt-2">
+              <b>{connectLinkInfo.name}</b> wants to connect to your wallet
+            </div>
+            <a href={connectLinkInfo.url} target="_blank">
+              {connectLinkInfo.url}
+            </a>
+          </>
+        ) : (
+          <>
+            <div className="blur-sm w-16 h-16 rounded-full bg-stone-800" />
+            <div className="mt-2">
+              <b className="blur-sm">Wallet</b> wants to connect to your wallet
+            </div>
+            <div className="text-accent blur-sm">http://wallet.link</div>
+          </>
+        )}
+      </div>
 
-          <div>Choose wallet to connect</div>
+      <div className="grid grid-cols-2 gap-4 w-full min-h-0 overflow-y-scroll p-2 h-full">
+        <Block className="flex flex-col gap-2 h-min">
+          {keys.map((k) => {
+            return (
+              <div
+                onClick={() => setChosenKeyId(k.id.get())}
+                className={cn(
+                  'flex flex-shrink-0 flex-wrap items-center p-2 rounded',
+                  'text-center cursor-pointer hover:bg-gray-600 h-12',
+                  k.id.get() === chosenKeyId && '!bg-gray-500'
+                )}
+                key={k.id.get()}
+              >
+                <KeyJazzicon walletKey={k} diameter={24} />
+                <div className="text-foreground ml-2">{k.name.get()}</div>
+              </div>
+            )
+          })}
+        </Block>
 
-          <div>Key:</div>
-          <Block className="flex flex-wrap p-2">
-            {keys.map((k) => {
-              return (
-                <div
-                  onClick={() => setChosenKeyId(k.id.get())}
-                  className={cn(
-                    'flex flex-col flex-shrink-0 flex-wrap w-32 items-center p-2 rounded',
-                    'text-center',
-                    k.id.get() === chosenKeyId && 'bg-gray-500'
-                  )}
-                  key={k.id.get()}
-                >
-                  <KeyJazzicon walletKey={k} />
-                  <div className="text-foreground mt-2">{k.name.get()}</div>
-                </div>
-              )
-            })}
-          </Block>
+        {chosenKeyId && (
+          <>
+            <Block className="flex flex-col p-2 w-full gap-2 h-min">
+              {wallets?.map((w) => {
+                return (
+                  <div
+                    onClick={() => setChosenWalletId(w.id)}
+                    className={cn(
+                      'flex flex-shrink-0 flex-wrap items-center justify-start',
+                      'p-2 rounded gap-2 hover:bg-gray-600 h-12',
+                      w.id === chosenWalletId && '!bg-gray-500'
+                    )}
+                    key={w.id}
+                  >
+                    <WalletJazzicon wallet={w} diameter={24} />
+                    <div className="text-foreground">{w.type}</div>
+                    <AddressRow containerClassName="w-28" address={w.address} disableCopy={true} />
+                  </div>
+                )
+              })}
+            </Block>
+          </>
+        )}
+      </div>
 
-          {chosenKeyId && (
-            <>
-              <div>Wallet:</div>
-              <Block className="flex flex-wrap p-2">
-                {wallets?.map((w) => {
-                  return (
-                    <div
-                      onClick={() => setChosenWalletId(w.id)}
-                      className={cn(
-                        'flex flex-col flex-shrink-0 flex-wrap w-32 items-center justify-center p-2 rounded',
-                        w.id === chosenWalletId && 'bg-gray-500'
-                      )}
-                      key={w.id}
-                    >
-                      <WalletJazzicon wallet={w} />
-                      <div className="text-foreground mt-2">{w.type}</div>
-                      <AddressRow
-                        containerClassName="w-28"
-                        address={w.address}
-                        disableCopy={true}
-                      />
-                    </div>
-                  )
-                })}
-              </Block>
-            </>
-          )}
-
-          <BlueButton
-            className={cn('mt-4 mx-auto', isButtonDisabled && 'bg-gray-500')}
-            onClick={doBridgeAuth}
-            disabled={isButtonDisabled}
-          >
-            Connect
-          </BlueButton>
-        </div>
-      )}
+      <div className="w-full flex flex-shrink-0 justify-center items-center border-t border-gray-500/50 h-16 self-end">
+        <BlueButton
+          className={cn('mx-auto', isButtonDisabled && 'bg-gray-500')}
+          onClick={doBridgeAuth}
+          disabled={isButtonDisabled}
+        >
+          Connect
+        </BlueButton>
+      </div>
     </div>
   )
 }

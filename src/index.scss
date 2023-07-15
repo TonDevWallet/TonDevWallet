@@ -195,3 +195,17 @@ button {
 .react-flow__controls-button {
   background: white;
 }
+
+html {
+  .connect-modal-overlay {
+    .connect-modal-content {
+      animation: appear 0.375s ease-in-out;
+      width: 75%;
+      max-width: min(100%, 600px);
+      overflow: hidden;
+      min-height: 0;
+      height: min(90%, 600px);
+      padding: 0;
+    }
+  }
+}

@@ -173,7 +173,7 @@ function AddWalletPopup() {
                 <select ref={typeRef}>
                   <option value="v4R2">v4R2</option>
                   <option value="v3R2">v3R2</option>
-                  <option value="highload">highload</option>
+                  <option value="highload">Highload</option>
                 </select>
               </div>
               <div className="">
