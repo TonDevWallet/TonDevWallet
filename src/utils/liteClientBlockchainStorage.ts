@@ -14,7 +14,6 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
   }
 
   async getContract(blockchain: Blockchain, address: Address) {
-    console.log('get address', address.toRaw())
     let existing = this.contracts.get(address.toString())
     if (!existing) {
       const lastBlock = await getLastLiteBlock(this.client)

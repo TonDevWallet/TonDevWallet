@@ -70,6 +70,11 @@ export function closePasswordPopup() {
   passwordState.popupOpen.set(false)
 }
 
+export function getPassword(): string {
+  const existing = passwordState.password.get()
+  return existing
+}
+
 // This function opens password popup and returns password if user unlocked it
 export async function getPasswordInteractive(): Promise<string> {
   const existing = passwordState.password.get()

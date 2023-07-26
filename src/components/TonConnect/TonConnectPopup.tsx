@@ -79,7 +79,7 @@ function ConnectPopupContent() {
 
     const wallets: IWallet[] =
       chosenKey.wallets.get()?.map((w) => {
-        const newWallet = getWalletFromKey(liteClient, chosenKey, w)
+        const newWallet = getWalletFromKey(liteClient, chosenKey.get(), w)
         if (!newWallet) {
           throw new Error('no wallet')
         }

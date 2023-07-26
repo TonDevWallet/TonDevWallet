@@ -1,6 +1,7 @@
 import { addConnectMessage } from '@/store/connectMessages'
-import { useLiteclient } from '@/store/liteClient'
+import { LiteClientState, useLiteclient } from '@/store/liteClient'
 import {
+  TonConnectSession,
   deleteTonConnectSession,
   updateSessionEventId,
   useTonConnectSessions,
@@ -24,7 +25,13 @@ import {
 } from '@tauri-apps/api/notification'
 import { appWindow } from '@tauri-apps/api/window'
 import { invoke } from '@tauri-apps/api'
-import { getPasswordInteractive } from '@/store/passwordManager'
+import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/passwordManager'
+import { getWalletListState } from '@/store/walletsListState'
+import { ImmutableObject } from '@hookstate/core'
+import { keyPairFromSeed } from 'ton-crypto'
+import { getWalletFromKey } from '@/utils/wallets'
+import { ApproveTonConnectMessage, GetTransfersFromTCMessage } from '@/utils/tonConnect'
+import { ConnectMessageTransactionMessage } from '@/types/connect'
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
@@ -146,6 +153,17 @@ export function TonConnectListener() {
           valid_until: number // date now
         }
 
+        const isAutoSend = await autoSendMessage({
+          session: s.get(),
+          messages: info.messages,
+          eventId: walletMessage.id,
+          bridgeEventId: e.lastEventId,
+        })
+
+        if (isAutoSend) {
+          return
+        }
+
         await addConnectMessage({
           connect_event_id: parseInt(walletMessage.id),
           connect_session_id: s.id.get(),
@@ -175,8 +193,6 @@ export function TonConnectListener() {
       return null
     })
 
-    // setListeners(listeners)
-
     return () => {
       for (const listener of listeners) {
         listener.close()
@@ -184,4 +200,46 @@ export function TonConnectListener() {
     }
   }, [liteClient, sessions])
   return <></>
+}
+
+async function autoSendMessage({
+  session,
+  messages,
+  eventId,
+  bridgeEventId,
+}: {
+  session: ImmutableObject<TonConnectSession>
+  messages: ConnectMessageTransactionMessage[]
+  eventId: string
+  bridgeEventId: string
+}): Promise<boolean> {
+  const password = getPassword()
+  if (!session.autoSend || !password) {
+    return false
+  }
+  const walletsState = getWalletListState()
+  const key = walletsState.find((k) => k.id.get() === session.keyId)?.get()
+  if (!key) {
+    return false
+  }
+
+  const wallet = key.wallets?.find((w) => w.id === session.walletId)
+  if (!wallet) {
+    return false
+  }
+  const decryptedData = await decryptWalletData(password, key.encrypted)
+
+  const transfers = GetTransfersFromTCMessage(messages)
+
+  const liteClient = LiteClientState.liteClient.get()
+  const keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+  const sendWallet = getWalletFromKey(liteClient, key, wallet)
+  if (!sendWallet) {
+    return false
+  }
+  const messageCell = await sendWallet.getExternalMessageCell(keyPair, transfers)
+  updateSessionEventId(session.id, parseInt(bridgeEventId))
+
+  await ApproveTonConnectMessage({ liteClient, messageCell, session, eventId })
+  return true
 }

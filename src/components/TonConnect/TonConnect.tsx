@@ -59,7 +59,7 @@ export function TonConnect() {
     return <></>
   }
 
-  const wallet = getWalletFromKey(liteClient, selectedKey, selectedWallet)
+  const wallet = getWalletFromKey(liteClient, selectedKey.get(), selectedWallet)
 
   if (!wallet) {
     return <></>

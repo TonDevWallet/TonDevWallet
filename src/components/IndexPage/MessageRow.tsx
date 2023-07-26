@@ -1,20 +1,17 @@
-import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
-import { TonConnectMessageTransaction, changeConnectMessageStatus } from '@/store/connectMessages'
+import { TonConnectMessageTransaction } from '@/store/connectMessages'
 import { useLiteclient } from '@/store/liteClient'
 import { openPasswordPopup, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
-import { ConnectMessageStatus } from '@/types/connect'
-import { sendTonConnectMessage } from '@/utils/tonConnect'
+import {
+  ApproveTonConnectMessage,
+  GetTransfersFromTCMessage,
+  RejectTonConnectMessage,
+} from '@/utils/tonConnect'
 import { getWalletFromKey, useWalletExternalMessageCell } from '@/utils/wallets'
 import { State, ImmutableObject } from '@hookstate/core'
-import {
-  SendTransactionRpcResponseSuccess,
-  SendTransactionRpcResponseError,
-  SEND_TRANSACTION_ERROR_CODES,
-} from '@tonconnect/protocol'
 import { useMemo, useState } from 'react'
-import { Address, Cell } from 'ton-core'
+import { Cell } from 'ton-core'
 import { KeyPair, keyPairFromSeed } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
@@ -67,91 +64,18 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
     const keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
     return keyPair
   }, [key.encrypted, decryptedData])
-  const tonWallet = useMemo(() => getWalletFromKey(liteClient, key, wallet), [liteClient, wallet])
+  const tonWallet = useMemo(
+    () => getWalletFromKey(liteClient, key.get(), wallet),
+    [liteClient, wallet, key]
+  )
 
   const transfers = useMemo(
-    () =>
-      s.payload.messages
-        .map((m) => {
-          if (!m.address.get() || !m.amount.get()) {
-            return undefined
-          }
-
-          let bounce: boolean | undefined
-
-          let destination
-
-          try {
-            if (Address.isFriendly(m.address.get() || '')) {
-              const { isBounceable, address } = Address.parseFriendly(m.address.get() || '')
-              destination = address
-              bounce = isBounceable
-            } else {
-              destination = Address.parseRaw(m.address.get() || '')
-            }
-          } catch (e) {
-            return undefined
-            // throw new Error('Wrong address')
-          }
-
-          const p = m?.payload?.get()
-          const payload = p ? Cell.fromBase64(p) : undefined
-
-          const stateInitData = m.stateInit.get()
-          const state = stateInitData ? Cell.fromBase64(stateInitData) : undefined
-
-          return {
-            body: payload,
-            destination,
-            amount: BigInt(m.amount.get()),
-            mode: 3,
-            state,
-            bounce: bounce ?? true,
-          }
-        })
-        .filter((m) => m) as WalletTransfer[],
+    () => GetTransfersFromTCMessage(s.payload.messages.get()),
     [s.payload.messages]
   )
 
   const messageCell = useWalletExternalMessageCell(tonWallet, walletKeyPair, transfers)
   const testMessageCell = useWalletExternalMessageCell(tonWallet, emptyKeyPair, transfers)
-
-  const approveMessage = async () => {
-    console.log('do approve', messageCell)
-    const msg: SendTransactionRpcResponseSuccess = {
-      id: s.connect_event_id.get().toString(),
-      result: messageCell?.toBoc().toString('base64') || '',
-    }
-
-    await sendTonConnectMessage(
-      msg,
-      session?.secretKey.get() || Buffer.from(''),
-      session?.userId?.get() || ''
-    )
-
-    await liteClient.sendMessage(messageCell?.toBoc() || Buffer.from(''))
-
-    changeConnectMessageStatus(s.id.get(), ConnectMessageStatus.REJECTED)
-  }
-
-  const rejectMessage = async () => {
-    console.log('do reject')
-    changeConnectMessageStatus(s.id.get(), ConnectMessageStatus.REJECTED)
-
-    const msg: SendTransactionRpcResponseError = {
-      id: s.connect_event_id.get().toString(),
-      error: {
-        code: SEND_TRANSACTION_ERROR_CODES.USER_REJECTS_ERROR,
-        message: 'User rejected',
-      },
-    }
-
-    await sendTonConnectMessage(
-      msg,
-      session?.secretKey.get() || Buffer.from(''),
-      session?.userId?.get() || ''
-    )
-  }
 
   return (
     <Block className="mt-2">
@@ -183,14 +107,29 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
           <div className="flex items-center gap-2 my-2">
             <BlueButton
               onClick={() => {
-                rejectMessage()
+                if (!session) {
+                  return
+                }
+                RejectTonConnectMessage({
+                  s: s.get(),
+                  session: session.get(),
+                })
               }}
             >
               Reject
             </BlueButton>
             <BlueButton
               onClick={() => {
-                approveMessage()
+                if (!messageCell || !session) {
+                  return
+                }
+                ApproveTonConnectMessage({
+                  liteClient,
+                  messageCell,
+                  s: s.get(),
+                  session: session.get(),
+                  eventId: s.connect_event_id.get().toString(),
+                })
               }}
               className={cn('bg-green-500', 'disabled:bg-gray-400')}
               disabled={!messageCell}
@@ -203,7 +142,13 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
         <>
           <BlueButton
             onClick={() => {
-              rejectMessage()
+              if (!session) {
+                return
+              }
+              RejectTonConnectMessage({
+                s: s.get(),
+                session: session.get(),
+              })
             }}
           >
             Reject

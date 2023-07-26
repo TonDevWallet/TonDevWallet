@@ -1,5 +1,9 @@
 import { useLiteclient } from '@/store/liteClient'
-import { useTonConnectSessions, deleteTonConnectSession } from '@/store/tonConnect'
+import {
+  useTonConnectSessions,
+  deleteTonConnectSession,
+  setTonConnectSessionAutoSend,
+} from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
 import { setWalletKey, setSelectedWallet } from '@/store/walletState'
 import { getWalletFromKey } from '@/utils/wallets'
@@ -35,7 +39,7 @@ export function SessionsList() {
           return <></>
         }
 
-        const tonWallet = getWalletFromKey(liteClient, key, wallet)
+        const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
 
         return (
           <Block
@@ -128,16 +132,23 @@ export function SessionsList() {
               address={tonWallet?.address}
             />
 
-            {/* <div className="flex items-center">
-              <div>Delete:&nbsp;</div>
-              <BlueButton
-                onClick={() => {
-                  deleteTonConnectSession(s.id.get())
+            <div className="flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                id={`autosend_input_${s.id.get()}`}
+                className="w-4 h-4 accent-highlight"
+                checked={s.autoSend.get()}
+                onChange={(e) => {
+                  setTonConnectSessionAutoSend({ session: s, autoSend: e.target.checked })
                 }}
+              />
+              <label
+                htmlFor={`autosend_input_${s.id.get()}`}
+                className="w-full ml-2 cursor-pointer"
               >
-                Delete
-              </BlueButton>
-            </div> */}
+                Send without confirmation?
+              </label>
+            </div>
           </Block>
         )
       })}

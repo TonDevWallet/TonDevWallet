@@ -56,7 +56,7 @@ export function SavedWalletsList() {
 
       const sessionKeyPair = nacl.box.keyPair.fromSecretKey(s.secretKey) as KeyPair
 
-      const tonWallet = getWalletFromKey(liteClient, key, wallet) as IWallet
+      const tonWallet = getWalletFromKey(liteClient, key.get(), wallet) as IWallet
 
       const serviceUrl = new URL(s.url)
       const host = serviceUrl.host

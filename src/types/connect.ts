@@ -4,13 +4,15 @@ export const ConnectMessageStatus = {
   REJECTED: 2,
 } as const
 
+export interface ConnectMessageTransactionMessage {
+  address: string
+  amount: string
+  payload?: string // boc
+  stateInit?: string
+}
+
 export interface ConnectMessageTransactionPayload {
-  messages: {
-    address: string
-    amount: string
-    payload?: string // boc
-    stateInit?: string
-  }[]
+  messages: ConnectMessageTransactionMessage[]
   valid_until: number // date now
 }
 
@@ -35,6 +37,7 @@ export interface ConnectSession {
   url: string
   name: string
   icon_url: string
+  auto_send: boolean
 }
 
 // last_selected_wallets

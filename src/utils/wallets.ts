@@ -13,7 +13,7 @@ import {
   SavedWallet,
 } from '@/types'
 import { Key } from '@/types/Key'
-import { State } from '@hookstate/core'
+import { ImmutableObject } from '@hookstate/core'
 import { useEffect, useMemo, useState } from 'react'
 import {
   beginCell,
@@ -30,18 +30,18 @@ import { KeyPair } from 'ton-crypto'
 import { LiteClient } from 'ton-lite-client'
 
 export function getWalletFromKey(
-  liteClient: LiteClient,
-  key: State<Key>,
+  liteClient: LiteClient | ImmutableObject<LiteClient>,
+  key: ImmutableObject<Key>,
   wallet: SavedWallet
 ): IWallet | undefined {
-  const encryptedData = JSON.parse(key.encrypted.get())
+  const encryptedData = JSON.parse(key.encrypted)
   if (!encryptedData) {
     return
   }
 
   if (wallet.type === 'highload') {
     const tonWallet = new HighloadWalletV2({
-      publicKey: Buffer.from(key.public_key.get(), 'base64'),
+      publicKey: Buffer.from(key.public_key, 'base64'),
       subwalletId: wallet.subwallet_id,
       workchain: 0,
     })
@@ -59,7 +59,7 @@ export function getWalletFromKey(
     const tonWallet = liteClient.open(
       WalletContractV3R2.create({
         workchain: 0,
-        publicKey: Buffer.from(key.public_key.get(), 'base64'),
+        publicKey: Buffer.from(key.public_key, 'base64'),
         walletId: wallet.subwallet_id,
       })
     )
@@ -77,7 +77,7 @@ export function getWalletFromKey(
     const tonWallet = liteClient.open(
       WalletContractV4.create({
         workchain: 0,
-        publicKey: Buffer.from(key.public_key.get(), 'base64'),
+        publicKey: Buffer.from(key.public_key, 'base64'),
         walletId: wallet.subwallet_id,
       })
     )
@@ -103,7 +103,7 @@ export function useSelectedTonWallet() {
     if (!selectedKey || !selectedWallet) {
       return
     }
-    const wallet = getWalletFromKey(liteClient, selectedKey, selectedWallet)
+    const wallet = getWalletFromKey(liteClient, selectedKey.get(), selectedWallet)
     return wallet
   }, [liteClient, selectedKey, selectedWallet])
 }

@@ -14,6 +14,7 @@ export interface TonConnectSession {
   url: string
   name: string
   iconUrl: string
+  autoSend: boolean
 }
 export interface TonConnectState {
   sessions: TonConnectSession[]
@@ -46,6 +47,7 @@ async function getSessions() {
       url: dbSession.url,
       name: dbSession.name,
       iconUrl: dbSession.icon_url,
+      autoSend: dbSession.auto_send,
     }
   })
 
@@ -117,9 +119,28 @@ export async function addTonConnectSession({
     iconUrl,
     name,
     url,
+    autoSend: false,
   }
 
   state.sessions.merge([session])
+}
+
+export async function setTonConnectSessionAutoSend({
+  session,
+  autoSend,
+}: {
+  session: State<TonConnectSession>
+  autoSend: boolean
+}) {
+  const db = await getDatabase()
+  await db<ConnectSession>('connect_sessions')
+    .where({
+      id: session.id.get(),
+    })
+    .update({
+      auto_send: autoSend,
+    })
+  state.sessions.set(await getSessions())
 }
 
 export async function deleteTonConnectSession(session: State<TonConnectSession>) {
