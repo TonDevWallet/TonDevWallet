@@ -192,8 +192,8 @@ export async function sendTonConnectStartMessage(
     payload: {
       device: {
         platform: 'windows',
-        appName: 'ton-dev-wallet',
-        appVersion: '0.1.0',
+        appName: 'tonkeeper',
+        appVersion: '0.3.3',
         maxProtocolVersion: 2,
         features: ['SendTransaction'],
       },
