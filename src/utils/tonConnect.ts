@@ -118,7 +118,14 @@ export function GetTransfersFromTCMessage(
       }
 
       const p = m?.payload
-      const payload = p ? Cell.fromBase64(p) : undefined
+      let payload
+      try {
+        if (p) {
+          payload = Cell.fromBase64(p)
+        }
+      } catch (e) {
+        //
+      }
 
       const stateInitData = m.stateInit
       const state = stateInitData ? Cell.fromBase64(stateInitData) : undefined
