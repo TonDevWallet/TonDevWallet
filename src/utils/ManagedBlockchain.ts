@@ -8,6 +8,7 @@ import {
   PendingMessage,
   SmartContractTransaction,
   BlockchainTransaction as SandboxBlockchainTransaction,
+  ExternalOut,
 } from '@ton-community/sandbox'
 import { extractEvents } from '@ton-community/sandbox/dist/event/Event'
 import { Executor } from '@ton-community/sandbox/dist/executor/Executor'
@@ -34,6 +35,7 @@ export interface BlockchainTransaction extends SandboxBlockchainTransaction {
 export type ManagedSendMessageResult = {
   transactions: BlockchainTransaction[]
   events: Event[]
+  externals: ExternalOut[]
 }
 
 export class ManagedBlockchain extends Blockchain {

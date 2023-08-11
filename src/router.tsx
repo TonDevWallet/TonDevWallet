@@ -5,6 +5,7 @@ import { NewWalletPage } from './components/NewWalletPage/NewWalletPage'
 import { WalletPage } from './components/IndexPage/WalletPage'
 import { Layout } from './components/Layout'
 import { TxInfoPage } from './components/TxInfoPage/TxInfoPage'
+import { CustomTxInfoPage } from './components/TxInfoPage/CustomTxInfoPage'
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
       {
         path: '/txinfo',
         element: <TxInfoPage />,
+      },
+      {
+        path: '/customtxinfo',
+        element: <CustomTxInfoPage />,
       },
     ],
   },
