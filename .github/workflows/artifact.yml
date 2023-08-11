@@ -2,6 +2,9 @@ name: 'Build artifact'
 
 on: push
 
+env:
+  TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+
 jobs:
   # create-release:
   #   runs-on: ubuntu-20.04
