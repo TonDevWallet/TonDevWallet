@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -33,8 +33,8 @@ dependencies:
     specifier: ^0.11.0
     version: 0.11.0(ton-core@0.49.1)(ton-crypto@3.2.0)
   '@tonconnect/protocol':
-    specifier: ^2.2.5
-    version: 2.2.5
+    specifier: ^2.2.6
+    version: 2.2.6
   '@tonconnect/sdk':
     specifier: ^2.1.3
     version: 2.1.3
@@ -999,8 +999,8 @@ packages:
       - encoding
     dev: false
 
-  /@tonconnect/protocol@2.2.5:
-    resolution: {integrity: sha512-kR0E+CWZl6JrE/30283v+sRiAvEu21t1xOLFx6f/BxlCNLY2wki39+L32+iicX8gn/Ig99L1flr9TAI9QW9bnQ==}
+  /@tonconnect/protocol@2.2.6:
+    resolution: {integrity: sha512-kyoDz5EqgsycYP+A+JbVsAUYHNT059BCrK+m0pqxykMODwpziuSAXfwAZmHcg8v7NB9VKYbdFY55xKeXOuEd0w==}
     dependencies:
       tweetnacl: 1.0.3
       tweetnacl-util: 0.15.1
@@ -1011,7 +1011,7 @@ packages:
     dependencies:
       '@tonconnect/isomorphic-eventsource': 0.0.1
       '@tonconnect/isomorphic-fetch': 0.0.2
-      '@tonconnect/protocol': 2.2.5
+      '@tonconnect/protocol': 2.2.6
     transitivePeerDependencies:
       - encoding
     dev: false

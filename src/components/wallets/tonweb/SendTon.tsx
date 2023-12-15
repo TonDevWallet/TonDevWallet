@@ -1,7 +1,7 @@
 import { Block } from '@/components/ui/Block'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import { Address, Cell, internal, loadStateInit } from 'ton-core'
+import { Address, Cell, SendMode, internal, loadStateInit } from 'ton-core'
 import { ITonWallet, TonWalletTransferArg } from '@/types'
 import { BlueButton } from '@/components/ui/BlueButton'
 import { decryptWalletData, getPasswordInteractive, usePassword } from '@/store/passwordManager'
@@ -198,7 +198,7 @@ const SendModal = ({
     const params: TonWalletTransferArg = {
       seqno: parseInt(seqno),
       secretKey: keyPair.secretKey,
-      sendMode: 3,
+      sendMode: SendMode.IGNORE_ERRORS + SendMode.PAY_GAS_SEPARATELY,
       messages: [
         internal({
           body: textToWalletBody(sendMessage, isBase64),
@@ -220,6 +220,17 @@ const SendModal = ({
     try {
       const query = await wallet.wallet.createTransfer(params)
       await wallet.wallet.send(query)
+
+      const retries = 10
+      let ok = 0
+      let fail = 0
+      for (let i = 0; i < retries; i++) {
+        wallet.wallet
+          .send(query)
+          .then(() => ok++)
+          .catch(() => fail++)
+      }
+
       // const transfer = external({
       //   to: wallet.address,
       //   body: query,

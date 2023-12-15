@@ -176,8 +176,13 @@ export async function sendTonConnectStartMessage(
       .endCell()
   }
 
-  const keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
-  const publicKey = keyPair.publicKey.toString('base64')
+  let keyPair // = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+  let publicKey // = keyPair.publicKey.toString('base64')
+
+  try {
+    keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+    publicKey = keyPair.publicKey.toString('base64')
+  } catch (e) {}
 
   const proof = connectRequest?.items.find((i) => i.name === 'ton_proof') as TonProofItem
   const timestamp = Math.floor(Date.now())
@@ -195,7 +200,12 @@ export async function sendTonConnectStartMessage(
         appName: 'tonkeeper',
         appVersion: '0.3.3',
         maxProtocolVersion: 2,
-        features: ['SendTransaction'],
+        features: [
+          {
+            name: 'SendTransaction',
+            maxMessages: wallet.type === 'highload' ? 255 : 4,
+          },
+        ],
       },
       items: [
         {
