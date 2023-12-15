@@ -20,6 +20,8 @@ const deleteWallet = (walletId: number) => {
 }
 
 function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolean }) {
+  const isTestnet = useLiteclientState().testnet.get()
+
   return (
     <Block
       className="my-2 flex flex-col border"
@@ -57,11 +59,19 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
         </div>
         <AddressRow
           text={<span className="w-32 flex-shrink-0">Bouncable:</span>}
-          address={wallet.address.toString({ bounceable: true, urlSafe: true })}
+          address={wallet.address.toString({
+            bounceable: true,
+            urlSafe: true,
+            testOnly: isTestnet,
+          })}
         />
         <AddressRow
           text={<span className="w-32 flex-shrink-0">UnBouncable:</span>}
-          address={wallet.address.toString({ urlSafe: true, bounceable: false })}
+          address={wallet.address.toString({
+            urlSafe: true,
+            bounceable: false,
+            testOnly: isTestnet,
+          })}
         />
         <AddressRow
           text={<span className="w-32 flex-shrink-0">Raw:</span>}
