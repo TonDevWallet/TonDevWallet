@@ -1,5 +1,5 @@
 import { TonConnectMessageTransaction } from '@/store/connectMessages'
-import { useLiteclient } from '@/store/liteClient'
+import { useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { openPasswordPopup, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
@@ -165,6 +165,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
 }
 
 export function MessageEmulationResult({ messageCell }: { messageCell?: Cell }) {
+  const isTestnet = useLiteclientState().testnet.get()
   const { response: txInfo, progress, isLoading } = useTonapiTxInfo(messageCell)
   const [max, setMax] = useState(false)
 
@@ -183,7 +184,10 @@ export function MessageEmulationResult({ messageCell }: { messageCell?: Cell }) 
             </div>
           </div>
 
-          <Block className={cn('h-[50vh]', max && 'h-[90vh]')}>
+          <Block
+            className={cn('h-[50vh]', max && 'h-[90vh]', 'p-0')}
+            bg={isTestnet ? 'bg-[#22351f]' : 'bg-transparent'}
+          >
             {!isLoading && <MessageFlow transactions={txInfo?.transactions} />}
           </Block>
         </div>
