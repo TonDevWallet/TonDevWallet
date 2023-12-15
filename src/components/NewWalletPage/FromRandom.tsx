@@ -1,6 +1,6 @@
 import { useSeed } from '@/hooks/useKeyPair'
 import { saveKeyFromData } from '@/store/walletsListState'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { mnemonicValidate, mnemonicToSeed, mnemonicNew } from 'ton-crypto'
 import Copier from '../copier'
@@ -10,7 +10,6 @@ import { cn } from '@/utils/cn'
 export function FromRandom() {
   const navigate = useNavigate()
 
-  const nameRef = useRef<HTMLInputElement | null>(null)
   const [words, setWords] = useState('')
   const [seed, setSeed] = useState<Buffer | undefined>()
   const [name, setName] = useState('')
@@ -48,7 +47,7 @@ export function FromRandom() {
       throw new Error('Seed must be 64 characters')
     }
 
-    await saveKeyFromData(nameRef.current?.value || '', navigate, seed, words)
+    await saveKeyFromData(name || '', navigate, seed, words)
   }
 
   return (
