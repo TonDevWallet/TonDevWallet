@@ -185,7 +185,7 @@ export async function sendTonConnectStartMessage(
   } catch (e) {}
 
   const proof = connectRequest?.items.find((i) => i.name === 'ton_proof') as TonProofItem
-  const timestamp = Math.floor(Date.now())
+  const timestamp = Math.floor(Date.now() / 1000)
   const domain = {
     LengthBytes: Buffer.from(host).length,
     Value: host,
