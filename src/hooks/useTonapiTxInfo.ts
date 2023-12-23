@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { Cell, loadMessage } from 'ton-core'
 import { LiteClient } from 'ton-lite-client'
 
-export function useTonapiTxInfo(cell: Cell | undefined) {
+export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
   const [response, setResponse] = useState<ManagedSendMessageResult | undefined>()
   const [progress, setProgress] = useState<{ total: number; done: number }>({ done: 0, total: 0 })
   const [isLoading, setIsLoading] = useState(false)
@@ -47,7 +47,7 @@ export function useTonapiTxInfo(cell: Cell | undefined) {
         const msg = loadMessage(cell.beginParse())
         const start = Date.now()
         const { result, emitter, gasMap } = await blockchain.sendMessageWithProgress(msg, {
-          ignoreChksig: true,
+          ignoreChksig: ignoreChecksig,
         })
 
         let isStopped = false

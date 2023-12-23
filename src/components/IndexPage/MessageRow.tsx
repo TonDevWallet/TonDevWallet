@@ -159,14 +159,23 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
         </>
       )}
 
-      <MessageEmulationResult messageCell={testMessageCell} />
+      <MessageEmulationResult
+        messageCell={walletKeyPair ? messageCell : testMessageCell}
+        ignoreChecksig={!walletKeyPair} // do not ignore checksig if we use real keypair
+      />
     </Block>
   )
 }
 
-export function MessageEmulationResult({ messageCell }: { messageCell?: Cell }) {
+export function MessageEmulationResult({
+  messageCell,
+  ignoreChecksig,
+}: {
+  messageCell?: Cell
+  ignoreChecksig?: boolean
+}) {
   const isTestnet = useLiteclientState().testnet.get()
-  const { response: txInfo, progress, isLoading } = useTonapiTxInfo(messageCell)
+  const { response: txInfo, progress, isLoading } = useTonapiTxInfo(messageCell, ignoreChecksig)
   const [max, setMax] = useState(false)
 
   return (
