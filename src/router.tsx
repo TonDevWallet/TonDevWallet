@@ -7,6 +7,7 @@ import { Layout } from './components/Layout'
 import { TxInfoPage } from './components/TxInfoPage/TxInfoPage'
 import { SettingsPage } from './components/SettingsPage/SettingsPage'
 import { TracerPage } from './components/TracerPage/TracerPage'
+import { EditorPage } from './components/EditorPage/EditorPage'
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
       {
         path: '/app/wallets/:walletId',
         element: <WalletPage />,
+      },
+      {
+        path: '/app/editor',
+        element: <EditorPage />,
       },
     ],
   },
