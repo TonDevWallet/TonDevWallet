@@ -29,9 +29,8 @@ export default defineConfig(({ command }) => ({
     alias: {
       '@': resolve(__dirname, './src'),
       '~': resolve(__dirname, './src'),
-      util: 'src/util.ts',
-      fs: 'src/fs.ts',
-      buffer: 'buffer/index.js', // add buffer
+      util: resolve(__dirname, 'src/util.ts'),
+      fs: resolve(__dirname, 'src/fs.ts'),
     },
   },
   define: {
