@@ -4,11 +4,11 @@ import {
   ExecutorVerbosity,
   RunCommonArgs,
   RunTransactionArgs,
-} from '@ton-community/sandbox/dist/executor/Executor'
+} from '@ton/sandbox/dist/executor/Executor'
 
-import { base64Decode } from '@ton-community/sandbox/dist/utils/base64'
-import EmulatorModule from '@ton-community/sandbox/dist/executor/emulator-emscripten.js'
-import WasmJs from '@ton-community/sandbox/dist/executor/emulator-emscripten.wasm.js'
+import { base64Decode } from '@ton/sandbox/dist/utils/base64'
+import EmulatorModule from '@ton/sandbox/dist/executor/emulator-emscripten.js'
+import WasmJs from '@ton/sandbox/dist/executor/emulator-emscripten.wasm.js'
 
 type EmulationInternalParams = {
   utime: number

@@ -12,7 +12,7 @@ import {
   SessionCrypto,
   WalletMessage,
 } from '@tonconnect/protocol'
-import { Address, Cell } from 'ton-core'
+import { Address, Cell } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 import nacl from 'tweetnacl'
 

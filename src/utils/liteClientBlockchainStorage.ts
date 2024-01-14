@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-import { Blockchain, BlockchainStorage, SmartContract } from '@ton-community/sandbox'
-import { Address } from 'ton-core'
+import { Blockchain, BlockchainStorage, SmartContract } from '@ton/sandbox'
+import { Address } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 // eslint-disable-next-line camelcase
 import { liteServer_masterchainInfo } from 'ton-lite-client/dist/schema'
@@ -18,8 +18,6 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
     if (!existing) {
       const lastBlock = await getLastLiteBlock(this.client)
       const account = await this.client.getAccountState(address, lastBlock.last)
-
-      console.log('not existing', account)
 
       if (
         account.state?.storage?.state?.type !== 'active' ||

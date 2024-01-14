@@ -32,6 +32,18 @@ dependencies:
   '@ton-community/sandbox':
     specifier: ^0.11.0
     version: 0.11.0(ton-core@0.53.0)(ton-crypto@3.2.0)
+  '@ton/core':
+    specifier: ^0.53.0
+    version: 0.53.0(@ton/crypto@3.2.0)
+  '@ton/crypto':
+    specifier: ^3.2.0
+    version: 3.2.0
+  '@ton/sandbox':
+    specifier: ^0.15.0
+    version: 0.15.0(@ton/core@0.53.0)(@ton/crypto@3.2.0)
+  '@ton/ton':
+    specifier: ^13.9.0
+    version: 13.9.0(@ton/core@0.53.0)(@ton/crypto@3.2.0)
   '@tonconnect/protocol':
     specifier: ^2.2.6
     version: 2.2.6
@@ -119,18 +131,9 @@ dependencies:
   tauri-plugin-sql-api:
     specifier: github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9
     version: github.com/tauri-apps/tauri-plugin-sql/013b002d72dde1a77ce6cda60007adbe36e146c9
-  ton:
-    specifier: ^13.9.0
-    version: 13.9.0(ton-core@0.53.0)(ton-crypto@3.2.0)
-  ton-core:
-    specifier: ^0.53.0
-    version: 0.53.0(ton-crypto@3.2.0)
-  ton-crypto:
-    specifier: ^3.2.0
-    version: 3.2.0
   ton-lite-client:
-    specifier: npm:@truecarry/ton-lite-client@^2.2.0
-    version: /@truecarry/ton-lite-client@2.2.1(ton-core@0.53.0)
+    specifier: npm:@truecarry/ton-lite-client@^2.3.0
+    version: /@truecarry/ton-lite-client@2.3.0(@ton/core@0.53.0)
   tonapi-sdk-js:
     specifier: ^0.28.0
     version: 0.28.0(@types/node@20.11.0)(@types/react@18.2.47)(react-dom@18.2.0)(react@18.2.0)
@@ -1126,6 +1129,56 @@ packages:
       ton-crypto: 3.2.0
     dev: false
 
+  /@ton/core@0.53.0(@ton/crypto@3.2.0):
+    resolution: {integrity: sha512-tB5RxXFS6Z/ivmsqMn/eebEZmkWXIAz+hS1PDZXhbBkcvnBTknZ12g2AFrZtXyuvpm8O6SbL15UI/3NgkyIWzQ==}
+    peerDependencies:
+      '@ton/crypto': '>=3.2.0'
+    dependencies:
+      '@ton/crypto': 3.2.0
+      symbol.inspect: 1.0.1
+    dev: false
+
+  /@ton/crypto-primitives@2.0.0:
+    resolution: {integrity: sha512-wttiNClmGbI6Dfy/8oyNnsIV0b/qYkCJz4Gn4eP62lJZzMtVQ94Ko7nikDX1EfYHkLI1xpOitWpW+8ZuG6XtDg==}
+    dependencies:
+      jssha: 3.2.0
+    dev: false
+
+  /@ton/crypto@3.2.0:
+    resolution: {integrity: sha512-50RkwReEuV2FkxSZ8ht/x9+n0ZGtwRKGsJ0ay4I/HFhkYVG/awIIBQeH0W4j8d5lADdO5h01UtX8PJ8AjiejjA==}
+    dependencies:
+      '@ton/crypto-primitives': 2.0.0
+      jssha: 3.2.0
+      tweetnacl: 1.0.3
+    dev: false
+
+  /@ton/sandbox@0.15.0(@ton/core@0.53.0)(@ton/crypto@3.2.0):
+    resolution: {integrity: sha512-dlxhKOfwnAL9XkEuve0v1ffXLk0rPkZn+/ym+RoY2fKx4Tx+lGSJwprIdo02bOdfPopK83zYh1BLxjLmjY1J6Q==}
+    peerDependencies:
+      '@ton/core': '>=0.49.2'
+      '@ton/crypto': '>=3.2.0'
+    dependencies:
+      '@ton/core': 0.53.0(@ton/crypto@3.2.0)
+      '@ton/crypto': 3.2.0
+    dev: false
+
+  /@ton/ton@13.9.0(@ton/core@0.53.0)(@ton/crypto@3.2.0):
+    resolution: {integrity: sha512-bvDn9vv0rNsN/OH84Q4DKH3N21AD0MvTxXmnS0wPEOoU38F4mltXmA7an2SjaSgd9kAlsOSHa0EirkTie+Zitw==}
+    peerDependencies:
+      '@ton/core': '>=0.53.0'
+      '@ton/crypto': '>=3.2.0'
+    dependencies:
+      '@ton/core': 0.53.0(@ton/crypto@3.2.0)
+      '@ton/crypto': 3.2.0
+      axios: 0.25.0
+      dataloader: 2.2.2
+      symbol.inspect: 1.0.1
+      teslabot: 1.5.0
+      zod: 3.22.4
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
   /@tonconnect/isomorphic-eventsource@0.0.2:
     resolution: {integrity: sha512-B4UoIjPi0QkvIzZH5fV3BQLWrqSYABdrzZQSI9sJA9aA+iC0ohOzFwVVGXanlxeDAy1bcvPbb29f6sVUk0UnnQ==}
     dependencies:
@@ -1203,16 +1256,16 @@ packages:
       - supports-color
     dev: false
 
-  /@truecarry/ton-lite-client@2.2.1(ton-core@0.53.0):
-    resolution: {integrity: sha512-egenBIEhmCslqVaEtbpflmU4cxC71+bDNlv4YIZThfohcni+wjVMuT0d7ZlUcSHtHtJeJSOn5QrEYZ35nS+MOw==}
+  /@truecarry/ton-lite-client@2.3.0(@ton/core@0.53.0):
+    resolution: {integrity: sha512-JloGpeLyxK6cJxQeWhOZdlY/Ojf05vqKHKMR1xUfq87BTPyO0mvaqEkjc26Uby0a71Gul1uT+X60e5cVbIzLOA==}
     peerDependencies:
-      ton-core: '*'
+      '@ton/core': '*'
     dependencies:
+      '@ton/core': 0.53.0(@ton/crypto@3.2.0)
       adnl: 1.0.3
       dataloader: 2.2.2
       lru_map: 0.4.1
       teslabot: 1.5.0
-      ton-core: 0.53.0(ton-crypto@3.2.0)
       ton-tl: 1.0.1
       tweetnacl: 1.0.3
     transitivePeerDependencies:
@@ -4685,23 +4738,6 @@ packages:
       case-shift: 2.5.3
       crc-32: 1.2.2
       pegjs: 0.10.0
-    dev: false
-
-  /ton@13.9.0(ton-core@0.53.0)(ton-crypto@3.2.0):
-    resolution: {integrity: sha512-IjZa4vFsyYHzQFY3kMSK/vw8T9b4zSJlSkZOgD8qeP4AFVxcD6pZ7TxfATwLJnA/4MCbaM9DY0V076oMjluDQg==}
-    peerDependencies:
-      ton-core: '>=0.53.0'
-      ton-crypto: '>=3.2.0'
-    dependencies:
-      axios: 0.25.0
-      dataloader: 2.2.2
-      symbol.inspect: 1.0.1
-      teslabot: 1.5.0
-      ton-core: 0.53.0(ton-crypto@3.2.0)
-      ton-crypto: 3.2.0
-      zod: 3.22.4
-    transitivePeerDependencies:
-      - debug
     dev: false
 
   /tonapi-sdk-js@0.28.0(@types/node@20.11.0)(@types/react@18.2.47)(react-dom@18.2.0)(react@18.2.0):

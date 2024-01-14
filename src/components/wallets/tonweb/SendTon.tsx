@@ -1,11 +1,11 @@
 import { Block } from '@/components/ui/Block'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import { Address, Cell, SendMode, internal, loadStateInit } from 'ton-core'
+import { Address, Cell, SendMode, internal, loadStateInit } from '@ton/core'
 import { ITonWallet, TonWalletTransferArg } from '@/types'
 import { BlueButton } from '@/components/ui/BlueButton'
 import { decryptWalletData, getPasswordInteractive, usePassword } from '@/store/passwordManager'
-import { keyPairFromSeed } from 'ton-crypto'
+import { keyPairFromSeed } from '@ton/crypto'
 import { textToWalletBody } from '@/utils/textToWalletBody'
 
 export default function SendTon({

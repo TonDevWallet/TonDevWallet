@@ -2,7 +2,7 @@ import { cn } from '@/utils/cn'
 import clipboard from 'clipboardy'
 import clsx from 'clsx'
 import { ReactNode, useState } from 'react'
-import { Address } from 'ton-core'
+import { Address } from '@ton/core'
 
 import CopySvg from './icons/copy'
 import DoneSvg from './icons/done'

@@ -17,7 +17,7 @@ import { BlueButton } from '../ui/BlueButton'
 import { sendTonConnectStartMessage } from './TonConnect'
 import { decryptWalletData, getPasswordInteractive } from '@/store/passwordManager'
 import nacl from 'tweetnacl'
-import { KeyPair } from 'ton-crypto'
+import { KeyPair } from '@ton/crypto'
 import { getDatabase } from '@/db'
 import { LastSelectedWallets } from '@/types/connect'
 

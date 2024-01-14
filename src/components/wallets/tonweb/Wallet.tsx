@@ -3,7 +3,7 @@ import { AddressRow } from '../../AddressRow'
 import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
 import { BlueButton } from '../../ui/BlueButton'
-import { Address } from 'ton-core'
+import { Address } from '@ton/core'
 // import { useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
 import { TonConnect } from '@/components/TonConnect/TonConnect'
@@ -29,9 +29,7 @@ function Wallet() {
   const updateBalance = async () => {
     const state = await liteClient.getAccountState(
       Address.parse(wallet.address.toString({ bounceable: true, urlSafe: true })),
-      (
-        await liteClient.getMasterchainInfo()
-      ).last
+      (await liteClient.getMasterchainInfo()).last
     )
     setBalance(state.balance.coins.toString())
   }
