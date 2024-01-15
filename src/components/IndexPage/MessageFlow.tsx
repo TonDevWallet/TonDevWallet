@@ -18,7 +18,7 @@ import ELK from 'elkjs/lib/elk.bundled'
 import 'reactflow/dist/style.css'
 import { TxEdge } from './TxEdge'
 import { TxNode } from './TxNode'
-import { BlockchainTransaction } from '@ton/sandbox'
+import { type BlockchainTransaction } from '@ton/sandbox'
 
 export type GraphTx = BlockchainTransaction & { id: number }
 

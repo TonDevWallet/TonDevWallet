@@ -4,8 +4,9 @@ import { ManagedBlockchain, ManagedSendMessageResult } from '@/utils/ManagedBloc
 import { useState, useEffect } from 'react'
 import { Cell, loadMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
-import { BlockchainTransaction } from '@ton/sandbox'
+import { type BlockchainTransaction } from '@ton/sandbox'
 import { ManagedExecutor } from '@/utils/ManagedExecutor'
+import { type Executor } from '@ton/sandbox/dist/executor/Executor'
 
 export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
   const [response, setResponse] = useState<ManagedSendMessageResult | undefined>()
@@ -36,7 +37,7 @@ export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean 
         }
         const storage = new LiteClientBlockchainStorage(liteClient)
         const executor = await ManagedExecutor.create()
-        const blockchain = await ManagedBlockchain.create({
+        const blockchain = await ManagedBlockchain.create(executor as any as Executor, {
           storage,
         })
         ;(blockchain as any).executor = executor
