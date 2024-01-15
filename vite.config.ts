@@ -12,11 +12,14 @@ export default defineConfig(({ command }) => ({
   },
   base: '/',
   optimizeDeps: {
-    include: ['bn.js'],
+    include: ['bn.js', '@ton/sandbox'],
     esbuildOptions: {
       target: 'esnext',
       plugins: [],
     },
+  },
+  worker: {
+    format: 'es',
   },
   build: {
     target: 'esnext',
@@ -24,6 +27,9 @@ export default defineConfig(({ command }) => ({
       plugins: [inject({ Buffer: ['buffer', 'Buffer'] })],
     },
     modulePreload: false,
+    commonjsOptions: {
+      // include: [/@ton\/sandbox/],
+    },
   },
   resolve: {
     alias: {
@@ -31,6 +37,7 @@ export default defineConfig(({ command }) => ({
       '~': resolve(__dirname, './src'),
       util: resolve(__dirname, 'src/util.ts'),
       fs: resolve(__dirname, 'src/fs.ts'),
+      buffer: resolve(__dirname, 'node_modules/buffer/index.js'),
     },
   },
   define: {

@@ -1,11 +1,11 @@
 import { useLiteclient } from '@/store/liteClient'
-// import { formatGasInfo } from '@/utils/formatNumbers'
 import { LiteClientBlockchainStorage } from '@/utils/liteClientBlockchainStorage'
 import { ManagedBlockchain, ManagedSendMessageResult } from '@/utils/ManagedBlockchain'
 import { useState, useEffect } from 'react'
 import { Cell, loadMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 import { BlockchainTransaction } from '@ton/sandbox'
+import { ManagedExecutor } from '@/utils/ManagedExecutor'
 
 export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
   const [response, setResponse] = useState<ManagedSendMessageResult | undefined>()
@@ -35,9 +35,11 @@ export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean 
           setProgress((p) => ({ ...p, done: p.done + 1 }))
         }
         const storage = new LiteClientBlockchainStorage(liteClient)
+        const executor = await ManagedExecutor.create()
         const blockchain = await ManagedBlockchain.create({
           storage,
         })
+        ;(blockchain as any).executor = executor
         // blockchain.verbosity = 'vm_logs_full'
         blockchain.verbosity = {
           blockchainLogs: true,
