@@ -2,6 +2,7 @@ import { Address, Cell, serializeTuple, TupleItem } from '@ton/core'
 import ExecWorker from './ExecutorWorkerWrapper?worker'
 import * as Comlink from 'comlink'
 import { RunCommonType } from './ExecutorWorkerWrapper'
+import { IExecutor } from '@ton/sandbox'
 
 const ExecutorWorkerInst = Comlink.wrap<RunCommonType>(new ExecWorker())
 
@@ -139,7 +140,7 @@ function runCommonArgsToInternalParams(args: RunCommonArgs): EmulationInternalPa
   }
 }
 
-export class ManagedExecutor {
+export class ManagedExecutor implements IExecutor {
   private debugLogs: string[] = []
 
   static async create() {
@@ -222,5 +223,9 @@ export class ManagedExecutor {
       args.message.toBoc().toString('base64'),
       JSON.stringify(params),
     ])
+  }
+
+  invoke(/* method: string, args: (string | number)[] */): number {
+    throw new Error('not implemented')
   }
 }
