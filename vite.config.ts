@@ -6,7 +6,12 @@ import { analyzer } from 'vite-bundle-analyzer'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
-  plugins: [react(), analyzer()],
+  plugins: [
+    react(),
+    analyzer({
+      analyzerMode: 'static',
+    }),
+  ],
   server: {
     port: 3003,
   },
