@@ -16,10 +16,10 @@ import { AddressRow } from '../AddressRow'
 import { BlueButton } from '../ui/BlueButton'
 import { sendTonConnectStartMessage } from './TonConnect'
 import { decryptWalletData, getPasswordInteractive } from '@/store/passwordManager'
-import nacl from 'tweetnacl'
 import { KeyPair } from '@ton/crypto'
 import { getDatabase } from '@/db'
 import { LastSelectedWallets } from '@/types/connect'
+import { randomX25519 } from '@/utils/ed25519'
 
 export function TonConnectPopup() {
   const tonConnectState = useTonConnectState()
@@ -114,7 +114,7 @@ function ConnectPopupContent() {
       const password = await getPasswordInteractive()
       const decryptedData = await decryptWalletData(password, chosenKey?.encrypted.get())
 
-      const sessionKeypair = nacl.box.keyPair() as KeyPair
+      const sessionKeypair = randomX25519() as KeyPair
 
       console.log('start connect, ', connectLinkInfo, tonConnectState.connectArg.get())
 

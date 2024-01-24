@@ -17,7 +17,6 @@ import {
 } from '@tonconnect/protocol'
 import { useEffect } from 'react'
 import { LiteClient } from 'ton-lite-client'
-import nacl from 'tweetnacl'
 import {
   isPermissionGranted,
   requestPermission,
@@ -32,6 +31,7 @@ import { keyPairFromSeed } from '@ton/crypto'
 import { getWalletFromKey } from '@/utils/wallets'
 import { ApproveTonConnectMessage, GetTransfersFromTCMessage } from '@/utils/tonConnect'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
+import { secretKeyToX25519 } from '@/utils/ed25519'
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
@@ -107,7 +107,7 @@ export function TonConnectListener() {
     const listeners: EventSource[] = []
 
     sessions.map((s) => {
-      const keyPair = nacl.box.keyPair.fromSecretKey(s.secretKey.get())
+      const keyPair = secretKeyToX25519(s.secretKey.get())
       const session = new SessionCrypto({
         publicKey: Buffer.from(keyPair.publicKey).toString('hex'),
         secretKey: Buffer.from(keyPair.secretKey).toString('hex'),

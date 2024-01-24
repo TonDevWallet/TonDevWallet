@@ -9,7 +9,6 @@ import { useCallback, useState } from 'react'
 import { Cell, beginCell, storeStateInit, StateInit } from '@ton/core'
 import { KeyPair, keyPairFromSeed } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
-import nacl from 'tweetnacl'
 import { BlueButton } from '../ui/BlueButton'
 import { fetch as tFetch } from '@tauri-apps/api/http'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
@@ -25,6 +24,7 @@ import {
   usePassword,
 } from '@/store/passwordManager'
 import { delay } from '@/utils'
+import { randomX25519 } from '@/utils/ed25519'
 
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
@@ -79,7 +79,7 @@ export function TonConnect() {
     const parsed = new URL(input)
     console.log('parse', parsed, parsed.searchParams.get('id'))
 
-    const sessionKeypair = nacl.box.keyPair() as KeyPair
+    const sessionKeypair = randomX25519() as KeyPair
     const clientId = parsed.searchParams.get('id') || '' // '230f1e4df32364888a5dbd92a410266fcb974b73e30ff3e546a654fc8ee2c953'
     const rString = parsed.searchParams.get('r')
     const r = rString ? (JSON.parse(rString) as ConnectRequest) : undefined

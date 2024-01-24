@@ -14,7 +14,7 @@ import {
 } from '@tonconnect/protocol'
 import { Address, Cell } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
-import nacl from 'tweetnacl'
+import { secretKeyToX25519 } from './ed25519'
 
 const bridgeUrl = 'https://bridge.tonapi.io/bridge'
 
@@ -23,7 +23,7 @@ export async function sendTonConnectMessage(
   secretKey: Buffer | Uint8Array,
   clientPublicKey: string
 ) {
-  const sessionKeypair = nacl.box.keyPair.fromSecretKey(secretKey)
+  const sessionKeypair = secretKeyToX25519(secretKey)
 
   const url = new URL(`${bridgeUrl}/message`)
   url.searchParams.append('client_id', Buffer.from(sessionKeypair.publicKey).toString('hex'))

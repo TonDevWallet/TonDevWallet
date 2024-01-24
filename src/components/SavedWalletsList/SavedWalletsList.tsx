@@ -5,7 +5,6 @@ import { NavLink } from 'react-router-dom'
 import { changeLiteClient, useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { sendTonConnectStartMessage } from '../TonConnect/TonConnect'
-import nacl from 'tweetnacl'
 import { getWalletFromKey } from '@/utils/wallets'
 import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
@@ -17,6 +16,7 @@ import { cleanPassword, openPasswordPopup, usePassword } from '@/store/passwordM
 import { PasswordPopup } from './PasswordPopup'
 import { ChangePasswordPopup } from './ChangePasswordPopup'
 import { DetectTonConnect } from './DetectTonConnect'
+import { secretKeyToX25519 } from '@/utils/ed25519'
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
@@ -54,7 +54,7 @@ export function SavedWalletsList() {
         return
       }
 
-      const sessionKeyPair = nacl.box.keyPair.fromSecretKey(s.secretKey) as KeyPair
+      const sessionKeyPair = secretKeyToX25519(s.secretKey) as KeyPair
 
       const tonWallet = getWalletFromKey(liteClient, key.get(), wallet) as IWallet
 

@@ -14,6 +14,9 @@
     "@hookstate/core": "^4.0.1",
     "@hookstate/devtools": "^4.0.1",
     "@hookstate/subscribable": "^4.0.0",
+    "@noble/ciphers": "^0.4.1",
+    "@noble/curves": "^1.3.0",
+    "@noble/hashes": "^1.3.3",
     "@rollup/plugin-inject": "^5.0.5",
     "@tauri-apps/api": "^1.5.3",
     "@ton-community/sandbox": "^0.11.0",
@@ -52,7 +55,6 @@
     "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9",
     "ton-lite-client": "npm:@truecarry/ton-lite-client@^2.3.0",
     "tonapi-sdk-js": "^0.28.0",
-    "tweetnacl": "^1.0.3",
     "vite-bundle-analyzer": "^0.7.0"
   },
   "devDependencies": {

@@ -4,7 +4,7 @@ import { Wallet } from '@tonconnect/sdk'
 import { Address } from '@ton/core'
 // eslint-disable-next-line camelcase
 import { sha256_sync } from '@ton/crypto'
-import nacl from 'tweetnacl'
+import { ed25519 } from '@noble/curves/ed25519'
 
 interface Domain {
   LengthBytes: number // uint32 `json:"lengthBytes"`
@@ -23,13 +23,13 @@ interface ParsedMessage {
 }
 
 export function SignatureVerify(pubkey: Buffer, message: Buffer, signature: Buffer): boolean {
-  return nacl.sign.detached.verify(message, signature, pubkey)
+  return ed25519.verify(signature, message, pubkey)
 
   // return ed25519.Verify(pubkey, message, signature)
 }
 
 export function SignatureCreate(privKey: Buffer, message: Buffer): Buffer {
-  return Buffer.from(nacl.sign.detached(message, privKey))
+  return Buffer.from(ed25519.sign(message, privKey))
 
   // return ed25519.Verify(pubkey, message, signature)
 }
