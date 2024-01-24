@@ -141,8 +141,8 @@ dependencies:
     specifier: ^1.0.3
     version: 1.0.3
   vite-bundle-analyzer:
-    specifier: ^0.6.1
-    version: 0.6.1
+    specifier: ^0.7.0
+    version: 0.7.0
 
 devDependencies:
   '@tauri-apps/cli':
@@ -5087,8 +5087,8 @@ packages:
     engines: {node: '>= 0.8'}
     dev: false
 
-  /vite-bundle-analyzer@0.6.1:
-    resolution: {integrity: sha512-uVQAZMkAzukKJdoBd4iXQSyFdDV5Akntsxak9xVzsngFG/yxe1tqDI+lbEAlzLPb4PtIyPtbRP7wgUhiR2sUyQ==}
+  /vite-bundle-analyzer@0.7.0:
+    resolution: {integrity: sha512-CaYVmRmlIupjutl50Ggl1tY5VNoAUyRZuMlqxBwAQxsysdHsJMHi66unwsonWmM3EmBbPSALvD5K1zgA1rviRA==}
     dependencies:
       fast-glob: 3.3.2
       open: 9.1.0
