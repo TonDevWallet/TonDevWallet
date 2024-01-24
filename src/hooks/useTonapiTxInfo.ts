@@ -1,10 +1,11 @@
 import { useLiteclient } from '@/store/liteClient'
-import { formatGasInfo } from '@/utils/formatNumbers'
 import { LiteClientBlockchainStorage } from '@/utils/liteClientBlockchainStorage'
-import { ManagedSendMessageResult, ManagedBlockchain } from '@/utils/ManagedBlockchain'
+import { ManagedBlockchain, ManagedSendMessageResult } from '@/utils/ManagedBlockchain'
 import { useState, useEffect } from 'react'
-import { Cell, loadMessage } from 'ton-core'
+import { Cell, loadMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
+import { type BlockchainTransaction } from '@ton/sandbox'
+import { ManagedExecutor } from '@/utils/ManagedExecutor'
 
 export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
   const [response, setResponse] = useState<ManagedSendMessageResult | undefined>()
@@ -34,9 +35,11 @@ export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean 
           setProgress((p) => ({ ...p, done: p.done + 1 }))
         }
         const storage = new LiteClientBlockchainStorage(liteClient)
-        const blockchain = await ManagedBlockchain.create({
+        const executor = await ManagedExecutor.create()
+        const blockchain = await ManagedBlockchain.create(executor, {
           storage,
         })
+        ;(blockchain as any).executor = executor
         // blockchain.verbosity = 'vm_logs_full'
         blockchain.verbosity = {
           blockchainLogs: true,
@@ -46,28 +49,34 @@ export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean 
         }
         const msg = loadMessage(cell.beginParse())
         const start = Date.now()
-        const { result, emitter, gasMap } = await blockchain.sendMessageWithProgress(msg, {
-          ignoreChksig: ignoreChecksig,
-        })
 
         let isStopped = false
-        stopEmulator = () => {
-          isStopped = true
-          emitter.emit('stop')
 
-          emitter.removeListener('add_message', onAddMessage)
-          emitter.removeListener('complete_message', onCompleteMessage)
+        const iter = await blockchain.sendMessageIter(msg, { ignoreChksig: ignoreChecksig })
+        const transactions: BlockchainTransaction[] = []
+        for await (const tx of iter) {
+          if (isStopped) {
+            break
+          }
+
+          onAddMessage()
+          onCompleteMessage()
+          transactions.push(tx as any)
+          setResponse({
+            transactions,
+          })
+          setIsLoading(false)
         }
 
-        emitter.on('add_message', onAddMessage)
-        emitter.on('complete_message', onCompleteMessage)
-        const res = await result
-        console.log('emulate res', res, Date.now() - start, isStopped, gasMap)
-        formatGasInfo(gasMap)
+        stopEmulator = () => {
+          isStopped = true
+        }
+
+        console.log('emulate res', transactions, Date.now() - start, isStopped)
+        // formatGasInfo(gasMap)
         if (isStopped) {
           return
         }
-        setResponse(res)
         setIsLoading(false)
       } catch (err) {
         console.log('emulate err', err)
@@ -78,7 +87,6 @@ export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean 
     startEmulator()
 
     return () => {
-      console.log('unmount effect')
       stopEmulator()
     }
   }, [cell, liteClient])

@@ -1,4 +1,4 @@
-import { Address, Cell } from 'ton-core'
+import { Address, Cell } from '@ton/core'
 
 export interface HighloadWalletInitData {
   subwalletId: number // uint 32

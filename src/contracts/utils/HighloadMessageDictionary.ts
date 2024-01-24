@@ -5,7 +5,7 @@ import {
   loadMessageRelaxed,
   SendMode,
   beginCell,
-} from 'ton-core'
+} from '@ton/core'
 
 export const HighloadDictionaryMessageValue: DictionaryValue<{
   sendMode: SendMode

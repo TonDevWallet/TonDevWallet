@@ -4,11 +4,11 @@ import { SignCell } from '@/contracts/utils/SignExternalMessage'
 import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
 import Popup from 'reactjs-popup'
-import { Address, beginCell, Cell, storeMessage } from 'ton-core'
+import { Address, beginCell, Cell, storeMessage } from '@ton/core'
 import { ITonHighloadWalletV2 } from '@/types'
 import { BlueButton } from '@/components/ui/BlueButton'
 import { getPasswordInteractive, decryptWalletData, usePassword } from '@/store/passwordManager'
-import { keyPairFromSeed } from 'ton-crypto'
+import { keyPairFromSeed } from '@ton/crypto'
 import { textToWalletBody } from '@/utils/textToWalletBody'
 
 export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {

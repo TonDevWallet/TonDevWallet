@@ -9,7 +9,7 @@ import {
   loadStateInit,
   Message,
   StateInit,
-} from 'ton-core'
+} from '@ton/core'
 import { HighloadWalletInitData, WalletTransfer } from '../utils/HighloadWalletTypes'
 import { HighloadWalletV2CodeCell } from './HighloadWalletV2.source'
 

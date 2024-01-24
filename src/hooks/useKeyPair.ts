@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { KeyPair, keyPairFromSeed } from 'ton-crypto'
+import { KeyPair, keyPairFromSeed } from '@ton/crypto'
 
 export function useSeed(seed?: string | Buffer): KeyPair | undefined {
   return useMemo(

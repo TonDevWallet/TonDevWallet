@@ -1,7 +1,7 @@
-import { bigIntToBuffer, tonToNumber } from '@/utils/ton'
+import { bigIntToBuffer } from '@/utils/ton'
 import { memo } from 'react'
 import { Handle, Position } from 'reactflow'
-import { Address, beginCell, storeTransaction } from 'ton-core'
+import { Address, beginCell, storeTransaction } from '@ton/core'
 import { AddressRow } from '../AddressRow'
 import { TxNodeData } from './MessageFlow'
 import { cn } from '@/utils/cn'
@@ -32,8 +32,8 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       <AddressRow address={txAddress} />
       <div>ID: {tx.id}</div>
       <div>LT: {tx.lt.toString()}</div>
-      <div>Self Fees: {tonToNumber(tx.gasSelf)}</div>
-      <div>Total Fees: {tonToNumber(tx.gasFull)}</div>
+      {/* <div>Self Fees: {tonToNumber(tx.gasSelf)}</div>
+      <div>Total Fees: {tonToNumber(tx.gasFull)}</div> */}
       {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
         <div>Compute Code: {tx.description.computePhase.exitCode}</div>
       )}

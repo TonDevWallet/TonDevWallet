@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
-import { KeyPair, keyPairFromSeed } from 'ton-crypto'
+import { KeyPair, keyPairFromSeed } from '@ton/crypto'
 import { cn } from '@/utils/cn'
 
 export function FromSeed() {

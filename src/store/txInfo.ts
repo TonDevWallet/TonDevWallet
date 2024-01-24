@@ -1,5 +1,5 @@
 import { hookstate, useHookstate } from '@hookstate/core'
-import { Transaction } from 'ton-core'
+import { Transaction } from '@ton/core'
 
 interface TransactionInfo {
   tx?: Transaction

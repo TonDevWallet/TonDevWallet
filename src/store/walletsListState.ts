@@ -6,7 +6,7 @@ import { getWalletState, setWalletKey } from './walletState'
 import { NavigateFunction } from 'react-router-dom'
 import { SavedWallet, WalletType } from '@/types'
 import { ConnectMessageTransaction, LastSelectedWallets } from '@/types/connect'
-import { keyPairFromSeed } from 'ton-crypto'
+import { keyPairFromSeed } from '@ton/crypto'
 import { encryptWalletData, getPasswordInteractive } from './passwordManager'
 
 const state = hookstate<Key[]>(() => getWallets())

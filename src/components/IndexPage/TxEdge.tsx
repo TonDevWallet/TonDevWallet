@@ -2,7 +2,7 @@ import { cn } from '@/utils/cn'
 import { bigIntToBuffer } from '@/utils/ton'
 import { FC } from 'react'
 import { EdgeProps, getBezierPath, EdgeLabelRenderer } from 'reactflow'
-import { Address } from 'ton-core'
+import { Address } from '@ton/core'
 import { GraphTx } from './MessageFlow'
 
 export const TxEdge: FC<EdgeProps> = ({

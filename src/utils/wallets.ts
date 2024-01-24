@@ -23,10 +23,10 @@ import {
   Cell,
   loadStateInit,
   SendMode,
-} from 'ton-core'
+} from '@ton/core'
 
-import { WalletContractV3R2, WalletContractV4 } from 'ton'
-import { KeyPair } from 'ton-crypto'
+import { WalletContractV3R2, WalletContractV4 } from '@ton/ton'
+import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 
 export function getWalletFromKey(
