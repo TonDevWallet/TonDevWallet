@@ -3,8 +3,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Copier from '../copier'
 import { BlueButton } from '../ui/BlueButton'
-import { KeyPair, keyPairFromSeed } from '@ton/crypto'
+import { KeyPair } from '@ton/crypto'
 import { cn } from '@/utils/cn'
+import { secretKeyToED25519 } from '@/utils/ed25519'
 
 export function FromSeed() {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ export function FromSeed() {
       setParsedSeed(undefined)
 
       try {
-        const parsed = keyPairFromSeed(Buffer.from(data, 'hex'))
+        const parsed = secretKeyToED25519(Buffer.from(data, 'hex'))
         if (parsed) {
           setParsedSeed(parsed)
         }

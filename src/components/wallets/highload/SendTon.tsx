@@ -8,8 +8,8 @@ import { Address, beginCell, Cell, storeMessage } from '@ton/core'
 import { ITonHighloadWalletV2 } from '@/types'
 import { BlueButton } from '@/components/ui/BlueButton'
 import { getPasswordInteractive, decryptWalletData, usePassword } from '@/store/passwordManager'
-import { keyPairFromSeed } from '@ton/crypto'
 import { textToWalletBody } from '@/utils/textToWalletBody'
+import { secretKeyToED25519 } from '@/utils/ed25519'
 
 export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
   const [amount, setAmount] = useState('0')
@@ -175,7 +175,7 @@ const SendModal = ({
       }
 
       const decrypted = await decryptWalletData(password, wallet.key)
-      const keyPair = keyPairFromSeed(decrypted.seed || Buffer.from([]))
+      const keyPair = secretKeyToED25519(decrypted.seed || Buffer.from([]))
 
       const message = wallet.wallet.CreateTransferMessage([params])
       const signedBody = SignCell(keyPair.secretKey, message.body)

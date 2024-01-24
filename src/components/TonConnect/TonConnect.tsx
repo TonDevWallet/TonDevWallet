@@ -7,7 +7,7 @@ import { getWalletFromKey } from '@/utils/wallets'
 import { ConnectEventSuccess, CHAIN, ConnectRequest, TonProofItem } from '@tonconnect/protocol'
 import { useCallback, useState } from 'react'
 import { Cell, beginCell, storeStateInit, StateInit } from '@ton/core'
-import { KeyPair, keyPairFromSeed } from '@ton/crypto'
+import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { BlueButton } from '../ui/BlueButton'
 import { fetch as tFetch } from '@tauri-apps/api/http'
@@ -24,7 +24,7 @@ import {
   usePassword,
 } from '@/store/passwordManager'
 import { delay } from '@/utils'
-import { randomX25519 } from '@/utils/ed25519'
+import { randomX25519, secretKeyToED25519 } from '@/utils/ed25519'
 
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
@@ -176,11 +176,11 @@ export async function sendTonConnectStartMessage(
       .endCell()
   }
 
-  let keyPair // = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+  let keyPair // = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
   let publicKey // = keyPair.publicKey.toString('base64')
 
   try {
-    keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+    keyPair = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
     publicKey = keyPair.publicKey.toString('base64')
   } catch (e) {}
 
@@ -224,7 +224,7 @@ export async function sendTonConnectStartMessage(
       throw new Error('no wallet seed')
     }
 
-    const walletKeyPair = keyPairFromSeed(decryptedData.seed)
+    const walletKeyPair = secretKeyToED25519(decryptedData.seed)
 
     const signMessage = createTonProofMessage({
       address: wallet.address,

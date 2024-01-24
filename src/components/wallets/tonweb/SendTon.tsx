@@ -5,8 +5,8 @@ import { Address, Cell, SendMode, internal, loadStateInit } from '@ton/core'
 import { ITonWallet, TonWalletTransferArg } from '@/types'
 import { BlueButton } from '@/components/ui/BlueButton'
 import { decryptWalletData, getPasswordInteractive, usePassword } from '@/store/passwordManager'
-import { keyPairFromSeed } from '@ton/crypto'
 import { textToWalletBody } from '@/utils/textToWalletBody'
+import { secretKeyToED25519 } from '@/utils/ed25519'
 
 export default function SendTon({
   seqno,
@@ -193,7 +193,7 @@ const SendModal = ({
     }
 
     const decrypted = await decryptWalletData(password, wallet.key)
-    const keyPair = keyPairFromSeed(decrypted.seed || Buffer.from([]))
+    const keyPair = secretKeyToED25519(decrypted.seed || Buffer.from([]))
 
     const params: TonWalletTransferArg = {
       seqno: parseInt(seqno),

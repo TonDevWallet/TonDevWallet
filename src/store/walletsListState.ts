@@ -6,8 +6,8 @@ import { getWalletState, setWalletKey } from './walletState'
 import { NavigateFunction } from 'react-router-dom'
 import { SavedWallet, WalletType } from '@/types'
 import { ConnectMessageTransaction, LastSelectedWallets } from '@/types/connect'
-import { keyPairFromSeed } from '@ton/crypto'
 import { encryptWalletData, getPasswordInteractive } from './passwordManager'
+import { secretKeyToED25519 } from '@/utils/ed25519'
 
 const state = hookstate<Key[]>(() => getWallets())
 
@@ -92,7 +92,7 @@ export async function saveKeyFromData(
     mnemonic: words,
     seed,
   })
-  const keyPair = await keyPairFromSeed(seed)
+  const keyPair = await secretKeyToED25519(seed)
   const key: Key = {
     id: 0,
     name: '',

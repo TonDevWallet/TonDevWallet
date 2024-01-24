@@ -12,7 +12,7 @@ import { getWalletFromKey, useWalletExternalMessageCell } from '@/utils/wallets'
 import { State, ImmutableObject } from '@hookstate/core'
 import { useMemo, useState } from 'react'
 import { Cell } from '@ton/core'
-import { KeyPair, keyPairFromSeed } from '@ton/crypto'
+import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
@@ -20,6 +20,7 @@ import { BlueButton } from '../ui/BlueButton'
 import { cn } from '@/utils/cn'
 import { useTonapiTxInfo } from '@/hooks/useTonapiTxInfo'
 import { MessageFlow } from './MessageFlow'
+import { secretKeyToED25519 } from '@/utils/ed25519'
 
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
@@ -61,7 +62,7 @@ export function MessageRow({ s }: { s: State<ImmutableObject<TonConnectMessageTr
     if (!decryptedData) {
       return undefined
     }
-    const keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+    const keyPair = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
     return keyPair
   }, [key.encrypted, decryptedData])
   const tonWallet = useMemo(

@@ -27,11 +27,10 @@ import { invoke } from '@tauri-apps/api'
 import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/passwordManager'
 import { getWalletListState } from '@/store/walletsListState'
 import { ImmutableObject } from '@hookstate/core'
-import { keyPairFromSeed } from '@ton/crypto'
 import { getWalletFromKey } from '@/utils/wallets'
 import { ApproveTonConnectMessage, GetTransfersFromTCMessage } from '@/utils/tonConnect'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
-import { secretKeyToX25519 } from '@/utils/ed25519'
+import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
@@ -232,7 +231,7 @@ async function autoSendMessage({
   const transfers = GetTransfersFromTCMessage(messages)
 
   const liteClient = LiteClientState.liteClient.get()
-  const keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+  const keyPair = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
   const sendWallet = getWalletFromKey(liteClient, key, wallet)
   if (!sendWallet) {
     return false
