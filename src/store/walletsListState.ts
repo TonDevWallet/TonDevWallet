@@ -80,6 +80,18 @@ export async function deleteWallet(db: Knex, key: number) {
   await updateWalletsList()
 }
 
+export async function updateWalletName(newName: string, keyId: number) {
+  const db = await getDatabase()
+  await db<Key>('keys')
+    .where({
+      id: keyId,
+    })
+    .update({
+      name: newName,
+    })
+  await updateWalletsList()
+}
+
 export async function saveKeyFromData(
   name: string,
   navigate: NavigateFunction,
