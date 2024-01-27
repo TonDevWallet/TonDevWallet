@@ -7,7 +7,7 @@ import { LiteClient } from 'ton-lite-client'
 import { type BlockchainTransaction } from '@ton/sandbox'
 import { ManagedExecutor } from '@/utils/ManagedExecutor'
 
-export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
+export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
   const [response, setResponse] = useState<ManagedSendMessageResult | undefined>()
   const [progress, setProgress] = useState<{ total: number; done: number }>({ done: 0, total: 0 })
   const [isLoading, setIsLoading] = useState(false)
@@ -73,7 +73,6 @@ export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean 
         }
 
         console.log('emulate res', transactions, Date.now() - start, isStopped)
-        // formatGasInfo(gasMap)
         if (isStopped) {
           return
         }
@@ -84,7 +83,7 @@ export function useTonapiTxInfo(cell: Cell | undefined, ignoreChecksig: boolean 
       }
     }
 
-    startEmulator()
+    startEmulator().then()
 
     return () => {
       stopEmulator()

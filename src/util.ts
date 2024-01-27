@@ -13,6 +13,8 @@ export function promisify(f) {
 
       args.push(callback) // добавляем колбэк в конец аргументов f
 
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       f.call(this, ...args) // вызываем оригинальную функцию
     })
   }

@@ -17,12 +17,12 @@ import { ImmutableObject } from '@hookstate/core'
 import { useEffect, useMemo, useState } from 'react'
 import {
   beginCell,
-  storeMessage,
+  Cell,
   external,
   internal,
-  Cell,
   loadStateInit,
   SendMode,
+  storeMessage,
 } from '@ton/core'
 
 import { WalletContractV3R2, WalletContractV4 } from '@ton/ton'
@@ -103,19 +103,15 @@ export function useSelectedTonWallet() {
     if (!selectedKey || !selectedWallet) {
       return
     }
-    const wallet = getWalletFromKey(liteClient, selectedKey.get(), selectedWallet)
-    return wallet
+    return getWalletFromKey(liteClient, selectedKey.get(), selectedWallet)
   }, [liteClient, selectedKey, selectedWallet])
 }
 
 function getExternalMessageCellFromHighload(wallet: HighloadWalletV2): GetExternalMessageCell {
   return async (keyPair: KeyPair, transfers: WalletTransfer[]) => {
     const message = wallet.CreateTransferMessage(transfers)
-    const signedBody = SignCell(keyPair.secretKey, message.body)
-    message.body = signedBody
-    const messageCell = beginCell().store(storeMessage(message)).endCell()
-
-    return messageCell
+    message.body = SignCell(keyPair.secretKey, message.body)
+    return beginCell().store(storeMessage(message)).endCell()
   }
 }
 
@@ -123,6 +119,12 @@ function getExternalMessageCellFromTonWallet(
   wallet: OpenedContract<WalletContractV3R2 | WalletContractV4>
 ): GetExternalMessageCell {
   return async (keyPair: KeyPair, transfers: WalletTransfer[]) => {
+    if (keyPair.secretKey.length === 32) {
+      keyPair.secretKey = Buffer.concat([
+        Uint8Array.from(keyPair.secretKey),
+        Uint8Array.from(keyPair.publicKey),
+      ])
+    }
     const transfer = wallet.createTransfer({
       seqno: await wallet.getSeqno(),
       secretKey: keyPair.secretKey,
@@ -146,9 +148,7 @@ function getExternalMessageCellFromTonWallet(
       init: wallet.init,
       body: transfer,
     })
-    const messageCell = beginCell().store(storeMessage(ext)).endCell()
-
-    return messageCell
+    return beginCell().store(storeMessage(ext)).endCell()
   }
 }
 

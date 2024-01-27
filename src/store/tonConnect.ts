@@ -2,7 +2,7 @@ import { getDatabase } from '@/db'
 import { ConnectMessageTransaction, ConnectSession, LastSelectedWallets } from '@/types/connect'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { hookstate, State, useHookstate } from '@hookstate/core'
-import { getConnectMessages, messagesState } from './connectMessages'
+import { removeConnectMessages } from './connectMessages'
 
 export interface TonConnectSession {
   id: number
@@ -16,6 +16,7 @@ export interface TonConnectSession {
   iconUrl: string
   autoSend: boolean
 }
+
 export interface TonConnectState {
   sessions: TonConnectSession[]
 
@@ -145,7 +146,8 @@ export async function setTonConnectSessionAutoSend({
 
 export async function deleteTonConnectSession(session: State<TonConnectSession>) {
   // const session =
-  sendTonConnectMessage(
+
+  await sendTonConnectMessage(
     {
       event: 'disconnect',
       payload: {},
@@ -168,8 +170,9 @@ export async function deleteTonConnectSession(session: State<TonConnectSession>)
     .delete()
 
   state.sessions.set(await getSessions())
-  messagesState.set(await getConnectMessages())
+  await removeConnectMessages()
 }
+
 export async function updateSessionEventId(id: number, eventId: number) {
   const db = await getDatabase()
   const session = state.sessions.find((s) => s.get().id === id)

@@ -22,24 +22,15 @@ export function WalletPage() {
   const walletsList = useWalletListState()
 
   useEffect(() => {
-    console.log('liteclient hook')
-    liteClient.getMasterchainInfo().then((res) => {
-      console.log('info', res)
-    })
-  }, [])
-
-  useEffect(() => {
     const id = parseInt(urlParams.walletId || '')
     const selectedWallet = walletsList.get().find((i) => i.id === id)
     if (selectedWallet) {
-      setWalletKey(selectedWallet.id)
+      setWalletKey(selectedWallet.id).then()
     }
   }, [urlParams.walletId])
-
   const key = useSelectedKey()
   const selectedWallet = useSelectedWallet()
-
-  const wallets = useMemo<IWallet[]>(() => {
+  const walletsToShow = useMemo<IWallet[]>(() => {
     if (!key?.public_key) {
       return []
     }
@@ -57,11 +48,8 @@ export function WalletPage() {
     return wallets
   }, [key, key?.wallets, liteClient])
 
-  const walletsToShow = wallets
-
   return (
     <div className="grid grid-cols-[1fr_1fr] gap-4 justify-center flex-col md:flex-row">
-      {/* <div className="flex flex-1"> */}
       <div className="md:max-w-xl min-w-0 w-full flex-grow-0 flex flex-col">
         <h1 className="font-bold text-xl mt-2 mb-4">Wallet {key?.name.get()}</h1>
         <WalletGenerator />
@@ -72,9 +60,6 @@ export function WalletPage() {
           selectedWallet?.type === 'highload' ? (
             <HighloadWallet />
           ) : (
-            // : wallet.selectedWallet.get()?.type === 'external' ? (
-            // <ExternalWallet />
-            // )
             <Wallet />
           )
         ) : (
@@ -86,7 +71,6 @@ export function WalletPage() {
           </div>
         )}
       </div>
-      {/* </div> */}
     </div>
   )
 }

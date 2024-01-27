@@ -1,10 +1,8 @@
-// import { Address } from 'tonweb/dist/types/utils/address'
 import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import { EncryptedWalletData } from '@/store/passwordManager'
 import type { Address, MessageRelaxed, SendMode, ContractProvider, Cell } from '@ton/core'
 import type { WalletContractV4, WalletContractV3R2 } from '@ton/ton'
-import { Maybe } from 'ton-core/dist/utils/maybe'
 import { KeyPair } from '@ton/crypto'
 
 export type OpenedContract<T> = {
@@ -65,8 +63,8 @@ export type TonWalletTransferArg = {
   seqno: number
   secretKey: Buffer
   messages: MessageRelaxed[]
-  sendMode?: Maybe<SendMode>
-  timeout?: Maybe<number>
+  sendMode?: SendMode
+  timeout?: number
 }
 
 export interface SavedWallet {

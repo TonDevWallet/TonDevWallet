@@ -1,21 +1,17 @@
-import { ITonWallet } from '../../../types'
+import { ITonWallet } from '@/types'
 import { AddressRow } from '../../AddressRow'
 import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
 import { BlueButton } from '../../ui/BlueButton'
 import { Address } from '@ton/core'
-// import { useWallet } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
 import { TonConnect } from '@/components/TonConnect/TonConnect'
 import { useSelectedTonWallet } from '@/utils/wallets'
 import { Block } from '@/components/ui/Block'
 
 function Wallet() {
-  // const currentWallet = useWallet()
-  // const currentWallet =
   const wallet = useSelectedTonWallet() as ITonWallet
   const liteClient = useLiteclient()
-  // as ITonWalletV3 | ITonWalletV4
 
   const [balance, setBalance] = useState('')
 
@@ -35,8 +31,10 @@ function Wallet() {
   }
 
   useEffect(() => {
-    updateBalance()
-    getSeqno()
+    setSeqno('0')
+    setBalance('0')
+    updateBalance().then()
+    getSeqno().then()
   }, [wallet, liteClient])
 
   return (

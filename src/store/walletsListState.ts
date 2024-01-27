@@ -63,7 +63,7 @@ export async function saveKey(db: Knex, key: Key, walletName: string): Promise<K
     })
     .returning('*')
 
-  updateWalletsList()
+  await updateWalletsList()
 
   return res[0]
 }
@@ -77,7 +77,7 @@ export async function deleteWallet(db: Knex, key: number) {
     await tx.raw(`DELETE FROM keys WHERE id = ?`, [key])
   })
 
-  updateWalletsList()
+  await updateWalletsList()
 }
 
 export async function saveKeyFromData(
@@ -92,7 +92,7 @@ export async function saveKeyFromData(
     mnemonic: words,
     seed,
   })
-  const keyPair = await secretKeyToED25519(seed)
+  const keyPair = secretKeyToED25519(seed)
   const key: Key = {
     id: 0,
     name: '',
@@ -129,7 +129,7 @@ export async function saveKeyAndWallets(
     },
   ]
 
-  setWalletKey(newWallet.id)
+  await setWalletKey(newWallet.id)
 
   const wallets = await db<SavedWallet>('wallets').insert(defaultWallets).returning('*')
   await updateWalletsList()
@@ -201,5 +201,5 @@ export async function DeleteKeyWallet(walletId: number) {
     })
     .delete()
 
-  updateWalletsList()
+  await updateWalletsList()
 }

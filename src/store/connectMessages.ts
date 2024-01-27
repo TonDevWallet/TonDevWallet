@@ -1,6 +1,6 @@
 import { getDatabase } from '@/db'
 import { ConnectMessageTransaction, ConnectMessageTransactionPayload } from '@/types/connect'
-import { hookstate, useHookstate } from '@hookstate/core'
+import { hookstate, none, useHookstate } from '@hookstate/core'
 
 export interface TonConnectMessageTransaction {
   id: number
@@ -74,5 +74,19 @@ export async function changeConnectMessageStatus(messageId: number, newStatus: 0
       status: newStatus,
     })
 
-  messagesState.set(await getConnectMessages())
+  await removeConnectMessages()
+}
+
+export async function removeConnectMessages() {
+  const newMessages = await getConnectMessages()
+  messagesState.merge((old) => {
+    const deleteA = {}
+    for (let i = 0; i < old.length; i++) {
+      if (!newMessages.find((m) => m.id === old[i].id)) {
+        deleteA[i] = none
+      }
+    }
+
+    return deleteA
+  })
 }

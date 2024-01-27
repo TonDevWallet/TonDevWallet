@@ -1,4 +1,4 @@
-import { KeyPair } from '@ton/crypto'
+import { type KeyPair } from '@ton/crypto'
 import { ed25519, x25519 } from '@noble/curves/ed25519'
 import { randomBytes } from '@noble/hashes/utils'
 export function secretKeyToED25519(secretKey: Buffer | Uint8Array): KeyPair {
