@@ -23,7 +23,7 @@ export function ChangePasswordPopup() {
     <ReactPopup
       modal
       trigger={
-        <div className={'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center '}>
+        <div className={'cursor-pointer rounded flex flex-col items-center my-2 text-center '}>
           <div
             className="rounded-full w-16 h-16 bg-foreground/5
         flex items-center justify-center text-[32px] text-foreground"

@@ -23,7 +23,7 @@ export function DetectTonConnect() {
   return (
     <div
       onClick={tryToStartConnect}
-      className={'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center '}
+      className={'cursor-pointer rounded flex flex-col items-center my-2 text-center '}
     >
       <div
         className="rounded-full w-16 h-16 bg-foreground/5
