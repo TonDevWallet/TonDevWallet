@@ -26,7 +26,7 @@ export function AddressRow({
 }) {
   const [copied, setCopied] = useState(false)
 
-  let addressString
+  let addressString: string = ''
   if (rawAddress) {
     addressString = Address.parse(rawAddress).toString({ urlSafe: true, bounceable: true })
   } else if (address) {

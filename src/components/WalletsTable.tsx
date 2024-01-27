@@ -3,13 +3,13 @@ import { DeleteKeyWallet } from '@/store/walletsListState'
 import { setSelectedWallet } from '@/store/walletState'
 import { useSelectedTonWallet } from '@/utils/wallets'
 import { useMemo } from 'react'
-import { IWallet } from '../types'
+import { IWallet } from '@/types'
 import { AddressRow } from './AddressRow'
 import { ReactPopup } from './Popup'
 import { Block } from './ui/Block'
 import { BlueButton } from './ui/BlueButton'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrashCan, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { faTrashCan, faArrowRight, faShareFromSquare } from '@fortawesome/free-solid-svg-icons'
 import { WalletJazzicon } from './WalletJazzicon'
 
 // const defaultHighloadId = 1
@@ -38,7 +38,8 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
           >
             <WalletJazzicon wallet={wallet} className="mr-2" />
             Wallet {wallet.type}
-          </a>{' '}
+            <FontAwesomeIcon icon={faShareFromSquare} className="ml-2" />
+          </a>
         </div>
 
         {!isSelected && (
@@ -64,6 +65,7 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
             urlSafe: true,
             testOnly: isTestnet,
           })}
+          containerClassName={'hover:text-accent-light'}
         />
         <AddressRow
           text={<span className="w-32 flex-shrink-0">UnBouncable:</span>}
@@ -72,10 +74,12 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
             bounceable: false,
             testOnly: isTestnet,
           })}
+          containerClassName={'hover:text-accent-light'}
         />
         <AddressRow
           text={<span className="w-32 flex-shrink-0">Raw:</span>}
           address={wallet.address.toRawString()}
+          containerClassName={'hover:text-accent-light'}
         />
       </div>
 
@@ -87,22 +91,26 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
               Delete
             </button>
           }
+          position={'bottom left'}
         >
           {(close: () => void) => {
             return (
-              <div className="flex gap-2">
-                <BlueButton
-                  className="bg-red-500"
-                  onClick={async () => {
-                    await deleteWallet(wallet.id)
-                    close()
-                  }}
-                >
-                  Confirm
-                </BlueButton>
-                <BlueButton className="" onClick={close}>
-                  Cancel
-                </BlueButton>
+              <div className="flex flex-col gap-2 p-2">
+                Are you sure?
+                <div className="flex gap-2">
+                  <BlueButton className="" onClick={close}>
+                    Cancel
+                  </BlueButton>
+                  <BlueButton
+                    className="bg-red-500"
+                    onClick={async () => {
+                      await deleteWallet(wallet.id)
+                      close()
+                    }}
+                  >
+                    Delete
+                  </BlueButton>
+                </div>
               </div>
             )
           }}
