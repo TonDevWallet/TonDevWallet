@@ -1,8 +1,8 @@
-import { useLiteclientState } from '@/store/liteClient'
+import { useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { DeleteKeyWallet } from '@/store/walletsListState'
 import { setSelectedWallet } from '@/store/walletState'
 import { useSelectedTonWallet } from '@/utils/wallets'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { IWallet } from '@/types'
 import { AddressRow } from './AddressRow'
 import { ReactPopup } from './Popup'
@@ -11,6 +11,7 @@ import { BlueButton } from './ui/BlueButton'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrashCan, faArrowRight, faShareFromSquare } from '@fortawesome/free-solid-svg-icons'
 import { WalletJazzicon } from './WalletJazzicon'
+import { Address } from '@ton/core'
 
 // const defaultHighloadId = 1
 // const defaultTonWalletId = 698983191
@@ -21,6 +22,21 @@ const deleteWallet = (walletId: number) => {
 
 function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolean }) {
   const isTestnet = useLiteclientState().testnet.get()
+  const liteClient = useLiteclient()
+
+  const [balance, setBalance] = useState('')
+  const updateBalance = async () => {
+    const state = await liteClient.getAccountState(
+      Address.parse(wallet.address.toString({ bounceable: true, urlSafe: true })),
+      (await liteClient.getMasterchainInfo()).last
+    )
+    setBalance(state.balance.coins.toString())
+  }
+
+  useEffect(() => {
+    setBalance('0')
+    updateBalance().then()
+  }, [wallet, liteClient])
 
   return (
     <Block
@@ -57,6 +73,11 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
         <div className="flex">
           <span className="w-32 flex-shrink-0">Subwallet ID: </span>
           <span>{wallet.subwalletId}</span>
+        </div>
+
+        <div className="flex">
+          <span className="w-32 flex-shrink-0">Balance: </span>
+          <span>{balance ? parseFloat(balance) / 10 ** 9 : 0} TON</span>
         </div>
         <AddressRow
           text={<span className="w-32 flex-shrink-0">Bouncable:</span>}
