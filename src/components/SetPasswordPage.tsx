@@ -2,6 +2,7 @@ import { setFirstPassword } from '@/store/passwordManager'
 import { cn } from '@/utils/cn'
 import { useState } from 'react'
 import { BlueButton } from './ui/BlueButton'
+import { Input } from './ui/input'
 
 export function SetPasswordPage() {
   const [pass, setPass] = useState('')
@@ -25,7 +26,7 @@ export function SetPasswordPage() {
       setErrorMessage('')
       await setFirstPassword(pass)
     } catch (e) {
-      console.log('wrong', e)
+      console.log('password create error', e)
       setErrorMessage('Wrong password')
     } finally {
       setIsUpdating(false)
@@ -40,7 +41,7 @@ export function SetPasswordPage() {
         <form onSubmit={createPassword}>
           <div className="flex flex-col">
             <label htmlFor="passwordInput">Password:</label>
-            <input
+            <Input
               id="passwordInput"
               type="password"
               className="mt-1 rounded p-2"
@@ -52,7 +53,7 @@ export function SetPasswordPage() {
 
           <div className="flex flex-col">
             <label htmlFor="passwordInputRepeat">Repeat password:</label>
-            <input
+            <Input
               id="passwordInputRepeat"
               type="password"
               className="mt-1 rounded p-2"

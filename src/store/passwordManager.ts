@@ -199,6 +199,10 @@ export async function setNewPassword(oldPassword: string, newPassword: string) {
 export async function setFirstPassword(password: string) {
   const db = await getDatabase()
 
+  const existingPassword = await db<Setting>('settings').where({ name: 'password' }).first()
+  if (existingPassword) {
+    throw new Error('Password already exists')
+  }
   const salt = Buffer.from(getRandomBytes(32))
   const key = Buffer.from(
     await scrypt(
