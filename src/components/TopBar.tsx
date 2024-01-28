@@ -10,7 +10,7 @@ import { IWallet } from '@/types'
 import { sendTonConnectStartMessage } from '@/components/TonConnect/TonConnect'
 import { DetectTonConnect } from '@/components/SavedWalletsList/DetectTonConnect'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLock, faLockOpen } from '@fortawesome/free-solid-svg-icons'
+import { faLock, faLockOpen, faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
 import { ChangePasswordPopup } from '@/components/SavedWalletsList/ChangePasswordPopup'
 import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
 import { cn } from '@/utils/cn'
@@ -23,7 +23,6 @@ export function TopBar() {
   const liteClient = useLiteclient() as LiteClient
   const keys = useWalletListState()
   const passwordState = usePassword()
-  const [theme, setTheme] = useTheme()
 
   const changeLiteClientNetwork = () => {
     changeLiteClient(!liteClientState.testnet.get()).then()
@@ -104,19 +103,28 @@ export function TopBar() {
 
       <PasswordPopup />
 
-      <div className="cursor-pointer rounded flex flex-col items-center my-2">
-        <label
-          className="rounded-full w-16 h-16 bg-foreground/5
-            flex flex-col items-center justify-center text-sm cursor-pointer text-foreground"
-          onClick={() => {
-            console.log('click', setTheme)
-            setTheme((theme === 'light' ? 'dark' : 'light') as Theme)
-          }}
-        >
-          {theme === 'dark' ? 'Dark' : 'Light'}
-        </label>
-        <div className="text-foreground">Theme</div>
-      </div>
+      <ThemeSwitcher />
+    </div>
+  )
+}
+
+function ThemeSwitcher() {
+  const [theme, setTheme] = useTheme()
+
+  return (
+    <div className="cursor-pointer rounded flex flex-col items-center my-2">
+      <label
+        className="rounded-full w-16 h-16 bg-foreground/5
+    flex flex-col items-center justify-center text-sm cursor-pointer text-foreground"
+        onClick={() => {
+          console.log('click', setTheme)
+          setTheme((theme === 'light' ? 'dark' : 'light') as Theme)
+        }}
+      >
+        <FontAwesomeIcon icon={theme === 'dark' ? faMoon : faSun} size="2x" />
+        {/* {theme === 'dark' ? 'Dark' : 'Light'} */}
+      </label>
+      <div className="text-foreground">Theme</div>
     </div>
   )
 }
