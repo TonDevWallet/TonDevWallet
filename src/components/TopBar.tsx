@@ -14,6 +14,8 @@ import { faLock, faLockOpen } from '@fortawesome/free-solid-svg-icons'
 import { ChangePasswordPopup } from '@/components/SavedWalletsList/ChangePasswordPopup'
 import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
 import { cn } from '@/utils/cn'
+import { useTheme } from '@/hooks/useTheme'
+import { Theme } from '@tauri-apps/api/window'
 
 export function TopBar() {
   const liteClientState = useLiteclientState()
@@ -21,6 +23,7 @@ export function TopBar() {
   const liteClient = useLiteclient() as LiteClient
   const keys = useWalletListState()
   const passwordState = usePassword()
+  const [theme, setTheme] = useTheme()
 
   const changeLiteClientNetwork = () => {
     changeLiteClient(!liteClientState.testnet.get()).then()
@@ -51,7 +54,7 @@ export function TopBar() {
       <div className="cursor-pointer rounded flex flex-col items-center my-2">
         <label
           className="rounded-full w-16 h-16 bg-foreground/5
-            flex flex-col items-center justify-center text-sm cursor-pointer"
+            flex flex-col items-center justify-center text-sm cursor-pointer text-foreground"
           htmlFor="apiKeyInput"
         >
           {/* <label>Testnet:</label> */}
@@ -75,7 +78,7 @@ export function TopBar() {
           className={'cursor-pointer rounded flex flex-col items-center my-2 text-center'}
         >
           <div
-            className="rounded-full w-16 h-4 bg-foreground/5
+            className="rounded-full w-16 h-16 bg-foreground/5
             flex flex-col items-center justify-center text-[32px] text-foreground"
           >
             <FontAwesomeIcon icon={faLockOpen} size="xs" />
@@ -100,6 +103,20 @@ export function TopBar() {
       <ChangePasswordPopup />
 
       <PasswordPopup />
+
+      <div className="cursor-pointer rounded flex flex-col items-center my-2">
+        <label
+          className="rounded-full w-16 h-16 bg-foreground/5
+            flex flex-col items-center justify-center text-sm cursor-pointer text-foreground"
+          onClick={() => {
+            console.log('click', setTheme)
+            setTheme((theme === 'light' ? 'dark' : 'light') as Theme)
+          }}
+        >
+          {theme === 'dark' ? 'Dark' : 'Light'}
+        </label>
+        <div className="text-foreground">Theme</div>
+      </div>
     </div>
   )
 }

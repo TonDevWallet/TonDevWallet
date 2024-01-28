@@ -137,8 +137,8 @@
         "title": "Ton Dev Wallet",
         "width": 1100,
         "focus": true,
-        "transparent": true,
-        "decorations": false,
+        "transparent": false,
+        "decorations": true,
         "url": "/app"
       }
     ],

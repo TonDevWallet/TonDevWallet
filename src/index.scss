@@ -16,7 +16,7 @@
 }
 
 body {
-  color: var(--color-foreground);
+  //color: var(--color-foreground);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   // overflow-y: scroll;
   user-select: none;
@@ -24,136 +24,214 @@ body {
   /* overflow-x: hidden; */
 }
 
-html {
-  --color-foreground: black;
-  --color-foreground-rgb: 0 0 0;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
 
-  input {
-    color: black;
-    background: white;
-    border-width: 1px;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 215 20.2% 65.1%;
+
+    --radius: 0.5rem;
   }
 
-  textarea {
-    color: black;
-    background: white;
-    border-width: 1px;
-  }
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
 
-  .popup-content {
-    width: auto;
-    background: white;
-    color: var(--color-foreground);
-  }
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
 
-  .popup-arrow {
-    color: var(--color-background);
-    fill: var(--color-background);
-    stroke: var(--color-background);
-    border: none;
-  }
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
 
-  a {
-    color: var(--color-accent);
-    text-decoration: none;
-  }
-}
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
 
-html.dark {
-  input {
-    @apply shadow-md;
-    color: white;
-    background: rgb(255 255 255 / 0.05);
-    border: none;
-    outline: none;
-  }
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
 
-  select {
-    @apply shadow-md;
-    color: white;
-    background: rgb(255 255 255 / 0.05);
-    border: none;
-    outline: none;
-  }
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
 
-  select > option {
-    color: white;
-    background: rgb(55 55 55);
-    // background: red;
-    border: none;
-  }
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 1.2%;
 
-  textarea {
-    @apply shadow-md;
-    color: white;
-    background: rgb(255 255 255 / 0.05);
-    border: none;
-  }
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
 
-  .popup-content {
-    @apply rounded;
-    width: auto;
-    background: rgb(55 55 55);
-    color: var(--color-foreground);
-    border: none;
-  }
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
 
-  .popup-arrow {
-    color: rgb(55 55 55);
-    fill: rgb(55 55 55);
-    stroke: rgb(55 55 55);
-    border: none;
-  }
+    --ring: 216 34% 17%;
 
-  a {
-    color: var(--color-accent-light);
-    text-decoration: none;
+    --radius: 0.5rem;
   }
 }
 
-html.linux {
-  &.dark {
-    body {
-      background: rgb(255 255 255 / 0.95);
-    }
+@layer base {
+  * {
+    @apply border-border;
   }
-
   body {
-    background: white;
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-html.macos {
-  &.dark {
-    body {
-      background: transparent;
-      --color-window-background: rgb(55 55 55);
-      --color-background-rgb: 55 55 55;
-    }
-  }
-
-  body {
-    background: rgb(255 255 255 / 0.75);
-    --color-window-background: rgb(255 255 255);
-    --color-background-rgb: 255 255 255;
-  }
-}
-
+//html {
+//  --color-foreground: black;
+//  --color-foreground-rgb: 0 0 0;
+//
+//  input {
+//    color: black;
+//    background: white;
+//    border-width: 1px;
+//  }
+//
+//  textarea {
+//    color: black;
+//    background: white;
+//    border-width: 1px;
+//  }
+//
+//  .popup-content {
+//    width: auto;
+//    background: white;
+//    color: var(--color-foreground);
+//  }
+//
+//  .popup-arrow {
+//    color: var(--color-background);
+//    fill: var(--color-background);
+//    stroke: var(--color-background);
+//    border: none;
+//  }
+//
+//  a {
+//    color: var(--color-accent);
+//    text-decoration: none;
+//  }
+//}
+//
+//html.dark {
+//  input {
+//    @apply shadow-md;
+//    color: white;
+//    background: rgb(255 255 255 / 0.05);
+//    border: none;
+//    outline: none;
+//  }
+//
+//  select {
+//    @apply shadow-md;
+//    color: white;
+//    background: rgb(255 255 255 / 0.05);
+//    border: none;
+//    outline: none;
+//  }
+//
+//  select > option {
+//    color: white;
+//    background: rgb(55 55 55);
+//    // background: red;
+//    border: none;
+//  }
+//
+//  textarea {
+//    @apply shadow-md;
+//    color: white;
+//    background: rgb(255 255 255 / 0.05);
+//    border: none;
+//  }
+//
+//  .popup-content {
+//    @apply rounded;
+//    width: auto;
+//    background: rgb(55 55 55);
+//    color: var(--color-foreground);
+//    border: none;
+//  }
+//
+//  .popup-arrow {
+//    color: rgb(55 55 55);
+//    fill: rgb(55 55 55);
+//    stroke: rgb(55 55 55);
+//    border: none;
+//  }
+//
+//  a {
+//    color: var(--color-accent-light);
+//    text-decoration: none;
+//  }
+//}
+//
+//html.linux {
+//  &.dark {
+//    body {
+//      background: rgb(255 255 255 / 0.95);
+//    }
+//  }
+//
+//  body {
+//    background: white;
+//  }
+//}
+//
+//html.macos {
+//  &.dark {
+//    body {
+//      background: transparent;
+//      --color-window-background: rgb(55 55 55);
+//      --color-background-rgb: 55 55 55;
+//    }
+//  }
+//
+//  body {
+//    background: rgb(255 255 255 / 0.75);
+//    --color-window-background: rgb(255 255 255);
+//    --color-background-rgb: 255 255 255;
+//  }
+//}
+//
 html.windows {
-  &.dark {
-    body {
-      background: rgb(55 55 55);
-      --color-window-background: rgb(55 55 55);
-      --color-background-rgb: 55 55 55;
-    }
-  }
-
-  body {
-    background: rgb(255 255 255);
-    --color-window-background: rgb(255 255 255);
-    --color-background-rgb: 255 255 255;
-  }
-
+//  &.dark {
+//    body {
+//      background: rgb(55 55 55);
+//      --color-window-background: rgb(55 55 55);
+//      --color-background-rgb: 55 55 55;
+//    }
+//  }
+//
+//  body {
+//    background: rgb(255 255 255);
+//    --color-window-background: rgb(255 255 255);
+//    --color-background-rgb: 255 255 255;
+//  }
+//
   ::-webkit-scrollbar {
     width: 9px;
   }
@@ -169,9 +247,9 @@ html.windows {
     background: #272d38;
   }
 }
-
+//
 html.windows11 {
-  --color-window-background: transparent;
+  //--color-window-background: transparent;
   ::-webkit-scrollbar {
     width: 9px;
   }
@@ -181,6 +259,7 @@ html.windows11 {
     border-radius: 20px;
   }
   ::-webkit-scrollbar-track {
+    margin: 8px 0 8px 0;
     background: var(--color-window-background);
   }
   ::-webkit-scrollbar-track:active {
@@ -188,9 +267,9 @@ html.windows11 {
   }
 }
 
-button {
-  outline: none;
-}
+//button {
+//  outline: none;
+//}
 
 .react-flow__controls-button {
   background: white;

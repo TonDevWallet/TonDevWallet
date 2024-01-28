@@ -180,7 +180,7 @@ fn main() {
 
             let window = app.get_window("main").unwrap();
 
-            change_transparent_effect(window.clone());
+//             change_transparent_effect(window.clone());
 
             let handle = app.handle();
             tauri_plugin_deep_link::register(
@@ -198,7 +198,7 @@ fn main() {
             colors::get_system_colors,
             get_os_name,
             detect_qr_code,
-            change_transparent_effect,
+//             change_transparent_effect,
             detect_qr_code_from_image,
         ])
         .build(context)

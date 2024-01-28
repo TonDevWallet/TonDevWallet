@@ -20,7 +20,7 @@ export function Layout() {
             className="grid grid-cols-[128px_minmax(128px,_1fr)] grid-rows-[120px_minmax(120px,_1fr)]
               h-screen w-full overflow-y-hidden"
           >
-            <div className="col-span-2 shadow-xl">
+            <div className="col-span-2 border-b">
               <TopBar />
             </div>
 
@@ -29,7 +29,7 @@ export function Layout() {
               <SavedWalletsList />
             </div>
             <div
-              className="w-full h-full overflow-y-scroll bg-window-background px-2 shadow"
+              className="w-full h-full overflow-y-scroll bg-window-background px-6 shadow pt-4"
               id="outlet"
             >
               <Outlet />

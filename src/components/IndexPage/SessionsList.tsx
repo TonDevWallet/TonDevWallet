@@ -7,7 +7,7 @@ import {
 import { useWalletListState } from '@/store/walletsListState'
 import { setWalletKey, setSelectedWallet } from '@/store/walletState'
 import { getWalletFromKey } from '@/utils/wallets'
-import { faClose, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faClose, faPlus, faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { NavLink } from 'react-router-dom'
 import { LiteClient } from 'ton-lite-client'
@@ -17,6 +17,18 @@ import { ReactPopup } from '../Popup'
 import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
 import { WalletJazzicon } from '../WalletJazzicon'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 
 export function SessionsList() {
   const sessions = useTonConnectSessions()
@@ -66,50 +78,45 @@ export function SessionsList() {
                 </NavLink>
               </div>
 
-              <ReactPopup
-                trigger={() => (
-                  <div>
-                    <button
-                      className="cursor-pointer text-accent dark:text-accent-light"
-                      onClick={async (e) => {
-                        if (e.ctrlKey) {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          deleteTonConnectSession(s)
-                        }
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faClose} className="mx-1" />
-                    </button>
-                  </div>
-                )}
-              >
-                {(close: () => void) => {
-                  return (
-                    <div className="flex flex-col gap-2 p-2">
-                      <p>To close session without confirm popup use Ctrl + Click</p>
-                      <div className="flex gap-2">
-                        <BlueButton
-                          className="bg-red-500"
-                          onClick={async () => {
-                            await deleteTonConnectSession(s)
-                            close()
-                          }}
-                          // onClick={async () => {
-                          //   await deleteWallet(wallet.id)
-                          //   close()
-                          // }}
-                        >
-                          Confirm
-                        </BlueButton>
-                        <BlueButton className="" onClick={close}>
-                          Cancel
-                        </BlueButton>
-                      </div>
-                    </div>
-                  )
-                }}
-              </ReactPopup>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  {/* <Button variant="outline" onClick={(e) => {}}> */}
+                  {/* <div> */}
+                  <Button
+                    variant={'ghost'}
+                    className={'px-2'}
+                    // className="cursor-pointer text-accent dark:text-accent-light"
+                    onClick={async (e) => {
+                      if (e.ctrlKey) {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        deleteTonConnectSession(s)
+                      }
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faClose} className="mx-1" />
+                  </Button>
+                  {/* </div> */}
+                  {/* </Button> */}
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Your session will be deleted, and will disconnect from service
+                    </AlertDialogDescription>
+                    <AlertDialogDescription>
+                      To close session without confirm popup use Ctrl + Click
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteTonConnectSession(s)}>
+                      Continue
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             <a href={s.url.get()} target="_blank" className="" rel="noopener noreferrer">
