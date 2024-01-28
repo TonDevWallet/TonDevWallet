@@ -16,6 +16,7 @@ import { getWalletFromKey } from '@/utils/wallets'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFileEdit, faWallet } from '@fortawesome/free-solid-svg-icons'
 import { BlueButton } from '@/components/ui/BlueButton'
+import { Input } from '../ui/input'
 
 function WalletHeader(props: { name?: string; keyId: number }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -28,7 +29,7 @@ function WalletHeader(props: { name?: string; keyId: number }) {
       <div className={'flex flex-col mt-1 mb-4 gap-2'}>
         <label htmlFor="newNameInput">New wallet name:</label>
 
-        <input
+        <Input
           id={'newNameInput'}
           type="text"
           className="border border-gray-300 rounded-md p-2"
@@ -41,7 +42,7 @@ function WalletHeader(props: { name?: string; keyId: number }) {
             await updateWalletName(newName, props.keyId)
           }}
         >
-          save
+          Save
         </BlueButton>
       </div>
     </div>

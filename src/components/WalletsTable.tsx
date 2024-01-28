@@ -87,10 +87,10 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
             </Button>
           )}
         </CardTitle>
-        <CardDescription>Subwallet ID: {wallet.subwalletId}</CardDescription>
         <CardDescription>
           Balance: {balance ? parseFloat(balance) / 10 ** 9 : 0} TON
         </CardDescription>
+        <CardDescription>Subwallet ID: {wallet.subwalletId}</CardDescription>
       </CardHeader>
 
       <CardContent>
