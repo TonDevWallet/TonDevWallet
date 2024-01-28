@@ -115,7 +115,7 @@ function ThemeSwitcher() {
     <div className="cursor-pointer rounded flex flex-col items-center my-2">
       <label
         className="rounded-full w-16 h-16 bg-foreground/5
-    flex flex-col items-center justify-center text-sm cursor-pointer text-foreground"
+          flex flex-col items-center justify-center text-sm cursor-pointer text-foreground"
         onClick={() => {
           console.log('click', setTheme)
           setTheme((theme === 'light' ? 'dark' : 'light') as Theme)

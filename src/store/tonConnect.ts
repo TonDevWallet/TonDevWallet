@@ -22,6 +22,8 @@ export interface TonConnectState {
 
   popupOpen: boolean
   connectArg: string
+
+  qrcodeOpen: boolean
 }
 
 const state = hookstate<TonConnectState>(async () => {
@@ -30,6 +32,8 @@ const state = hookstate<TonConnectState>(async () => {
 
     popupOpen: false,
     connectArg: '',
+
+    qrcodeOpen: false,
   }
 })
 
