@@ -1,28 +1,74 @@
+import { useEffect, useState } from 'react'
+import {
+  DialogHeader,
+  DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog'
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from '../ui/form'
+import { Input } from '../ui/input'
+import { useForm } from 'react-hook-form'
+import { Button } from '../ui/button'
 import { setNewPassword } from '@/store/passwordManager'
-import { cn } from '@/utils/cn'
-import { faHashtag } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useState } from 'react'
-import { ReactPopup } from '../Popup'
-import { BlueButton } from '../ui/BlueButton'
+import { faHashtag } from '@fortawesome/free-solid-svg-icons'
+
+type ChangePasswordInputs = {
+  currentPassword: string
+  newPassword: string
+  repeatPassword: string
+}
 
 export function ChangePasswordPopup() {
-  const [pass, setPass] = useState('')
-  const [newPass, setNewPass] = useState('')
-  const [repeatPas, setRepeatPass] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
   const [isUpdating, setIsUpdating] = useState(false)
+  const [open, setOpen] = useState(false)
 
-  const onOpen = () => {
-    setPass('')
-    setNewPass('')
-    setRepeatPass('')
+  const form = useForm<ChangePasswordInputs>({
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      repeatPassword: '',
+    },
+  })
+
+  const onSubmit = async () => {
+    const currentPassword = form.getValues('currentPassword')
+    const newPassword = form.getValues('newPassword')
+    const repeatPassword = form.getValues('repeatPassword')
+    try {
+      setIsUpdating(true)
+      if (!currentPassword) {
+        form.setError('currentPassword', { message: 'Current password is required' })
+        return
+      }
+      if (newPassword.length < 4) {
+        form.setError('newPassword', { message: 'Password is too short. Minimum 4 symbols' })
+        return
+      }
+      if (newPassword !== repeatPassword) {
+        form.setError('repeatPassword', { message: 'Passwords are not the same' })
+        return
+      }
+      await setNewPassword(currentPassword, newPassword)
+      setOpen(false)
+    } catch (e) {
+      console.log('password update error', 3)
+      form.setError('currentPassword', { message: 'Error occured during update, check passwords' })
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
+  useEffect(() => {
+    form.reset()
+  }, [])
+
   return (
-    <ReactPopup
-      modal
-      trigger={
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger>
         <div className={'cursor-pointer rounded flex flex-col items-center my-2 text-center '}>
           <div
             className="rounded-full w-16 h-16 bg-foreground/5
@@ -32,75 +78,65 @@ export function ChangePasswordPopup() {
           </div>
           <div className="text-foreground">Change password</div>
         </div>
-      }
-      onOpen={onOpen}
-    >
-      {(close) => (
-        <div className="flex flex-col w-64 p-4">
-          <div>
-            <label htmlFor="passwordInput">Enter current password</label>
-            <input
-              id="passwordInput"
-              type="password"
-              className="mt-2 px-2"
-              value={pass}
-              autoComplete="off"
-              onChange={(e) => setPass(e.target.value)}
+      </DialogTrigger>
+      <DialogContent noClose={true}>
+        <DialogHeader>
+          <DialogTitle>Enter your password to unlock wallets</DialogTitle>
+          <DialogDescription></DialogDescription>
+        </DialogHeader>
+        {/*  */}
+        <Form {...form}>
+          <form className="grid gap-4 py-4" onSubmit={form.handleSubmit(onSubmit)}>
+            <FormField
+              control={form.control}
+              name="currentPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" autoComplete="off" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div>
-            <label htmlFor="passwordInputNew">Enter new password</label>
-            <input
-              id="passwordInputNew"
-              type="password"
-              className="mt-2 px-2"
-              value={newPass}
-              autoComplete="off"
-              onChange={(e) => setNewPass(e.target.value)}
+            <FormField
+              control={form.control}
+              name="newPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New password</FormLabel>
+                  <FormControl>
+                    <Input type="password" autoComplete="off" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div>
-            <label htmlFor="passwordInputRepeat">Repeat new password</label>
-            <input
-              id="passwordInputRepeat"
-              type="password"
-              className="mt-2 px-2"
-              value={repeatPas}
-              autoComplete="off"
-              onChange={(e) => setRepeatPass(e.target.value)}
+            <FormField
+              control={form.control}
+              name="repeatPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Repeat New password</FormLabel>
+                  <FormControl>
+                    <Input type="password" autoComplete="off" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="text-sm text-red-500 h-4">{errorMessage}</div>
-
-          <BlueButton
-            className={cn('w-full mt-2', isUpdating && 'bg-gray-500')}
-            onClick={async () => {
-              try {
-                setIsUpdating(true)
-                if (newPass !== repeatPas || newPass.length < 4) {
-                  setErrorMessage('Wrong new password')
-                  return
-                }
-                setErrorMessage('')
-                await setNewPassword(pass, newPass)
-                setPass('')
-                close()
-              } catch (e) {
-                console.log('wrong')
-                setErrorMessage('Wrong password')
-              } finally {
-                setIsUpdating(false)
-              }
-            }}
-            disabled={isUpdating}
-          >
-            Update password
-          </BlueButton>
-        </div>
-      )}
-    </ReactPopup>
+            <DialogFooter>
+              <Button type="submit" variant={'default'} disabled={isUpdating}>
+                Save changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   )
 }
