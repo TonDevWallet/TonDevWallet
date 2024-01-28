@@ -2,12 +2,12 @@ import { ITonWallet } from '@/types'
 import { AddressRow } from '../../AddressRow'
 import { useEffect, useState } from 'react'
 import SendTon from './SendTon'
-import { BlueButton } from '../../ui/BlueButton'
 import { Address } from '@ton/core'
 import { useLiteclient } from '@/store/liteClient'
-import { TonConnect } from '@/components/TonConnect/TonConnect'
 import { useSelectedTonWallet } from '@/utils/wallets'
 import { Block } from '@/components/ui/Block'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 function Wallet() {
   const wallet = useSelectedTonWallet() as ITonWallet
@@ -39,8 +39,8 @@ function Wallet() {
 
   return (
     <div className="flex flex-col gap-2">
-      <Block>
-        <div className="flex flex-col">
+      <Block className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           <div className="font-medium text-lg">Wallet:</div>
           <div>Type: {wallet.type}</div>
           <div>
@@ -51,17 +51,17 @@ function Wallet() {
           </div>
         </div>
 
-        <div className="flex items-center">
+        <div className="flex items-center justify-between">
           <div>Balance: {balance && parseFloat(balance) / 10 ** 9}</div>
-          <BlueButton onClick={updateBalance} className="ml-2 px-2 py-0 w-auto">
+          <Button onClick={updateBalance} variant={'outline'} className="ml-2 px-2 py-0 w-auto">
             Refresh Balance
-          </BlueButton>
+          </Button>
         </div>
 
-        <div className="mt-2 flex flex-col">
+        <div className="flex flex-col">
           <label htmlFor="amountInput">Seqno:</label>
-          <div>
-            <input
+          <div className="flex">
+            <Input
               className="border rounded p-2"
               id="amountInput"
               type="text"
@@ -70,14 +70,12 @@ function Wallet() {
               value={seqno}
               onChange={(e: any) => setSeqno(e.target.value)}
             />
-            <BlueButton onClick={getSeqno} className="ml-2">
-              Get Seqno
-            </BlueButton>
+            <Button variant={'outline'} onClick={getSeqno} className="ml-2">
+              Refresh Seqno
+            </Button>
           </div>
         </div>
       </Block>
-
-      <TonConnect />
 
       <SendTon seqno={seqno} wallet={wallet} updateBalance={updateBalance} />
 

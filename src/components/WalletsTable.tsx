@@ -5,9 +5,6 @@ import { useSelectedTonWallet } from '@/utils/wallets'
 import { useEffect, useMemo, useState } from 'react'
 import { IWallet } from '@/types'
 import { AddressRow } from './AddressRow'
-import { ReactPopup } from './Popup'
-import { Block } from './ui/Block'
-import { BlueButton } from './ui/BlueButton'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrashCan, faArrowRight, faShareFromSquare } from '@fortawesome/free-solid-svg-icons'
 import { WalletJazzicon } from './WalletJazzicon'
@@ -128,7 +125,7 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
       <CardFooter className="flex justify-between">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="outline" onClick={(e) => {}}>
+            <Button variant="outline">
               <FontAwesomeIcon icon={faTrashCan} className="mr-1" />
               Delete
             </Button>

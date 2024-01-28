@@ -98,7 +98,7 @@ export function WalletPage() {
         <WalletGenerator />
         <WalletsTable walletsToShow={walletsToShow} />
       </div>
-      <div className="md:max-w-xl min-w-0 w-full flex-grow-0 flex flex-col mt-[6.75rem]">
+      <div className="md:max-w-xl min-w-0 w-full flex-grow-0 flex flex-col mt-[7rem]">
         {selectedWallet ? (
           selectedWallet?.type === 'highload' ? (
             <HighloadWallet />

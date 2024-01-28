@@ -28,7 +28,11 @@ export function PasswordPopup() {
 
   const [isUpdating, setIsUpdating] = useState(false)
 
-  const form = useForm<passwordInputs>()
+  const form = useForm<passwordInputs>({
+    defaultValues: {
+      password: '',
+    },
+  })
 
   useEffect(() => {
     form.reset()
@@ -37,8 +41,6 @@ export function PasswordPopup() {
   const onSubmit = async () => {
     try {
       const formPassword = form.getValues('password')
-
-      console.log('submit', form, formPassword)
       setIsUpdating(true)
       await setPassword(formPassword)
       form.reset()

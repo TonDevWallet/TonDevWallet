@@ -3,13 +3,23 @@ import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import { SignCell } from '@/contracts/utils/SignExternalMessage'
 import { useLiteclient } from '@/store/liteClient'
 import { useEffect, useState } from 'react'
-import Popup from 'reactjs-popup'
 import { Address, beginCell, Cell, storeMessage } from '@ton/core'
 import { ITonHighloadWalletV2 } from '@/types'
-import { BlueButton } from '@/components/ui/BlueButton'
 import { getPasswordInteractive, decryptWalletData, usePassword } from '@/store/passwordManager'
 import { textToWalletBody } from '@/utils/textToWalletBody'
 import { secretKeyToED25519 } from '@/utils/ed25519'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
   const [amount, setAmount] = useState('0')
@@ -29,12 +39,12 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
   }, [wallet, liteClient])
 
   return (
-    <Block className="flex flex-col p-4 border rounded shadow">
+    <Block className="flex flex-col">
       <div className="font-medium text-lg">Send TON:</div>
 
       <div className="mt-2 flex flex-col">
         <label htmlFor="toInput">Recepient:</label>
-        <input
+        <Input
           className="border rounded p-2"
           id="toInput"
           type="text"
@@ -45,7 +55,7 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
 
       <div className="mt-2 flex flex-col">
         <label htmlFor="amountInput">Amount:</label>
-        <input
+        <Input
           className="border rounded p-2"
           id="amountInput"
           type="text"
@@ -60,22 +70,20 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
       <div className="mt-2 flex flex-col">
         <label htmlFor="messageInput">Message:</label>
         <div className="flex items-center">
-          <label htmlFor="base64Check" className="text-sm text-foreground/75 my-1">
+          <label htmlFor="base64Check" className="text-sm text-foreground/75 my-1 cursor-pointer">
             Base64 cell?
           </label>
-          <input
+          <Checkbox
             id="base64Check"
-            type="checkbox"
             checked={message64}
-            onChange={(e: any) => {
+            onCheckedChange={(e: any) => {
               console.log('change', e)
               setMessage64((c) => !c)
             }}
             className="ml-2"
-            autoComplete="off"
           />
         </div>
-        <input
+        <Input
           className="border rounded p-2"
           id="messageInput"
           type="text"
@@ -90,7 +98,7 @@ export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
       <div className="mt-2 flex flex-col">
         <label htmlFor="amountInput">StateInit:</label>
         <p className="text-foreground/75 text-sm my-1">Base64 encoded state init cell</p>
-        <input
+        <Input
           className="border rounded p-2"
           id="amountInput"
           type="text"
@@ -144,8 +152,15 @@ const SendModal = ({
     setSeconds(0)
     setMessage('')
   }
+  useEffect(() => {
+    clearPopup()
+  }, [])
 
-  const clickOpenModal = async () => {
+  const clickOpenModal = async (e) => {
+    if (e) {
+      e.preventDefault()
+    }
+
     const password = await getPasswordInteractive()
     if (password) {
       setOpen(true)
@@ -176,7 +191,12 @@ const SendModal = ({
 
       const decrypted = await decryptWalletData(password, wallet.key)
       const keyPair = secretKeyToED25519(decrypted.seed || Buffer.from([]))
-
+      if (keyPair.secretKey.length === 32) {
+        keyPair.secretKey = Buffer.concat([
+          Uint8Array.from(keyPair.secretKey),
+          Uint8Array.from(keyPair.publicKey),
+        ])
+      }
       const message = wallet.wallet.CreateTransferMessage([params])
       const signedBody = SignCell(keyPair.secretKey, message.body)
       message.body = signedBody
@@ -205,7 +225,52 @@ const SendModal = ({
 
   return (
     <>
-      <BlueButton className="mt-2" onClick={clickOpenModal}>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button className="w-full mt-2" onClick={clickOpenModal}>
+            Send
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          {status === 0 && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  You will send {amount} TON to {recepient}.
+                </DialogTitle>
+                <DialogDescription></DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant={'default'} onClick={() => sendMoney()}>
+                  Confirm
+                </Button>
+                <Button variant={'outline'} onClick={() => close()} className="ml-2">
+                  Cancel
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {status === 1 && <div>Sending {seconds}</div>}
+          {status === 2 && (
+            <div>
+              <div>Success</div>
+              <Button className="mt-8" onClick={() => close()}>
+                Close
+              </Button>
+            </div>
+          )}
+          {status === 3 && (
+            <div>
+              <div>Error: {message}</div>
+              <Button className="mt-8" onClick={() => close()}>
+                Close
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      {/* <BlueButton className="mt-2" onClick={clickOpenModal}>
         Send
       </BlueButton>
 
@@ -252,7 +317,7 @@ const SendModal = ({
             </div>
           )}
         </div>
-      </Popup>
+      </Popup> */}
     </>
   )
 }
