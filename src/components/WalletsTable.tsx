@@ -75,17 +75,6 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
             Wallet {wallet.type}
             <FontAwesomeIcon icon={faShareFromSquare} className="ml-2" />
           </a>
-
-          {!isSelected && (
-            <Button
-              // className="cursor-pointer text-primary"
-              onClick={() => setSelectedWallet(wallet)}
-              variant={'ghost'}
-            >
-              Use this wallet
-              <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
-            </Button>
-          )}
         </CardTitle>
         <CardDescription>
           Balance: {balance ? parseFloat(balance) / 10 ** 9 : 0} TON
@@ -145,6 +134,17 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {!isSelected && (
+          <Button
+            // className="cursor-pointer text-primary"
+            onClick={() => setSelectedWallet(wallet)}
+            variant={'ghost'}
+          >
+            Use this wallet
+            <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
+          </Button>
+        )}
       </CardFooter>
     </Card>
   )
