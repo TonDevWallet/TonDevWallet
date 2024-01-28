@@ -24,8 +24,10 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
   return (
     <div
       className={cn(
-        'p-2 rounded',
-        rootAddress.equals(txAddress) ? 'bg-blue-500 text-white' : 'bg-foreground text-black',
+        'p-2 rounded border',
+        rootAddress.equals(txAddress)
+          ? 'bg-blue-500 text-white'
+          : 'bg-secondary text-secondary-foreground',
         isTxError && 'bg-red-500 text-white'
       )}
     >

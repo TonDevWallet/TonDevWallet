@@ -21,6 +21,9 @@ import { cn } from '@/utils/cn'
 import { useEmulatedTxInfo } from '@/hooks/useEmulatedTxInfo'
 import { MessageFlow } from './MessageFlow'
 import { secretKeyToED25519 } from '@/utils/ed25519'
+import { Button } from '@/components/ui/button'
+import { faExpand } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
@@ -115,6 +118,7 @@ export const MessageRow = memo(function MessageRow({
         <>
           <div className="flex items-center gap-2 my-2">
             <BlueButton
+              variant={'outline'}
               onClick={() => {
                 if (!session) {
                   return
@@ -184,7 +188,7 @@ export function MessageEmulationResult({
   ignoreChecksig?: boolean
 }) {
   const isTestnet = useLiteclientState().testnet.get()
-  const { response: txInfo, progress, isLoading } = useEmulatedTxInfo(messageCell, ignoreChecksig)
+  const { response: txInfo, isLoading } = useEmulatedTxInfo(messageCell, ignoreChecksig)
   const [max, setMax] = useState(false)
 
   return (
@@ -192,14 +196,10 @@ export function MessageEmulationResult({
       <div className="flex flex-col">
         <div className="break-words break-all flex flex-col gap-2">
           <div>
-            <div>
-              Progress: {progress.done} / {progress.total}
-            </div>
-            <div>
-              <button className="text-accent" onClick={() => setMax((v) => !v)}>
-                Toggle Preview Size
-              </button>
-            </div>
+            <Button variant={'outline'} className={'mt-4'} onClick={() => setMax((v) => !v)}>
+              <FontAwesomeIcon icon={faExpand} className={'mr-2'} />
+              Toggle Preview Size
+            </Button>
           </div>
 
           <Block
