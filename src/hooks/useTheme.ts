@@ -19,10 +19,8 @@ export const useTheme = (): [Theme, (v: Theme) => void] => {
   }
 
   useEffect(() => {
-    console.log('local theme', localTheme)
     if (localTheme) {
       setTheme(localTheme)
-      // setThemeValue(localTheme as Theme)
     }
   }, [localTheme])
 

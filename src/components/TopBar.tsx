@@ -16,6 +16,7 @@ import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
 import { cn } from '@/utils/cn'
 import { useTheme } from '@/hooks/useTheme'
 import { Theme } from '@tauri-apps/api/window'
+import { useEffect, useState } from 'react'
 
 export function TopBar() {
   const liteClientState = useLiteclientState()
@@ -23,9 +24,13 @@ export function TopBar() {
   const liteClient = useLiteclient() as LiteClient
   const keys = useWalletListState()
   const passwordState = usePassword()
+  const [readyEngines, setReadyEngines] = useState(0)
 
   const changeLiteClientNetwork = () => {
-    changeLiteClient(!liteClientState.testnet.get()).then()
+    changeLiteClient(!liteClientState.testnet.get()).then((newLiteClient) => {
+      setReadyEngines((newLiteClient.engine as any).readyEngines.length)
+    })
+
     for (const s of sessions.get()) {
       const key = keys.find((k) => k.id.get() === s.keyId)
       if (!key) {
@@ -48,11 +53,18 @@ export function TopBar() {
     }
   }
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setReadyEngines((liteClient.engine as any).readyEngines.length)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [liteClient])
+
   return (
     <div className={cn('flex py-2 px-4  gap-4')}>
       <div className="cursor-pointer rounded flex flex-col items-center my-2">
         <label
-          className="rounded-full w-16 h-16 bg-foreground/5
+          className="rounded-full w-16 h-16 bg-foreground/5 relative
             flex flex-col items-center justify-center text-sm cursor-pointer text-foreground"
           htmlFor="apiKeyInput"
         >
@@ -64,6 +76,12 @@ export function TopBar() {
             id="apiKeyInput"
             checked={liteClientState.testnet.get()}
             onChange={changeLiteClientNetwork}
+          />
+          <div
+            className={cn(
+              'absolute w-2 h-2 rounded-full top-[44px]',
+              readyEngines > 0 ? 'bg-green-500' : 'bg-yellow-700'
+            )}
           />
         </label>
         <div className="text-foreground">Network</div>

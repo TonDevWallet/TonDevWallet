@@ -38,7 +38,6 @@ export function useLiteclientState() {
 }
 
 export async function changeLiteClient(testnet: boolean) {
-  console.log('changeLiteClient', testnet)
   const newLiteClient = getLiteClient(testnet)
 
   if (LiteClientState.liteClient.get()) {
@@ -54,7 +53,7 @@ export async function changeLiteClient(testnet: boolean) {
     .where('name', 'is_testnet')
     .update('value', String(testnet))
 
-  console.log('update done')
+  return newLiteClient
 }
 
 export function getLiteClient(isTestnet: boolean): LiteClient {
