@@ -258,8 +258,8 @@ dependencies:
     specifier: github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9
     version: github.com/tauri-apps/tauri-plugin-sql/013b002d72dde1a77ce6cda60007adbe36e146c9
   ton-lite-client:
-    specifier: npm:@truecarry/ton-lite-client@^3.1.1
-    version: /@truecarry/ton-lite-client@3.1.1(@ton/core@0.53.0)
+    specifier: npm:@truecarry/ton-lite-client@^3.3.0
+    version: /@truecarry/ton-lite-client@3.3.0(@ton/core@0.53.0)
   use-local-storage-state:
     specifier: ^19.1.0
     version: 19.1.0(react-dom@18.2.0)(react@18.2.0)
@@ -2919,8 +2919,8 @@ packages:
       '@ton/crypto': 3.2.0
     dev: false
 
-  /@truecarry/ton-lite-client@3.1.1(@ton/core@0.53.0):
-    resolution: {integrity: sha512-dO270GSRNrPW5unyIirzpBoJvpDBIIndoJ2a1laQuM5WfQRif7dLyTOW2/8tpFTbTG7hWAelSXzmRiPEugZD3A==}
+  /@truecarry/ton-lite-client@3.3.0(@ton/core@0.53.0):
+    resolution: {integrity: sha512-EN0+7dSF4bQtF6GWCyal6oGKo7Y48LsQwWcBHh7vQ9Pxl6HcbjyRp8rDOk1frqG7loHQMHUnRRQliN3Je7/AXw==}
     peerDependencies:
       '@ton/core': '*'
     dependencies:
