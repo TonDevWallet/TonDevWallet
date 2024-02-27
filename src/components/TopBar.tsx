@@ -10,7 +10,14 @@ import { IWallet } from '@/types'
 import { sendTonConnectStartMessage } from '@/components/TonConnect/TonConnect'
 import { DetectTonConnect } from '@/components/SavedWalletsList/DetectTonConnect'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLock, faLockOpen, faMoon, faPlus, faSun } from '@fortawesome/free-solid-svg-icons'
+import {
+  faGlobe,
+  faLock,
+  faLockOpen,
+  faMoon,
+  faPlus,
+  faSun,
+} from '@fortawesome/free-solid-svg-icons'
 import { ChangePasswordPopup } from '@/components/SavedWalletsList/ChangePasswordPopup'
 import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
 import { cn } from '@/utils/cn'
@@ -24,7 +31,7 @@ export function TopBar() {
   const sessions = useTonConnectSessions()
   const liteClient = useLiteclient() as LiteClient
   const keys = useWalletListState()
-  const passwordState = usePassword()
+
   const [readyEngines, setReadyEngines] = useState(0)
 
   const changeLiteClientNetwork = () => {
@@ -62,15 +69,15 @@ export function TopBar() {
   }, [liteClient])
 
   return (
-    <div className={cn('flex py-2 px-4  gap-4')}>
+    <div className={cn('flex py-2 px-4 gap-4')}>
       <div className="cursor-pointer rounded flex flex-col items-center my-2">
         <label
-          className="rounded-full w-16 h-16 bg-foreground/5 relative
-            flex flex-col items-center justify-center text-sm cursor-pointer text-foreground"
+          className="rounded-full px-4 h-8 relative
+            flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
           htmlFor="apiKeyInput"
         >
-          {/* <label>Testnet:</label> */}
-          <div>{liteClientState.testnet.get() ? 'Testnet' : 'Mainnet'}</div>
+          <FontAwesomeIcon icon={faGlobe} size="xs" />
+          <div className="w-12">{liteClientState.testnet.get() ? 'Testnet' : 'Mainnet'}</div>
           <input
             className="hidden"
             type="checkbox"
@@ -80,52 +87,59 @@ export function TopBar() {
           />
           <div
             className={cn(
-              'absolute w-2 h-2 rounded-full top-[44px]',
+              'w-2 h-2 rounded-full top-[44px]',
               readyEngines > 0 ? 'bg-green-500' : 'bg-yellow-700'
             )}
           />
         </label>
-        <div className="text-foreground">Network</div>
       </div>
 
       <DetectTonConnect />
-
-      {passwordState.password.get() ? (
-        <div
-          onClick={cleanPassword}
-          className={'cursor-pointer rounded flex flex-col items-center my-2 text-center'}
-        >
-          <div
-            className="rounded-full w-16 h-16 bg-foreground/5
-            flex flex-col items-center justify-center text-[32px] text-foreground"
-          >
-            <FontAwesomeIcon icon={faLockOpen} size="xs" />
-          </div>
-          <div className="text-foreground">Lock wallet</div>
-        </div>
-      ) : (
-        <div
-          onClick={openPasswordPopup}
-          className={'cursor-pointer rounded flex flex-col items-center my-2 text-center '}
-        >
-          <div
-            className="rounded-full w-16 h-16 bg-foreground/5
-            flex items-center justify-center text-[32px] text-foreground"
-          >
-            <FontAwesomeIcon icon={faLock} size="xs" />
-          </div>
-          <div className="text-foreground">Unlock wallet</div>
-        </div>
-      )}
-
-      <ChangePasswordPopup />
 
       <PasswordPopup />
 
       <ThemeSwitcher />
 
       <NewWalletLink />
+
+      <ChangePasswordPopup />
+      <PasswordUnlock />
     </div>
+  )
+}
+
+function PasswordUnlock() {
+  const passwordState = usePassword()
+  return (
+    <>
+      {passwordState.password.get() ? (
+        <div
+          onClick={cleanPassword}
+          className={'cursor-pointer rounded flex flex-col items-center my-2 text-center'}
+        >
+          <div
+            className="rounded-full px-4 h-8 relative
+              flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
+          >
+            <FontAwesomeIcon icon={faLockOpen} size="xs" />
+            <div className="text-foreground">Unlocked</div>
+          </div>
+        </div>
+      ) : (
+        <div
+          onClick={openPasswordPopup}
+          className={'cursor-pointer rounded flex flex-col items-center my-2 text-center'}
+        >
+          <div
+            className="rounded-full px-4 h-8 relative
+              flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
+          >
+            <FontAwesomeIcon icon={faLock} size="xs" />
+            <div className="text-foreground">Locked</div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -135,17 +149,16 @@ function ThemeSwitcher() {
   return (
     <div className="cursor-pointer rounded flex flex-col items-center my-2">
       <label
-        className="rounded-full w-16 h-16 bg-foreground/5
-          flex flex-col items-center justify-center text-sm cursor-pointer text-foreground"
+        className="rounded-full px-4 h-8 relative
+          flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
         onClick={() => {
           console.log('click', setTheme)
           setTheme((theme === 'light' ? 'dark' : 'light') as Theme)
         }}
       >
-        <FontAwesomeIcon icon={theme === 'dark' ? faMoon : faSun} size="2x" />
-        {/* {theme === 'dark' ? 'Dark' : 'Light'} */}
+        <FontAwesomeIcon icon={theme === 'dark' ? faMoon : faSun} size="xs" />
+        <div className="text-foreground">Theme</div>
       </label>
-      <div className="text-foreground">Theme</div>
     </div>
   )
 }
@@ -157,12 +170,12 @@ function NewWalletLink() {
       className="cursor-pointer rounded flex flex-col items-center my-2"
     >
       <div
-        className="rounded-full w-16 h-16 bg-foreground/5
-            flex items-center justify-center text-[32px] text-foreground"
+        className="rounded-full px-4 h-8 relative
+          flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
       >
         <FontAwesomeIcon icon={faPlus} size="xs" />
+        <div className="text-foreground">New Wallet</div>
       </div>
-      <div className="text-foreground">New Wallet</div>
     </NavLink>
   )
 }

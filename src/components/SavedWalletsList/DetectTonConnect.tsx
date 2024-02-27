@@ -40,12 +40,12 @@ export function DetectTonConnect() {
       <DialogTrigger asChild>
         <button className={'cursor-pointer rounded flex flex-col items-center my-2 text-center'}>
           <div
-            className="rounded-full w-16 h-16 bg-foreground/5
-          flex items-center justify-center text-[32px] text-foreground"
+            className="rounded-full px-4 h-8 relative
+              flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
           >
             <FontAwesomeIcon icon={faQrcode} size="xs" />
+            <div className="text-foreground">TonConnect</div>
           </div>
-          <div className="text-foreground">TonConnect</div>
         </button>
       </DialogTrigger>
       <DialogContent noClose>

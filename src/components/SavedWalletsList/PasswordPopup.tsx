@@ -85,7 +85,7 @@ export function PasswordPopup() {
 
             <DialogFooter>
               <Button type="submit" variant={'default'} disabled={isUpdating}>
-                Save changes
+                Unlock
               </Button>
             </DialogFooter>
           </form>

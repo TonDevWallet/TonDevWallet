@@ -71,12 +71,12 @@ export function ChangePasswordPopup() {
       <DialogTrigger>
         <div className={'cursor-pointer rounded flex flex-col items-center my-2 text-center '}>
           <div
-            className="rounded-full w-16 h-16 bg-foreground/5
-        flex items-center justify-center text-[32px] text-foreground"
+            className="rounded-full px-4 h-8 relative
+              flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
           >
             <FontAwesomeIcon icon={faHashtag} size="xs" />
+            <div className="text-foreground">Change password</div>
           </div>
-          <div className="text-foreground">Change password</div>
         </div>
       </DialogTrigger>
       <DialogContent noClose={true}>
