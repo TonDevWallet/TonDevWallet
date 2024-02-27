@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { AddressRow } from '@/components/AddressRow'
 
 export default function SendTon({
   seqno,
@@ -150,11 +151,11 @@ const SendModal = ({
   updateBalance: () => void
 }) => {
   const [open, setOpen] = useState(false)
-  const close = () => setOpen(false)
 
   const [status, setStatus] = useState(0) // 0 before send, 1 sending, 2 success, 3 error
   const [seconds, setSeconds] = useState(0)
   const [message, setMessage] = useState('')
+  const [storedIntervalId, setIntervalId] = useState(0)
   const passwordState = usePassword()
 
   // const clearPopup = () => {
@@ -163,10 +164,21 @@ const SendModal = ({
   //   setMessage('')
   // }
   useEffect(() => {
-    setStatus(0)
-    setSeconds(0)
-    setMessage('')
-  })
+    if (open) {
+      setStatus(0)
+      setSeconds(0)
+      setMessage('')
+      setIntervalId(0)
+    } else {
+      if (storedIntervalId) {
+        clearInterval(storedIntervalId)
+      }
+    }
+  }, [open])
+
+  const close = () => {
+    setOpen(false)
+  }
 
   const checkSeqno = async (oldSeqno: number, seqs: number, interval: number) => {
     const newSeq = await wallet.wallet.getSeqno()
@@ -254,6 +266,7 @@ const SendModal = ({
           .then(() => ok++)
           .catch(() => fail++)
       }
+      setStatus(1)
     } catch (e) {
       console.log(e)
       setStatus(3)
@@ -279,6 +292,7 @@ const SendModal = ({
       }
     }, 1000)
 
+    setIntervalId(intervalId)
     setStatus(1)
     setSeconds(secondsLeft)
   }
@@ -295,23 +309,23 @@ const SendModal = ({
           {status === 0 && (
             <>
               <DialogHeader>
-                <DialogTitle>
-                  You will send {amount} TON to {recepient}.
-                </DialogTitle>
-                <DialogDescription></DialogDescription>
+                <DialogTitle>You will send {amount} TON to:</DialogTitle>
+                <DialogDescription>
+                  <AddressRow address={recepient} />
+                </DialogDescription>
               </DialogHeader>
-              <DialogFooter>
+              <DialogFooter className="gap-2">
                 <Button variant={'default'} onClick={() => sendMoney()}>
                   Confirm
                 </Button>
-                <Button variant={'outline'} onClick={() => close()} className="ml-2">
+                <Button variant={'outline'} onClick={() => close()} className="">
                   Cancel
                 </Button>
               </DialogFooter>
             </>
           )}
 
-          {status === 1 && <div>Sending {seconds}</div>}
+          {status === 1 && <div>Message sent, waiting for update on chain... {seconds}</div>}
           {status === 2 && (
             <div>
               <div>Success</div>
@@ -321,7 +335,7 @@ const SendModal = ({
             </div>
           )}
           {status === 3 && (
-            <div>
+            <div className="overflow-hidden">
               <div>Error: {message}</div>
               <Button className="mt-8" onClick={() => close()}>
                 Close
