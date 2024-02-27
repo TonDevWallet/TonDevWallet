@@ -43,7 +43,7 @@ fn int_to_ip(int: i32) -> String {
     return format!("{}.{}.{}.{}", part4, part3, part2, part1);
 }
 
-async fn accept_connection(mut stream: TcpStream) -> Result<(), Box<dyn stdError + Send + Sync>> {
+async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + Send + Sync>> {
     let addr = stream
         .peer_addr()
         .expect("connected streams should have a peer address");
@@ -89,14 +89,14 @@ async fn accept_connection(mut stream: TcpStream) -> Result<(), Box<dyn stdError
 
 
     // let mut rng = rand::thread_rng();
-    let random_value: f64 = rand::random();
+    // let random_value: f64 = rand::random();
     
-    if random_value < 0.5 {
-        if let Err(e) = stream.shutdown().await {
-            info!("Error while closing WebSocket: {:?}", e);
-        }
-        return Ok(());
-    }
+    // if random_value < 0.5 {
+    //     if let Err(e) = stream.shutdown().await {
+    //         info!("Error while closing WebSocket: {:?}", e);
+    //     }
+    //     return Ok(());
+    // }
 
     let ws_stream = match accept_hdr_async(stream, auth_callback).await {
         Ok(v) => v,
