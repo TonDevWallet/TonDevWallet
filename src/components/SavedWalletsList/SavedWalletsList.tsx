@@ -3,8 +3,6 @@ import { suspend } from '@hookstate/core'
 import { useWalletListState } from '@/store/walletsListState'
 import { NavLink } from 'react-router-dom'
 import { useAppInfo } from '@/hooks/useAppInfo'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
@@ -33,22 +31,6 @@ export function SavedWalletsList() {
 
         {keys &&
           keys.map((dbWallet) => <SavedWalletRow walletKey={dbWallet} key={dbWallet.get().id} />)}
-
-        <NavLink
-          to="/app/new_wallet"
-          className={({ isActive }) =>
-            'cursor-pointer rounded p-1 flex flex-col items-center my-2 text-center ' +
-            (isActive ? 'bg-foreground/5' : '')
-          }
-        >
-          <div
-            className="rounded-full w-16 h-16 bg-foreground/5
-            flex items-center justify-center text-[32px] text-foreground"
-          >
-            <FontAwesomeIcon icon={faPlus} size="xs" />
-          </div>
-          <div className="text-foreground">New Key</div>
-        </NavLink>
 
         <div className="text-center mt-4 text-sm text-gray-400">v{version}</div>
 

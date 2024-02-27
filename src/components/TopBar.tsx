@@ -10,13 +10,14 @@ import { IWallet } from '@/types'
 import { sendTonConnectStartMessage } from '@/components/TonConnect/TonConnect'
 import { DetectTonConnect } from '@/components/SavedWalletsList/DetectTonConnect'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLock, faLockOpen, faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
+import { faLock, faLockOpen, faMoon, faPlus, faSun } from '@fortawesome/free-solid-svg-icons'
 import { ChangePasswordPopup } from '@/components/SavedWalletsList/ChangePasswordPopup'
 import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
 import { cn } from '@/utils/cn'
 import { useTheme } from '@/hooks/useTheme'
 import { Theme } from '@tauri-apps/api/window'
 import { useEffect, useState } from 'react'
+import { NavLink } from 'react-router-dom'
 
 export function TopBar() {
   const liteClientState = useLiteclientState()
@@ -122,6 +123,8 @@ export function TopBar() {
       <PasswordPopup />
 
       <ThemeSwitcher />
+
+      <NewWalletLink />
     </div>
   )
 }
@@ -144,5 +147,22 @@ function ThemeSwitcher() {
       </label>
       <div className="text-foreground">Theme</div>
     </div>
+  )
+}
+
+function NewWalletLink() {
+  return (
+    <NavLink
+      to="/app/new_wallet"
+      className="cursor-pointer rounded flex flex-col items-center my-2"
+    >
+      <div
+        className="rounded-full w-16 h-16 bg-foreground/5
+            flex items-center justify-center text-[32px] text-foreground"
+      >
+        <FontAwesomeIcon icon={faPlus} size="xs" />
+      </div>
+      <div className="text-foreground">New Wallet</div>
+    </NavLink>
   )
 }
