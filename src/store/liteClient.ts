@@ -74,9 +74,18 @@ async function addWorkingEngineToRoundRobin(isTestnet: boolean, robin: LiteRound
     throw new Error('no tauri')
   }
 
-  while (shuffledEngines.length > 0) {
-    const ls = shuffledEngines.pop()
-    if (!ls) {
+  let goodEngineFound = false
+  const registerConnect = (engine: LiteSingleEngine) => {
+    if (goodEngineFound) {
+      engine.close()
+    } else {
+      robin.addSingleEngine(engine)
+      goodEngineFound = true
+    }
+  }
+
+  for (const ls of shuffledEngines) {
+    if (goodEngineFound) {
       break
     }
 
@@ -87,14 +96,20 @@ async function addWorkingEngineToRoundRobin(isTestnet: boolean, robin: LiteRound
       client: 'ws',
     })
 
-    const check = await checkEngine(singleEngine)
-    if (!check) {
-      singleEngine.close()
-      continue
-    }
+    setTimeout(async () => {
+      try {
+        const check = await checkEngine(singleEngine)
+        if (!check) {
+          singleEngine.close()
+        } else {
+          registerConnect(singleEngine)
+        }
+      } catch (e) {
+        singleEngine.close()
+      }
+    }, 1)
 
-    robin.addSingleEngine(singleEngine)
-    break
+    await delay(100)
   }
 }
 

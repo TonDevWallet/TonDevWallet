@@ -37,6 +37,9 @@ export function TopBar() {
   const changeLiteClientNetwork = () => {
     changeLiteClient(!liteClientState.testnet.get()).then((newLiteClient) => {
       setReadyEngines((newLiteClient.engine as any).readyEngines.length)
+      setTimeout(() => {
+        setReadyEngines((newLiteClient.engine as any).readyEngines.length)
+      }, 500)
     })
 
     for (const s of sessions.get()) {
