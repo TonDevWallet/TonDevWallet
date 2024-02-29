@@ -4,6 +4,7 @@ import { hookstate, useHookstate } from '@hookstate/core'
 import { tauriState } from './tauri'
 import { getDatabase } from '@/db'
 import { delay } from '@/utils'
+import { Functions } from 'ton-lite-client/dist/schema'
 
 const LiteClientState = hookstate<{
   liteClient: LiteClient
@@ -80,6 +81,18 @@ async function addWorkingEngineToRoundRobin(isTestnet: boolean, robin: LiteRound
       engine.close()
     } else {
       robin.addSingleEngine(engine)
+
+      const keepAlive = () => {
+        if (robin.isClosed()) {
+          return
+        }
+
+        robin.query(Functions.liteServer_getTime, { kind: 'liteServer.getTime' }).catch(() => {})
+        setTimeout(keepAlive, 55000)
+      }
+
+      setTimeout(keepAlive, 55000)
+
       goodEngineFound = true
     }
   }
