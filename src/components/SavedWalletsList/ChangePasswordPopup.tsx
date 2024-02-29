@@ -69,7 +69,7 @@ export function ChangePasswordPopup() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <div className={'cursor-pointer rounded flex flex-col items-center my-2 text-center '}>
+        <div className={'cursor-pointer rounded flex flex-col items-center my-2 text-center'}>
           <div
             className="rounded-full px-4 h-8 relative
               flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"

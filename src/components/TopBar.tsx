@@ -11,6 +11,8 @@ import { sendTonConnectStartMessage } from '@/components/TonConnect/TonConnect'
 import { DetectTonConnect } from '@/components/SavedWalletsList/DetectTonConnect'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
+  IconDefinition,
+  faGear,
   faGlobe,
   faLock,
   faLockOpen,
@@ -72,41 +74,46 @@ export function TopBar() {
   }, [liteClient])
 
   return (
-    <div className={cn('flex py-2 px-4 gap-4')}>
-      <div className="cursor-pointer rounded flex flex-col items-center my-2">
-        <label
-          className="rounded-full px-4 h-8 relative
+    <div className={cn('flex py-2 px-4 justify-between')}>
+      <div className="flex">
+        <div className="cursor-pointer rounded flex flex-col items-center my-2">
+          <label
+            className="rounded-full px-4 h-8 relative
             flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
-          htmlFor="apiKeyInput"
-        >
-          <FontAwesomeIcon icon={faGlobe} size="xs" />
-          <div className="w-12">{liteClientState.testnet.get() ? 'Testnet' : 'Mainnet'}</div>
-          <input
-            className="hidden"
-            type="checkbox"
-            id="apiKeyInput"
-            checked={liteClientState.testnet.get()}
-            onChange={changeLiteClientNetwork}
-          />
-          <div
-            className={cn(
-              'w-2 h-2 rounded-full top-[44px]',
-              readyEngines > 0 ? 'bg-green-500' : 'bg-yellow-700'
-            )}
-          />
-        </label>
+            htmlFor="apiKeyInput"
+          >
+            <FontAwesomeIcon icon={faGlobe} size="xs" />
+            <div className="w-12">{liteClientState.testnet.get() ? 'Testnet' : 'Mainnet'}</div>
+            <input
+              className="hidden"
+              type="checkbox"
+              id="apiKeyInput"
+              checked={liteClientState.testnet.get()}
+              onChange={changeLiteClientNetwork}
+            />
+            <div
+              className={cn(
+                'w-2 h-2 rounded-full top-[44px]',
+                readyEngines > 0 ? 'bg-green-500' : 'bg-yellow-700'
+              )}
+            />
+          </label>
+        </div>
+
+        <DetectTonConnect />
+
+        <PasswordPopup />
+
+        <ThemeSwitcher />
+
+        <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
+        <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
       </div>
 
-      <DetectTonConnect />
-
-      <PasswordPopup />
-
-      <ThemeSwitcher />
-
-      <NewWalletLink />
-
-      <ChangePasswordPopup />
-      <PasswordUnlock />
+      <div className="flex">
+        <ChangePasswordPopup />
+        <PasswordUnlock />
+      </div>
     </div>
   )
 }
@@ -116,31 +123,9 @@ function PasswordUnlock() {
   return (
     <>
       {passwordState.password.get() ? (
-        <div
-          onClick={cleanPassword}
-          className={'cursor-pointer rounded flex flex-col items-center my-2 text-center'}
-        >
-          <div
-            className="rounded-full px-4 h-8 relative
-              flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
-          >
-            <FontAwesomeIcon icon={faLockOpen} size="xs" />
-            <div className="text-foreground">Unlocked</div>
-          </div>
-        </div>
+        <TopBarLinkWrapper onClick={cleanPassword} icon={faLockOpen} text="Unlocked" />
       ) : (
-        <div
-          onClick={openPasswordPopup}
-          className={'cursor-pointer rounded flex flex-col items-center my-2 text-center'}
-        >
-          <div
-            className="rounded-full px-4 h-8 relative
-              flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
-          >
-            <FontAwesomeIcon icon={faLock} size="xs" />
-            <div className="text-foreground">Locked</div>
-          </div>
-        </div>
+        <TopBarLinkWrapper onClick={openPasswordPopup} icon={faLock} text="Locked" />
       )}
     </>
   )
@@ -150,35 +135,47 @@ function ThemeSwitcher() {
   const [theme, setTheme] = useTheme()
 
   return (
-    <div className="cursor-pointer rounded flex flex-col items-center my-2">
-      <label
-        className="rounded-full px-4 h-8 relative
-          flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
-        onClick={() => {
-          console.log('click', setTheme)
-          setTheme((theme === 'light' ? 'dark' : 'light') as Theme)
-        }}
-      >
-        <FontAwesomeIcon icon={theme === 'dark' ? faMoon : faSun} size="xs" />
-        <div className="text-foreground">Theme</div>
-      </label>
-    </div>
+    <TopBarLinkWrapper
+      onClick={() => {
+        console.log('click', setTheme)
+        setTheme((theme === 'light' ? 'dark' : 'light') as Theme)
+      }}
+      icon={theme === 'dark' ? faMoon : faSun}
+      text="Theme"
+    />
   )
 }
 
-function NewWalletLink() {
-  return (
-    <NavLink
-      to="/app/new_wallet"
-      className="cursor-pointer rounded flex flex-col items-center my-2"
+function TopBarLinkWrapper({
+  icon,
+  text,
+  to,
+  onClick,
+}: {
+  icon: IconDefinition
+  text: string
+  to?: string
+  onClick?: () => void
+}) {
+  const children = (
+    <div
+      className="rounded-full px-4 h-8 relative
+        flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
+      onClick={onClick}
     >
-      <div
-        className="rounded-full px-4 h-8 relative
-          flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
-      >
-        <FontAwesomeIcon icon={faPlus} size="xs" />
-        <div className="text-foreground">New Wallet</div>
-      </div>
+      <FontAwesomeIcon icon={icon} size="xs" className="" />
+      <div className="text-foreground">{text}</div>
+    </div>
+  )
+  return to ? (
+    <NavLink
+      to={to}
+      className="cursor-pointer rounded flex flex-col items-center my-2"
+      onClick={onClick}
+    >
+      {children}
     </NavLink>
+  ) : (
+    <div className="cursor-pointer rounded flex flex-col items-center my-2">{children}</div>
   )
 }
