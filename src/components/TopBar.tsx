@@ -27,8 +27,33 @@ import { useTheme } from '@/hooks/useTheme'
 import { Theme } from '@tauri-apps/api/window'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 
 export function TopBar() {
+  return (
+    <div className={cn('flex py-2 px-4 justify-between')}>
+      <div className="flex">
+        <NetworkSelector />
+
+        <DetectTonConnect />
+
+        <PasswordPopup />
+
+        <ThemeSwitcher />
+
+        <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
+        <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
+      </div>
+
+      <div className="flex">
+        <ChangePasswordPopup />
+        <PasswordUnlock />
+      </div>
+    </div>
+  )
+}
+
+function NetworkSelector() {
   const liteClientState = useLiteclientState()
   const sessions = useTonConnectSessions()
   const liteClient = useLiteclient() as LiteClient
@@ -36,12 +61,8 @@ export function TopBar() {
 
   const [readyEngines, setReadyEngines] = useState(0)
 
-  const changeLiteClientNetwork = () => {
-    const newNetworkId =
-      liteClientState.networks
-        .get()
-        .find((n) => n.network_id !== liteClientState.selectedNetwork.network_id.get())
-        ?.network_id || 0
+  const changeLiteClientNetwork = (newNetworkIdString: string) => {
+    const newNetworkId = parseInt(newNetworkIdString, 10)
 
     changeLiteClient(newNetworkId).then((newLiteClient) => {
       if (!newLiteClient) {
@@ -83,45 +104,41 @@ export function TopBar() {
   }, [liteClient])
 
   return (
-    <div className={cn('flex py-2 px-4 justify-between')}>
-      <div className="flex">
-        <div className="cursor-pointer rounded flex flex-col items-center my-2">
-          <label
-            className="rounded-full px-4 h-8 relative
-            flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
-            htmlFor="apiKeyInput"
-          >
-            <FontAwesomeIcon icon={faGlobe} size="xs" />
-            <div className="w-12">{liteClientState.selectedNetwork.name.get()}</div>
-            <input
-              className="hidden"
-              type="checkbox"
-              id="apiKeyInput"
-              onChange={changeLiteClientNetwork}
-            />
-            <div
-              className={cn(
-                'w-2 h-2 rounded-full top-[44px]',
-                readyEngines > 0 ? 'bg-green-500' : 'bg-yellow-700'
-              )}
-            />
-          </label>
-        </div>
+    <div className="cursor-pointer rounded flex flex-col items-center my-2">
+      <label
+        className="rounded-full px-4 h-8 relative
+    flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
+        htmlFor="apiKeyInput"
+      >
+        <FontAwesomeIcon icon={faGlobe} size="xs" />
+        <Select
+          value={liteClientState.selectedNetwork.network_id.get().toString()}
+          onValueChange={changeLiteClientNetwork}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Theme" />
+          </SelectTrigger>
+          <SelectContent>
+            {liteClientState.networks.get().map((network) => {
+              return (
+                <SelectItem
+                  value={network.network_id.toString()}
+                  key={network.network_id + network.name}
+                >
+                  {network.name}
+                </SelectItem>
+              )
+            })}
+          </SelectContent>
+        </Select>
 
-        <DetectTonConnect />
-
-        <PasswordPopup />
-
-        <ThemeSwitcher />
-
-        <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
-        <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
-      </div>
-
-      <div className="flex">
-        <ChangePasswordPopup />
-        <PasswordUnlock />
-      </div>
+        <div
+          className={cn(
+            'w-2 h-2 rounded-full top-[44px]',
+            readyEngines > 0 ? 'bg-green-500' : 'bg-yellow-700'
+          )}
+        />
+      </label>
     </div>
   )
 }

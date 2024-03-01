@@ -1,13 +1,5 @@
 import { useFieldArray, useForm } from 'react-hook-form'
-import {
-  Form,
-  FormControl,
-  // FormDescription,
-  FormField,
-  FormItem,
-  // FormLabel,
-  FormMessage,
-} from '../ui/form'
+import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
 import { Input } from '../ui/input'
 import { useEffect } from 'react'
 import { Button } from '../ui/button'
@@ -45,8 +37,7 @@ export function SettingsPage() {
   }, [liteClientState.networks])
 
   useEffect(() => {
-    const subscription = form.watch(async (value, { name, type }) => {
-      console.log('watch', value, name, type)
+    const subscription = form.watch(async (value) => {
       if (!value.networks) {
         return
       }
@@ -61,6 +52,7 @@ export function SettingsPage() {
           url: network.url,
         })
       }
+      await updateNetworksList()
     })
     return () => subscription.unsubscribe()
   }, [form])

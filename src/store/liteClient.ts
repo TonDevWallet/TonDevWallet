@@ -1,11 +1,10 @@
 import { LiteClient, LiteRoundRobinEngine, LiteSingleEngine } from 'ton-lite-client'
-import networkConfig from '@/networkConfig'
 import { hookstate, useHookstate } from '@hookstate/core'
 import { tauriState } from './tauri'
 import { getDatabase } from '@/db'
 import { delay } from '@/utils'
 import { Functions } from 'ton-lite-client/dist/schema'
-import { Network } from '@/types/network'
+import { LSConfigData, Network } from '@/types/network'
 import { fetch as tFetch } from '@tauri-apps/api/http'
 
 const LiteClientState = hookstate<{
@@ -140,7 +139,7 @@ export function getLiteClient(configUrl: string): LiteClient {
 }
 
 async function addWorkingEngineToRoundRobin(configUrl: string, robin: LiteRoundRobinEngine) {
-  const { data } = await tFetch<typeof networkConfig.mainnetConfig>(configUrl)
+  const { data } = await tFetch<LSConfigData>(configUrl)
   const shuffledEngines = shuffle(data.liteservers)
 
   const tauri = (await tauriState.promise) || tauriState
