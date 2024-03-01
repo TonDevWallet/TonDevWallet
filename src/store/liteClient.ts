@@ -83,6 +83,21 @@ export function useLiteclientState() {
   return useHookstate(LiteClientState)
 }
 
+export async function updateNetworksList() {
+  const db = await getDatabase()
+  const networks = await db<Network>('networks').select()
+
+  const selectedId = LiteClientState.selectedNetwork.network_id.get()
+
+  let selectedNetwork = networks.find((n) => n.network_id === selectedId)
+  if (!selectedNetwork) {
+    selectedNetwork = networks[0]
+  }
+
+  LiteClientState.networks.set(networks)
+  LiteClientState.selectedNetwork.set(selectedNetwork)
+}
+
 export async function changeLiteClient(networkId: number) {
   const db = await getDatabase()
   const selectedNetwork = LiteClientState.networks.get().find((n) => n.network_id === networkId)

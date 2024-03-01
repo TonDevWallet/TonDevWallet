@@ -13,58 +13,85 @@ import { useEffect } from 'react'
 import { Button } from '../ui/button'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
-import { useLiteclientState } from '@/store/liteClient'
+import { updateNetworksList, useLiteclientState } from '@/store/liteClient'
+import { getDatabase } from '@/db'
+import { Network } from '@/types/network'
 
 export function SettingsPage() {
   const liteClientState = useLiteclientState()
   const form = useForm<{
-    networks: { name: string; url: string; isDefault: boolean }[]
+    networks: { name: string; url: string; is_default: boolean; network_id: number }[]
   }>({})
   const { fields, append, remove } = useFieldArray({
-    control: form.control, // control props comes from useForm (optional: if you are using FormContext)
+    control: form.control,
     name: 'networks',
-    // name: 'test', // unique name for your Field Array
   })
 
   useEffect(() => {
-    if (fields.length !== 0) {
+    if (fields.length === liteClientState.networks.length) {
       return
     }
+
+    remove()
 
     for (const network of liteClientState.networks.get()) {
       append({
         name: network.name,
         url: network.url,
-        isDefault: network.is_default,
+        is_default: network.is_default,
+        network_id: network.network_id,
       })
     }
-    // append({
-    //   name: 'Mainnet',
-    //   value: 'https://ton-blockchain.github.io/global.config.json',
-    //   isDefault: true,
-    // })
-    // append({
-    //   name: 'Testnet',
-    //   value: 'https://ton-blockchain.github.io/testnet-global.config.json',
-    //   isDefault: true,
-    // })
-  }, [])
+  }, [liteClientState.networks])
 
   useEffect(() => {
-    console.log('fields', fields)
-  }, [fields])
+    const subscription = form.watch(async (value, { name, type }) => {
+      console.log('watch', value, name, type)
+      if (!value.networks) {
+        return
+      }
 
-  useEffect(() => {
-    console.log('qq', form.getValues())
-  }, [form.getValues()])
+      const db = await getDatabase()
+      for (const network of value.networks) {
+        if (!network) {
+          continue
+        }
+        await db<Network>('networks').where('network_id', network.network_id).update({
+          name: network.name,
+          url: network.url,
+        })
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
 
-  const addCustomNetwork = () => {
-    append({
+  const addCustomNetwork = async () => {
+    const db = await getDatabase()
+    await db<Network>('networks').insert({
       name: `Custom network #${fields.length}`,
       url: 'https://ton-blockchain.github.io/global.config.json',
-      isDefault: false,
+      item_order: fields.length + 1,
+      is_default: false,
+      is_testnet: false,
+      scanner_url: 'https://tonviewer.com/',
+
+      created_at: new Date(),
+      updated_at: new Date(),
     })
+    await updateNetworksList()
   }
+
+  const removeField = async (field: {
+    name: string
+    url: string
+    is_default: boolean
+    network_id: number
+  }) => {
+    const db = await getDatabase()
+    await db<Network>('networks').where('network_id', field.network_id).delete()
+    await updateNetworksList()
+  }
+
   return (
     <div>
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-4xl">Settings</h1>
@@ -72,8 +99,6 @@ export function SettingsPage() {
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-2xl mt-4">
         Networks
       </h1>
-
-      {/* <div>Data: {JSON.stringify(form.getValues())}</div> */}
 
       <Form {...form}>
         <div className="flex flex-col gap-4">
@@ -87,7 +112,6 @@ export function SettingsPage() {
                     name={`networks.${index}.name`}
                     render={({ field }) => (
                       <FormItem>
-                        {/* <FormLabel>{field.value}</FormLabel> */}
                         <FormControl>
                           <Input
                             placeholder="shadcn"
@@ -96,18 +120,12 @@ export function SettingsPage() {
                             spellCheck={false}
                           />
                         </FormControl>
-                        {/* <FormDescription>This is your public display name.</FormDescription> */}
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  {!field.isDefault && (
-                    <div
-                      onClick={() => {
-                        remove(index)
-                      }}
-                      className="cursor-pointer"
-                    >
+                  {!field.is_default && (
+                    <div onClick={() => removeField(field)} className="cursor-pointer">
                       <FontAwesomeIcon icon={faTrash} size="xs" />
                     </div>
                   )}
