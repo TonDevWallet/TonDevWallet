@@ -187,7 +187,7 @@ export function MessageEmulationResult({
   messageCell?: Cell
   ignoreChecksig?: boolean
 }) {
-  const isTestnet = useLiteclientState().testnet.get()
+  const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
   const { response: txInfo, isLoading } = useEmulatedTxInfo(messageCell, ignoreChecksig)
   const [max, setMax] = useState(false)
 

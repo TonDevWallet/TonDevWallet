@@ -37,7 +37,16 @@ export function TopBar() {
   const [readyEngines, setReadyEngines] = useState(0)
 
   const changeLiteClientNetwork = () => {
-    changeLiteClient(!liteClientState.testnet.get()).then((newLiteClient) => {
+    const newNetworkId =
+      liteClientState.networks
+        .get()
+        .find((n) => n.network_id !== liteClientState.selectedNetwork.network_id.get())
+        ?.network_id || 0
+
+    changeLiteClient(newNetworkId).then((newLiteClient) => {
+      if (!newLiteClient) {
+        return
+      }
       setReadyEngines((newLiteClient.engine as any).readyEngines.length)
       setTimeout(() => {
         setReadyEngines((newLiteClient.engine as any).readyEngines.length)
@@ -83,12 +92,11 @@ export function TopBar() {
             htmlFor="apiKeyInput"
           >
             <FontAwesomeIcon icon={faGlobe} size="xs" />
-            <div className="w-12">{liteClientState.testnet.get() ? 'Testnet' : 'Mainnet'}</div>
+            <div className="w-12">{liteClientState.selectedNetwork.name.get()}</div>
             <input
               className="hidden"
               type="checkbox"
               id="apiKeyInput"
-              checked={liteClientState.testnet.get()}
               onChange={changeLiteClientNetwork}
             />
             <div

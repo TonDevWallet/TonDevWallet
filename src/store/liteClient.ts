@@ -5,28 +5,73 @@ import { tauriState } from './tauri'
 import { getDatabase } from '@/db'
 import { delay } from '@/utils'
 import { Functions } from 'ton-lite-client/dist/schema'
+import { Network } from '@/types/network'
+import { fetch as tFetch } from '@tauri-apps/api/http'
 
 const LiteClientState = hookstate<{
   liteClient: LiteClient
-  testnet: boolean
+  networks: Network[]
+  selectedNetwork: Network
 }>(async () => {
   const db = await getDatabase()
-  const testnetSetting = await db<{ name: string; value: string }>('settings')
-    .where('name', 'is_testnet')
-    .first()
 
-  if (!testnetSetting) {
-    await db('settings').insert({
-      name: 'is_testnet',
-      value: 'false',
+  let networks = await db<Network>('networks').select()
+  if (networks.length === 0) {
+    await db<Network>('networks').insert({
+      name: 'Mainnet',
+      url: 'https://ton-blockchain.github.io/global.config.json',
+      item_order: 0,
+      is_default: true,
+      is_testnet: false,
+      scanner_url: 'https://tonviewer.com/',
+
+      created_at: new Date(),
+      updated_at: new Date(),
     })
+    await db<Network>('networks').insert({
+      name: 'Testnet',
+      url: 'https://ton-blockchain.github.io/testnet-global.config.json',
+      item_order: 1,
+      is_default: true,
+      is_testnet: true,
+      scanner_url: 'https://testnet.tonviewer.com/',
+
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+    networks = await db<Network>('networks').select()
   }
 
-  const isTestnet = testnetSetting?.value === 'true'
+  let selectedNetworkId = await db<{ name: string; value: string }>('settings')
+    .where('name', 'selected_network')
+    .first()
+  // const testnetSetting = await db<{ name: string; value: string }>('settings')
+  //   .where('name', 'is_testnet')
+  //   .first()
+
+  if (!selectedNetworkId) {
+    await db('settings').insert({
+      name: 'selected_network',
+      value: networks[0].network_id,
+    })
+    selectedNetworkId = {
+      name: 'selected_network',
+      value: networks[0].network_id.toString(),
+    }
+  }
+
+  let selectedNetwork = networks.find(
+    (n) => n.network_id === parseInt(selectedNetworkId?.value || '0', 10)
+  )
+  if (!selectedNetwork) {
+    selectedNetwork = networks[0]
+  }
+  // const isTestnet = testnetSetting?.value === 'true'
 
   return {
-    testnet: isTestnet,
-    liteClient: getLiteClient(isTestnet),
+    networks,
+    selectedNetwork,
+    liteClient: getLiteClient(selectedNetwork.url),
   }
 })
 
@@ -38,36 +83,49 @@ export function useLiteclientState() {
   return useHookstate(LiteClientState)
 }
 
-export async function changeLiteClient(testnet: boolean) {
-  const newLiteClient = getLiteClient(testnet)
+export async function changeLiteClient(networkId: number) {
+  const db = await getDatabase()
+  const selectedNetwork = LiteClientState.networks.get().find((n) => n.network_id === networkId)
+  if (!selectedNetwork) {
+    return
+  }
+  // const selectedNetworkId = await db<{ name: string; value: string }>('settings')
+  //   .where('name', 'selected_network')
+  //   .first()
+
+  const newLiteClient = getLiteClient(selectedNetwork.url)
+
+  await db<{ name: string; value: string }>('settings')
+    .where('name', 'selected_network')
+    .update('value', String(networkId))
 
   if (LiteClientState.liteClient.get()) {
     LiteClientState.liteClient.get().engine.close()
   }
-  LiteClientState.set({
-    testnet,
+  LiteClientState.merge({
     liteClient: newLiteClient,
+    selectedNetwork,
   })
-
-  const db = await getDatabase()
-  await db<{ name: string; value: string }>('settings')
-    .where('name', 'is_testnet')
-    .update('value', String(testnet))
+  // LiteClientState.set({
+  //   testnet,
+  //   liteClient: newLiteClient,
+  //   networks: LiteClientState.networks.get(),
+  // })
 
   return newLiteClient
 }
 
-export function getLiteClient(isTestnet: boolean): LiteClient {
+export function getLiteClient(configUrl: string): LiteClient {
   const engine = new LiteRoundRobinEngine([])
   const client = new LiteClient({ engine })
 
-  addWorkingEngineToRoundRobin(isTestnet, engine)
+  addWorkingEngineToRoundRobin(configUrl, engine)
 
   return client
 }
 
-async function addWorkingEngineToRoundRobin(isTestnet: boolean, robin: LiteRoundRobinEngine) {
-  const data = isTestnet ? networkConfig.testnetConfig : networkConfig.mainnetConfig
+async function addWorkingEngineToRoundRobin(configUrl: string, robin: LiteRoundRobinEngine) {
+  const { data } = await tFetch<typeof networkConfig.mainnetConfig>(configUrl)
   const shuffledEngines = shuffle(data.liteservers)
 
   const tauri = (await tauriState.promise) || tauriState

@@ -3,6 +3,11 @@ import { suspend } from '@hookstate/core'
 import { useWalletListState } from '@/store/walletsListState'
 import { NavLink } from 'react-router-dom'
 import { useAppInfo } from '@/hooks/useAppInfo'
+import { getDatabase } from '@/db'
+import { ImportMigrations } from '@/utils/getMigrations'
+import { Button } from '../ui/button'
+
+const showRollback = false
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
@@ -34,16 +39,18 @@ export function SavedWalletsList() {
 
         <div className="text-center mt-4 text-sm text-gray-400">v{version}</div>
 
-        {/* <BlueButton
-          onClick={async () => {
-            const db = await getDatabase()
-            await db.migrate.down({
-              migrationSource: new ImportMigrations(),
-            })
-          }}
-        >
-          Migrate back
-        </BlueButton> */}
+        {showRollback && (
+          <Button
+            onClick={async () => {
+              const db = await getDatabase()
+              await db.migrate.down({
+                migrationSource: new ImportMigrations(),
+              })
+            }}
+          >
+            Migrate back
+          </Button>
+        )}
       </div>
     )
   )

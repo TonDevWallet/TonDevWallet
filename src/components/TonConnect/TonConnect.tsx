@@ -211,7 +211,7 @@ export async function sendTonConnectStartMessage(
         {
           name: 'ton_addr',
           address: wallet.address.toRawString(),
-          network: LiteClientState.testnet.get() ? CHAIN.TESTNET : CHAIN.MAINNET,
+          network: LiteClientState.selectedNetwork.is_testnet.get() ? CHAIN.TESTNET : CHAIN.MAINNET,
           walletStateInit: stateInit.toBoc().toString('base64'),
           publicKey,
         },

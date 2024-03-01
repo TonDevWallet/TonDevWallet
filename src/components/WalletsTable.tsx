@@ -39,7 +39,7 @@ const deleteWallet = (walletId: number) => {
 }
 
 function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolean }) {
-  const isTestnet = useLiteclientState().testnet.get()
+  const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
   const liteClient = useLiteclient()
 
   const [balance, setBalance] = useState('')
@@ -167,9 +167,10 @@ export function WalletsTable({ walletsToShow }: { walletsToShow?: IWallet[] }) {
 }
 
 function getScanLink(address: string): string {
-  const isTestnet = useLiteclientState().testnet.get()
-  return useMemo(
-    () => `https://${isTestnet ? 'testnet.' : ''}tonscan.org/address/${address}`,
-    [isTestnet]
-  )
+  const scannerUrl =
+    useLiteclientState().selectedNetwork.scanner_url.get() || 'https://tonviewer.com/'
+
+  const addAddress = scannerUrl.indexOf('tonviewer.com') === -1
+
+  return useMemo(() => `${scannerUrl}${addAddress ? 'address/' : ''}${address}`, [scannerUrl])
 }
