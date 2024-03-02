@@ -106,19 +106,31 @@ function NetworkSelector() {
   return (
     <div className="cursor-pointer rounded flex flex-col items-center my-2">
       <label
-        className="rounded-full px-4 h-8 relative
+        className="rounded-full h-8 relative
     flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
         htmlFor="apiKeyInput"
       >
-        <FontAwesomeIcon icon={faGlobe} size="xs" />
         <Select
           value={liteClientState.selectedNetwork.network_id.get().toString()}
           onValueChange={changeLiteClientNetwork}
         >
-          <SelectTrigger className="w-[180px] focus-visible:ring-0">
-            <SelectValue placeholder="Theme" />
+          <SelectTrigger className="w-[180px] focus-visible:ring-0 ring-0 focus:ring-0 overflow-hidden">
+            <div className="grid grid-cols-[128px_0px] w-full items-center">
+              <div className="flex items-center gap-2 w-full">
+                <FontAwesomeIcon icon={faGlobe} size="xs" />
+                <div className="truncate">
+                  <SelectValue placeholder="Network" />
+                </div>
+              </div>
+              <div
+                className={cn(
+                  'w-2 h-2 rounded-full',
+                  readyEngines > 0 ? 'bg-green-500' : 'bg-yellow-700'
+                )}
+              />
+            </div>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="">
             {liteClientState.networks.get().map((network) => {
               return (
                 <SelectItem
@@ -131,13 +143,6 @@ function NetworkSelector() {
             })}
           </SelectContent>
         </Select>
-
-        <div
-          className={cn(
-            'w-2 h-2 rounded-full top-[44px]',
-            readyEngines > 0 ? 'bg-green-500' : 'bg-yellow-700'
-          )}
-        />
       </label>
     </div>
   )

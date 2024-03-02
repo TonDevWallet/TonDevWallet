@@ -119,12 +119,12 @@ function NetworkSettings() {
                     control={form.control}
                     name={`networks.${index}.name`}
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="w-full">
                         <FormControl>
                           <Input
-                            placeholder="shadcn"
+                            placeholder=""
                             {...field}
-                            className="border-0 px-0 outline-none focus-visible:ring-0"
+                            className="border-0 px-0 outline-none focus-visible:ring-0 w-full"
                             spellCheck={false}
                           />
                         </FormControl>
@@ -144,7 +144,7 @@ function NetworkSettings() {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input placeholder="shadcn" {...field} spellCheck={false} />
+                        <Input placeholder="" {...field} spellCheck={false} className="w-full" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
