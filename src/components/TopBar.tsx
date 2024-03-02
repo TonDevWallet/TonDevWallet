@@ -115,7 +115,7 @@ function NetworkSelector() {
           value={liteClientState.selectedNetwork.network_id.get().toString()}
           onValueChange={changeLiteClientNetwork}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] focus-visible:ring-0">
             <SelectValue placeholder="Theme" />
           </SelectTrigger>
           <SelectContent>
