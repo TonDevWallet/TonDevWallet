@@ -9,11 +9,28 @@ import { updateNetworksList, useLiteclientState } from '@/store/liteClient'
 import { getDatabase } from '@/db'
 import { Network } from '@/types/network'
 
+interface NetworkSettingsProps {
+  name: string
+  url: string
+  is_default: boolean
+  network_id: number
+}
 function NetworkSettings() {
   const liteClientState = useLiteclientState()
   const form = useForm<{
-    networks: { name: string; url: string; is_default: boolean; network_id: number }[]
-  }>({})
+    networks: NetworkSettingsProps[]
+  }>({
+    defaultValues: {
+      networks: liteClientState.networks.get().map((network) => {
+        return {
+          name: network.name,
+          url: network.url,
+          is_default: network.is_default,
+          network_id: network.network_id,
+        }
+      }),
+    },
+  })
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'networks',
