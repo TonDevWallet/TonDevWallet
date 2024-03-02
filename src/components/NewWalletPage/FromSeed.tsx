@@ -2,10 +2,11 @@ import { saveKeyFromData } from '@/store/walletsListState'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Copier from '../copier'
-import { BlueButton } from '../ui/BlueButton'
 import { KeyPair } from '@ton/crypto'
 import { cn } from '@/utils/cn'
 import { secretKeyToED25519 } from '@/utils/ed25519'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
 
 export function FromSeed() {
   const navigate = useNavigate()
@@ -45,11 +46,12 @@ export function FromSeed() {
     <div>
       <div className="flex flex-col">
         <label htmlFor="seedInput">Seed</label>
-        <input
+        <Input
           className="border w-3/4 outline-none rounded px-2 py-1"
           id="seedInput"
           onChange={onWordsChange}
           value={seed}
+          autoFocus
         />
         {/* <input type="text" id="mnemonicInput" className="border rounded p-2 w-96" /> */}
       </div>
@@ -59,14 +61,14 @@ export function FromSeed() {
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
             <div className="flex">
-              <div className="w-96 overflow-hidden text-ellipsis text-xs">{seed}</div>
+              <div className="w-100 overflow-hidden text-ellipsis text-xs">{seed}</div>
               <Copier className="w-6 h-6 ml-2" text={seed || ''} />
             </div>
           </div>
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Public key:</div>
             <div className="flex">
-              <div className="w-96 overflow-hidden text-ellipsis text-xs">
+              <div className="w-100 overflow-hidden text-ellipsis text-xs">
                 {Buffer.from(keyPair?.publicKey || []).toString('hex')}
               </div>
               <Copier
@@ -78,7 +80,7 @@ export function FromSeed() {
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Secret key:</div>
             <div className="flex">
-              <div className="w-96 overflow-hidden text-ellipsis text-xs">
+              <div className="w-100 overflow-hidden text-ellipsis text-xs">
                 {Buffer.from(keyPair?.secretKey || []).toString('hex')}
               </div>
               <Copier
@@ -90,7 +92,7 @@ export function FromSeed() {
 
           <div className="py-4 flex flex-col">
             <label htmlFor="nameRef">Name:</label>
-            <input
+            <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -98,13 +100,13 @@ export function FromSeed() {
               className="border w-3/4 outline-none rounded px-2 py-1"
             />
 
-            <BlueButton
+            <Button
               onClick={saveSeed}
-              className={cn('mt-2', !name && 'opacity-50')}
+              className={cn('mt-2 w-24', !name && 'opacity-50')}
               disabled={!name}
             >
               Save
-            </BlueButton>
+            </Button>
           </div>
         </>
       )}
