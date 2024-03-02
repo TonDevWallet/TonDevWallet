@@ -86,7 +86,9 @@ export async function updateNetworksList() {
   const db = await getDatabase()
   const networks = await db<Network>('networks').select()
 
-  const selectedId = LiteClientState.selectedNetwork.network_id.get()
+  const oldSelectedNetwork = LiteClientState.selectedNetwork.get()
+  const selectedId = oldSelectedNetwork.network_id
+  const oldNetworkUrl = oldSelectedNetwork.url
 
   let selectedNetwork = networks.find((n) => n.network_id === selectedId)
   if (!selectedNetwork) {
@@ -95,6 +97,10 @@ export async function updateNetworksList() {
 
   LiteClientState.networks.set(networks)
   LiteClientState.selectedNetwork.set(selectedNetwork)
+
+  if (oldNetworkUrl !== selectedNetwork.url) {
+    changeLiteClient(selectedNetwork.network_id)
+  }
 }
 
 export async function changeLiteClient(networkId: number) {
@@ -140,6 +146,9 @@ export function getLiteClient(configUrl: string): LiteClient {
 
 async function addWorkingEngineToRoundRobin(configUrl: string, robin: LiteRoundRobinEngine) {
   const { data } = await tFetch<LSConfigData>(configUrl)
+  if (!data || !data.liteservers) {
+    return
+  }
   const shuffledEngines = shuffle(data.liteservers)
 
   const tauri = (await tauriState.promise) || tauriState

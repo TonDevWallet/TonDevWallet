@@ -95,7 +95,6 @@ function NetworkSettings() {
       <Form {...form}>
         <div className="flex flex-col gap-4">
           {fields.map((field, index) => {
-            console.log('render field', field)
             return (
               <div key={field.id}>
                 <div className="flex justify-between items-center">
