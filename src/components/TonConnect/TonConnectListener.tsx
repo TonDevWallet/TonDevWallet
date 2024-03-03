@@ -161,6 +161,18 @@ export function TonConnectListener() {
           return
         }
 
+        let walletAddress: string | undefined
+        const keys = getWalletListState()
+
+        const key = keys.find((k) => k.id.get() === s.keyId.get())
+        if (key) {
+          const wallet = key.wallets.get()?.find((w) => w.id === s.walletId.get())
+          if (wallet) {
+            const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
+            walletAddress = tonWallet?.address.toRawString()
+          }
+        }
+
         await addConnectMessage({
           connect_event_id: parseInt(walletMessage.id),
           connect_session_id: s.id.get(),
@@ -168,6 +180,7 @@ export function TonConnectListener() {
           key_id: s.keyId.get(),
           wallet_id: s.walletId.get(),
           status: 0,
+          wallet_address: walletAddress,
         })
         appWindow.unminimize()
         appWindow.setFocus()

@@ -52,6 +52,7 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
         ],
         valid_until: Date.now(),
       },
+      wallet_address: wallet.address.toRawString(),
     })
     navigate('/app')
   }

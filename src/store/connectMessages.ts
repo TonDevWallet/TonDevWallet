@@ -11,6 +11,10 @@ export interface TonConnectMessageTransaction {
   wallet_id: number
   status: number
   payload: ConnectMessageTransactionPayload
+
+  wallet_address?: string
+  created_at?: Date
+  updated_at?: Date
 }
 
 export const messagesState = hookstate<TonConnectMessageTransaction[]>(getConnectMessages)
@@ -33,6 +37,10 @@ export async function getConnectMessages() {
       key_id: m.key_id,
       wallet_id: m.wallet_id,
       payload: JSON.parse(m.payload),
+
+      wallet_address: m.wallet_address,
+      created_at: m.created_at,
+      updated_at: m.updated_at,
     }
   })
 
@@ -49,6 +57,8 @@ export async function addConnectMessage(input: Omit<TonConnectMessageTransaction
     .insert({
       ...input,
       payload: JSON.stringify(input.payload),
+      created_at: input.created_at ?? new Date(),
+      updated_at: input.created_at ?? new Date(),
     })
     .returning('*')
 
@@ -72,6 +82,7 @@ export async function changeConnectMessageStatus(messageId: number, newStatus: 0
     })
     .update({
       status: newStatus,
+      updated_at: new Date(),
     })
 
   await removeConnectMessages()
