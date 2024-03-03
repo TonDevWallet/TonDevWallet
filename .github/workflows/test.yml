@@ -40,6 +40,8 @@ jobs:
           workspaces: "src-tauri"
 
       - name: check builds
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
         run: |
           pnpm vite build
           cargo check --manifest-path=src-tauri/Cargo.toml -p app
