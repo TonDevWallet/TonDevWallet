@@ -8,7 +8,7 @@ import { ImportMigrations } from '@/utils/getMigrations'
 import { Button } from '../ui/button'
 import debug from 'debug'
 
-const showRollback = true
+const showRollback = false
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
