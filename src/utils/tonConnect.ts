@@ -44,51 +44,53 @@ export async function sendTonConnectMessage(
 
 export async function ApproveTonConnectMessage({
   messageCell,
-  s,
+  connectMessage,
   session,
   liteClient,
   eventId,
 }: {
   messageCell: Cell
-  s?: TonConnectMessageTransaction | ImmutableObject<TonConnectMessageTransaction>
-  session: TonConnectSession | ImmutableObject<TonConnectSession>
+  connectMessage?: TonConnectMessageTransaction | ImmutableObject<TonConnectMessageTransaction>
+  session?: TonConnectSession | ImmutableObject<TonConnectSession>
   liteClient: LiteClient | ImmutableObject<LiteClient>
   eventId: string
 }) {
-  console.log('do approve', messageCell)
-  const msg: SendTransactionRpcResponseSuccess = {
-    id: eventId, // s.connect_event_id.toString(),
-    result: messageCell?.toBoc().toString('base64') || '',
-  }
-
-  await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
-
   await liteClient.sendMessage(messageCell?.toBoc() || Buffer.from(''))
 
-  if (s) {
-    changeConnectMessageStatus(s.id, ConnectMessageStatus.APPROVED)
+  if (session) {
+    const msg: SendTransactionRpcResponseSuccess = {
+      id: eventId, // s.connect_event_id.toString(),
+      result: messageCell?.toBoc().toString('base64') || '',
+    }
+
+    await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
+  }
+
+  if (connectMessage) {
+    await changeConnectMessageStatus(connectMessage.id, ConnectMessageStatus.APPROVED)
   }
 }
 
 export async function RejectTonConnectMessage({
-  s,
+  message,
   session,
 }: {
-  s: TonConnectMessageTransaction | ImmutableObject<TonConnectMessageTransaction>
-  session: TonConnectSession | ImmutableObject<TonConnectSession>
+  message: TonConnectMessageTransaction | ImmutableObject<TonConnectMessageTransaction>
+  session?: TonConnectSession | ImmutableObject<TonConnectSession>
 }) {
-  console.log('do reject')
-  changeConnectMessageStatus(s.id, ConnectMessageStatus.REJECTED)
+  await changeConnectMessageStatus(message.id, ConnectMessageStatus.REJECTED)
 
-  const msg: SendTransactionRpcResponseError = {
-    id: s.connect_event_id.toString(),
-    error: {
-      code: SEND_TRANSACTION_ERROR_CODES.USER_REJECTS_ERROR,
-      message: 'User rejected',
-    },
+  if (session) {
+    const msg: SendTransactionRpcResponseError = {
+      id: message.connect_event_id.toString(),
+      error: {
+        code: SEND_TRANSACTION_ERROR_CODES.USER_REJECTS_ERROR,
+        message: 'User rejected',
+      },
+    }
+
+    await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
   }
-
-  await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
 }
 
 export function GetTransfersFromTCMessage(

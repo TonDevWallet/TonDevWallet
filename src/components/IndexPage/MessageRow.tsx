@@ -89,6 +89,26 @@ export const MessageRow = memo(function MessageRow({
     transfers
   )
 
+  const rejectConnectMessage = () => {
+    RejectTonConnectMessage({
+      message: s.get(),
+      session: session?.get(),
+    })
+  }
+
+  const approveConnectMessage = () => {
+    if (!messageCell) {
+      return
+    }
+    ApproveTonConnectMessage({
+      liteClient,
+      messageCell,
+      connectMessage: s.get(),
+      session: session?.get(),
+      eventId: s.connect_event_id?.get()?.toString(),
+    }).then()
+  }
+
   return (
     <Block className="mt-2">
       <div className="flex items-center">
@@ -117,33 +137,11 @@ export const MessageRow = memo(function MessageRow({
       {password ? (
         <>
           <div className="flex items-center gap-2 my-2">
-            <BlueButton
-              variant={'outline'}
-              onClick={() => {
-                if (!session) {
-                  return
-                }
-                RejectTonConnectMessage({
-                  s: s.get(),
-                  session: session.get(),
-                }).then()
-              }}
-            >
+            <BlueButton variant={'outline'} onClick={rejectConnectMessage}>
               Reject
             </BlueButton>
             <BlueButton
-              onClick={() => {
-                if (!messageCell || !session) {
-                  return
-                }
-                ApproveTonConnectMessage({
-                  liteClient,
-                  messageCell,
-                  s: s.get(),
-                  session: session.get(),
-                  eventId: s.connect_event_id.get().toString(),
-                }).then()
-              }}
+              onClick={approveConnectMessage}
               className={cn('bg-green-500', 'disabled:bg-gray-400')}
               disabled={!messageCell || !walletKeyPair}
             >
@@ -153,19 +151,7 @@ export const MessageRow = memo(function MessageRow({
         </>
       ) : (
         <>
-          <BlueButton
-            onClick={() => {
-              if (!session) {
-                return
-              }
-              RejectTonConnectMessage({
-                s: s.get(),
-                session: session.get(),
-              }).then()
-            }}
-          >
-            Reject
-          </BlueButton>
+          <BlueButton onClick={rejectConnectMessage}>Reject</BlueButton>
           <BlueButton onClick={openPasswordPopup} className="ml-2 mt-2 bg-green-500">
             Unlock wallet
           </BlueButton>

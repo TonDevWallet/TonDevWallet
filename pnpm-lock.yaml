@@ -136,7 +136,7 @@ dependencies:
     version: /@truecarry/sandbox@1.0.4(@ton/core@0.56.1)(@ton/crypto@3.2.0)
   '@ton/ton':
     specifier: ^13.11.1
-    version: 13.11.1(@ton/core@0.56.1)(@ton/crypto@3.2.0)
+    version: 13.11.1(@ton/core@0.56.1)(@ton/crypto@3.2.0)(debug@4.3.4)
   '@tonconnect/protocol':
     specifier: ^2.2.6
     version: 2.2.6
@@ -176,6 +176,9 @@ dependencies:
   date-fns:
     specifier: ^3.3.1
     version: 3.3.1
+  debug:
+    specifier: ^4.3.4
+    version: 4.3.4
   elkjs:
     specifier: ^0.9.2
     version: 0.9.2
@@ -2802,7 +2805,7 @@ packages:
       tweetnacl: 1.0.3
     dev: false
 
-  /@ton/ton@13.11.1(@ton/core@0.56.1)(@ton/crypto@3.2.0):
+  /@ton/ton@13.11.1(@ton/core@0.56.1)(@ton/crypto@3.2.0)(debug@4.3.4):
     resolution: {integrity: sha512-tcLdHzwhS5bmS0EGstcmfYK0ZeRrNz1AUIzUGKq/Xh0MGEwfP1qZBMloGGHLQnyZdRQ1D7Wx4g4mBKNrvG6DcQ==}
     peerDependencies:
       '@ton/core': '>=0.56.0'
@@ -2810,7 +2813,7 @@ packages:
     dependencies:
       '@ton/core': 0.56.1(@ton/crypto@3.2.0)
       '@ton/crypto': 3.2.0
-      axios: 1.6.7
+      axios: 1.6.7(debug@4.3.4)
       dataloader: 2.2.2
       symbol.inspect: 1.0.1
       teslabot: 1.5.0
@@ -3524,10 +3527,10 @@ packages:
       possible-typed-array-names: 1.0.0
     dev: true
 
-  /axios@1.6.7:
+  /axios@1.6.7(debug@4.3.4):
     resolution: {integrity: sha512-/hDJGff6/c7u0hDkvkGxR/oy6CbCs8ziCsC7SqmhjfozqiJGc8Z11wrv9z9lYfY4K8l+H9TpjcMDX0xOZmx+RA==}
     dependencies:
-      follow-redirects: 1.15.5
+      follow-redirects: 1.15.5(debug@4.3.4)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -4715,7 +4718,7 @@ packages:
     resolution: {integrity: sha512-X8cqMLLie7KsNUDSdzeN8FYK9rEt4Dt67OsG/DNGnYTSDBG4uFAJFBnUeiV+zCVAvwFy56IjM9sH51jVaEhNxw==}
     dev: true
 
-  /follow-redirects@1.15.5:
+  /follow-redirects@1.15.5(debug@4.3.4):
     resolution: {integrity: sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==}
     engines: {node: '>=4.0'}
     peerDependencies:
@@ -4723,6 +4726,8 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
+    dependencies:
+      debug: 4.3.4
     dev: false
 
   /for-each@0.3.3:

@@ -1,7 +1,7 @@
 import { ITonHighloadWalletV2 } from '../../../types'
 import { AddressRow } from '../../AddressRow'
 import { useEffect, useState } from 'react'
-import SendTon from './SendTon'
+import SendTon from '../tonweb/SendTon'
 import { useLiteclient } from '@/store/liteClient'
 import { useSelectedTonWallet } from '@/utils/wallets'
 import { Block } from '@/components/ui/Block'

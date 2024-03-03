@@ -6,8 +6,9 @@ import { useAppInfo } from '@/hooks/useAppInfo'
 import { getDatabase } from '@/db'
 import { ImportMigrations } from '@/utils/getMigrations'
 import { Button } from '../ui/button'
+import debug from 'debug'
 
-const showRollback = false
+const showRollback = true
 
 export function SavedWalletsList() {
   const keys = useWalletListState()
@@ -40,16 +41,36 @@ export function SavedWalletsList() {
         <div className="text-center mt-4 text-sm text-gray-400">v{version}</div>
 
         {showRollback && (
-          <Button
-            onClick={async () => {
-              const db = await getDatabase()
-              await db.migrate.down({
-                migrationSource: new ImportMigrations(),
-              })
-            }}
-          >
-            Migrate back
-          </Button>
+          <>
+            <Button
+              onClick={async () => {
+                const db = await getDatabase()
+                debug.enable('knex:*')
+                // localStorage.debug = 'knex:*'
+                await db.migrate.up({
+                  migrationSource: new ImportMigrations(),
+                })
+                debug.enable('')
+                // localStorage.debug = ''
+              }}
+            >
+              Migrate Up
+            </Button>
+            <Button
+              onClick={async () => {
+                const db = await getDatabase()
+                // localStorage.debug = 'knex:*'
+                debug.enable('knex:*')
+                await db.migrate.down({
+                  migrationSource: new ImportMigrations(),
+                })
+                debug.enable('')
+                // localStorage.debug = ''
+              }}
+            >
+              Migrate Down
+            </Button>
+          </>
         )}
       </div>
     )

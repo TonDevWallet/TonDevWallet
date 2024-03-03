@@ -6,11 +6,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelectedKey } from '@/store/walletState'
 import { WalletType } from '@/types'
-import { ReactPopup } from './Popup'
 import { openPasswordPopup, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 import { useSeed } from '@/hooks/useKeyPair'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faClock, faPlus, faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { faClock, faPlus } from '@fortawesome/free-solid-svg-icons'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +27,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
