@@ -1,5 +1,3 @@
-// import type { GasInfo } from './ManagedBlockchain'
-
 const previouslyMaxSafeInteger = 9007199254740991n
 export function formatTon(amount: bigint | number | undefined) {
   if (!amount) {

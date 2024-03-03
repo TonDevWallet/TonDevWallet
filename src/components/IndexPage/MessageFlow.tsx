@@ -1,4 +1,3 @@
-// import { BlockchainTransaction } from '@/utils/ManagedBlockchain'
 import { useCallback, useEffect, useRef } from 'react'
 import ReactFlow, {
   Controls,

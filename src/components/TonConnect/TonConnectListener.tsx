@@ -120,8 +120,6 @@ export function TonConnectListener() {
       const sse = new EventSource(sseUrl)
 
       sse.addEventListener('message', async (e) => {
-        console.log('sse message', e.data)
-
         const bridgeIncomingMessage = JSON.parse(e.data)
         const walletMessage: SendTransactionRpcRequest | DisconnectRpcRequest = JSON.parse(
           session.decrypt(
@@ -183,7 +181,6 @@ export function TonConnectListener() {
           sendNotification({ title: 'New message', body: `From ${s.name.get()}` })
         }
 
-        console.log('update before', e)
         updateSessionEventId(s.id.get(), parseInt(e.lastEventId))
       })
 

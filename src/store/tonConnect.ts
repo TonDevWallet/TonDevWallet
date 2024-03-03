@@ -194,7 +194,6 @@ export async function updateSessionEventId(id: number, eventId: number) {
     .update({
       last_event_id: eventId,
     })
-  console.log('updated', session, eventId)
 }
 
 export function closeTonConnectPopup() {
