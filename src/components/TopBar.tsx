@@ -31,24 +31,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 export function TopBar() {
   return (
-    <div className={cn('flex py-2 px-4 justify-between')}>
-      <div className="flex">
-        <NetworkSelector />
+    <div className={cn('flex flex-wrap py-2 px-4 gap-4 w-full')}>
+      <NetworkSelector />
 
-        <DetectTonConnect />
+      <DetectTonConnect />
 
-        <PasswordPopup />
+      <PasswordPopup />
 
-        <ThemeSwitcher />
+      <ThemeSwitcher />
 
-        <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
-        <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
-      </div>
+      <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
+      <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
 
-      <div className="flex">
-        <ChangePasswordPopup />
-        <PasswordUnlock />
-      </div>
+      <ChangePasswordPopup />
+      <PasswordUnlock />
     </div>
   )
 }

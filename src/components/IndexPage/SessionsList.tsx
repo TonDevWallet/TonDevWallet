@@ -7,15 +7,13 @@ import {
 import { useWalletListState } from '@/store/walletsListState'
 import { setWalletKey, setSelectedWallet } from '@/store/walletState'
 import { getWalletFromKey } from '@/utils/wallets'
-import { faClose, faPlus, faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { faClose, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { NavLink } from 'react-router-dom'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { KeyJazzicon } from '../KeyJazzicon'
-import { ReactPopup } from '../Popup'
 import { Block } from '../ui/Block'
-import { BlueButton } from '../ui/BlueButton'
 import { WalletJazzicon } from '../WalletJazzicon'
 import {
   AlertDialog,
@@ -36,10 +34,7 @@ export function SessionsList() {
   const liteClient = useLiteclient() as unknown as LiteClient
 
   return (
-    <div className="gap-2 flex flex-col mb-8">
-      <div className="flex justify-between">
-        <h3 className="text-lg">Active Sessions:</h3>
-      </div>
+    <div className="mb-8 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {sessions.map((s) => {
         const key = keys.find((k) => k.id.get() === s.keyId.get())
         if (!key) {

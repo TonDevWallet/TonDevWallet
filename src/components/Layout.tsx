@@ -17,7 +17,11 @@ export function Layout() {
       {passwordState.passwordExists.get() ? (
         <>
           <div
-            className="grid grid-cols-[128px_minmax(128px,_1fr)] grid-rows-[64px_minmax(120px,_1fr)]
+            className="grid
+
+              grid-cols-[128px_minmax(128px,_1fr)]
+              grid-rows-[minmax(auto,max-content)_minmax(120px,_1fr)] lg:grid-rows-[64px_minmax(120px,_1fr)]
+
               h-screen w-full overflow-y-hidden"
           >
             <div className="col-span-2 border-b">

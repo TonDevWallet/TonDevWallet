@@ -110,14 +110,16 @@ export const MessageRow = memo(function MessageRow({
   }
 
   return (
-    <Block className="mt-2">
-      <div className="flex items-center">
-        <img src={session?.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
-        <div className="ml-2">{session?.name.get()}</div>
-        <a href={session?.url.get()} target="_blank" className="ml-2" rel="noopener noreferrer">
-          {session?.url.get()}
-        </a>
-      </div>
+    <Block className="">
+      {session?.url.get() && (
+        <div className="flex items-center">
+          <img src={session?.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
+          <div className="ml-2">{session?.name.get()}</div>
+          <a href={session?.url.get()} target="_blank" className="ml-2" rel="noopener noreferrer">
+            {session?.url.get()}
+          </a>
+        </div>
+      )}
 
       <div className="break-keep">
         {

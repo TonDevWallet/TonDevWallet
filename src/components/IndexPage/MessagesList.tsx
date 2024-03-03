@@ -6,8 +6,7 @@ export function MessagesList() {
   const messages = useMessagesState()
 
   return (
-    <div className="overflow-x-hidden mb-8">
-      <h3 className="text-lg mb-2">Messages:</h3>
+    <div className="overflow-x-hidden mb-8 flex flex-col gap-4 max-w-lg mx-auto">
       {messages.map((s) => {
         return <MessageRow s={s} key={s.id.get()} />
       })}
