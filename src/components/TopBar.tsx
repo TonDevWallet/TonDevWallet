@@ -20,7 +20,6 @@ import {
   faPlus,
   faSun,
 } from '@fortawesome/free-solid-svg-icons'
-import { ChangePasswordPopup } from '@/components/SavedWalletsList/ChangePasswordPopup'
 import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
 import { cn } from '@/utils/cn'
 import { useTheme } from '@/hooks/useTheme'
@@ -43,7 +42,6 @@ export function TopBar() {
       <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
       <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
 
-      <ChangePasswordPopup />
       <PasswordUnlock />
     </div>
   )
@@ -190,7 +188,7 @@ function TopBarLinkWrapper({
       onClick={onClick}
     >
       <FontAwesomeIcon icon={icon} size="xs" className="" />
-      <div className="text-foreground">{text}</div>
+      <div className="hidden lg:block text-foreground">{text}</div>
     </div>
   )
   return to ? (

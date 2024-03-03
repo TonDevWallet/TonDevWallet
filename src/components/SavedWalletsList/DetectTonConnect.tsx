@@ -44,7 +44,7 @@ export function DetectTonConnect() {
               flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
           >
             <FontAwesomeIcon icon={faQrcode} size="xs" />
-            <div className="text-foreground">TonConnect</div>
+            <div className="hidden lg:block text-foreground">TonConnect</div>
           </div>
         </button>
       </DialogTrigger>

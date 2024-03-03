@@ -69,14 +69,14 @@ export function ChangePasswordPopup() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <div className={'cursor-pointer rounded flex flex-col items-center my-2 text-center'}>
-          <div
-            className="rounded-full px-4 h-8 relative
-              flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
-          >
+        <div>
+          <h2 className="mt-10 scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight transition-colors">
+            Password settings
+          </h2>
+          <Button className={'flex gap-2 mt-4'}>
             <FontAwesomeIcon icon={faHashtag} size="xs" />
-            <div className="text-foreground">Change password</div>
-          </div>
+            <div className="">Change password</div>
+          </Button>
         </div>
       </DialogTrigger>
       <DialogContent noClose={true}>
