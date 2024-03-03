@@ -7,6 +7,7 @@ import { memo, useMemo } from 'react'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 
 export const MessageHistoryRow = memo(function MessageHistoryRow({
   connectMessage,
@@ -50,7 +51,11 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
     <Block className="">
       {session?.url.get() && (
         <div className="flex items-center mb-4">
-          <img src={session?.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
+          <Avatar className="w-8 h-8">
+            <AvatarImage src={session?.iconUrl.get()} />
+            <AvatarFallback>C</AvatarFallback>
+          </Avatar>
+
           <div className="ml-2">{session?.name.get()}</div>
           <a href={session?.url.get()} target="_blank" className="ml-2" rel="noopener noreferrer">
             {session?.url.get()}

@@ -24,6 +24,7 @@ import { secretKeyToED25519 } from '@/utils/ed25519'
 import { Button } from '@/components/ui/button'
 import { faExpand } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
@@ -113,7 +114,11 @@ export const MessageRow = memo(function MessageRow({
     <Block className="">
       {session?.url.get() && (
         <div className="flex items-center">
-          <img src={session?.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
+          <Avatar className="w-8 h-8">
+            <AvatarImage src={session?.iconUrl.get()} />
+            <AvatarFallback>C</AvatarFallback>
+          </Avatar>
+
           <div className="ml-2">{session?.name.get()}</div>
           <a href={session?.url.get()} target="_blank" className="ml-2" rel="noopener noreferrer">
             {session?.url.get()}
