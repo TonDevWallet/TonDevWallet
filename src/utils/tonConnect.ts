@@ -78,8 +78,6 @@ export async function RejectTonConnectMessage({
   message: TonConnectMessageTransaction | ImmutableObject<TonConnectMessageTransaction>
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
 }) {
-  await changeConnectMessageStatus(message.id, ConnectMessageStatus.REJECTED)
-
   if (session) {
     const msg: SendTransactionRpcResponseError = {
       id: message.connect_event_id.toString(),
@@ -91,6 +89,8 @@ export async function RejectTonConnectMessage({
 
     await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
   }
+
+  await changeConnectMessageStatus(message.id, ConnectMessageStatus.REJECTED)
 }
 
 export function GetTransfersFromTCMessage(

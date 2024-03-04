@@ -50,8 +50,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
           onClick={() => {
             const webview = new WebviewWindow(`txinfo:${tx.lt}:${tx.address.toString()}`, {
               focus: true,
-              transparent: true,
-              decorations: false,
+              // transparent: true,
               url: '/txinfo',
               center: true,
               title: `Transaction ${tx.lt} ${tx.address.toString()}`,
