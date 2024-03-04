@@ -8,6 +8,7 @@ import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { BocContainer } from '../BocContainer'
 
 export const MessageHistoryRow = memo(function MessageHistoryRow({
   connectMessage,
@@ -93,15 +94,13 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
               </div>
               <div>Amount: {m.amount}</div>
               {m.payload && (
-                <div className="flex gap-2">
-                  <div>Payload:</div>
-                  <div className="truncate"> {m.payload}</div>
+                <div className="flex gap-2 my-2">
+                  <BocContainer boc={m.payload} label="Payload" />
                 </div>
               )}
               {m.stateInit && (
                 <div className="flex gap-2">
-                  <div>StateInit:</div>
-                  <div className="truncate"> {m.stateInit}</div>
+                  <BocContainer boc={m.stateInit} label="StateInit" />
                 </div>
               )}
             </Block>

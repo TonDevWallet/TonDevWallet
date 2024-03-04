@@ -4,8 +4,8 @@ import clsx from 'clsx'
 import { ReactNode, useState } from 'react'
 import { Address } from '@ton/core'
 
-import CopySvg from './icons/copy'
-import DoneSvg from './icons/done'
+import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 export function AddressRow({
   address,
@@ -63,7 +63,9 @@ export function AddressRow({
 
       {!disableCopy && (
         <div className="ml-auto flex items-center">
-          <button className="w-5 h-5">{copied ? <DoneSvg /> : <CopySvg />}</button>
+          <button className="w-5 h-5">
+            {copied ? <FontAwesomeIcon icon={faCheck} /> : <FontAwesomeIcon icon={faCopy} />}
+          </button>
         </div>
       )}
     </div>
