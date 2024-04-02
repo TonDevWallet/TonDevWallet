@@ -21,6 +21,15 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       tx.description.actionPhase?.resultCode !== 0) ||
     (tx.description.type === 'generic' && tx.description.bouncePhase?.type)
 
+  let opCode = 0
+  if (tx.inMessage?.body) {
+    try {
+      opCode = tx.inMessage.body.asSlice().preloadUint(32)
+    } catch (e) {
+      //
+    }
+  }
+
   return (
     <div
       className={cn(
@@ -34,8 +43,11 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       <AddressRow address={txAddress} />
       <div>ID: {tx.id}</div>
       <div>LT: {tx.lt.toString()}</div>
-      {/* <div>Self Fees: {tonToNumber(tx.gasSelf)}</div>
-      <div>Total Fees: {tonToNumber(tx.gasFull)}</div> */}
+      <div>Self Fees: {Number(tx.totalFees.coins) / 10 ** 9}</div>
+      {/* <div>Total Fees: {tonToNumber(tx.gasFull)}</div> */}
+      {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
+        <div>OpCode: 0x{opCode.toString(16)}</div>
+      )}
       {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
         <div>Compute Code: {tx.description.computePhase.exitCode}</div>
       )}

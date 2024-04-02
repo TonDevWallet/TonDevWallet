@@ -273,11 +273,26 @@ function useConnectLink(link: string) {
         return
       }
 
-      const { data: metaInfo } = await tFetch<{
-        iconUrl: string
-        name: string
-        url: string
-      }>(r.manifestUrl)
+      let metaInfo:
+        | {
+            iconUrl?: string
+            name?: string
+            url?: string
+          }
+        | undefined
+      try {
+        const { data } = await tFetch<any>(r.manifestUrl, {
+          method: 'GET',
+          timeout: { secs: 3, nanos: 0 },
+        })
+        metaInfo = data
+      } catch (e) {
+        //
+      }
+
+      if (!metaInfo) {
+        metaInfo = {}
+      }
 
       if (!metaInfo.name) {
         console.log('No connect meta', metaInfo)
@@ -286,7 +301,7 @@ function useConnectLink(link: string) {
       if (!metaInfo.url) {
         const parsedJsonLink = new URL(r.manifestUrl)
         setInfo({
-          iconUrl: metaInfo?.iconUrl,
+          iconUrl: metaInfo?.iconUrl || '',
           name: metaInfo?.name || parsedJsonLink.host,
           url: metaInfo?.url || parsedJsonLink.origin,
           host: parsedJsonLink.host,
@@ -305,8 +320,8 @@ function useConnectLink(link: string) {
       }
 
       setInfo({
-        iconUrl: metaInfo.iconUrl,
-        name: metaInfo.name,
+        iconUrl: metaInfo.iconUrl || '',
+        name: metaInfo.name || '',
         url: metaInfo.url,
         host,
         clientId,

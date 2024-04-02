@@ -110,7 +110,13 @@ export function useSelectedTonWallet() {
 function getExternalMessageCellFromHighload(wallet: HighloadWalletV2): GetExternalMessageCell {
   return async (keyPair: KeyPair, transfers: WalletTransfer[]) => {
     const message = wallet.CreateTransferMessage(transfers)
-    message.body = SignCell(keyPair.secretKey, message.body)
+
+    const secretWithPublic =
+      keyPair.secretKey.length === 64
+        ? keyPair.secretKey
+        : Buffer.concat([keyPair.secretKey, keyPair.publicKey])
+
+    message.body = SignCell(secretWithPublic, message.body)
     return beginCell().store(storeMessage(message)).endCell()
   }
 }

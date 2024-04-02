@@ -84,7 +84,7 @@ export function MessageFlow({
       graph.children.push({
         id: tx.id.toString(),
         width: 400,
-        height: isTxError(tx) ? 250 : 200,
+        height: isTxError(tx) ? 350 : 300,
       })
       const children: GraphTx[][] = [tx.children as GraphTx[]]
       const parent = [tx]
@@ -104,7 +104,7 @@ export function MessageFlow({
           graph.children.push({
             id: childTx.id.toString(),
             width: 400,
-            height: isTxError(childTx) ? 250 : 200,
+            height: isTxError(childTx) ? 350 : 300,
           })
 
           graph.edges.push({

@@ -114,7 +114,10 @@ export function TonConnectListener() {
 
       const sseUrl = new URL(`${bridgeUrl}/events`)
       sseUrl.searchParams.append('client_id', Buffer.from(keyPair.publicKey).toString('hex'))
-      sseUrl.searchParams.append('last_event_id', s.lastEventId.get().toString())
+      const lastEventId = s.lastEventId.get().toString()
+      if (lastEventId && lastEventId !== '0') {
+        sseUrl.searchParams.append('last_event_id', lastEventId)
+      }
       // url.searchParams.append('to', clientId)
       // url.searchParams.append('ttl', '300')
       const sse = new EventSource(sseUrl)

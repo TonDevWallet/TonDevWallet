@@ -181,7 +181,7 @@ export async function sendTonConnectStartMessage(
 
   try {
     keyPair = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
-    publicKey = keyPair.publicKey.toString('base64')
+    publicKey = keyPair.publicKey.toString('hex')
   } catch (e) {}
 
   const proof = connectRequest?.items.find((i) => i.name === 'ton_proof') as TonProofItem
