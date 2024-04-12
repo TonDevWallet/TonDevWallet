@@ -1,4 +1,7 @@
-import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
+import {
+  HighloadWalletV2,
+  HighloadWalletV2R2,
+} from '@/contracts/highload-wallet-v2/HighloadWalletV2'
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import { SignCell } from '@/contracts/utils/SignExternalMessage'
 import { useLiteclient } from '@/store/liteClient'
@@ -6,6 +9,7 @@ import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
 import {
   GetExternalMessageCell,
   ITonHighloadWalletV2,
+  ITonHighloadWalletV2R2,
   ITonWalletV3,
   ITonWalletV4,
   IWallet,
@@ -47,6 +51,22 @@ export function getWalletFromKey(
     })
     const result: ITonHighloadWalletV2 = {
       type: 'highload',
+      address: tonWallet.address,
+      wallet: tonWallet,
+      getExternalMessageCell: getExternalMessageCellFromHighload(tonWallet),
+      key: encryptedData,
+      id: wallet.id,
+      subwalletId: wallet.subwallet_id,
+    }
+    return result
+  } else if (wallet.type === 'highload_v2r2') {
+    const tonWallet = new HighloadWalletV2R2({
+      publicKey: Buffer.from(key.public_key, 'base64'),
+      subwalletId: wallet.subwallet_id,
+      workchain: 0,
+    })
+    const result: ITonHighloadWalletV2R2 = {
+      type: 'highload_v2r2',
       address: tonWallet.address,
       wallet: tonWallet,
       getExternalMessageCell: getExternalMessageCellFromHighload(tonWallet),

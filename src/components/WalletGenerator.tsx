@@ -202,13 +202,14 @@ function AddWalletPopup() {
                 Wallet Type:
                 <Select defaultValue={walletType} onValueChange={setWalletType}>
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select a fruit" />
+                    <SelectValue placeholder="Select wallet version" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value="v4R2">v4R2</SelectItem>
                       <SelectItem value="v3R2">v3R2</SelectItem>
-                      <SelectItem value="highload">Highload</SelectItem>
+                      <SelectItem value="highload">Highload V2</SelectItem>
+                      <SelectItem value="highload_v2r2">Highload V2R2</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>

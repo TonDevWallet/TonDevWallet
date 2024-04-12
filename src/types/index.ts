@@ -1,4 +1,7 @@
-import { HighloadWalletV2 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
+import {
+  HighloadWalletV2,
+  HighloadWalletV2R2,
+} from '@/contracts/highload-wallet-v2/HighloadWalletV2'
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import { EncryptedWalletData } from '@/store/passwordManager'
 import type { Address, MessageRelaxed, SendMode, ContractProvider, Cell } from '@ton/core'
@@ -12,8 +15,6 @@ export type OpenedContract<T> = {
       : never
     : T[P]
 }
-
-export type WalletType = 'v3R2' | 'v4R2' | 'highload'
 
 export type GetExternalMessageCell = (
   keyPair: KeyPair,
@@ -50,14 +51,27 @@ export interface ITonHighloadWalletV2 {
   subwalletId: number
 }
 
+export interface ITonHighloadWalletV2R2 {
+  type: 'highload_v2r2'
+  address: Address
+  wallet: HighloadWalletV2R2
+  getExternalMessageCell: GetExternalMessageCell
+  key: EncryptedWalletData
+  id: number
+  subwalletId: number
+}
+
 export interface ITonExternalWallet {
   type: 'external'
   id: string
 }
 
 export type ITonWallet = ITonWalletV3 | ITonWalletV4
+export type IHighloadWallet = ITonHighloadWalletV2 | ITonHighloadWalletV2R2
 
-export type IWallet = ITonWallet | ITonHighloadWalletV2 // | ITonExternalWallet
+export type IWallet = ITonWallet | IHighloadWallet
+
+export type WalletType = IWallet['type'] // v3R2' | 'v4R2' | 'highload' | 'highload_v2r2'
 
 export type TonWalletTransferArg = {
   seqno: number
