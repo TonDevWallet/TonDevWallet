@@ -10,6 +10,7 @@ import {
   GetExternalMessageCell,
   ITonHighloadWalletV2,
   ITonHighloadWalletV2R2,
+  ITonHighloadWalletV3,
   ITonWalletV3,
   ITonWalletV4,
   IWallet,
@@ -25,13 +26,19 @@ import {
   external,
   internal,
   loadStateInit,
+  OutActionSendMsg,
   SendMode,
+  StateInit,
   storeMessage,
 } from '@ton/core'
 
 import { WalletContractV3R2, WalletContractV4 } from '@ton/ton'
 import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
+import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV3'
+import { HighloadWalletV3CodeCell } from '@/contracts/highload-wallet-v3/HighloadWalletV3.source'
+import { HighloadQueryId } from '@/contracts/highload-wallet-v3/HighloadQueryId'
+import { Maybe } from '@ton/core/dist/utils/maybe'
 
 export function getWalletFromKey(
   liteClient: LiteClient | ImmutableObject<LiteClient>,
@@ -70,6 +77,27 @@ export function getWalletFromKey(
       address: tonWallet.address,
       wallet: tonWallet,
       getExternalMessageCell: getExternalMessageCellFromHighload(tonWallet),
+      key: encryptedData,
+      id: wallet.id,
+      subwalletId: wallet.subwallet_id,
+    }
+    return result
+  } else if (wallet.type === 'highload_v3') {
+    const tonWallet = HighloadWalletV3.createFromConfig(
+      {
+        publicKey: Buffer.from(key.public_key, 'base64'),
+        subwalletId: wallet.subwallet_id,
+        timeout: 60,
+      },
+      HighloadWalletV3CodeCell,
+      0
+    )
+    tonWallet.setSubwalletId(wallet.subwallet_id)
+    const result: ITonHighloadWalletV3 = {
+      type: 'highload_v3',
+      address: tonWallet.address,
+      wallet: tonWallet,
+      getExternalMessageCell: getExternalMessageCellFromHighloadV3(tonWallet),
       key: encryptedData,
       id: wallet.id,
       subwalletId: wallet.subwallet_id,
@@ -141,6 +169,49 @@ function getExternalMessageCellFromHighload(wallet: HighloadWalletV2): GetExtern
   }
 }
 
+function getExternalMessageCellFromHighloadV3(wallet: HighloadWalletV3): GetExternalMessageCell {
+  return async (keyPair: KeyPair, transfers: WalletTransfer[]) => {
+    const secretWithPublic =
+      keyPair.secretKey.length === 64
+        ? keyPair.secretKey
+        : Buffer.concat([keyPair.secretKey, keyPair.publicKey])
+
+    const rndShift = getRandomInt(0, 8190)
+    const rndBitNum = getRandomInt(0, 1022)
+
+    const queryId = HighloadQueryId.fromShiftAndBitNumber(BigInt(rndShift), BigInt(rndBitNum))
+
+    const sendMessages: OutActionSendMsg[] = transfers.map((t) => {
+      let init: Maybe<StateInit>
+      if (t.state) {
+        init = loadStateInit(t.state.asSlice())
+      }
+
+      return {
+        type: 'sendMsg',
+        mode: SendMode.PAY_GAS_SEPARATELY + SendMode.IGNORE_ERRORS,
+        outMsg: internal({
+          to: t.destination,
+          value: t.amount,
+          body: t.body,
+          bounce: t.bounce,
+          init,
+        }),
+      }
+    })
+
+    const lsDesyncVar = 20 // seconds
+    const message = await wallet.getExternalMessage(secretWithPublic, {
+      createdAt: Math.floor(Date.now() / 1000) - lsDesyncVar,
+      queryId,
+      message: wallet.packActions(sendMessages, 1000000000n, queryId),
+      mode: 3,
+      timeout: 60,
+    })
+    return message
+  }
+}
+
 function getExternalMessageCellFromTonWallet(
   wallet: OpenedContract<WalletContractV3R2 | WalletContractV4>
 ): GetExternalMessageCell {
@@ -196,4 +267,12 @@ export function useWalletExternalMessageCell(
   }, [wallet?.id, transfers, liteClient, keyPair])
 
   return cell
+}
+
+const getRandom = (min: number, max: number) => {
+  return Math.random() * (max - min) + min
+}
+
+export const getRandomInt = (min: number, max: number) => {
+  return Math.round(getRandom(min, max))
 }

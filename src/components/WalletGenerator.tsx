@@ -210,6 +210,7 @@ function AddWalletPopup() {
                       <SelectItem value="v3R2">v3R2</SelectItem>
                       <SelectItem value="highload">Highload V2</SelectItem>
                       <SelectItem value="highload_v2r2">Highload V2R2</SelectItem>
+                      <SelectItem value="highload_v3">Highload V3</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>

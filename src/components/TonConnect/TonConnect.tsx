@@ -169,11 +169,21 @@ export async function sendTonConnectStartMessage(
     stateInit = beginCell()
       .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
       .endCell()
-  } else {
+  } else if (wallet?.type === 'v4R2') {
     // if (wallet?.type === 'v4R2') {
     stateInit = beginCell()
       .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
       .endCell()
+  } else if (wallet?.type === 'highload_v2r2') {
+    stateInit = beginCell()
+      .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
+      .endCell()
+  } else if (wallet?.type === 'highload_v3') {
+    stateInit = beginCell()
+      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+      .endCell()
+  } else {
+    throw new Error('Unknown wallet type!')
   }
 
   let keyPair // = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
@@ -203,7 +213,12 @@ export async function sendTonConnectStartMessage(
         features: [
           {
             name: 'SendTransaction',
-            maxMessages: wallet.type === 'highload' ? 255 : 4,
+            maxMessages:
+              wallet.type === 'highload' ||
+              wallet.type === 'highload_v2r2' ||
+              wallet.type === 'highload_v3'
+                ? 250
+                : 4,
           },
         ],
       },
