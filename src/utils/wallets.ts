@@ -263,7 +263,9 @@ export function useWalletExternalMessageCell(
       return
     }
 
-    wallet.getExternalMessageCell(keyPair, transfers).then(setCell)
+    wallet.getExternalMessageCell(keyPair, transfers).then((c) => {
+      setCell(c)
+    })
   }, [wallet?.id, transfers, liteClient, keyPair])
 
   return cell

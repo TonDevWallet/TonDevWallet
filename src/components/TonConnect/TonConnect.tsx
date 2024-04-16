@@ -214,11 +214,11 @@ export async function sendTonConnectStartMessage(
           {
             name: 'SendTransaction',
             maxMessages:
-              wallet.type === 'highload' ||
-              wallet.type === 'highload_v2r2' ||
-              wallet.type === 'highload_v3'
+              wallet.type === 'highload' || wallet.type === 'highload_v2r2'
                 ? 250
-                : 4,
+                : wallet.type === 'highload_v3'
+                  ? 500
+                  : 4,
           },
         ],
       },
