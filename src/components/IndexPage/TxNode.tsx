@@ -30,6 +30,37 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
     }
   }
 
+  let notificationErrorCode = 0
+  if (tx.inMessage?.body) {
+    try {
+      const inSlice = tx.inMessage.body.asSlice()
+      const op = inSlice.loadUint(32)
+      if (op !== 0xf8a7ea5) {
+        throw new Error('a')
+      }
+      // if (inSlice.remainingBits < 64 + 4 + 267 + 267 + 1) {
+      //   throw new Error('b')
+      // }
+
+      inSlice.skip(64) // query id
+      inSlice.loadCoins() // amount
+      inSlice.loadAddress() // destination
+      inSlice.loadAddress() // response_destination
+      inSlice.loadMaybeRef() // ?
+      inSlice.loadCoins() // forward_ton_amount
+      const forward = inSlice.loadMaybeRef()?.asSlice()
+
+      forward?.skip(32)
+      forward?.skip(64)
+
+      notificationErrorCode = forward?.loadUint(32) || 0
+      console.log('notificationErrorCode', notificationErrorCode)
+    } catch (e) {
+      //
+      // console.log('err', e)
+    }
+  }
+
   return (
     <div
       className={cn(
@@ -47,6 +78,13 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       {/* <div>Total Fees: {tonToNumber(tx.gasFull)}</div> */}
       {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
         <div>OpCode: 0x{opCode.toString(16)}</div>
+      )}
+      {notificationErrorCode ? (
+        <div>
+          NotificationErrorCode: {notificationErrorCode} {notificationErrorCode.toString(16)}
+        </div>
+      ) : (
+        <></>
       )}
       {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
         <div>Compute Code: {tx.description.computePhase.exitCode}</div>

@@ -132,8 +132,8 @@ dependencies:
     specifier: ^3.2.0
     version: 3.2.0
   '@ton/sandbox':
-    specifier: npm:@truecarry/sandbox@^1.0.4
-    version: /@truecarry/sandbox@1.0.4(@ton/core@0.56.1)(@ton/crypto@3.2.0)
+    specifier: npm:@truecarry/sandbox@^1.0.5
+    version: /@truecarry/sandbox@1.0.5(@ton/core@0.56.1)(@ton/crypto@3.2.0)
   '@ton/ton':
     specifier: ^13.11.1
     version: 13.11.1(@ton/core@0.56.1)(@ton/crypto@3.2.0)(debug@4.3.4)
@@ -2899,8 +2899,8 @@ packages:
       - supports-color
     dev: false
 
-  /@truecarry/sandbox@1.0.4(@ton/core@0.56.1)(@ton/crypto@3.2.0):
-    resolution: {integrity: sha512-E4bWBsXyCqX2OmXQnzUneEn4tYvzhrp+KNIrlx3GjtjUC4UhSSWN4RyGMI6CCYNRbNgsPsAp5V9Q+X39uclnng==}
+  /@truecarry/sandbox@1.0.5(@ton/core@0.56.1)(@ton/crypto@3.2.0):
+    resolution: {integrity: sha512-H7Hekg8Gc1YrD7838Yx3nItn0efklm3drHS1gEh5t92NdEnan0JA6C9nneXVvKQ9qkep2UlCvPU6ndZZc+dbiw==}
     peerDependencies:
       '@ton/core': '>=0.56.0'
       '@ton/crypto': '>=3.2.0'

@@ -193,7 +193,7 @@ export class ExecutorWorker {
 
   runCommon(args: (string | number)[]): EmulationResult {
     //   const debugLogs = []
-    const resp = JSON.parse(extractString(invoke('_emulate', args)))
+    const resp = JSON.parse(extractString(invoke('_emulate_with_emulator', args)))
     const debugLogs = '' // this.debugLogs.join('\n')
     if (resp.fail) {
       console.error(resp)

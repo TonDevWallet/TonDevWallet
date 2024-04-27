@@ -1,4 +1,4 @@
-import type { BlockchainTransaction } from '@ton/sandbox/dist/blockchain/Blockchain'
+import type { BlockchainTransaction } from '@ton/sandbox/dist/blockchain/BlockchainBase'
 import { BlockchainWithExecutor } from '@ton/sandbox/dist/blockchain/BlockchainWithExecutor'
 
 export type ManagedSendMessageResult = {
