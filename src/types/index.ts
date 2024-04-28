@@ -98,4 +98,5 @@ export interface SavedWallet {
   type: WalletType
   key_id: number
   subwallet_id: number
+  wallet_address?: string | null
 }

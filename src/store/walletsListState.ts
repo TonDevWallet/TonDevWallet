@@ -160,10 +160,12 @@ export async function CreateNewKeyWallet({
   type,
   subwalletId,
   keyId,
+  walletAddress,
 }: {
   type: WalletType
   subwalletId: number
   keyId: number
+  walletAddress: string | null
 }) {
   const db = await getDatabase()
   const wallets = await db<SavedWallet>('wallets')
@@ -171,15 +173,14 @@ export async function CreateNewKeyWallet({
       type,
       key_id: keyId,
       subwallet_id: subwalletId,
+      wallet_address: walletAddress,
     })
     .returning('*')
 
   const walletState = getWalletState()
   const stateKey = state.find((k) => k.id.get() === walletState.keyId.get())
-  console.log('stateKey?', state)
 
   if (stateKey) {
-    console.log('merge', stateKey, wallets)
     stateKey.wallets.merge(wallets)
   }
 }

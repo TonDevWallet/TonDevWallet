@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Address } from '@ton/core'
 
 export function WalletGenerator() {
   const [isInfoOpened, setIsInfoOpened] = useState(false)
@@ -175,12 +176,21 @@ function AddWalletPopup() {
   // const typeRef = useRef<HTMLSelectElement>(null)
   const subwalletIdRef = useRef<HTMLInputElement>(null)
   const [walletType, setWalletType] = useState('v4R2')
+  const [walletAddress, setWalletAddress] = useState('')
 
   const saveWallet = async (close: () => void) => {
+    let saveWalletAddress: string | null = null
+    try {
+      const parsed = Address.parse(walletAddress)
+      saveWalletAddress = parsed.toString()
+    } catch (e) {
+      //
+    }
     await CreateNewKeyWallet({
       type: walletType as WalletType,
       subwalletId: parseInt(subwalletIdRef.current?.value || '', 10),
       keyId: selectedKey?.id.get() || 0,
+      walletAddress: saveWalletAddress,
     })
     close()
   }
@@ -211,6 +221,7 @@ function AddWalletPopup() {
                       <SelectItem value="highload">Highload V2</SelectItem>
                       <SelectItem value="highload_v2r2">Highload V2R2</SelectItem>
                       <SelectItem value="highload_v3">Highload V3</SelectItem>
+                      <SelectItem value="multisig_v2_v4r2">MultisigV2 + V4R2</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -218,6 +229,15 @@ function AddWalletPopup() {
 
               <div className="flex items-center gap-2">
                 SubwalletId: <Input type="number" ref={subwalletIdRef} defaultValue={698983191} />
+              </div>
+
+              <div className="flex items-center gap-2">
+                Address:{' '}
+                <Input
+                  type="text"
+                  value={walletAddress}
+                  onChange={(e) => setWalletAddress(e.target.value)}
+                />
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
