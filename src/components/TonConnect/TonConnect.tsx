@@ -161,29 +161,39 @@ export async function sendTonConnectStartMessage(
   connectRequest?: ConnectRequest
 ) {
   let stateInit: Cell
-  if (wallet?.type === 'highload') {
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
-      .endCell()
-  } else if (wallet?.type === 'v3R2') {
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-      .endCell()
-  } else if (wallet?.type === 'v4R2') {
-    // if (wallet?.type === 'v4R2') {
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-      .endCell()
-  } else if (wallet?.type === 'highload_v2r2') {
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
-      .endCell()
-  } else if (wallet?.type === 'highload_v3') {
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-      .endCell()
-  } else {
-    throw new Error('Unknown wallet type!')
+  switch (wallet.type) {
+    case 'highload':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
+        .endCell()
+      break
+    case 'highload_v2r2':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
+        .endCell()
+      break
+    case 'highload_v3':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'v3R2':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'v4R2':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'multisig_v2_v4r2':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    default:
+      throw new Error('Unknown wallet type!')
   }
 
   let keyPair // = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))

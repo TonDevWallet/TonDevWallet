@@ -72,6 +72,16 @@ export interface ITonHighloadWalletV3 {
   subwalletId: number
 }
 
+export interface ITonMultisigWalletV2V4R2 {
+  type: 'multisig_v2_v4r2'
+  address: Address
+  wallet: OpenedContract<WalletContractV4>
+  getExternalMessageCell: GetExternalMessageCell
+  key: EncryptedWalletData
+  id: number
+  subwalletId: number
+}
+
 export interface ITonExternalWallet {
   type: 'external'
   id: string
@@ -80,10 +90,11 @@ export interface ITonExternalWallet {
 export type ITonWallet = ITonWalletV3 | ITonWalletV4
 export type IHighloadWalletV2 = ITonHighloadWalletV2 | ITonHighloadWalletV2R2
 export type IHighloadWalletV3 = ITonHighloadWalletV3
+export type IMultisigWallet = ITonMultisigWalletV2V4R2
 
-export type IWallet = ITonWallet | IHighloadWalletV2 | IHighloadWalletV3
+export type IWallet = ITonWallet | IHighloadWalletV2 | IHighloadWalletV3 | IMultisigWallet
 
-export type WalletType = IWallet['type'] // v3R2' | 'v4R2' | 'highload' | 'highload_v2r2'
+export type WalletType = IWallet['type']
 
 export type TonWalletTransferArg = {
   seqno: number
