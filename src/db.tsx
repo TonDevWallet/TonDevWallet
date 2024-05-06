@@ -29,8 +29,9 @@ export async function InitDB() {
   try {
     await checkFs()
 
+    const migrations = new ImportMigrations()
     await db.migrate.latest({
-      migrationSource: new ImportMigrations(),
+      migrationSource: migrations,
     })
   } catch (e) {
     console.log('migrate error', e)
