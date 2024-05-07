@@ -2,7 +2,7 @@ import { BlueButton } from './ui/BlueButton'
 import Copier from './copier'
 import { useDatabase } from '@/db'
 import { CreateNewKeyWallet, deleteWallet } from '@/store/walletsListState'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelectedKey } from '@/store/walletState'
 import { WalletType } from '@/types'
@@ -178,12 +178,16 @@ function AddWalletPopup() {
   const [walletType, setWalletType] = useState('v4R2')
   const [walletAddress, setWalletAddress] = useState('')
 
-  const saveWallet = async (close: () => void) => {
+  const saveWallet = async (e: MouseEvent) => {
     let saveWalletAddress: string | null = null
     try {
       const parsed = Address.parse(walletAddress)
       saveWalletAddress = parsed.toString()
-    } catch (e) {
+    } catch (err) {
+      if (walletType === 'multisig_v2_v4r2') {
+        e.preventDefault()
+        throw err
+      }
       //
     }
     await CreateNewKeyWallet({
@@ -231,19 +235,21 @@ function AddWalletPopup() {
                 SubwalletId: <Input type="number" ref={subwalletIdRef} defaultValue={698983191} />
               </div>
 
-              <div className="flex items-center gap-2">
-                Address:{' '}
-                <Input
-                  type="text"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                />
-              </div>
+              {walletType === 'multisig_v2_v4r2' && (
+                <div className="flex items-center gap-2">
+                  Address:{' '}
+                  <Input
+                    type="text"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                  />
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => saveWallet(() => {})}>Save</AlertDialogAction>
+            <AlertDialogAction onClick={(e) => saveWallet(e)}>Save</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
