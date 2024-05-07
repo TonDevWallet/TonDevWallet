@@ -14,3 +14,5 @@ export * as m_12_add_connect_sessions_autoincrement from './12_add_connect_sessi
 export * as m_13_add_keys_autoincrement from './13_add_keys_autoincrement'
 export * as m_14_add_networks_autoincrement from './14_add_networks_autoincrement'
 export * as m_15_add_wallets_autoincrement from './15_add_wallets_autoincrement'
+export * as m_16_fix_connect_sessions_foreign_keys from './16_fix_connect_sessions_foreign_keys'
+export * as m_17_fix_last_selected_wallets_foreign_keys from './17_fix_last_selected_wallets_foreign_keys'
