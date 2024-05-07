@@ -132,8 +132,8 @@ dependencies:
     specifier: ^3.2.0
     version: 3.2.0
   '@ton/sandbox':
-    specifier: npm:@truecarry/sandbox@^1.0.5
-    version: /@truecarry/sandbox@1.0.5(@ton/core@0.56.1)(@ton/crypto@3.2.0)
+    specifier: ^0.19.0
+    version: 0.19.0(@ton/core@0.56.1)(@ton/crypto@3.2.0)
   '@ton/ton':
     specifier: ^13.11.1
     version: 13.11.1(@ton/core@0.56.1)(@ton/crypto@3.2.0)(debug@4.3.4)
@@ -2829,6 +2829,16 @@ packages:
       tweetnacl: 1.0.3
     dev: false
 
+  /@ton/sandbox@0.19.0(@ton/core@0.56.1)(@ton/crypto@3.2.0):
+    resolution: {integrity: sha512-ARSZg9Hic0UgWl2fA11PokeVFsHFaxh7tQA1KTCLpthx0QJNaFqRsxeeNNw2ICmZovB3JVWSCwYQkkd/4kVeow==}
+    peerDependencies:
+      '@ton/core': '>=0.56.0'
+      '@ton/crypto': '>=3.2.0'
+    dependencies:
+      '@ton/core': 0.56.1(@ton/crypto@3.2.0)
+      '@ton/crypto': 3.2.0
+    dev: false
+
   /@ton/ton@13.11.1(@ton/core@0.56.1)(@ton/crypto@3.2.0)(debug@4.3.4):
     resolution: {integrity: sha512-tcLdHzwhS5bmS0EGstcmfYK0ZeRrNz1AUIzUGKq/Xh0MGEwfP1qZBMloGGHLQnyZdRQ1D7Wx4g4mBKNrvG6DcQ==}
     peerDependencies:
@@ -2921,16 +2931,6 @@ packages:
       tildify: 2.0.0
     transitivePeerDependencies:
       - supports-color
-    dev: false
-
-  /@truecarry/sandbox@1.0.5(@ton/core@0.56.1)(@ton/crypto@3.2.0):
-    resolution: {integrity: sha512-H7Hekg8Gc1YrD7838Yx3nItn0efklm3drHS1gEh5t92NdEnan0JA6C9nneXVvKQ9qkep2UlCvPU6ndZZc+dbiw==}
-    peerDependencies:
-      '@ton/core': '>=0.56.0'
-      '@ton/crypto': '>=3.2.0'
-    dependencies:
-      '@ton/core': 0.56.1(@ton/crypto@3.2.0)
-      '@ton/crypto': 3.2.0
     dev: false
 
   /@truecarry/ton-lite-client@3.3.1(@ton/core@0.56.1):

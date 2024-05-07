@@ -17,7 +17,7 @@ export default defineConfig(({ command }) => ({
   },
   base: '/',
   optimizeDeps: {
-    include: ['bn.js', '@ton/sandbox'],
+    include: ['bn.js'],
     esbuildOptions: {
       target: 'esnext',
       plugins: [],
@@ -30,6 +30,7 @@ export default defineConfig(({ command }) => ({
     target: 'esnext',
     rollupOptions: {
       plugins: [inject({ Buffer: ['buffer', 'Buffer'] })],
+      minify: false,
     },
     modulePreload: false,
     commonjsOptions: {
