@@ -50,7 +50,7 @@
     "@tauri-apps/api": "^1.5.3",
     "@ton/core": "^0.56.1",
     "@ton/crypto": "^3.2.0",
-    "@ton/sandbox": "^0.19.0",
+    "@ton/sandbox": "npm:@truecarry/sandbox@^1.0.5",
     "@ton/ton": "^13.11.1",
     "@tonconnect/protocol": "^2.2.6",
     "@tonconnect/sdk": "^3.0.0",

@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import { Address } from '@ton/core'
-import { type Blockchain } from '@ton/sandbox/dist/blockchain/Blockchain'
+import { type IBlockchain } from '@ton/sandbox/dist/blockchain/BlockchainBase'
 import { BlockchainStorage } from '@ton/sandbox/dist/blockchain/BlockchainStorage'
 import { SmartContract } from '@ton/sandbox/dist/blockchain/SmartContract'
 import { LiteClient } from 'ton-lite-client'
@@ -15,7 +15,7 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
     this.client = client
   }
 
-  async getContract(blockchain: Blockchain, address: Address) {
+  async getContract(blockchain: IBlockchain, address: Address) {
     let existing = this.contracts.get(address.toString())
     if (!existing) {
       const lastBlock = await getLastLiteBlock(this.client)
