@@ -2,15 +2,15 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import { resolve } from 'node:path'
 import inject from '@rollup/plugin-inject'
-import { analyzer } from 'vite-bundle-analyzer'
+// import { analyzer } from 'vite-bundle-analyzer'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
   plugins: [
     react(),
-    analyzer({
-      analyzerMode: 'static',
-    }),
+    // analyzer({
+    //   analyzerMode: 'static',
+    // }),
   ],
   server: {
     port: 3003,
