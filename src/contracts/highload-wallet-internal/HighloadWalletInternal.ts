@@ -8,7 +8,7 @@ import {
   loadStateInit,
   Message,
   StateInit,
-} from 'ton-core'
+} from '@ton/core'
 import { HighloadDictionaryMessageValue } from '../utils/HighloadMessageDictionary'
 import { HighloadWalletInternalCodeCell } from './HighloadWalletInternal.source'
 import { HighloadWalletInitData, WalletTransfer } from '../utils/HighloadWalletTypes'

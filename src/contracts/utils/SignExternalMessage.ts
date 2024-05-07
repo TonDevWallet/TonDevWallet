@@ -1,5 +1,5 @@
-import { beginCell, Cell } from 'ton-core'
-import { sign } from 'ton-crypto'
+import { beginCell, Cell } from '@ton/core'
+import { sign } from '@ton/crypto'
 
 export function SignCell(key: Buffer, message: Cell): Cell {
   if (!message) {

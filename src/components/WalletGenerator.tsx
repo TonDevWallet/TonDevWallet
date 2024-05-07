@@ -2,15 +2,37 @@ import { BlueButton } from './ui/BlueButton'
 import Copier from './copier'
 import { useDatabase } from '@/db'
 import { CreateNewKeyWallet, deleteWallet } from '@/store/walletsListState'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelectedKey } from '@/store/walletState'
 import { WalletType } from '@/types'
-import { ReactPopup } from './Popup'
 import { openPasswordPopup, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 import { useSeed } from '@/hooks/useKeyPair'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faClock } from '@fortawesome/free-solid-svg-icons'
+import { faClock, faPlus } from '@fortawesome/free-solid-svg-icons'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Address } from '@ton/core'
 
 export function WalletGenerator() {
   const [isInfoOpened, setIsInfoOpened] = useState(false)
@@ -25,7 +47,7 @@ export function WalletGenerator() {
     <>
       {!isInfoOpened ? (
         <div className="flex gap-2">
-          <BlueButton className="mb-2" onClick={() => setIsInfoOpened(true)}>
+          <BlueButton className="mb-2" variant={'outline'} onClick={() => setIsInfoOpened(true)}>
             Show wallet key info
           </BlueButton>
           <AddWalletPopup />
@@ -33,7 +55,7 @@ export function WalletGenerator() {
       ) : (
         <div>
           <div className="flex gap-2">
-            <BlueButton className="mb-2" onClick={() => setIsInfoOpened(false)}>
+            <BlueButton className="mb-2" variant={'outline'} onClick={() => setIsInfoOpened(false)}>
               Close wallet key info
             </BlueButton>
             <AddWalletPopup />
@@ -63,7 +85,7 @@ export function OpenedWalletInfo() {
   if (!password) {
     return (
       <div>
-        <BlueButton onClick={openPasswordPopup} className="mt-2">
+        <BlueButton onClick={openPasswordPopup} variant={'outline'} className="mt-2">
           Unlock wallet
         </BlueButton>
       </div>
@@ -79,8 +101,8 @@ export function OpenedWalletInfo() {
   }
 
   return (
-    <div>
-      <div className="my-2">
+    <div className={'my-4'}>
+      <div className="">
         {isLoading && (
           <div>
             <FontAwesomeIcon icon={faClock} /> Decrypting your wallet...
@@ -93,7 +115,7 @@ export function OpenedWalletInfo() {
               Words
               <Copier className="w-6 h-6 ml-2" text={words} />
             </label>
-            <textarea className="w-full h-24 outline-none" id="wordsInput" value={words} readOnly />
+            <Textarea className="w-full h-24 outline-none" id="wordsInput" value={words} readOnly />
           </>
         )}
 
@@ -136,6 +158,7 @@ export function OpenedWalletInfo() {
         )}
       </div>
       <BlueButton
+        variant={'outline'}
         onClick={() => {
           deleteWallet(db, key.id.get())
           navigate('/app')
@@ -150,41 +173,86 @@ export function OpenedWalletInfo() {
 function AddWalletPopup() {
   const selectedKey = useSelectedKey()
 
-  const typeRef = useRef<HTMLSelectElement>(null)
+  // const typeRef = useRef<HTMLSelectElement>(null)
   const subwalletIdRef = useRef<HTMLInputElement>(null)
+  const [walletType, setWalletType] = useState('v4R2')
+  const [walletAddress, setWalletAddress] = useState('')
 
-  const saveWallet = async (close: () => void) => {
+  const saveWallet = async (e: MouseEvent) => {
+    let saveWalletAddress: string | null = null
+    try {
+      const parsed = Address.parse(walletAddress)
+      saveWalletAddress = parsed.toString()
+    } catch (err) {
+      if (walletType === 'multisig_v2_v4r2') {
+        e.preventDefault()
+        throw err
+      }
+      //
+    }
     await CreateNewKeyWallet({
-      type: typeRef.current?.value as WalletType,
+      type: walletType as WalletType,
       subwalletId: parseInt(subwalletIdRef.current?.value || '', 10),
       keyId: selectedKey?.id.get() || 0,
+      walletAddress: saveWalletAddress,
     })
     close()
   }
 
   return (
     <div>
-      <ReactPopup trigger={<BlueButton>Add Wallet</BlueButton>} modal closeOnDocumentClick={true}>
-        {(close: () => void) => {
-          return (
-            <div className="p-2 flex flex-col gap-2">
-              <div className="">
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline">
+            <FontAwesomeIcon icon={faPlus} className="mr-1" />
+            Add Wallet
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Wallet Settings</AlertDialogTitle>
+            <AlertDialogDescription className={'flex flex-col gap-2'}>
+              <div className="flex items-center gap-2">
                 Wallet Type:
-                <select ref={typeRef}>
-                  <option value="v4R2">v4R2</option>
-                  <option value="v3R2">v3R2</option>
-                  <option value="highload">Highload</option>
-                </select>
-              </div>
-              <div className="">
-                SubwalletId: <input type="number" ref={subwalletIdRef} defaultValue={698983191} />
+                <Select defaultValue={walletType} onValueChange={setWalletType}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select wallet version" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="v4R2">v4R2</SelectItem>
+                      <SelectItem value="v3R2">v3R2</SelectItem>
+                      <SelectItem value="highload">Highload V2</SelectItem>
+                      <SelectItem value="highload_v2r2">Highload V2R2</SelectItem>
+                      <SelectItem value="highload_v3">Highload V3</SelectItem>
+                      <SelectItem value="multisig_v2_v4r2">MultisigV2 + V4R2</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <BlueButton onClick={() => saveWallet(close)}>Save</BlueButton>
-            </div>
-          )
-        }}
-      </ReactPopup>
+              <div className="flex items-center gap-2">
+                SubwalletId: <Input type="number" ref={subwalletIdRef} defaultValue={698983191} />
+              </div>
+
+              {walletType === 'multisig_v2_v4r2' && (
+                <div className="flex items-center gap-2">
+                  Address:{' '}
+                  <Input
+                    type="text"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                  />
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => saveWallet(e)}>Save</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

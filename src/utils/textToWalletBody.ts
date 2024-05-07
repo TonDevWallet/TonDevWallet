@@ -1,4 +1,4 @@
-import { beginCell, Cell } from 'ton-core'
+import { beginCell, Cell } from '@ton/core'
 
 export function textToWalletBody(text: string | undefined, isBase64?: boolean): Cell | undefined {
   if (!text) {

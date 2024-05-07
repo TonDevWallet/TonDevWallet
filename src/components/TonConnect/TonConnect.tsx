@@ -6,10 +6,9 @@ import { getWalletFromKey } from '@/utils/wallets'
 // import { useWallet } from '@/store/walletState'
 import { ConnectEventSuccess, CHAIN, ConnectRequest, TonProofItem } from '@tonconnect/protocol'
 import { useCallback, useState } from 'react'
-import { Cell, beginCell, storeStateInit, StateInit } from 'ton-core'
-import { KeyPair, keyPairFromSeed } from 'ton-crypto'
+import { Cell, beginCell, storeStateInit, StateInit } from '@ton/core'
+import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
-import nacl from 'tweetnacl'
 import { BlueButton } from '../ui/BlueButton'
 import { fetch as tFetch } from '@tauri-apps/api/http'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
@@ -25,6 +24,7 @@ import {
   usePassword,
 } from '@/store/passwordManager'
 import { delay } from '@/utils'
+import { randomX25519, secretKeyToED25519 } from '@/utils/ed25519'
 
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
@@ -79,7 +79,7 @@ export function TonConnect() {
     const parsed = new URL(input)
     console.log('parse', parsed, parsed.searchParams.get('id'))
 
-    const sessionKeypair = nacl.box.keyPair() as KeyPair
+    const sessionKeypair = randomX25519() as KeyPair
     const clientId = parsed.searchParams.get('id') || '' // '230f1e4df32364888a5dbd92a410266fcb974b73e30ff3e546a654fc8ee2c953'
     const rString = parsed.searchParams.get('r')
     const r = rString ? (JSON.parse(rString) as ConnectRequest) : undefined
@@ -161,27 +161,47 @@ export async function sendTonConnectStartMessage(
   connectRequest?: ConnectRequest
 ) {
   let stateInit: Cell
-  if (wallet?.type === 'highload') {
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
-      .endCell()
-  } else if (wallet?.type === 'v3R2') {
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-      .endCell()
-  } else {
-    // if (wallet?.type === 'v4R2') {
-    stateInit = beginCell()
-      .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-      .endCell()
+  switch (wallet.type) {
+    case 'highload':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
+        .endCell()
+      break
+    case 'highload_v2r2':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
+        .endCell()
+      break
+    case 'highload_v3':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'v3R2':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'v4R2':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'multisig_v2_v4r2':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    default:
+      throw new Error('Unknown wallet type!')
   }
 
-  let keyPair // = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+  let keyPair // = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
   let publicKey // = keyPair.publicKey.toString('base64')
 
   try {
-    keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
-    publicKey = keyPair.publicKey.toString('base64')
+    keyPair = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
+    publicKey = keyPair.publicKey.toString('hex')
   } catch (e) {}
 
   const proof = connectRequest?.items.find((i) => i.name === 'ton_proof') as TonProofItem
@@ -203,7 +223,12 @@ export async function sendTonConnectStartMessage(
         features: [
           {
             name: 'SendTransaction',
-            maxMessages: wallet.type === 'highload' ? 255 : 4,
+            maxMessages:
+              wallet.type === 'highload' || wallet.type === 'highload_v2r2'
+                ? 250
+                : wallet.type === 'highload_v3'
+                  ? 500
+                  : 4,
           },
         ],
       },
@@ -211,7 +236,7 @@ export async function sendTonConnectStartMessage(
         {
           name: 'ton_addr',
           address: wallet.address.toRawString(),
-          network: LiteClientState.testnet.get() ? CHAIN.TESTNET : CHAIN.MAINNET,
+          network: LiteClientState.selectedNetwork.is_testnet.get() ? CHAIN.TESTNET : CHAIN.MAINNET,
           walletStateInit: stateInit.toBoc().toString('base64'),
           publicKey,
         },
@@ -224,7 +249,7 @@ export async function sendTonConnectStartMessage(
       throw new Error('no wallet seed')
     }
 
-    const walletKeyPair = keyPairFromSeed(decryptedData.seed)
+    const walletKeyPair = secretKeyToED25519(decryptedData.seed)
 
     const signMessage = createTonProofMessage({
       address: wallet.address,

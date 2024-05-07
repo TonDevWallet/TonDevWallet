@@ -11,7 +11,8 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::WebSocketStream;
 use tungstenite::{http, Message};
 use url::form_urlencoded;
-
+use std::time::Duration;
+use tokio::time::timeout;
 use tokio_tungstenite::{
     accept_hdr_async,
     tungstenite::handshake::server::{Request, Response},
@@ -86,6 +87,17 @@ async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
         Ok(res)
     };
 
+
+    // let mut rng = rand::thread_rng();
+    // let random_value: f64 = rand::random();
+    
+    // if random_value < 0.5 {
+    //     if let Err(e) = stream.shutdown().await {
+    //         info!("Error while closing WebSocket: {:?}", e);
+    //     }
+    //     return Ok(());
+    // }
+
     let ws_stream = match accept_hdr_async(stream, auth_callback).await {
         Ok(v) => v,
         Err(e) => {
@@ -94,9 +106,11 @@ async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
         }
     };
 
+    
+
+
     info!("New WebSocket connection: {}", addr);
 
-    //"5.9.10.15:48014"
     let addr_str = format!("{}:{}", ip, port);
     info!("addr_str {}", addr_str);
     let addr = addr_str.parse::<SocketAddr>()?;
@@ -114,21 +128,49 @@ async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
 async fn ws_to_tcp(
     mut ro: SplitStream<WebSocketStream<TcpStream>>,
     mut wi: OwnedWriteHalf,
-) -> Result<(), Box<dyn stdError + Send + Sync>> {
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     info!("got ws to tcp start");
 
     loop {
-        let msg = match ro.try_next().await? {
-            Some(v) => v,
-            None => break,
+        let msg_or_timeout = timeout(Duration::from_secs(60), ro.try_next()).await;
+
+        let msg = match msg_or_timeout {
+            Ok(Ok(msg)) => msg,
+            Ok(Err(_)) => {
+                // Error occurred while receiving message
+                break;
+            }
+            Err(_) => {
+                // Timeout occurred, break the loop
+                info!("No activity for 60 seconds, breaking the loop");
+                break;
+            }
         };
 
-        if msg.is_binary() {
-            info!("got ws to tcp");
-            let mut data = msg.into_data();
-            wi.write(&mut data).await?;
-            info!("writen to tcp {}", data.len());
+        match msg {
+            Some(msg) => {
+                if msg.is_binary() {
+                    info!("got ws to tcp");
+                    let mut data = msg.into_data();
+                    wi.write(&mut data).await?;
+                    info!("written to tcp {}", data.len());
+                } else {
+                    // Handle other message types if needed
+                }
+            }
+            None => {
+                info!("No more messages, breaking the loop");
+                break;
+            }
         }
+        // if msg.is_binary() {
+        //     info!("got ws to tcp");
+        //     let mut data = msg.into_data();
+        //     wi.write(&mut data).await?;
+        //     info!("written to tcp {}", data.len());
+        // } else {
+        //     // Handle other message types if needed
+        // }
     }
 
     wi.shutdown().await?;

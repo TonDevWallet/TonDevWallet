@@ -2,10 +2,12 @@ import { useSeed } from '@/hooks/useKeyPair'
 import { saveKeyFromData } from '@/store/walletsListState'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mnemonicValidate, mnemonicToSeed } from 'ton-crypto'
+import { mnemonicValidate, mnemonicToSeed } from '@ton/crypto'
 import Copier from '../copier'
-import { BlueButton } from '../ui/BlueButton'
 import { cn } from '@/utils/cn'
+import { Textarea } from '../ui/textarea'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
 
 export function FromMnemonic() {
   const navigate = useNavigate()
@@ -42,11 +44,13 @@ export function FromMnemonic() {
     <div>
       <div className="flex flex-col">
         <label htmlFor="mnemonicInput">Mnemonic</label>
-        <textarea
+        <Textarea
           className="w-3/4 h-24 outline-none border p-1"
           id="mnemonicInput"
           onChange={onWordsChange}
           value={words}
+          spellCheck={false}
+          autoFocus
         />
         {/* <input type="text" id="mnemonicInput" className="border rounded p-2 w-96" /> */}
       </div>
@@ -56,16 +60,16 @@ export function FromMnemonic() {
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
             <div className="flex">
-              <div className="w-96 overflow-hidden text-ellipsis text-xs">
-                {seed.toString('base64')}
+              <div className="w-100 overflow-hidden text-ellipsis text-xs">
+                {seed.toString('hex')}
               </div>
-              <Copier className="w-6 h-6 ml-2" text={seed.toString('base64') || ''} />
+              <Copier className="w-6 h-6 ml-2" text={seed.toString('hex') || ''} />
             </div>
           </div>
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Public key:</div>
             <div className="flex">
-              <div className="w-96 overflow-hidden text-ellipsis text-xs">
+              <div className="w-100 overflow-hidden text-ellipsis text-xs">
                 {Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
               </div>
               <Copier
@@ -77,7 +81,7 @@ export function FromMnemonic() {
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Secret key:</div>
             <div className="flex">
-              <div className="w-96 overflow-hidden text-ellipsis text-xs">
+              <div className="w-100 overflow-hidden text-ellipsis text-xs">
                 {Buffer.from(walletKeyPair?.secretKey || []).toString('hex')}
               </div>
               <Copier
@@ -89,21 +93,22 @@ export function FromMnemonic() {
 
           <div className="py-4 flex flex-col">
             <label htmlFor="nameRef">Name:</label>
-            <input
+            <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               id="nameRef"
               className="border w-3/4 outline-none rounded px-2 py-1"
+              autoFocus
             />
 
-            <BlueButton
+            <Button
               onClick={saveSeed}
-              className={cn('mt-2', !name && 'opacity-50')}
+              className={cn('mt-2 w-24', !name && 'opacity-50')}
               disabled={!name}
             >
               Save
-            </BlueButton>
+            </Button>
           </div>
         </>
       )}

@@ -1,7 +1,7 @@
 import { IWallet } from '@/types'
 import clsx from 'clsx'
 import Jazzicon from 'react-jazzicon'
-import { Address } from 'ton-core'
+import { Address } from '@ton/core'
 
 export function WalletJazzicon({
   wallet,

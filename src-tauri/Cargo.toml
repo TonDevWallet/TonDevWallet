@@ -15,6 +15,7 @@ rust-version = "1.57"
 tauri-build = { version = "1.2.1", features = [] }
 
 [dependencies]
+rand = "0.8.5"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.2.3", features = [ "cli", "devtools", "fs-create-dir", "fs-exists", "fs-remove-file", "http-all", "macos-private-api", "notification-all", "path-all", "shell-open", "updater", "window-create", "window-minimize", "window-set-decorations", "window-set-focus", "window-start-dragging", "window-unminimize"] }

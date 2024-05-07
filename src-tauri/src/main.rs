@@ -4,16 +4,12 @@
 )]
 
 use rxing::multi::MultipleBarcodeReader;
-#[cfg(target_os = "macos")]
-use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
 
 #[cfg(target_os = "macos")]
 #[macro_use]
 extern crate objc;
 
-mod colors;
 mod proxy;
-mod register_uri;
 
 use proxy::spawn_proxy;
 use screenshots::Screen;
@@ -109,28 +105,6 @@ async fn detect_qr_code_from_image(data: String) -> Result<Vec<String>, String> 
     Ok(images)
 }
 
-#[cfg(target_os = "windows")]
-#[tauri::command]
-#[inline]
-fn change_transparent_effect(window: tauri::Window) {
-    if is_win_11() {
-        use window_vibrancy::{apply_mica, clear_mica};
-        clear_mica(&window).unwrap();
-        apply_mica(&window).unwrap()
-    }
-}
-
-#[cfg(target_os = "linux")]
-#[tauri::command]
-fn change_transparent_effect(window: tauri::Window) {}
-
-#[cfg(target_os = "macos")]
-#[tauri::command]
-fn change_transparent_effect(window: tauri::Window) {
-    apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, None)
-        .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
-}
-
 // #[cfg(not(target_os = "windows"))]
 #[tauri::command]
 fn get_os_name() -> Result<String, String> {
@@ -178,9 +152,7 @@ fn main() {
                 };
             });
 
-            let window = app.get_window("main").unwrap();
-
-            change_transparent_effect(window.clone());
+            // let window = app.get_window("main").unwrap();
 
             let handle = app.handle();
             tauri_plugin_deep_link::register(
@@ -195,10 +167,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             get_ws_port,
-            colors::get_system_colors,
             get_os_name,
             detect_qr_code,
-            change_transparent_effect,
             detect_qr_code_from_image,
         ])
         .build(context)

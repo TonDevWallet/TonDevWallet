@@ -9,9 +9,9 @@ import {
   loadStateInit,
   Message,
   StateInit,
-} from 'ton-core'
+} from '@ton/core'
 import { HighloadWalletInitData, WalletTransfer } from '../utils/HighloadWalletTypes'
-import { HighloadWalletV2CodeCell } from './HighloadWalletV2.source'
+import { HighloadWalletV2CodeCell, HighloadWalletV2R2CodeCell } from './HighloadWalletV2.source'
 
 export class HighloadWalletV2 {
   data: HighloadWalletInitData
@@ -93,5 +93,21 @@ export class HighloadWalletV2 {
     })
 
     return msg
+  }
+}
+
+export class HighloadWalletV2R2 extends HighloadWalletV2 {
+  get stateInit() {
+    const walletStateInit = HighloadWalletV2R2.BuildStateInit(this.data)
+    return walletStateInit
+  }
+
+  static BuildStateInit(data: HighloadWalletInitData): StateInit {
+    const stateInit = {
+      code: HighloadWalletV2R2CodeCell,
+      data: HighloadWalletV2.BuildDataCell(data),
+    }
+
+    return stateInit
   }
 }

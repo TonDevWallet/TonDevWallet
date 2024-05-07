@@ -17,7 +17,7 @@ jobs:
       - name: setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
       - uses: pnpm/action-setup@v2
@@ -40,6 +40,8 @@ jobs:
           workspaces: "src-tauri"
 
       - name: check builds
+        env:
+          NODE_OPTIONS: "--max_old_space_size=14096"
         run: |
           pnpm vite build
           cargo check --manifest-path=src-tauri/Cargo.toml -p app

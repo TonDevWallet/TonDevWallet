@@ -2,11 +2,12 @@ import { getDatabase } from '@/db'
 import { hookstate, useHookstate } from '@hookstate/core'
 import { useEffect, useState } from 'react'
 import { scrypt } from 'scrypt-js'
-import nacl from 'tweetnacl'
 import { subscribable } from '@hookstate/subscribable'
 import { Setting } from '@/types/settings'
 import { Key } from '@/types/Key'
 import { updateWalletsList } from './walletsListState'
+import { getRandomBytes } from '@/utils/ed25519'
+import { secretbox } from '@noble/ciphers/salsa' // == xsalsa20poly1305
 
 export interface PasswordInfo {
   password?: string
@@ -157,7 +158,7 @@ export async function setNewPassword(oldPassword: string, newPassword: string) {
   const database = await getDatabase()
   const tx = await database.transaction()
   try {
-    const salt = Buffer.from(nacl.randomBytes(32))
+    const salt = Buffer.from(getRandomBytes(32))
     const key = Buffer.from(
       await scrypt(
         Buffer.from(newPassword, 'utf8'),
@@ -198,7 +199,11 @@ export async function setNewPassword(oldPassword: string, newPassword: string) {
 export async function setFirstPassword(password: string) {
   const db = await getDatabase()
 
-  const salt = Buffer.from(nacl.randomBytes(32))
+  const existingPassword = await db<Setting>('settings').where({ name: 'password' }).first()
+  if (existingPassword) {
+    throw new Error('Password already exists')
+  }
+  const salt = Buffer.from(getRandomBytes(32))
   const key = Buffer.from(
     await scrypt(
       Buffer.from(password, 'utf8'),
@@ -222,7 +227,7 @@ export async function cleanPassword() {
 }
 
 export async function encryptWalletData(password: string, data: SensitiveWalletData) {
-  const salt = Buffer.from(await nacl.randomBytes(32))
+  const salt = Buffer.from(getRandomBytes(32))
   const enckey = await scrypt(
     Buffer.from(password, 'utf8'),
     salt,
@@ -243,17 +248,15 @@ export async function encryptWalletData(password: string, data: SensitiveWalletD
 
   if (data.mnemonic) {
     encrypted.mnemonic = Buffer.from(
-      nacl.secretbox(
-        Uint8Array.from(Buffer.from(data.mnemonic, 'utf8')),
-        Uint8Array.from(nonce),
-        Uint8Array.from(enckey)
+      secretbox(Uint8Array.from(enckey), Uint8Array.from(nonce)).seal(
+        Buffer.from(data.mnemonic, 'utf8')
       )
     ).toString('base64')
   }
 
   if (data.seed) {
     encrypted.seed = Buffer.from(
-      nacl.secretbox(Uint8Array.from(data.seed), Uint8Array.from(nonce), Uint8Array.from(enckey))
+      secretbox(Uint8Array.from(enckey), Uint8Array.from(nonce)).seal(Uint8Array.from(data.seed))
     ).toString('base64')
   }
 
@@ -290,7 +293,7 @@ export async function decryptWalletData(
   }
 
   if (encrypted.mnemonic) {
-    const inside = nacl.secretbox.open(Buffer.from(encrypted.mnemonic, 'base64'), nonce, enckey)
+    const inside = secretbox(enckey, nonce).open(Buffer.from(encrypted.mnemonic, 'base64'))
     if (!inside) {
       throw new Error("Can't open box")
     }
@@ -299,7 +302,7 @@ export async function decryptWalletData(
   }
 
   if (encrypted.seed) {
-    const inside = nacl.secretbox.open(Buffer.from(encrypted.seed, 'base64'), nonce, enckey)
+    const inside = secretbox(enckey, nonce).open(Buffer.from(encrypted.seed, 'base64'))
     if (!inside) {
       throw new Error("Can't open box")
     }

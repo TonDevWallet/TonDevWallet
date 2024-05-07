@@ -1,32 +1,16 @@
-import { invoke } from '@tauri-apps/api'
 import { appWindow, Theme } from '@tauri-apps/api/window'
 import { useState, useEffect } from 'react'
+import useLocalStorageState from 'use-local-storage-state'
 
-function numberToRgba(x: number) {
-  return [(x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, (x & 0xff) / 255]
-}
-
-async function setColors() {
-  const colors = (await invoke('get_system_colors')) as { [key: string]: number }
-
-  const root = document.documentElement
-  for (const key of Object.keys(colors)) {
-    if (colors[key]) {
-      const [r, g, b, a] = numberToRgba(colors[key])
-
-      const cssKey = key.replace(/_/g, '-')
-
-      root.style.setProperty(`--color-${cssKey}`, `rgba(${r}, ${g}, ${b}, ${a})`)
-      root.style.setProperty(`--color-${cssKey}-rgb`, `${r} ${g} ${b}`)
-    }
-  }
-}
-
-export const useTheme = () => {
+export const useTheme = (): [Theme, (v: Theme) => void] => {
   const [theme, setThemeValue] = useState<Theme>('light')
+  const [localTheme, setLocalTheme] = useLocalStorageState<Theme>('theme')
 
-  const setTheme = (v: Theme) => {
+  const setTheme = (v: Theme, saveLocal = true) => {
     setThemeValue(v)
+    if (saveLocal) {
+      setLocalTheme(v)
+    }
     if (v === 'dark') {
       document.documentElement.classList.add('dark')
     } else {
@@ -35,15 +19,24 @@ export const useTheme = () => {
   }
 
   useEffect(() => {
+    if (localTheme) {
+      setTheme(localTheme)
+    }
+  }, [localTheme])
+
+  useEffect(() => {
     let unlisten: () => void | undefined
     ;(async () => {
-      setTheme((await appWindow.theme()) || 'light')
-      setColors()
+      if (!localTheme) {
+        setTheme((await appWindow.theme()) || 'light', false)
+      }
 
       unlisten = await appWindow.onThemeChanged(({ payload: theme }) => {
+        if (localTheme) {
+          return
+        }
         console.log(`theme changed to ${theme}`)
-        setTheme(theme)
-        setColors()
+        setTheme(theme, false)
       })
     })()
 
@@ -52,7 +45,7 @@ export const useTheme = () => {
         unlisten()
       }
     }
-  }, [])
+  }, [theme])
 
-  return theme
+  return [theme, setTheme]
 }

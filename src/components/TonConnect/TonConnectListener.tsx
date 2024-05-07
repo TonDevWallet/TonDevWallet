@@ -17,7 +17,6 @@ import {
 } from '@tonconnect/protocol'
 import { useEffect } from 'react'
 import { LiteClient } from 'ton-lite-client'
-import nacl from 'tweetnacl'
 import {
   isPermissionGranted,
   requestPermission,
@@ -28,10 +27,10 @@ import { invoke } from '@tauri-apps/api'
 import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/passwordManager'
 import { getWalletListState } from '@/store/walletsListState'
 import { ImmutableObject } from '@hookstate/core'
-import { keyPairFromSeed } from 'ton-crypto'
 import { getWalletFromKey } from '@/utils/wallets'
 import { ApproveTonConnectMessage, GetTransfersFromTCMessage } from '@/utils/tonConnect'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
+import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
@@ -107,7 +106,7 @@ export function TonConnectListener() {
     const listeners: EventSource[] = []
 
     sessions.map((s) => {
-      const keyPair = nacl.box.keyPair.fromSecretKey(s.secretKey.get())
+      const keyPair = secretKeyToX25519(s.secretKey.get())
       const session = new SessionCrypto({
         publicKey: Buffer.from(keyPair.publicKey).toString('hex'),
         secretKey: Buffer.from(keyPair.secretKey).toString('hex'),
@@ -115,14 +114,15 @@ export function TonConnectListener() {
 
       const sseUrl = new URL(`${bridgeUrl}/events`)
       sseUrl.searchParams.append('client_id', Buffer.from(keyPair.publicKey).toString('hex'))
-      sseUrl.searchParams.append('last_event_id', s.lastEventId.get().toString())
+      const lastEventId = s.lastEventId.get().toString()
+      if (lastEventId && lastEventId !== '0') {
+        sseUrl.searchParams.append('last_event_id', lastEventId)
+      }
       // url.searchParams.append('to', clientId)
       // url.searchParams.append('ttl', '300')
       const sse = new EventSource(sseUrl)
 
       sse.addEventListener('message', async (e) => {
-        console.log('sse message', e.data)
-
         const bridgeIncomingMessage = JSON.parse(e.data)
         const walletMessage: SendTransactionRpcRequest | DisconnectRpcRequest = JSON.parse(
           session.decrypt(
@@ -164,6 +164,18 @@ export function TonConnectListener() {
           return
         }
 
+        let walletAddress: string | undefined
+        const keys = getWalletListState()
+
+        const key = keys.find((k) => k.id.get() === s.keyId.get())
+        if (key) {
+          const wallet = key.wallets.get()?.find((w) => w.id === s.walletId.get())
+          if (wallet) {
+            const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
+            walletAddress = tonWallet?.address.toRawString()
+          }
+        }
+
         await addConnectMessage({
           connect_event_id: parseInt(walletMessage.id),
           connect_session_id: s.id.get(),
@@ -171,6 +183,7 @@ export function TonConnectListener() {
           key_id: s.keyId.get(),
           wallet_id: s.walletId.get(),
           status: 0,
+          wallet_address: walletAddress,
         })
         appWindow.unminimize()
         appWindow.setFocus()
@@ -184,7 +197,6 @@ export function TonConnectListener() {
           sendNotification({ title: 'New message', body: `From ${s.name.get()}` })
         }
 
-        console.log('update before', e)
         updateSessionEventId(s.id.get(), parseInt(e.lastEventId))
       })
 
@@ -232,7 +244,7 @@ async function autoSendMessage({
   const transfers = GetTransfersFromTCMessage(messages)
 
   const liteClient = LiteClientState.liteClient.get()
-  const keyPair = keyPairFromSeed(decryptedData?.seed || Buffer.from([]))
+  const keyPair = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
   const sendWallet = getWalletFromKey(liteClient, key, wallet)
   if (!sendWallet) {
     return false

@@ -6,8 +6,8 @@ import { getWalletState, setWalletKey } from './walletState'
 import { NavigateFunction } from 'react-router-dom'
 import { SavedWallet, WalletType } from '@/types'
 import { ConnectMessageTransaction, LastSelectedWallets } from '@/types/connect'
-import { keyPairFromSeed } from 'ton-crypto'
 import { encryptWalletData, getPasswordInteractive } from './passwordManager'
+import { secretKeyToED25519 } from '@/utils/ed25519'
 
 const state = hookstate<Key[]>(() => getWallets())
 
@@ -63,7 +63,7 @@ export async function saveKey(db: Knex, key: Key, walletName: string): Promise<K
     })
     .returning('*')
 
-  updateWalletsList()
+  await updateWalletsList()
 
   return res[0]
 }
@@ -77,7 +77,19 @@ export async function deleteWallet(db: Knex, key: number) {
     await tx.raw(`DELETE FROM keys WHERE id = ?`, [key])
   })
 
-  updateWalletsList()
+  await updateWalletsList()
+}
+
+export async function updateWalletName(newName: string, keyId: number) {
+  const db = await getDatabase()
+  await db<Key>('keys')
+    .where({
+      id: keyId,
+    })
+    .update({
+      name: newName,
+    })
+  await updateWalletsList()
 }
 
 export async function saveKeyFromData(
@@ -92,7 +104,7 @@ export async function saveKeyFromData(
     mnemonic: words,
     seed,
   })
-  const keyPair = await keyPairFromSeed(seed)
+  const keyPair = secretKeyToED25519(seed)
   const key: Key = {
     id: 0,
     name: '',
@@ -129,7 +141,7 @@ export async function saveKeyAndWallets(
     },
   ]
 
-  setWalletKey(newWallet.id)
+  await setWalletKey(newWallet.id)
 
   const wallets = await db<SavedWallet>('wallets').insert(defaultWallets).returning('*')
   await updateWalletsList()
@@ -148,10 +160,12 @@ export async function CreateNewKeyWallet({
   type,
   subwalletId,
   keyId,
+  walletAddress,
 }: {
   type: WalletType
   subwalletId: number
   keyId: number
+  walletAddress: string | null
 }) {
   const db = await getDatabase()
   const wallets = await db<SavedWallet>('wallets')
@@ -159,15 +173,14 @@ export async function CreateNewKeyWallet({
       type,
       key_id: keyId,
       subwallet_id: subwalletId,
+      wallet_address: walletAddress,
     })
     .returning('*')
 
   const walletState = getWalletState()
   const stateKey = state.find((k) => k.id.get() === walletState.keyId.get())
-  console.log('stateKey?', state)
 
   if (stateKey) {
-    console.log('merge', stateKey, wallets)
     stateKey.wallets.merge(wallets)
   }
 }
@@ -201,5 +214,5 @@ export async function DeleteKeyWallet(walletId: number) {
     })
     .delete()
 
-  updateWalletsList()
+  await updateWalletsList()
 }

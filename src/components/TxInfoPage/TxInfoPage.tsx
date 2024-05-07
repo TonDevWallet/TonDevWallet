@@ -1,7 +1,7 @@
 import { setTransactionState, useTransactionState } from '@/store/txInfo'
 import { listen } from '@tauri-apps/api/event'
 import { useEffect, useState } from 'react'
-import { Cell, loadTransaction } from 'ton-core'
+import { Cell, loadTransaction } from '@ton/core'
 import { VmLogsInfo } from './VmLogsInfo'
 import { VmStackInfo } from './VmStackInfo'
 

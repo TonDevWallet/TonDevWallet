@@ -120,6 +120,7 @@ dependencies = [
  "log",
  "objc",
  "objc_id",
+ "rand 0.8.5",
  "rxing",
  "screenshots",
  "serde",

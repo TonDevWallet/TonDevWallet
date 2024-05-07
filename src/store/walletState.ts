@@ -48,11 +48,6 @@ export async function setWalletKey(keyId: number /* key: Key */) {
     return
   }
 
-  // if (key.seed && !key.keyPair.get()) {
-  //   key.merge({
-  //     keyPair: keyPairFromSeed(Buffer.from(key.get().seed || '', 'hex')),
-  //   })
-  // }
   state.keyId.set(key.id.get())
 }
 

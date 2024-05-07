@@ -1,25 +1,29 @@
-import { useState } from 'react'
-import { BlueButton } from '../ui/BlueButton'
 import { FromMnemonic } from './FromMnemonic'
 import { FromRandom } from './FromRandom'
 import { FromSeed } from './FromSeed'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export function NewWalletPage() {
-  const [createMode, setCreateMode] = useState<'random' | 'mnemonic' | 'seed'>('random')
-
   return (
     <div className="mt-2">
-      <h1 className="font-bold text-xl">New Wallet</h1>
-      <div className="flex gap-2 mt-4">
-        <BlueButton onClick={() => setCreateMode('random')}>Create random wallet</BlueButton>
-        <BlueButton onClick={() => setCreateMode('mnemonic')}>From Mnemonic</BlueButton>
-        <BlueButton onClick={() => setCreateMode('seed')}>From Seed</BlueButton>
-      </div>
-
-      <div className="mt-4"></div>
-      {createMode === 'random' && <FromRandom />}
-      {createMode === 'mnemonic' && <FromMnemonic />}
-      {createMode === 'seed' && <FromSeed />}
+      <Tabs defaultValue="random" className="">
+        <TabsList className="mb-4">
+          <TabsTrigger value="random">Create random wallet</TabsTrigger>
+          <TabsTrigger value="mnemonic">From Mnemonic</TabsTrigger>
+          <TabsTrigger value="seed">From Seed</TabsTrigger>
+        </TabsList>
+        <TabsContent
+          value="random" /* forceMount={true} className="hidden data-[state=active]:block" */
+        >
+          <FromRandom />
+        </TabsContent>
+        <TabsContent value="mnemonic">
+          <FromMnemonic />
+        </TabsContent>
+        <TabsContent value="seed">
+          <FromSeed />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

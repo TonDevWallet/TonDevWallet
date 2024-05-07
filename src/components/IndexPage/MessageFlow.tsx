@@ -1,5 +1,4 @@
-import { BlockchainTransaction } from '@/utils/ManagedBlockchain'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import ReactFlow, {
   Controls,
   Background,
@@ -8,12 +7,17 @@ import ReactFlow, {
   addEdge,
   Node,
   Edge,
+  ReactFlowInstance,
+  // FlowElement as IFlowElement,
+  // OnLoadFunc as TOnLoadFunc,
+  // OnLoadParams as TReactFlowInstance,
 } from 'reactflow'
 import ELK from 'elkjs/lib/elk.bundled'
 
 import 'reactflow/dist/style.css'
 import { TxEdge } from './TxEdge'
 import { TxNode } from './TxNode'
+import { type BlockchainTransaction } from '@ton/sandbox'
 
 export type GraphTx = BlockchainTransaction & { id: number }
 
@@ -38,14 +42,20 @@ export function MessageFlow({
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
-  const transactions = _txes as GraphTx[]
-  for (let i = 0; i < transactions?.length; i++) {
-    transactions[i].id = i
+  const instanceRef = useRef<ReactFlowInstance | null>(null)
+
+  const onLoad = (reactFlowInstance: ReactFlowInstance) => {
+    instanceRef.current = reactFlowInstance
   }
 
   useEffect(() => {
-    if (!transactions) {
+    if (!_txes?.length) {
       return
+    }
+
+    const transactions = _txes as GraphTx[]
+    for (let i = 0; i < transactions?.length; i++) {
+      transactions[i].id = i
     }
 
     const nodes: Node<any, string | undefined>[] = []
@@ -63,7 +73,10 @@ export function MessageFlow({
       }[]
     } = {
       id: 'root',
-      layoutOptions: { 'elk.algorithm': 'mrtree' },
+      layoutOptions: {
+        'elk.algorithm': 'mrtree',
+        'org.eclipse.elk.spacing.nodeNode': 10,
+      },
       children: [],
       edges: [],
     }
@@ -71,7 +84,7 @@ export function MessageFlow({
       graph.children.push({
         id: tx.id.toString(),
         width: 400,
-        height: 200,
+        height: isTxError(tx) ? 350 : 300,
       })
       const children: GraphTx[][] = [tx.children as GraphTx[]]
       const parent = [tx]
@@ -80,16 +93,20 @@ export function MessageFlow({
         const locChildren = children.pop()
         const locParent = parent.pop()
 
-        if (!locChildren) {
+        if (!locChildren?.length) {
           return
         }
 
         for (const childTx of locChildren) {
+          if (!childTx.id) {
+            continue
+          }
           graph.children.push({
             id: childTx.id.toString(),
             width: 400,
-            height: 200,
+            height: isTxError(childTx) ? 350 : 300,
           })
+
           graph.edges.push({
             id: `edge-${locParent?.id}-${childTx.id}`,
             sources: [locParent?.id?.toString() || '0'],
@@ -143,8 +160,11 @@ export function MessageFlow({
 
         setNodes(nodes)
         setEdges(edges)
+        setTimeout(() => {
+          instanceRef.current?.fitView()
+        }, 64)
       })
-  }, [_txes])
+  }, [_txes, _txes?.length, instanceRef])
 
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
 
@@ -159,9 +179,23 @@ export function MessageFlow({
       edgeTypes={edgeTypes}
       minZoom={0.1}
       fitView
+      onInit={onLoad}
     >
       <Controls />
       <Background />
     </ReactFlow>
   )
+}
+
+function isTxError(tx: BlockchainTransaction) {
+  const isError =
+    (tx.description.type === 'generic' &&
+      tx.description.computePhase.type === 'vm' &&
+      tx.description.computePhase.exitCode !== 0) ||
+    (tx.description.type === 'generic' &&
+      tx.description.actionPhase &&
+      tx.description.actionPhase?.resultCode !== 0) ||
+    (tx.description.type === 'generic' && tx.description.bouncePhase?.type)
+
+  return isError
 }
