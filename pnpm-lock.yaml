@@ -143,6 +143,9 @@ dependencies:
   '@tonconnect/sdk':
     specifier: ^3.0.0
     version: 3.0.0
+  '@truecarry/tlb-abi':
+    specifier: ^0.1.2
+    version: 0.1.2(@ton/core@0.56.1)
   '@types/bn.js':
     specifier: ^5.1.5
     version: 5.1.5
@@ -2931,6 +2934,14 @@ packages:
     dependencies:
       '@ton/core': 0.56.1(@ton/crypto@3.2.0)
       '@ton/crypto': 3.2.0
+    dev: false
+
+  /@truecarry/tlb-abi@0.1.2(@ton/core@0.56.1):
+    resolution: {integrity: sha512-2pLbls7wbVEgJIS+Vm7h18I4M9iPWYPbreiU6vfNTGYYxJprkygM8ozVEmQNPLBT35YQSenq42dx8uXZb5UU3w==}
+    peerDependencies:
+      '@ton/core': ^0.56.3
+    dependencies:
+      '@ton/core': 0.56.1(@ton/crypto@3.2.0)
     dev: false
 
   /@truecarry/ton-lite-client@3.3.1(@ton/core@0.56.1):

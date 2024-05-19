@@ -17,9 +17,9 @@ import ELK from 'elkjs/lib/elk.bundled'
 import 'reactflow/dist/style.css'
 import { TxEdge } from './TxEdge'
 import { TxNode } from './TxNode'
-import { type BlockchainTransaction } from '@ton/sandbox'
+import { ParsedTransaction } from '@/utils/ManagedBlockchain'
 
-export type GraphTx = BlockchainTransaction & { id: number }
+export type GraphTx = ParsedTransaction & { id: number }
 
 export interface TxNodeData {
   label: string
@@ -38,7 +38,7 @@ const edgeTypes = {
 export function MessageFlow({
   transactions: _txes,
 }: {
-  transactions: BlockchainTransaction[] | undefined
+  transactions: ParsedTransaction[] | undefined
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
@@ -84,7 +84,7 @@ export function MessageFlow({
       graph.children.push({
         id: tx.id.toString(),
         width: 400,
-        height: isTxError(tx) ? 350 : 300,
+        height: getTxHeight(tx),
       })
       const children: GraphTx[][] = [tx.children as GraphTx[]]
       const parent = [tx]
@@ -104,7 +104,7 @@ export function MessageFlow({
           graph.children.push({
             id: childTx.id.toString(),
             width: 400,
-            height: isTxError(childTx) ? 350 : 300,
+            height: getTxHeight(childTx),
           })
 
           graph.edges.push({
@@ -187,7 +187,20 @@ export function MessageFlow({
   )
 }
 
-function isTxError(tx: BlockchainTransaction) {
+function getTxHeight(tx: ParsedTransaction) {
+  let start = 300
+  if (isTxError(tx)) {
+    start += 50
+  }
+
+  if (tx?.parsed?.internal === 'jetton_transfer') {
+    start += 120
+  }
+
+  return start
+}
+
+function isTxError(tx: ParsedTransaction) {
   const isError =
     (tx.description.type === 'generic' &&
       tx.description.computePhase.type === 'vm' &&

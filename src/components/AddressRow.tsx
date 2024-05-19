@@ -2,7 +2,7 @@ import { cn } from '@/utils/cn'
 import clipboard from 'clipboardy'
 import clsx from 'clsx'
 import { ReactNode, useState } from 'react'
-import { Address } from '@ton/core'
+import { Address, ExternalAddress } from '@ton/core'
 
 import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -16,7 +16,7 @@ export function AddressRow({
   containerClassName,
   disableCopy,
 }: {
-  address?: string | Address
+  address?: string | Address | ExternalAddress
   text?: string | ReactNode | undefined
   rawAddress?: string
 

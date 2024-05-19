@@ -95,6 +95,17 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       {tx.description.type === 'generic' && tx.description.bouncePhase?.type && (
         <div>Bounce Phase Type: {tx.description.bouncePhase?.type}</div>
       )}
+
+      {tx?.parsed?.schema && <div>Schema: {tx.parsed?.schema}</div>}
+      {tx?.parsed?.internal && <div>Type: {tx.parsed?.internal}</div>}
+      {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_transfer' && (
+        <>
+          <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
+          <div>
+            To: <AddressRow address={tx.parsed.data.destination ?? ''} />
+          </div>
+        </>
+      )}
       <div>
         <button
           onClick={() => {
