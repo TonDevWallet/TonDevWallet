@@ -82,7 +82,7 @@ export function SessionsList() {
                     className={'px-2'}
                     // className="cursor-pointer text-accent dark:text-accent-light"
                     onClick={async (e) => {
-                      if (e.ctrlKey) {
+                      if (e.ctrlKey || e.metaKey) {
                         e.preventDefault()
                         e.stopPropagation()
                         deleteTonConnectSession(s)
@@ -101,7 +101,7 @@ export function SessionsList() {
                       Your session will be deleted, and will disconnect from service
                     </AlertDialogDescription>
                     <AlertDialogDescription>
-                      To close session without confirm popup use Ctrl + Click
+                      To close session without confirm popup use Ctrl + Click or CMD + Click
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -125,7 +125,7 @@ export function SessionsList() {
               </div>
               <div className="flex">
                 <div>SubId:&nbsp;</div>
-                <div>{tonWallet?.subwalletId || 'Default'}</div>
+                <div>{tonWallet?.subwalletId.toString() || 'Default'}</div>
               </div>
             </div>
 

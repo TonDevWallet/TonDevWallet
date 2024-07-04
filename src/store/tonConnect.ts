@@ -151,30 +151,35 @@ export async function setTonConnectSessionAutoSend({
 export async function deleteTonConnectSession(session: State<TonConnectSession>) {
   // const session =
 
-  await sendTonConnectMessage(
-    {
-      event: 'disconnect',
-      payload: {},
-      id: Date.now(),
-    },
-    session?.secretKey.get() || Buffer.from(''),
-    session?.userId?.get() || ''
-  )
+  try {
+    await sendTonConnectMessage(
+      {
+        event: 'disconnect',
+        payload: {},
+        id: Date.now(),
+      },
+      session?.secretKey.get() || Buffer.from(''),
+      session?.userId?.get() || ''
+    )
 
-  const db = await getDatabase()
-  await db<ConnectMessageTransaction>('connect_message_transactions')
-    .where({
-      connect_session_id: session.id.get(),
-    })
-    .delete()
-  await db<ConnectSession>('connect_sessions')
-    .where({
-      id: session.id.get(),
-    })
-    .delete()
+    const db = await getDatabase()
+    await db<ConnectMessageTransaction>('connect_message_transactions')
+      .where({
+        connect_session_id: session.id.get(),
+      })
+      .delete()
+    await db<ConnectSession>('connect_sessions')
+      .where({
+        id: session.id.get(),
+      })
+      .delete()
 
-  state.sessions.set(await getSessions())
-  await removeConnectMessages()
+    state.sessions.set(await getSessions())
+    await removeConnectMessages()
+  } catch (e) {
+    console.log('Delete session error', e)
+    throw e
+  }
 }
 
 export async function updateSessionEventId(id: number, eventId: number) {
