@@ -158,6 +158,7 @@ export class WalletV5 implements Contract {
       sendMode: SendMode.PAY_GAS_SEPARATELY,
       body: beginCell()
         .storeUint(Opcodes.auth_extension, 32)
+        .storeUint(0, 64) // query id
         .storeSlice(opts.body.beginParse())
         .endCell(),
     })
@@ -172,12 +173,7 @@ export class WalletV5 implements Contract {
   }
 
   async sendExternalSignedMessage(provider: ContractProvider, body: Cell) {
-    await provider.external(
-      beginCell()
-        // .storeUint(Opcodes.auth_signed, 32) // Is signed inside message
-        .storeSlice(body.beginParse())
-        .endCell()
-    )
+    await provider.external(body)
   }
 
   async sendExternal(provider: ContractProvider, body: Cell) {
@@ -202,7 +198,7 @@ export class WalletV5 implements Contract {
   async getIsSignatureAuthAllowed(provider: ContractProvider) {
     const state = await provider.getState()
     if (state.state.type === 'active') {
-      const res = await provider.get('get_is_signature_auth_allowed', [])
+      const res = await provider.get('is_signature_allowed', [])
       return res.stack.readNumber()
     } else {
       return -1
@@ -210,7 +206,7 @@ export class WalletV5 implements Contract {
   }
 
   async getWalletId(provider: ContractProvider) {
-    const result = await provider.get('get_wallet_id', [])
+    const result = await provider.get('get_subwallet_id', [])
     return WalletId.deserialize(result.stack.readBigNumber())
   }
 
@@ -227,14 +223,14 @@ export class WalletV5 implements Contract {
 
     const dict: Dictionary<bigint, bigint> = Dictionary.loadDirect(
       Dictionary.Keys.BigUint(256),
-      Dictionary.Values.BigInt(8),
+      Dictionary.Values.BigInt(1),
       extensions
     )
 
     return dict.keys().map((key) => {
-      const wc = dict.get(key)!
-      const addressHex = key ^ (wc + 1n)
-      return Address.parseRaw(`${wc}:${addressHex.toString(16)}`)
+      const wc = this.address.workChain
+      const addressHex = key
+      return Address.parseRaw(`${wc}:${addressHex.toString(16).padStart(64, '0')}`)
     })
   }
 }

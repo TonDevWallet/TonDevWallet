@@ -127,17 +127,17 @@ export async function saveKeyAndWallets(
     {
       type: 'v4R2',
       key_id: newWallet.id,
-      subwallet_id: 698983191,
+      subwallet_id: '698983191',
     },
     {
       type: 'v3R2',
       key_id: newWallet.id,
-      subwallet_id: 698983191,
+      subwallet_id: '698983191',
     },
     {
       type: 'highload',
       key_id: newWallet.id,
-      subwallet_id: 1,
+      subwallet_id: '1',
     },
   ]
 
@@ -163,7 +163,7 @@ export async function CreateNewKeyWallet({
   walletAddress,
 }: {
   type: WalletType
-  subwalletId: number
+  subwalletId: bigint
   keyId: number
   walletAddress: string | null
 }) {
@@ -172,7 +172,7 @@ export async function CreateNewKeyWallet({
     .insert({
       type,
       key_id: keyId,
-      subwallet_id: subwalletId,
+      subwallet_id: subwalletId.toString(),
       wallet_address: walletAddress,
     })
     .returning('*')

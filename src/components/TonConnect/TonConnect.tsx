@@ -192,6 +192,11 @@ export async function sendTonConnectStartMessage(
         .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
         .endCell()
       break
+    case 'v5R1':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
     default:
       throw new Error('Unknown wallet type!')
   }
