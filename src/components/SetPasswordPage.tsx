@@ -34,39 +34,39 @@ export function SetPasswordPage() {
   }
 
   return (
-    <div className="w-full h-screen flex flex-col items-center justify-center">
-      <div className="flex flex-col gap-2">
-        <h3 className="text-lg font-bold">Set password to use wallet</h3>
+    <div className="w-full h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="flex flex-col gap-2 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300">Set password to use wallet</h3>
 
         <form onSubmit={createPassword}>
           <div className="flex flex-col">
-            <label htmlFor="passwordInput">Password:</label>
+            <label htmlFor="passwordInput" className="text-gray-700 dark:text-gray-300">Password:</label>
             <Input
               id="passwordInput"
               type="password"
-              className="mt-1 rounded p-2"
+              className="mt-1 rounded p-2 border border-gray-300 dark:border-gray-600"
               value={pass}
               autoComplete="off"
               onChange={(e) => setPass(e.target.value)}
             />
           </div>
 
-          <div className="flex flex-col">
-            <label htmlFor="passwordInputRepeat">Repeat password:</label>
+          <div className="flex flex-col mt-2">
+            <label htmlFor="passwordInputRepeat" className="text-gray-700 dark:text-gray-300">Repeat password:</label>
             <Input
               id="passwordInputRepeat"
               type="password"
-              className="mt-1 rounded p-2"
+              className="mt-1 rounded p-2 border border-gray-300 dark:border-gray-600"
               value={repeatPass}
               autoComplete="off"
               onChange={(e) => setRepeatPass(e.target.value)}
             />
           </div>
 
-          <div className="text-sm text-red-500 h-4">{errorMessage}</div>
+          <div className="text-sm text-red-500 h-4 mt-2">{errorMessage}</div>
 
           <BlueButton
-            className={cn('w-full mt-2', isUpdating && 'bg-gray-500')}
+            className={cn('w-full mt-4', isUpdating && 'bg-gray-500')}
             type="submit"
             disabled={isUpdating}
           >

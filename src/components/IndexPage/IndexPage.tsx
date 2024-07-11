@@ -5,8 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export function IndexPage() {
   return (
-    // <div className="grid grid-cols-2 md:grid-cols-[300px_1fr] gap-2 mt-2 mr-2">
-    <div>
+    <div className="container mx-auto p-4">
       <Tabs defaultValue="messages" className="flex flex-col">
         <TabsList className="mb-4 mx-auto">
           <TabsTrigger value="messages">Messages</TabsTrigger>
@@ -24,6 +23,5 @@ export function IndexPage() {
         </TabsContent>
       </Tabs>
     </div>
-    // </div>
   )
 }

@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export function NewWalletPage() {
   return (
-    <div className="mt-2">
+    <div className="mt-2 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
       <Tabs defaultValue="random" className="">
         <TabsList className="mb-4">
           <TabsTrigger value="random">Create random wallet</TabsTrigger>

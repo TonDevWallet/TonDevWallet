@@ -93,13 +93,13 @@ export function WalletPage() {
   }, [key, key?.wallets, liteClient])
 
   return (
-    <div className="grid grid-cols-[1fr_1fr] gap-4 justify-center flex-col md:flex-row">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 justify-center">
       <div className="md:max-w-xl min-w-0 w-full flex-grow-0 flex flex-col">
         <WalletHeader name={key?.name.get()} keyId={key?.id.get() || 0} />
         <WalletGenerator />
         <WalletsTable walletsToShow={walletsToShow} />
       </div>
-      <div className="md:max-w-xl min-w-0 w-full flex-grow-0 flex flex-col mt-[7rem]">
+      <div className="md:max-w-xl min-w-0 w-full flex-grow-0 flex flex-col mt-4 md:mt-0">
         {selectedWallet ? (
           selectedWallet?.type === 'highload' ? (
             <HighloadWallet />
@@ -107,7 +107,7 @@ export function WalletPage() {
             <Wallet />
           )
         ) : (
-          <div className="flex flex-col justify-center h-screen mt-[-6.75rem]">
+          <div className="flex flex-col justify-center h-full">
             <div className="flex flex-col items-center text-gray-500">
               <FontAwesomeIcon icon={faWallet} className="mr-1" size={'4x'} />
               <div className="mt-2">Select wallet</div>

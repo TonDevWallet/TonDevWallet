@@ -17,7 +17,7 @@ export function SavedWalletsList() {
 
   return (
     suspend(keys) || (
-      <div className="p-2">
+      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
         <NavLink
           to="/app"
           end

@@ -53,23 +53,25 @@ export function FromRandom() {
   }
 
   return (
-    <div>
-      <Button onClick={generateNewMnemonic}>Generate new mnemonic</Button>
+    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+      <Button onClick={generateNewMnemonic} className="mb-4">
+        Generate new mnemonic
+      </Button>
 
       {seed && (
         <>
           <div className="text-lg font-medium my-2 flex items-center">Mnemonic:</div>
           <div>
             <Textarea
-              className="w-3/4 h-24 outline-none border p-1"
+              className="w-full h-24 outline-none border p-2 rounded-md"
               id="mnemonicInput"
               value={words}
               readOnly
               spellCheck={false}
             />
             <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
-            <div className="flex">
-              <div className="w-100 overflow-hidden text-ellipsis text-xs">
+            <div className="flex items-center">
+              <div className="w-full overflow-hidden text-ellipsis text-xs">
                 {seed.toString('hex')}
               </div>
               <Copier className="w-6 h-6 ml-2" text={seed.toString('hex') || ''} />
@@ -77,8 +79,8 @@ export function FromRandom() {
           </div>
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Public key:</div>
-            <div className="flex">
-              <div className="w-100 overflow-hidden text-ellipsis text-xs">
+            <div className="flex items-center">
+              <div className="w-full overflow-hidden text-ellipsis text-xs">
                 {Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
               </div>
               <Copier
@@ -89,8 +91,8 @@ export function FromRandom() {
           </div>
           <div>
             <div className="text-lg font-medium my-2 flex items-center">Secret key:</div>
-            <div className="flex">
-              <div className="w-100 overflow-hidden text-ellipsis text-xs">
+            <div className="flex items-center">
+              <div className="w-full overflow-hidden text-ellipsis text-xs">
                 {Buffer.from(walletKeyPair?.secretKey || []).toString('hex')}
               </div>
               <Copier
@@ -101,19 +103,21 @@ export function FromRandom() {
           </div>
 
           <div className="py-4 flex flex-col">
-            <label htmlFor="nameRef">Name:</label>
+            <label htmlFor="nameRef" className="text-lg font-medium mb-2">
+              Name:
+            </label>
             <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               id="nameRef"
-              className="border w-3/4 outline-none rounded px-2 py-1"
+              className="border w-full outline-none rounded-md px-2 py-1 mb-4"
               autoFocus
             />
 
             <Button
               onClick={saveSeed}
-              className={cn('mt-2 w-24', !name && 'opacity-50')}
+              className={cn('w-full', !name && 'opacity-50')}
               disabled={!name}
             >
               Save

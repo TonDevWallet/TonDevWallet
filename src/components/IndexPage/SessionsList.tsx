@@ -34,7 +34,7 @@ export function SessionsList() {
   const liteClient = useLiteclient() as unknown as LiteClient
 
   return (
-    <div className="mb-8 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="mb-8 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 p-4 bg-gray-100 dark:bg-gray-900 rounded-lg shadow-md">
       {sessions.map((s) => {
         const key = keys.find((k) => k.id.get() === s.keyId.get())
         if (!key) {
@@ -51,14 +51,14 @@ export function SessionsList() {
         return (
           <Block
             // className="dark:bg-foreground/5 bg-background rounded dark:shadow border-2 dark:border-none p-2"
-            className="overflow-hidden flex flex-col gap-2"
+            className="overflow-hidden flex flex-col gap-2 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md"
             key={s.id.get()}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <img src={s.iconUrl.get()} alt="icon" className="w-8 h-8 rounded-full" />
-                <div className="ml-2">{s.name.get()}</div>
-                <FontAwesomeIcon icon={faPlus} className="mx-1" />
+                <div className="ml-2 text-gray-700 dark:text-gray-300">{s.name.get()}</div>
+                <FontAwesomeIcon icon={faPlus} className="mx-1 text-gray-700 dark:text-gray-300" />
 
                 <NavLink
                   className="flex"
@@ -114,11 +114,11 @@ export function SessionsList() {
               </AlertDialog>
             </div>
 
-            <a href={s.url.get()} target="_blank" className="" rel="noopener noreferrer">
+            <a href={s.url.get()} target="_blank" className="text-blue-500 dark:text-blue-300" rel="noopener noreferrer">
               {s.url.get()}
             </a>
 
-            <div className="flex justify-between">
+            <div className="flex justify-between text-gray-700 dark:text-gray-300">
               <div className="flex">
                 <div>Type:&nbsp;</div>
                 <div>{tonWallet?.type}</div>
@@ -130,7 +130,7 @@ export function SessionsList() {
             </div>
 
             <AddressRow
-              text={<span className="w-24 flex-shrink-0">Address:</span>}
+              text={<span className="w-24 flex-shrink-0 text-gray-700 dark:text-gray-300">Address:</span>}
               address={tonWallet?.address}
             />
 
@@ -146,7 +146,7 @@ export function SessionsList() {
               />
               <label
                 htmlFor={`autosend_input_${s.id.get()}`}
-                className="w-full ml-2 cursor-pointer"
+                className="w-full ml-2 cursor-pointer text-gray-700 dark:text-gray-300"
               >
                 Send without confirmation?
               </label>

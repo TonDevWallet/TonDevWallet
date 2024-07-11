@@ -1,6 +1,6 @@
 import clipboard from 'clipboardy'
 import { useState } from 'react'
-
+import { Button } from './ui/button'
 import CopySvg from './icons/copy'
 import DoneSvg from './icons/done'
 
@@ -22,8 +22,8 @@ export default function Copier({
   }
 
   return (
-    <button className={className} onClick={pressCopy}>
+    <Button variant="ghost" className={className} onClick={pressCopy}>
       {copied ? <DoneSvg /> : <CopySvg className="text-red" />}
-    </button>
+    </Button>
   )
 }

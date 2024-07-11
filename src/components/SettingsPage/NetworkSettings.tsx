@@ -102,18 +102,16 @@ function NetworkSettings() {
   }
 
   return (
-    <div>
+    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
       <h2 className="mt-10 scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight transition-colors">
         Networks Settings
       </h2>
-
-      {/* <p className="mt-4">asd</p> */}
 
       <Form {...form}>
         <div className="flex flex-col gap-4">
           {fields.map((field, index) => {
             return (
-              <div key={field.id}>
+              <div key={field.id} className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg shadow-sm">
                 <div className="flex justify-between items-center">
                   <FormField
                     control={form.control}

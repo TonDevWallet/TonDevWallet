@@ -48,7 +48,6 @@ export function AddressRow({
       onClick={pressCopy}
     >
       {text && (typeof text === 'string' ? <div>{text}</div> : text)}
-      {/* <div className="">{text}</div> */}
       <div
         className={clsx(
           'text-xs overflow-hidden text-ellipsis whitespace-nowrap',

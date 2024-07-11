@@ -55,7 +55,6 @@ export function PasswordPopup() {
 
   return (
     <Dialog open={passwordState.popupOpen.get()}>
-      {/* <DialogTrigger>Open</DialogTrigger> */}
       <DialogContent onPointerDownOutside={() => closePasswordPopup()} noClose={true}>
         <DialogHeader>
           <DialogTitle>Enter your password to unlock wallets</DialogTitle>

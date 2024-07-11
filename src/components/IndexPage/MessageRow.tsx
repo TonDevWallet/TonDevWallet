@@ -111,32 +111,37 @@ export const MessageRow = memo(function MessageRow({
   }
 
   return (
-    <Block className="">
+    <Block className="p-4 rounded-lg shadow-md bg-white dark:bg-gray-800">
       {session?.url.get() && (
-        <div className="flex items-center">
+        <div className="flex items-center mb-4">
           <Avatar className="w-8 h-8">
             <AvatarImage src={session?.iconUrl.get()} />
             <AvatarFallback>C</AvatarFallback>
           </Avatar>
 
-          <div className="ml-2">{session?.name.get()}</div>
-          <a href={session?.url.get()} target="_blank" className="ml-2" rel="noopener noreferrer">
+          <div className="ml-2 text-gray-700 dark:text-gray-300">{session?.name.get()}</div>
+          <a
+            href={session?.url.get()}
+            target="_blank"
+            className="ml-2 text-blue-500 dark:text-blue-300"
+            rel="noopener noreferrer"
+          >
             {session?.url.get()}
           </a>
         </div>
       )}
 
-      <div className="break-keep">
+      <div className="break-keep mb-4">
         {
           <AddressRow
-            text={<div className="w-40 flex-shrink-0">{`Wallet (${wallet.type}): `}</div>}
+            text={<div className="w-40 flex-shrink-0 text-gray-700 dark:text-gray-300">{`Wallet (${wallet.type}): `}</div>}
             address={tonWallet?.address}
           />
         }
       </div>
-      <div className="flex">
-        <div>Messages count:&nbsp;</div>
-        <div className="break-words break-all">
+      <div className="flex mb-4">
+        <div className="text-gray-700 dark:text-gray-300">Messages count:&nbsp;</div>
+        <div className="break-words break-all text-gray-700 dark:text-gray-300">
           {s?.payload?.get()?.messages?.length} ({amountOut.toString()} TON)
         </div>
       </div>

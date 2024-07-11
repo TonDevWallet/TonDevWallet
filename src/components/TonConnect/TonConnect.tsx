@@ -130,7 +130,7 @@ export function TonConnect() {
   }, [connectLink, decryptedData.decryptedData])
 
   return (
-    <Block className="flex flex-col gap-2">
+    <Block className="flex flex-col gap-2 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
       {/* <div className="flex"> */}
       <label htmlFor="tonconnectLink">Enter your Ton Connect link</label>
       <input

@@ -30,7 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 export function TopBar() {
   return (
-    <div className={cn('flex flex-wrap py-2 px-4 gap-4 w-full')}>
+    <div className={cn('flex flex-wrap py-2 px-4 gap-4 w-full bg-gray-100 dark:bg-gray-900')}>
       <NetworkSelector />
 
       <DetectTonConnect />
