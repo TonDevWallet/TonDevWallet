@@ -175,7 +175,7 @@ function AddWalletPopup() {
 
   // const typeRef = useRef<HTMLSelectElement>(null)
   const subwalletIdRef = useRef<HTMLInputElement>(null)
-  const [walletType, setWalletType] = useState('v4R2')
+  const [walletType, setWalletType] = useState('v5R1')
   const [walletAddress, setWalletAddress] = useState('')
 
   const saveWallet = async (e: MouseEvent) => {
@@ -192,7 +192,7 @@ function AddWalletPopup() {
     }
     await CreateNewKeyWallet({
       type: walletType as WalletType,
-      subwalletId: parseInt(subwalletIdRef.current?.value || '', 10),
+      subwalletId: BigInt(subwalletIdRef.current?.value || ''),
       keyId: selectedKey?.id.get() || 0,
       walletAddress: saveWalletAddress,
     })
@@ -220,6 +220,7 @@ function AddWalletPopup() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
+                      <SelectItem value="v5R1">W5</SelectItem>
                       <SelectItem value="v4R2">v4R2</SelectItem>
                       <SelectItem value="v3R2">v3R2</SelectItem>
                       <SelectItem value="highload">Highload V2</SelectItem>

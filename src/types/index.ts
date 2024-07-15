@@ -8,6 +8,7 @@ import type { Address, MessageRelaxed, SendMode, ContractProvider, Cell } from '
 import type { WalletContractV4, WalletContractV3R2 } from '@ton/ton'
 import { KeyPair } from '@ton/crypto'
 import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV3'
+import { WalletV5 } from '@/contracts/w5/WalletV5R1'
 
 export type OpenedContract<T> = {
   [P in keyof T]: P extends `get${string}` | `send${string}`
@@ -40,6 +41,16 @@ export interface ITonWalletV4 {
   key: EncryptedWalletData
   id: number
   subwalletId: number
+}
+
+export interface ITonWalletV5 {
+  type: 'v5R1'
+  address: Address
+  wallet: OpenedContract<WalletV5>
+  getExternalMessageCell: GetExternalMessageCell
+  key: EncryptedWalletData
+  id: number
+  subwalletId: bigint
 }
 
 export interface ITonHighloadWalletV2 {
@@ -87,7 +98,7 @@ export interface ITonExternalWallet {
   id: string
 }
 
-export type ITonWallet = ITonWalletV3 | ITonWalletV4
+export type ITonWallet = ITonWalletV3 | ITonWalletV4 | ITonWalletV5
 export type IHighloadWalletV2 = ITonHighloadWalletV2 | ITonHighloadWalletV2R2
 export type IHighloadWalletV3 = ITonHighloadWalletV3
 export type IMultisigWallet = ITonMultisigWalletV2V4R2
@@ -108,6 +119,6 @@ export interface SavedWallet {
   id: number
   type: WalletType
   key_id: number
-  subwallet_id: number
+  subwallet_id: string
   wallet_address?: string | null
 }

@@ -14,6 +14,7 @@ import {
   ITonMultisigWalletV2V4R2,
   ITonWalletV3,
   ITonWalletV4,
+  ITonWalletV5,
   IWallet,
   OpenedContract,
   SavedWallet,
@@ -25,6 +26,8 @@ import {
   Address,
   beginCell,
   Cell,
+  contractAddress,
+  Dictionary,
   external,
   internal,
   loadStateInit,
@@ -36,19 +39,23 @@ import {
 } from '@ton/core'
 
 import { WalletContractV3R2, WalletContractV4 } from '@ton/ton'
-import { KeyPair } from '@ton/crypto'
+import { KeyPair, sign } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV3'
 import { HighloadWalletV3CodeCell } from '@/contracts/highload-wallet-v3/HighloadWalletV3.source'
 import { HighloadQueryId } from '@/contracts/highload-wallet-v3/HighloadQueryId'
 import { Maybe } from '@ton/core/dist/utils/maybe'
 import { Multisig } from '@/contracts/multisig-v2/Multisig'
+import { Opcodes, WalletId, WalletV5, bufferToBigInt } from '@/contracts/w5/WalletV5R1'
+import { WalletV5R1CodeCell } from '@/contracts/w5/WalletV5R1.source'
+import { ActionSendMsg, packActionsList } from '@/contracts/w5/actions'
 
 export function getWalletFromKey(
   liteClient: LiteClient | ImmutableObject<LiteClient>,
   key: ImmutableObject<Key>,
   wallet: SavedWallet
 ): IWallet | undefined {
+  // debugger
   const encryptedData = JSON.parse(key.encrypted)
   if (!encryptedData) {
     return
@@ -57,7 +64,7 @@ export function getWalletFromKey(
   if (wallet.type === 'highload') {
     const tonWallet = new HighloadWalletV2({
       publicKey: Buffer.from(key.public_key, 'base64'),
-      subwalletId: wallet.subwallet_id,
+      subwalletId: parseInt(wallet.subwallet_id),
       workchain: 0,
     })
     const result: ITonHighloadWalletV2 = {
@@ -67,13 +74,13 @@ export function getWalletFromKey(
       getExternalMessageCell: getExternalMessageCellFromHighload(tonWallet),
       key: encryptedData,
       id: wallet.id,
-      subwalletId: wallet.subwallet_id,
+      subwalletId: parseInt(wallet.subwallet_id),
     }
     return result
   } else if (wallet.type === 'highload_v2r2') {
     const tonWallet = new HighloadWalletV2R2({
       publicKey: Buffer.from(key.public_key, 'base64'),
-      subwalletId: wallet.subwallet_id,
+      subwalletId: parseInt(wallet.subwallet_id),
       workchain: 0,
     })
     const result: ITonHighloadWalletV2R2 = {
@@ -83,20 +90,20 @@ export function getWalletFromKey(
       getExternalMessageCell: getExternalMessageCellFromHighload(tonWallet),
       key: encryptedData,
       id: wallet.id,
-      subwalletId: wallet.subwallet_id,
+      subwalletId: parseInt(wallet.subwallet_id),
     }
     return result
   } else if (wallet.type === 'highload_v3') {
     const tonWallet = HighloadWalletV3.createFromConfig(
       {
         publicKey: Buffer.from(key.public_key, 'base64'),
-        subwalletId: wallet.subwallet_id,
+        subwalletId: parseInt(wallet.subwallet_id),
         timeout: 60,
       },
       HighloadWalletV3CodeCell,
       0
     )
-    tonWallet.setSubwalletId(wallet.subwallet_id)
+    tonWallet.setSubwalletId(parseInt(wallet.subwallet_id))
     const result: ITonHighloadWalletV3 = {
       type: 'highload_v3',
       address: tonWallet.address,
@@ -104,7 +111,7 @@ export function getWalletFromKey(
       getExternalMessageCell: getExternalMessageCellFromHighloadV3(tonWallet),
       key: encryptedData,
       id: wallet.id,
-      subwalletId: wallet.subwallet_id,
+      subwalletId: parseInt(wallet.subwallet_id),
     }
     return result
   } else if (wallet.type === 'v3R2') {
@@ -112,7 +119,7 @@ export function getWalletFromKey(
       WalletContractV3R2.create({
         workchain: 0,
         publicKey: Buffer.from(key.public_key, 'base64'),
-        walletId: wallet.subwallet_id,
+        walletId: parseInt(wallet.subwallet_id),
       })
     )
     const result: ITonWalletV3 = {
@@ -122,7 +129,7 @@ export function getWalletFromKey(
       getExternalMessageCell: getExternalMessageCellFromTonWallet(tonWallet),
       key: encryptedData,
       id: wallet.id,
-      subwalletId: wallet.subwallet_id,
+      subwalletId: parseInt(wallet.subwallet_id),
     }
     return result
   } else if (wallet.type === 'multisig_v2_v4r2') {
@@ -133,7 +140,7 @@ export function getWalletFromKey(
       WalletContractV4.create({
         workchain: 0,
         publicKey: Buffer.from(key.public_key, 'base64'),
-        walletId: wallet.subwallet_id,
+        walletId: parseInt(wallet.subwallet_id),
       })
     )
     const result: ITonMultisigWalletV2V4R2 = {
@@ -146,15 +153,15 @@ export function getWalletFromKey(
       ),
       key: encryptedData,
       id: wallet.id,
-      subwalletId: wallet.subwallet_id,
+      subwalletId: parseInt(wallet.subwallet_id),
     }
     return result
-  } else {
+  } else if (wallet.type === 'v4R2') {
     const tonWallet = liteClient.open(
       WalletContractV4.create({
         workchain: 0,
         publicKey: Buffer.from(key.public_key, 'base64'),
-        walletId: wallet.subwallet_id,
+        walletId: parseInt(wallet.subwallet_id),
       })
     )
     const result: ITonWalletV4 = {
@@ -164,7 +171,34 @@ export function getWalletFromKey(
       getExternalMessageCell: getExternalMessageCellFromTonWallet(tonWallet),
       key: encryptedData,
       id: wallet.id,
-      subwalletId: wallet.subwallet_id,
+      subwalletId: parseInt(wallet.subwallet_id),
+    }
+    return result
+  } else if (wallet.type === 'v5R1') {
+    const tonWallet = liteClient.open(
+      WalletV5.createFromConfig(
+        {
+          // workchain: 0,
+          publicKey: Buffer.from(key.public_key, 'base64'),
+          walletId: BigInt(wallet.subwallet_id),
+          seqno: 0,
+          extensions: Dictionary.empty(),
+          signatureAllowed: true,
+        },
+        WalletV5R1CodeCell
+      )
+    )
+    const result: ITonWalletV5 = {
+      type: 'v5R1',
+      address: tonWallet.address,
+      wallet: tonWallet,
+      getExternalMessageCell: getExternalMessageCellFromTonWalletV5(
+        tonWallet,
+        BigInt(wallet.subwallet_id)
+      ),
+      key: encryptedData,
+      id: wallet.id,
+      subwalletId: BigInt(wallet.subwallet_id),
     }
     return result
   }
@@ -268,6 +302,66 @@ function getExternalMessageCellFromTonWallet(
       }),
       sendMode: SendMode.IGNORE_ERRORS | SendMode.PAY_GAS_SEPARATELY,
     })
+    const ext = external({
+      to: wallet.address,
+      init: wallet.init,
+      body: transfer,
+    })
+    return beginCell().store(storeMessage(ext)).endCell()
+  }
+}
+
+function getExternalMessageCellFromTonWalletV5(
+  wallet: OpenedContract<WalletV5>,
+  subwalletId: bigint
+): GetExternalMessageCell {
+  return async (keyPair: KeyPair, transfers: WalletTransfer[]) => {
+    if (keyPair.secretKey.length === 32) {
+      keyPair.secretKey = Buffer.concat([
+        Uint8Array.from(keyPair.secretKey),
+        Uint8Array.from(keyPair.publicKey),
+      ])
+    }
+
+    const actions = packActionsList(
+      transfers.map((m) => {
+        const msg = internal({
+          body: m.body,
+          to: m.destination,
+          value: m.amount,
+          bounce: m.bounce,
+        })
+
+        if (m.state) {
+          msg.init = loadStateInit(m.state.asSlice())
+        }
+        return new ActionSendMsg(m.mode, msg)
+      })
+    )
+
+    let seqno
+    try {
+      seqno = await wallet.getSeqno()
+    } catch (e) {}
+    let walletId = WalletId.deserialize(subwalletId)
+    try {
+      walletId = await wallet.getWalletId()
+    } catch (e) {}
+    const transfer = createBodyV5(keyPair, seqno, subwalletId, actions)
+
+    console.log(
+      'init',
+      wallet.init,
+      'seqno',
+      seqno,
+      'subwallet',
+      subwalletId,
+      walletId,
+      wallet.address.toString(),
+      'emulated address',
+      contractAddress(0, wallet.init as any).toString()
+    )
+
     const ext = external({
       to: wallet.address,
       init: wallet.init,
@@ -384,4 +478,22 @@ const getRandom = (min: number, max: number) => {
 
 export const getRandomInt = (min: number, max: number) => {
   return Math.round(getRandom(min, max))
+}
+
+function createBodyV5(keyPair: KeyPair, seqno: number, walletId: bigint, actionsList: Cell) {
+  const expireAt = Math.floor(Date.now() / 1000) + 60
+  const payload = beginCell()
+    .storeUint(Opcodes.auth_signed, 32)
+    .storeUint(walletId, 80)
+    .storeUint(expireAt, 32)
+    .storeUint(seqno, 32) // seqno
+    .storeSlice(actionsList.beginParse())
+    .endCell()
+
+  const signature = sign(payload.hash(), keyPair.secretKey)
+  // seqno++
+  return beginCell()
+    .storeSlice(payload.beginParse())
+    .storeUint(bufferToBigInt(signature), 512)
+    .endCell()
 }

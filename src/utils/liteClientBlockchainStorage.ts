@@ -27,6 +27,7 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
         !account.state.storage.state.state.code
       ) {
         existing = SmartContract.empty(blockchain, address)
+        existing.balance = BigInt(account.balance.coins)
       } else {
         existing = SmartContract.create(blockchain, {
           address,

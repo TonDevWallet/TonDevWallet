@@ -16,3 +16,4 @@ export * as m_14_add_networks_autoincrement from './14_add_networks_autoincremen
 export * as m_15_add_wallets_autoincrement from './15_add_wallets_autoincrement'
 export * as m_16_fix_connect_sessions_foreign_keys from './16_fix_connect_sessions_foreign_keys'
 export * as m_17_fix_last_selected_wallets_foreign_keys from './17_fix_last_selected_wallets_foreign_keys'
+export * as m_18_change_subwallet_id_type from './18_change_subwallet_id_type'
