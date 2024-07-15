@@ -20,9 +20,7 @@ jobs:
           node-version: 20
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
+      - run: corepack enable
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-20.04'
         run: |
