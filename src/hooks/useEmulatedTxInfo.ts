@@ -10,8 +10,8 @@ import { Blockchain } from '@ton/sandbox'
 const libs: Record<string, Buffer> = {}
 let megaLibsCell = beginCell().endCell()
 
-async function checkForLibraries(cell: Cell, liteClient: LiteClient) {
-  const toCheck = [cell]
+async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
+  const toCheck = [...cells]
   let libFound = false
   while (toCheck.length > 0) {
     const current = toCheck.pop()
@@ -25,6 +25,13 @@ async function checkForLibraries(cell: Cell, liteClient: LiteClient) {
         }
 
         const libData = await liteClient.getLibraries([libHash])
+        if (libData.result.length === 0) {
+          console.log('lib not found', libHash.toString('hex'))
+          continue
+        } else {
+          console.log('lib found', libHash.toString('hex'))
+        }
+
         for (const lib of libData.result) {
           libs[lib.hash.toString('hex')] = lib.data
         }
@@ -56,13 +63,21 @@ async function checkAndLoadLibraries(tx: ParsedTransaction, liteClient: LiteClie
   ) {
     // Check lib in init
     if (tx.inMessage?.init) {
-      const code = tx.inMessage.init.code
-      if (code) {
-        const libFound = await checkForLibraries(code, liteClient)
-        if (libFound) {
-          console.log('lib found in init, restarting emulator')
-          return true
-        }
+      const messageCells: Cell[] = []
+      if (tx?.inMessage?.init?.code) {
+        messageCells.push(tx.inMessage.init.code)
+      }
+      if (tx?.inMessage?.init?.data) {
+        messageCells.push(tx.inMessage.init.data)
+      }
+      if (tx?.inMessage?.body) {
+        messageCells.push(tx.inMessage.body)
+      }
+
+      const libFound = await checkForLibraries(messageCells, liteClient)
+      if (libFound) {
+        console.log('lib found in init, restarting emulator')
+        return true
       }
     }
 
@@ -75,7 +90,7 @@ async function checkAndLoadLibraries(tx: ParsedTransaction, liteClient: LiteClie
       if (destinationState?.state?.storage?.state?.type === 'active') {
         const code = destinationState?.state?.storage?.state?.state?.code
         if (code) {
-          const libFound = await checkForLibraries(code, liteClient)
+          const libFound = await checkForLibraries([code], liteClient)
           if (libFound) {
             console.log('lib found in destination, restarting emulator')
             return true
