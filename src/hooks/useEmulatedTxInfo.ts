@@ -18,6 +18,12 @@ async function checkForLibraries(cell: Cell, liteClient: LiteClient) {
     if (current) {
       if (current.isExotic) {
         const libHash = current.beginParse(true).skip(8).loadBuffer(32)
+
+        if (libs[libHash.toString('hex')]) {
+          console.log('lib already found', libHash.toString('hex'))
+          continue
+        }
+
         const libData = await liteClient.getLibraries([libHash])
         for (const lib of libData.result) {
           libs[lib.hash.toString('hex')] = lib.data
@@ -81,11 +87,34 @@ async function checkAndLoadLibraries(tx: ParsedTransaction, liteClient: LiteClie
   return false
 }
 
+const initializeBlockchain = async (liteClient: LiteClient) => {
+  const storage = new LiteClientBlockchainStorage(liteClient)
+  const blockchain = await Blockchain.create({ storage })
+  blockchain.verbosity = {
+    blockchainLogs: true,
+    vmLogs: 'vm_logs_full',
+    debugLogs: true,
+    print: false,
+  }
+  blockchain.libs = megaLibsCell
+  return blockchain
+}
+
 export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
   const [response, setResponse] = useState<ManagedSendMessageResult | undefined>()
   const [progress, setProgress] = useState<{ total: number; done: number }>({ done: 0, total: 0 })
   const [isLoading, setIsLoading] = useState(false)
   const liteClient = useLiteclient() as LiteClient
+
+  const setInitialState = () => {
+    setResponse(undefined)
+    setProgress({ done: 0, total: 0 })
+    setIsLoading(true)
+  }
+
+  const updateProgress = () => {
+    setProgress((p) => ({ total: p.total + 1, done: p.done + 1 }))
+  }
 
   useEffect(() => {
     if (!cell) {
@@ -95,95 +124,51 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
 
     let isStopped = false
 
-    const stopEmulator = () => {
-      isStopped = true
+    const runEmulator = async (blockchain: Blockchain, msg: any) => {
+      const iter = await blockchain.sendMessageIter(msg, { ignoreChksig: ignoreChecksig })
+      const transactions: ParsedTransaction[] = []
+      for await (const tx of iter) {
+        if (isStopped) break
+
+        const shouldRestart = await checkAndLoadLibraries(tx as ParsedTransaction, liteClient)
+        if (shouldRestart) return { transactions, shouldRestart }
+
+        updateProgress()
+
+        if (tx?.inMessage?.body) {
+          const parsed = parseInternal(tx.inMessage.body.asSlice())
+          if (parsed) {
+            ;(tx as any).parsed = parsed
+          }
+        }
+
+        transactions.push(tx as any)
+        setResponse({ transactions })
+        setIsLoading(false)
+      }
+
+      return { transactions, shouldRestart: false }
     }
-    const startEmulator = async () => {
+
+    const emulateTransaction = async () => {
       try {
-        setResponse(undefined)
-        setProgress({ done: 0, total: 0 })
-        setIsLoading(true)
-
-        const onAddMessage = () => {
-          setProgress((p) => ({ ...p, total: p.total + 1 }))
-        }
-        const onCompleteMessage = () => {
-          setProgress((p) => ({ ...p, done: p.done + 1 }))
-        }
-        const storage = new LiteClientBlockchainStorage(liteClient)
-        let blockchain = await Blockchain.create({
-          storage,
-        })
-
-        blockchain.verbosity = {
-          blockchainLogs: true,
-          vmLogs: 'vm_logs_full',
-          debugLogs: true,
-          print: false,
-        }
-        blockchain.libs = megaLibsCell
         const msg = loadMessage(cell.beginParse())
 
-        const runEmulator = async () => {
-          const iter = await blockchain.sendMessageIter(msg, { ignoreChksig: ignoreChecksig })
-          const transactions: ParsedTransaction[] = []
-          for await (const tx of iter) {
-            if (isStopped) {
-              break
-            }
-
-            const shouldRestart = await checkAndLoadLibraries(tx as ParsedTransaction, liteClient)
-            if (shouldRestart) {
-              return { transactions, shouldRestart }
-            }
-
-            onAddMessage()
-            onCompleteMessage()
-            if (tx?.inMessage?.body) {
-              const parsed = parseInternal(tx.inMessage.body.asSlice())
-              if (parsed) {
-                ;(tx as any).parsed = parsed
-              }
-            }
-
-            transactions.push(tx as any)
-            setResponse({
-              transactions,
-            })
-            setIsLoading(false)
-          }
-
-          return { transactions, shouldRestart: false }
-        }
-
-        let restart = false
-        do {
-          const { transactions, shouldRestart } = await runEmulator()
+        let restart = true
+        // eslint-disable-next-line no-unmodified-loop-condition
+        while (restart && !isStopped) {
+          setInitialState()
+          const blockchain = await initializeBlockchain(liteClient)
+          const { transactions, shouldRestart } = await runEmulator(blockchain, msg)
           restart = shouldRestart
+
           if (!restart) {
             setResponse({ transactions })
             setIsLoading(false)
-          } else {
-            // Reset the blockchain instance with the updated library
-            const storage = new LiteClientBlockchainStorage(liteClient)
-            blockchain = await Blockchain.create({
-              storage,
-            })
-            blockchain.verbosity = {
-              blockchainLogs: true,
-              vmLogs: 'vm_logs_full',
-              debugLogs: true,
-              print: false,
-            }
-            blockchain.libs = megaLibsCell
           }
-          // eslint-disable-next-line no-unmodified-loop-condition
-        } while (restart && !isStopped)
-
-        // console.log('emulate res', transactions, Date.now() - start, isStopped)
-        if (isStopped) {
-          return
         }
+
+        if (isStopped) return
         setIsLoading(false)
       } catch (err) {
         console.log('emulate err', err)
@@ -191,12 +176,12 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
       }
     }
 
-    startEmulator().then()
+    emulateTransaction()
 
     return () => {
-      stopEmulator()
+      isStopped = true
     }
-  }, [cell, liteClient])
+  }, [cell, liteClient, ignoreChecksig])
 
   return { response, progress, isLoading }
 }
