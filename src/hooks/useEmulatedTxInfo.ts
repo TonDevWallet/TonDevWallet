@@ -41,6 +41,46 @@ async function checkForLibraries(cell: Cell, liteClient: LiteClient) {
   return libFound
 }
 
+async function checkAndLoadLibraries(tx: ParsedTransaction, liteClient: LiteClient) {
+  if (
+    tx.description.type === 'generic' &&
+    tx.description.computePhase.type === 'vm' &&
+    tx.description.computePhase.exitCode === 9 &&
+    tx.vmLogs.includes('failed to load library cell')
+  ) {
+    // Check lib in init
+    if (tx.inMessage?.init) {
+      const code = tx.inMessage.init.code
+      if (code) {
+        const libFound = await checkForLibraries(code, liteClient)
+        if (libFound) {
+          console.log('lib found in init, restarting emulator')
+          return true
+        }
+      }
+    }
+
+    // Check lib in destination
+    const destination = tx.inMessage?.info.dest as Address
+    if (destination) {
+      const lastBlock = await liteClient.getMasterchainInfo()
+      const destinationState = await liteClient.getAccountState(destination, lastBlock.last)
+
+      if (destinationState?.state?.storage?.state?.type === 'active') {
+        const code = destinationState?.state?.storage?.state?.state?.code
+        if (code) {
+          const libFound = await checkForLibraries(code, liteClient)
+          if (libFound) {
+            console.log('lib found in destination, restarting emulator')
+            return true
+          }
+        }
+      }
+    }
+  }
+  return false
+}
+
 export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
   const [response, setResponse] = useState<ManagedSendMessageResult | undefined>()
   const [progress, setProgress] = useState<{ total: number; done: number }>({ done: 0, total: 0 })
@@ -84,8 +124,6 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
         blockchain.libs = megaLibsCell
         const msg = loadMessage(cell.beginParse())
 
-        let shouldRestart = false
-
         const runEmulator = async () => {
           const iter = await blockchain.sendMessageIter(msg, { ignoreChksig: ignoreChecksig })
           const transactions: ParsedTransaction[] = []
@@ -94,47 +132,9 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
               break
             }
 
-            if (
-              tx.description.type === 'generic' &&
-              tx.description.computePhase.type === 'vm' &&
-              tx.description.computePhase.exitCode === 9
-            ) {
-              if (tx.vmLogs.includes('failed to load library cell')) {
-                // check lib in init
-                if (tx.inMessage?.init) {
-                  const code = tx.inMessage.init.code
-                  if (code) {
-                    const libFound = await checkForLibraries(code, liteClient)
-                    if (libFound) {
-                      console.log('lib found, restarting emulator')
-                      shouldRestart = true
-                      break
-                    }
-                  }
-                }
-
-                // check lib in destination
-                const destination = tx.inMessage?.info.dest as Address
-                if (destination) {
-                  const lastBlock = await liteClient.getMasterchainInfo()
-                  const destinationState = await liteClient.getAccountState(
-                    destination,
-                    lastBlock.last
-                  )
-
-                  if (destinationState?.state?.storage?.state?.type === 'active') {
-                    const code = destinationState?.state?.storage?.state?.state?.code
-                    if (code) {
-                      const libFound = await checkForLibraries(code, liteClient)
-                      if (libFound) {
-                        console.log('lib found, restarting emulator')
-                        shouldRestart = true
-                        break
-                      }
-                    }
-                  }
-                }
-              }
+            const shouldRestart = await checkAndLoadLibraries(tx as ParsedTransaction, liteClient)
+            if (shouldRestart) {
+              return { transactions, shouldRestart }
             }
 
             onAddMessage()
@@ -153,14 +153,14 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
             setIsLoading(false)
           }
 
-          return transactions
+          return { transactions, shouldRestart: false }
         }
 
+        let restart = false
         do {
-          shouldRestart = false
-          const transactions = await runEmulator()
-
-          if (!shouldRestart) {
+          const { transactions, shouldRestart } = await runEmulator()
+          restart = shouldRestart
+          if (!restart) {
             setResponse({ transactions })
             setIsLoading(false)
           } else {
@@ -178,7 +178,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
             blockchain.libs = megaLibsCell
           }
           // eslint-disable-next-line no-unmodified-loop-condition
-        } while (shouldRestart && !isStopped)
+        } while (restart && !isStopped)
 
         // console.log('emulate res', transactions, Date.now() - start, isStopped)
         if (isStopped) {
