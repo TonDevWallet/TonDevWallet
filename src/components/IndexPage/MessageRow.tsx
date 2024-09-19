@@ -79,10 +79,14 @@ export const MessageRow = memo(function MessageRow({
     [liteClient, wallet, key]
   )
 
-  const transfers = useMemo(
-    () => GetTransfersFromTCMessage(s.payload.messages.get()),
-    [s.payload.messages]
-  )
+  const transfers = useMemo(() => {
+    try {
+      return GetTransfersFromTCMessage(s.payload.messages.get())
+    } catch (e) {
+      console.error(e)
+      return []
+    }
+  }, [s.payload.messages])
 
   const messageCell = useWalletExternalMessageCell(
     tonWallet,
