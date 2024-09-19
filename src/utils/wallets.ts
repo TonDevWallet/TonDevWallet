@@ -133,8 +133,12 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'multisig_v2_v4r2') {
-    if (!wallet.wallet_address) {
-      throw new Error('Wallet address required for multisig')
+    let walletAddress = wallet.wallet_address
+    if (!walletAddress) {
+      console.log('Wallet address required for multisig')
+      walletAddress = Address.parse(
+        '0:0000000000000000000000000000000000000000000000000000000000000000'
+      ).toString({ bounceable: true, urlSafe: true })
     }
     const tonWallet = liteClient.open(
       WalletContractV4.create({
@@ -145,12 +149,9 @@ export function getWalletFromKey(
     )
     const result: ITonMultisigWalletV2V4R2 = {
       type: 'multisig_v2_v4r2',
-      address: Address.parse(wallet.wallet_address),
+      address: Address.parse(walletAddress),
       wallet: tonWallet,
-      getExternalMessageCell: getExternalMessageCellFromTonMultisigWallet(
-        tonWallet,
-        wallet.wallet_address as string
-      ),
+      getExternalMessageCell: getExternalMessageCellFromTonMultisigWallet(tonWallet, walletAddress),
       key: encryptedData,
       id: wallet.id,
       subwalletId: parseInt(wallet.subwallet_id),
