@@ -5,28 +5,22 @@ import { ClientSqliteWasm } from './utils/knexSqliteDialect'
 import { appDataDir, BaseDirectory } from '@tauri-apps/api/path'
 import { removeFile, exists, createDir } from '@tauri-apps/api/fs'
 
-const dataDir = await appDataDir()
+let db: Knex
 
-const db = KnexDb({
-  client: ClientSqliteWasm as any,
-  connection: {
-    filename: `sqlite:${dataDir}/databases/data.db`,
-  },
-})
-
-// const oldDb = KnexDb({
-//   client: ClientSqliteWasm as any,
-//   connection: {
-//     filename: 'sqlite:test.db',
-//   },
-// })
-
-export const DbContext = createContext<Knex>(db)
+export const DbContext = createContext<Knex>(null as any)
 
 export const useDatabase = () => useContext(DbContext)
 
 export async function InitDB() {
   try {
+    const dataDir = await appDataDir()
+    db = KnexDb({
+      client: ClientSqliteWasm as any,
+      connection: {
+        filename: `sqlite:${dataDir}/databases/data.db`,
+      },
+    })
+
     await checkFs()
 
     const migrations = new ImportMigrations()

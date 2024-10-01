@@ -7,8 +7,13 @@ import '@hookstate/devtools'
 import { getDatabase } from './db'
 import './store/walletState'
 
-const db = await getDatabase()
+async function main() {
+  const db = await getDatabase()
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const root = createRoot(document.getElementById('app')!)
-root.render(<App db={db} />)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const root = createRoot(document.getElementById('app')!)
+  root.render(<App db={db} />)
+}
+main().catch((err) => {
+  console.error(err)
+})

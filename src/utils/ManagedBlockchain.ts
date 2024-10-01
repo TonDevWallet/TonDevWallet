@@ -1,5 +1,5 @@
-import type { BlockchainTransaction } from '@ton/sandbox/dist/blockchain/BlockchainBase'
-import { BlockchainWithExecutor } from '@ton/sandbox/dist/blockchain/BlockchainWithExecutor'
+import type { BlockchainTransaction } from '@ton/sandbox/dist/blockchain/Blockchain'
+import { Blockchain } from '@ton/sandbox/dist/blockchain/Blockchain'
 import { ParsedInternal } from '@truecarry/tlb-abi'
 
 export type ParsedTransaction = BlockchainTransaction & {
@@ -11,4 +11,4 @@ export type ManagedSendMessageResult = {
   transactions: ParsedTransaction[]
 }
 
-export class ManagedBlockchain extends BlockchainWithExecutor {}
+export class ManagedBlockchain extends Blockchain {}
