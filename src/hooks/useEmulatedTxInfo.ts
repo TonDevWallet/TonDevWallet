@@ -2,7 +2,7 @@ import { useLiteclient } from '@/store/liteClient'
 import { LiteClientBlockchainStorage } from '@/utils/liteClientBlockchainStorage'
 import { ManagedSendMessageResult, ParsedTransaction } from '@/utils/ManagedBlockchain'
 import { useState, useEffect } from 'react'
-import { Address, beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
+import { beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 import { parseInternal } from '@truecarry/tlb-abi'
 import { Blockchain } from '@ton/sandbox'
@@ -61,42 +61,24 @@ async function checkAndLoadLibraries(tx: ParsedTransaction, liteClient: LiteClie
     tx.description.computePhase.exitCode === 9 &&
     tx.vmLogs.includes('failed to load library cell')
   ) {
-    // Check lib in init
-    if (tx.inMessage?.init) {
-      const messageCells: Cell[] = []
-      if (tx?.inMessage?.init?.code) {
-        messageCells.push(tx.inMessage.init.code)
-      }
-      if (tx?.inMessage?.init?.data) {
-        messageCells.push(tx.inMessage.init.data)
-      }
-      if (tx?.inMessage?.body) {
-        messageCells.push(tx.inMessage.body)
-      }
+    const cellRegex = / C{([A-Fb0-9]+)}/g
+    const cellMatch = tx.vmLogs.matchAll(cellRegex)
+    const hexes: Record<string, number> = {}
 
-      const libFound = await checkForLibraries(messageCells, liteClient)
-      if (libFound) {
-        console.log('lib found in init, restarting emulator')
-        return true
+    for (const match of cellMatch) {
+      hexes[match[1]] = 1
+    }
+    const messageCells: Cell[] = []
+    if (Object.keys(hexes).length > 0) {
+      for (const hex of Object.keys(hexes)) {
+        const cell = Cell.fromBoc(Buffer.from(hex, 'hex'))[0]
+        messageCells.push(cell)
       }
     }
-
-    // Check lib in destination
-    const destination = tx.inMessage?.info.dest as Address
-    if (destination) {
-      const lastBlock = await liteClient.getMasterchainInfo()
-      const destinationState = await liteClient.getAccountState(destination, lastBlock.last)
-
-      if (destinationState?.state?.storage?.state?.type === 'active') {
-        const code = destinationState?.state?.storage?.state?.state?.code
-        if (code) {
-          const libFound = await checkForLibraries([code], liteClient)
-          if (libFound) {
-            console.log('lib found in destination, restarting emulator')
-            return true
-          }
-        }
-      }
+    const libFound = await checkForLibraries(messageCells, liteClient)
+    if (libFound) {
+      console.log('lib found in init, restarting emulator')
+      return true
     }
   }
   return false
@@ -107,7 +89,7 @@ const initializeBlockchain = async (liteClient: LiteClient) => {
   const blockchain = await Blockchain.create({ storage })
   blockchain.verbosity = {
     blockchainLogs: true,
-    vmLogs: 'vm_logs_full',
+    vmLogs: 'vm_logs_verbose',
     debugLogs: true,
     print: false,
   }
