@@ -52,12 +52,19 @@ export class HighloadWalletV3 implements Contract {
   readonly init?: Maybe<StateInit>
   readonly abi?: Maybe<ContractABI>
 
+  private timeout?: number
   private subwalletId?: number
 
-  constructor(address: Address, init?: { code: Cell; data: Cell }, subwalletId?: number) {
+  constructor(
+    address: Address,
+    init?: { code: Cell; data: Cell },
+    subwalletId?: number,
+    timeout?: number
+  ) {
     this.address = address
     this.init = init
     this.subwalletId = subwalletId
+    this.timeout = timeout || 600
   }
 
   static createFromAddress(address: Address) {
@@ -72,6 +79,14 @@ export class HighloadWalletV3 implements Contract {
 
   setSubwalletId(subwalletId: number) {
     this.subwalletId = subwalletId
+  }
+
+  setTimeout(timeout: number) {
+    this.timeout = timeout
+  }
+
+  localTimeout() {
+    return this.timeout || 600
   }
 
   async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {

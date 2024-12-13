@@ -94,16 +94,19 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'highload_v3') {
+    const timeout = wallet.extra_data ? JSON.parse(wallet.extra_data)?.timeout : 600
     const tonWallet = HighloadWalletV3.createFromConfig(
       {
         publicKey: Buffer.from(key.public_key, 'base64'),
         subwalletId: parseInt(wallet.subwallet_id),
-        timeout: 60,
+        timeout,
       },
       HighloadWalletV3CodeCell,
       0
     )
     tonWallet.setSubwalletId(parseInt(wallet.subwallet_id))
+    tonWallet.setTimeout(timeout)
+
     const result: ITonHighloadWalletV3 = {
       type: 'highload_v3',
       address: tonWallet.address,
@@ -112,6 +115,7 @@ export function getWalletFromKey(
       key: encryptedData,
       id: wallet.id,
       subwalletId: parseInt(wallet.subwallet_id),
+      timeout,
     }
     return result
   } else if (wallet.type === 'v3R2') {
@@ -269,7 +273,7 @@ function getExternalMessageCellFromHighloadV3(wallet: HighloadWalletV3): GetExte
       queryId,
       message: wallet.packActions(sendMessages, 1000000000n, queryId),
       mode: 3,
-      timeout: 60,
+      timeout: wallet.localTimeout(),
     })
     return message
   }

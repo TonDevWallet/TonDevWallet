@@ -173,8 +173,16 @@ export function OpenedWalletInfo() {
 function AddWalletPopup() {
   const selectedKey = useSelectedKey()
   const subwalletIdRef = useRef<HTMLInputElement>(null)
-  const [walletType, setWalletType] = useState('v5R1')
+  const [walletType, setWalletType] = useState<WalletType>('v5R1')
   const [walletAddress, setWalletAddress] = useState('')
+  const [highloadV3Timeout, setHighloadV3Timeout] = useState(600)
+
+  const changeWalletType = (type: string) => {
+    setWalletType(type as WalletType)
+    if (type === 'highload_v3') {
+      setHighloadV3Timeout(600)
+    }
+  }
 
   const saveWallet = async (e: MouseEvent) => {
     let saveWalletAddress: string | null = null
@@ -189,11 +197,22 @@ function AddWalletPopup() {
         throw err
       }
     }
+
+    const extraData: Record<string, any> = {}
+    if (walletType === 'highload_v3') {
+      if (highloadV3Timeout < 60) {
+        e.preventDefault()
+        throw new Error('Timeout must be greater than 60')
+      }
+      extraData.timeout = highloadV3Timeout
+    }
+
     await CreateNewKeyWallet({
       type: walletType as WalletType,
       subwalletId: BigInt(subwalletIdRef.current?.value || ''),
       keyId: selectedKey?.id.get() || 0,
       walletAddress: saveWalletAddress,
+      extraData: JSON.stringify(extraData),
     })
     close()
   }
@@ -213,7 +232,7 @@ function AddWalletPopup() {
             <AlertDialogDescription className={'flex flex-col gap-2'}>
               <div className="flex items-center gap-2">
                 Wallet Type:
-                <Select defaultValue={walletType} onValueChange={setWalletType}>
+                <Select defaultValue={walletType} onValueChange={changeWalletType}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select wallet version" />
                   </SelectTrigger>
@@ -242,6 +261,17 @@ function AddWalletPopup() {
                     type="text"
                     value={walletAddress}
                     onChange={(e) => setWalletAddress(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {walletType === 'highload_v3' && (
+                <div className="flex items-center gap-2">
+                  Timeout:{' '}
+                  <Input
+                    type="number"
+                    value={highloadV3Timeout}
+                    onChange={(e) => setHighloadV3Timeout(parseInt(e.target.value))}
                   />
                 </div>
               )}

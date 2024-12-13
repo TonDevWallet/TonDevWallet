@@ -81,6 +81,7 @@ export interface ITonHighloadWalletV3 {
   key: EncryptedWalletData
   id: number
   subwalletId: number
+  timeout: number
 }
 
 export interface ITonMultisigWalletV2V4R2 {
@@ -121,4 +122,5 @@ export interface SavedWallet {
   key_id: number
   subwallet_id: string
   wallet_address?: string | null
+  extra_data?: string | null // json object with wallet specific data
 }
