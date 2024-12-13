@@ -172,8 +172,6 @@ export function OpenedWalletInfo() {
 
 function AddWalletPopup() {
   const selectedKey = useSelectedKey()
-
-  // const typeRef = useRef<HTMLSelectElement>(null)
   const subwalletIdRef = useRef<HTMLInputElement>(null)
   const [walletType, setWalletType] = useState('v5R1')
   const [walletAddress, setWalletAddress] = useState('')
@@ -181,14 +179,15 @@ function AddWalletPopup() {
   const saveWallet = async (e: MouseEvent) => {
     let saveWalletAddress: string | null = null
     try {
-      const parsed = Address.parse(walletAddress)
-      saveWalletAddress = parsed.toString()
+      if (walletAddress) {
+        const parsed = Address.parse(walletAddress)
+        saveWalletAddress = parsed.toString()
+      }
     } catch (err) {
       if (walletType === 'multisig_v2_v4r2') {
         e.preventDefault()
         throw err
       }
-      //
     }
     await CreateNewKeyWallet({
       type: walletType as WalletType,

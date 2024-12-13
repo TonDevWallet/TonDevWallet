@@ -485,7 +485,7 @@ function createBodyV5(keyPair: KeyPair, seqno: number, walletId: bigint, actions
   const expireAt = Math.floor(Date.now() / 1000) + 60
   const payload = beginCell()
     .storeUint(Opcodes.auth_signed, 32)
-    .storeUint(walletId, 80)
+    .storeUint(walletId, 32)
     .storeUint(expireAt, 32)
     .storeUint(seqno, 32) // seqno
     .storeSlice(actionsList.beginParse())
