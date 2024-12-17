@@ -61,39 +61,63 @@ async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
 }
 
 async function checkAndLoadLibraries(
-  tx: ParsedTransaction,
+  genericTx: ParsedTransaction,
+  blockchain: Blockchain,
   storage: BlockchainStorage,
   liteClient: LiteClient
 ) {
   if (
-    tx.description.type === 'generic' &&
-    tx.description.computePhase.type === 'vm' &&
-    tx.description.computePhase.exitCode === 9 &&
-    tx.vmLogs.includes('failed to load library cell')
+    genericTx.description.type === 'generic' &&
+    genericTx.description.computePhase.type === 'vm' &&
+    genericTx.description.computePhase.exitCode === 9 &&
+    genericTx.vmLogs.includes('failed to load library cell')
   ) {
-    const cellRegex = /C{([A-Fb0-9]+)}/g
-    const cellMatch = tx.vmLogs.matchAll(cellRegex)
-    const hexes: Record<string, number> = {}
-
-    for (const match of cellMatch) {
-      hexes[match[1]] = 1
-    }
     const messageCells: Cell[] = []
-    if (Object.keys(hexes).length > 0) {
-      for (const hex of Object.keys(hexes)) {
-        const cell = Cell.fromBoc(Buffer.from(hex, 'hex'))[0]
-        messageCells.push(cell)
+    try {
+      const blockchainCopy = await blockchain.snapshot()
+      const { blockchain: verboseBlockchain } = await initializeBlockchain(liteClient)
+      await verboseBlockchain.loadFrom(blockchainCopy)
+
+      setBlockchainVerbosityVerbose(verboseBlockchain)
+
+      if (!genericTx.inMessage) {
+        return // making ts happy
       }
+      const verboseEmulatedTxResult = await verboseBlockchain.sendMessage(genericTx.inMessage, {
+        ignoreChksig: true,
+      })
+      const verboseEmulatedTx = verboseEmulatedTxResult.transactions[0]
+
+      const cellRegex = /C{([A-Fb0-9]+)}/g
+      const cellMatch = verboseEmulatedTx.vmLogs.matchAll(cellRegex)
+      const hexes: Record<string, number> = {}
+
+      for (const match of cellMatch) {
+        hexes[match[1]] = 1
+      }
+
+      if (Object.keys(hexes).length > 0) {
+        for (const hex of Object.keys(hexes)) {
+          try {
+            const cell = Cell.fromBoc(Buffer.from(hex, 'hex'))[0]
+            messageCells.push(cell)
+          } catch (err) {
+            console.log('error loading cell', hex)
+          }
+        }
+      }
+    } catch (err) {
+      console.log('error in checkAndLoadLibraries', err)
     }
-    if (tx.inMessage?.body) {
-      messageCells.push(tx.inMessage.body)
+    if (genericTx.inMessage?.body) {
+      messageCells.push(genericTx.inMessage.body)
     }
-    if (tx.inMessage?.init?.code) {
-      messageCells.push(tx.inMessage.init.code)
+    if (genericTx.inMessage?.init?.code) {
+      messageCells.push(genericTx.inMessage.init.code)
     }
     const contracts = await storage.knownContracts()
     for (const contract of contracts) {
-      if (contract.address.hash.equals(bigIntToBuffer(tx.address))) {
+      if (contract.address.hash.equals(bigIntToBuffer(genericTx.address))) {
         if (contract.accountState?.type === 'active') {
           if (contract.accountState.state.code) {
             messageCells.push(contract.accountState.state.code)
@@ -118,14 +142,26 @@ async function checkAndLoadLibraries(
 const initializeBlockchain = async (liteClient: LiteClient) => {
   const storage = new LiteClientBlockchainStorage(liteClient)
   const blockchain = await Blockchain.create({ storage })
+  setBlockchainVerbosityFull(blockchain)
+  blockchain.libs = megaLibsCell
+  return { storage, blockchain }
+}
+
+function setBlockchainVerbosityFull(blockchain: Blockchain) {
+  blockchain.verbosity = {
+    blockchainLogs: true,
+    vmLogs: 'vm_logs_full',
+    debugLogs: true,
+    print: false,
+  }
+}
+function setBlockchainVerbosityVerbose(blockchain: Blockchain) {
   blockchain.verbosity = {
     blockchainLogs: true,
     vmLogs: 'vm_logs_verbose',
     debugLogs: true,
     print: false,
   }
-  blockchain.libs = megaLibsCell
-  return { storage, blockchain }
 }
 
 export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
@@ -160,6 +196,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
 
         const shouldRestart = await checkAndLoadLibraries(
           tx as ParsedTransaction,
+          blockchain,
           storage,
           liteClient
         )

@@ -106,6 +106,11 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
           </div>
         </>
       )}
+      {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_internal_transfer' && (
+        <>
+          <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
+        </>
+      )}
       <div>
         <button
           onClick={() => {
