@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react'
 import { beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 import { parseInternal } from '@truecarry/tlb-abi'
-import { Blockchain } from '@ton/sandbox'
+import { Blockchain, BlockchainStorage } from '@ton/sandbox'
+import { bigIntToBuffer } from '@/utils/ton'
 
 const libs: Record<string, Buffer> = {}
 let megaLibsCell = beginCell().endCell()
@@ -16,7 +17,15 @@ async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
   while (toCheck.length > 0) {
     const current = toCheck.pop()
     if (current) {
+      for (const ref of current.refs) {
+        toCheck.push(ref)
+      }
       if (current.isExotic) {
+        const libSlice = current.beginParse(true)
+        const type = libSlice.loadUint(8)
+        if (type !== 0x02) {
+          continue
+        }
         const libHash = current.beginParse(true).skip(8).loadBuffer(32)
 
         if (libs[libHash.toString('hex')]) {
@@ -45,23 +54,24 @@ async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
         megaLibsCell = beginCell().storeDictDirect(libDict).endCell()
         libFound = true
       }
-      for (const ref of current.refs) {
-        toCheck.push(ref)
-      }
     }
   }
 
   return libFound
 }
 
-async function checkAndLoadLibraries(tx: ParsedTransaction, liteClient: LiteClient) {
+async function checkAndLoadLibraries(
+  tx: ParsedTransaction,
+  storage: BlockchainStorage,
+  liteClient: LiteClient
+) {
   if (
     tx.description.type === 'generic' &&
     tx.description.computePhase.type === 'vm' &&
     tx.description.computePhase.exitCode === 9 &&
     tx.vmLogs.includes('failed to load library cell')
   ) {
-    const cellRegex = / C{([A-Fb0-9]+)}/g
+    const cellRegex = /C{([A-Fb0-9]+)}/g
     const cellMatch = tx.vmLogs.matchAll(cellRegex)
     const hexes: Record<string, number> = {}
 
@@ -75,6 +85,27 @@ async function checkAndLoadLibraries(tx: ParsedTransaction, liteClient: LiteClie
         messageCells.push(cell)
       }
     }
+    if (tx.inMessage?.body) {
+      messageCells.push(tx.inMessage.body)
+    }
+    if (tx.inMessage?.init?.code) {
+      messageCells.push(tx.inMessage.init.code)
+    }
+    const contracts = await storage.knownContracts()
+    for (const contract of contracts) {
+      if (contract.address.hash.equals(bigIntToBuffer(tx.address))) {
+        if (contract.accountState?.type === 'active') {
+          if (contract.accountState.state.code) {
+            messageCells.push(contract.accountState.state.code)
+          }
+          // if (contract.accountState.state.data) {
+          //   messageCells.push(contract.accountState.state.data)
+          // }
+          // console.log('Contract', contract.address.toString())
+        }
+      }
+    }
+
     const libFound = await checkForLibraries(messageCells, liteClient)
     if (libFound) {
       console.log('lib found in init, restarting emulator')
@@ -94,7 +125,7 @@ const initializeBlockchain = async (liteClient: LiteClient) => {
     print: false,
   }
   blockchain.libs = megaLibsCell
-  return blockchain
+  return { storage, blockchain }
 }
 
 export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
@@ -121,13 +152,17 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
 
     let isStopped = false
 
-    const runEmulator = async (blockchain: Blockchain, msg: any) => {
+    const runEmulator = async (blockchain: Blockchain, storage: BlockchainStorage, msg: any) => {
       const iter = await blockchain.sendMessageIter(msg, { ignoreChksig: ignoreChecksig })
       const transactions: ParsedTransaction[] = []
       for await (const tx of iter) {
         if (isStopped) break
 
-        const shouldRestart = await checkAndLoadLibraries(tx as ParsedTransaction, liteClient)
+        const shouldRestart = await checkAndLoadLibraries(
+          tx as ParsedTransaction,
+          storage,
+          liteClient
+        )
         if (shouldRestart) return { transactions, shouldRestart }
 
         updateProgress()
@@ -155,8 +190,8 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
         // eslint-disable-next-line no-unmodified-loop-condition
         while (restart && !isStopped) {
           setInitialState()
-          const blockchain = await initializeBlockchain(liteClient)
-          const { transactions, shouldRestart } = await runEmulator(blockchain, msg)
+          const { blockchain, storage } = await initializeBlockchain(liteClient)
+          const { transactions, shouldRestart } = await runEmulator(blockchain, storage, msg)
           restart = shouldRestart
 
           if (!restart) {
