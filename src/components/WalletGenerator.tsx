@@ -176,7 +176,7 @@ function AddWalletPopup() {
   const [walletType, setWalletType] = useState<WalletType>('v5R1')
   const [walletAddress, setWalletAddress] = useState('')
   const [highloadV3Timeout, setHighloadV3Timeout] = useState(600)
-
+  const [walletName, setWalletName] = useState('')
   const changeWalletType = (type: string) => {
     setWalletType(type as WalletType)
     if (type === 'highload_v3') {
@@ -213,6 +213,7 @@ function AddWalletPopup() {
       keyId: selectedKey?.id.get() || 0,
       walletAddress: saveWalletAddress,
       extraData: JSON.stringify(extraData),
+      name: walletName || walletType,
     })
     close()
   }
@@ -230,6 +231,15 @@ function AddWalletPopup() {
           <AlertDialogHeader>
             <AlertDialogTitle>Wallet Settings</AlertDialogTitle>
             <AlertDialogDescription className={'flex flex-col gap-2'}>
+              <div className="flex items-center gap-2">
+                Wallet Name:
+                <Input
+                  type="text"
+                  value={walletName}
+                  onChange={(e) => setWalletName(e.target.value)}
+                />
+              </div>
+
               <div className="flex items-center gap-2">
                 Wallet Type:
                 <Select defaultValue={walletType} onValueChange={changeWalletType}>

@@ -128,16 +128,19 @@ export async function saveKeyAndWallets(
       type: 'v4R2',
       key_id: newWallet.id,
       subwallet_id: '698983191',
+      name: 'v4R2',
     },
     {
       type: 'v3R2',
       key_id: newWallet.id,
       subwallet_id: '698983191',
+      name: 'v3R2',
     },
     {
       type: 'highload',
       key_id: newWallet.id,
       subwallet_id: '1',
+      name: 'Highload V2',
     },
   ]
 
@@ -162,12 +165,14 @@ export async function CreateNewKeyWallet({
   keyId,
   walletAddress,
   extraData,
+  name,
 }: {
   type: WalletType
   subwalletId: bigint
   keyId: number
   walletAddress: string | null
   extraData: string | null
+  name?: string | null
 }) {
   const db = await getDatabase()
   const wallets = await db<SavedWallet>('wallets')
@@ -177,6 +182,7 @@ export async function CreateNewKeyWallet({
       subwallet_id: subwalletId.toString(),
       wallet_address: walletAddress,
       extra_data: extraData,
+      name,
     })
     .returning('*')
 
@@ -217,5 +223,15 @@ export async function DeleteKeyWallet(walletId: number) {
     })
     .delete()
 
+  await updateWalletsList()
+}
+
+export async function UpdateKeyWalletName(walletId: number, name: string) {
+  const db = await getDatabase()
+  await db<SavedWallet>('wallets')
+    .where({
+      id: walletId,
+    })
+    .update({ name })
   await updateWalletsList()
 }

@@ -20,6 +20,33 @@ import { getDatabase } from '@/db'
 import { LastSelectedWallets } from '@/types/connect'
 import { randomX25519 } from '@/utils/ed25519'
 import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
+import { Input } from '@/components/ui/input'
+import { Address } from '@ton/core'
+
+const optionsMatrix = {
+  bounceable: [true, false],
+  urlSafe: [true, false],
+  testOnly: [true, false],
+}
+const allOptionsPermutations = Object.keys(optionsMatrix).reduce(
+  (acc, key) => {
+    return acc.flatMap((a) => optionsMatrix[key].map((b) => ({ ...a, [key]: b })))
+  },
+  [{}]
+)
+function isWalletMatch(wallet: IWallet, query: string) {
+  const addressStringifiers = [
+    ...allOptionsPermutations.map((options) => (a: Address) => a.toString(options)),
+    (a: Address) => a.toRawString(),
+  ]
+  return (
+    wallet.type.toLowerCase().includes(query.toLowerCase()) ||
+    wallet.name?.toLowerCase().includes(query.toLowerCase()) ||
+    addressStringifiers.some((stringify) =>
+      stringify(wallet.address).toLowerCase().includes(query.toLowerCase())
+    )
+  )
+}
 
 export function TonConnectPopup() {
   const tonConnectState = useTonConnectState()
@@ -46,6 +73,7 @@ function ConnectPopupContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [chosenKeyId, setChosenKeyIdValue] = useState<number | undefined>()
   const [chosenWalletId, setChosenWalletId] = useState<number | undefined>()
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     tonConnectState.qrcodeOpen.set(false)
@@ -77,8 +105,28 @@ function ConnectPopupContent() {
   }, [connectLinkInfo])
 
   const chosenKey = useMemo(() => keys.find((k) => k.id.get() === chosenKeyId), [chosenKeyId, keys])
+
+  const filteredKeys = useMemo(() => {
+    if (!searchQuery) return keys
+
+    return keys.filter((k) => {
+      const keyWallets = k.wallets.get() || []
+      return (
+        k.name.get().toLowerCase().includes(searchQuery.toLowerCase()) ||
+        keyWallets.some((w) => {
+          const wallet = getWalletFromKey(liteClient, k.get(), w)
+          return wallet ? isWalletMatch(wallet, searchQuery) : false
+        })
+      )
+    })
+  }, [keys, searchQuery, liteClient])
+
   const wallets = useMemo<IWallet[]>(() => {
     if (!chosenKey?.public_key) {
+      return []
+    }
+
+    if (!filteredKeys.some((k) => k.id.get() === chosenKey.id.get())) {
       return []
     }
 
@@ -93,11 +141,21 @@ function ConnectPopupContent() {
       }) || []
 
     return wallets
-  }, [chosenKey, chosenKey?.wallets, liteClient])
+  }, [chosenKey, chosenKey?.wallets, liteClient, filteredKeys])
   const chosenWallet = useMemo(
     () => wallets.find((w) => w.id === chosenWalletId),
     [wallets, chosenWalletId]
   )
+
+  const filteredWallets = useMemo(() => {
+    if (!searchQuery || !wallets) return wallets
+
+    const filtered = wallets.filter((w) => isWalletMatch(w, searchQuery))
+    if (filtered.length === 0) {
+      return wallets
+    }
+    return filtered
+  }, [wallets, searchQuery])
 
   const setChosenKeyId = (v: number | undefined, walletId?: number) => {
     setChosenKeyIdValue(v)
@@ -149,87 +207,100 @@ function ConnectPopupContent() {
   }, [chosenKey, chosenWallet, connectLinkInfo])
 
   return (
-    <div className={'relative overflow-hidden my-8 max-h-[768px]'}>
-      <div className="grid grid-rows-[auto_minmax(200px, 0px)_auto] h-full items-center relative bg-background border rounded-xl">
-        <div className="w-full flex flex-col items-center pt-4 pb-4 border-b border-gray-500/50">
-          {connectLinkInfo ? (
-            <>
-              {connectLinkInfo.iconUrl ? (
-                <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
-              ) : (
+    <div className="relative overflow-hidden my-8 max-h-[768px] h-full">
+      <div className="h-full relative bg-background border rounded-xl flex flex-col">
+        <div className="flex-none w-full flex flex-col items-center border-b border-gray-500/50">
+          <div className="p-4 w-full flex flex-col items-center">
+            {connectLinkInfo ? (
+              <>
+                {connectLinkInfo.iconUrl ? (
+                  <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
+                ) : (
+                  <div className="blur-sm w-16 h-16 rounded-full bg-stone-800" />
+                )}
+                <div className="mt-2">
+                  <b>{connectLinkInfo.name}</b> wants to connect to your wallet
+                </div>
+                <a href={connectLinkInfo.url} target="_blank">
+                  {connectLinkInfo.url}
+                </a>
+              </>
+            ) : (
+              <>
                 <div className="blur-sm w-16 h-16 rounded-full bg-stone-800" />
-              )}
-              <div className="mt-2">
-                <b>{connectLinkInfo.name}</b> wants to connect to your wallet
-              </div>
-              <a href={connectLinkInfo.url} target="_blank">
-                {connectLinkInfo.url}
-              </a>
-            </>
-          ) : (
-            <>
-              <div className="blur-sm w-16 h-16 rounded-full bg-stone-800" />
-              <div className="mt-2">
-                <b className="blur-sm">Wallet</b> wants to connect to your wallet
-              </div>
-              <div className="text-accent blur-sm">https://wallet.link</div>
-            </>
-          )}
+                <div className="mt-2">
+                  <b className="blur-sm">Wallet</b> wants to connect to your wallet
+                </div>
+                <div className="text-accent blur-sm">https://wallet.link</div>
+              </>
+            )}
+          </div>
+
+          <div className="w-full px-4 pb-4">
+            <Input
+              type="text"
+              placeholder="Search by address/name/type..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full"
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-h-0 h-full overflow-y-scroll p-2">
-          <Block className="flex flex-col gap-2 h-min">
-            {keys.map((k) => {
-              return (
-                <div
-                  onClick={() => setChosenKeyId(k.id.get())}
-                  className={cn(
-                    'flex flex-shrink-0 flex-wrap items-center p-2 rounded',
-                    'text-center cursor-pointer hover:bg-gray-600 h-12',
-                    k.id.get() === chosenKeyId && '!bg-gray-500'
-                  )}
-                  key={k.id.get()}
-                >
-                  <KeyJazzicon walletKey={k} diameter={24} />
-                  <div className="text-foreground ml-2">{k.name.get()}</div>
-                </div>
-              )
-            })}
-          </Block>
-
-          {chosenKeyId && (
-            <>
-              <Block className="flex flex-col p-2 w-full gap-2 h-min">
-                {wallets?.map((w) => {
+        <div className="flex-1 min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 h-full p-2">
+            <Block className="flex flex-col p-2 h-full overflow-hidden">
+              <div className="flex-1 overflow-y-auto">
+                {filteredKeys.map((k) => {
                   return (
                     <div
-                      onClick={() => setChosenWalletId(w.id)}
+                      onClick={() => setChosenKeyId(k.id.get())}
                       className={cn(
-                        'flex flex-shrink-0 flex-wrap items-center justify-start',
-                        'p-2 rounded gap-2 hover:bg-gray-600 h-12 cursor-pointer',
-                        w.id === chosenWalletId && '!bg-gray-500'
+                        'flex flex-shrink-0 flex-wrap items-center p-2 rounded mb-2',
+                        'text-center cursor-pointer hover:bg-gray-600 h-12',
+                        k.id.get() === chosenKeyId && '!bg-gray-500'
                       )}
-                      key={w.id}
+                      key={k.id.get()}
                     >
-                      <WalletJazzicon wallet={w} diameter={24} />
-                      <div className="text-foreground">{w.type}</div>
-                      <AddressRow
-                        containerClassName="w-28"
-                        address={w.address}
-                        disableCopy={true}
-                      />
+                      <KeyJazzicon walletKey={k} diameter={24} />
+                      <div className="text-foreground ml-2">{k.name.get()}</div>
                     </div>
                   )
                 })}
+              </div>
+            </Block>
+
+            {chosenKeyId && filteredWallets.length > 0 && (
+              <Block className="flex flex-col p-2 h-full overflow-hidden">
+                <div className="flex-1 overflow-y-auto">
+                  {filteredWallets?.map((w) => {
+                    return (
+                      <div
+                        onClick={() => setChosenWalletId(w.id)}
+                        className={cn(
+                          'flex flex-shrink-0 flex-wrap items-center justify-start',
+                          'p-2 rounded gap-2 hover:bg-gray-600 h-12 cursor-pointer mb-2',
+                          w.id === chosenWalletId && '!bg-gray-500'
+                        )}
+                        key={w.id}
+                      >
+                        <WalletJazzicon wallet={w} diameter={24} />
+                        <div className="text-foreground">{w.name || w.type}</div>
+                        <AddressRow
+                          containerClassName="flex-1 min-w-0"
+                          address={w.address}
+                          disableCopy={true}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
               </Block>
-            </>
-          )}
+            )}
+          </div>
         </div>
 
-        <div
-          className="w-full flex flex-shrink-0 justify-center gap-4
-          items-center border-t border-gray-500/50 self-end py-4"
-        >
+        <div className="flex-none w-full flex justify-center gap-4 items-center border-t border-gray-500/50 p-4">
           <BlueButton variant={'outline'} onClick={closeTonConnectPopup}>
             Cancel
           </BlueButton>

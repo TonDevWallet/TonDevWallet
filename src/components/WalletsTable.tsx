@@ -1,12 +1,17 @@
 import { useLiteclient, useLiteclientState } from '@/store/liteClient'
-import { DeleteKeyWallet } from '@/store/walletsListState'
+import { DeleteKeyWallet, UpdateKeyWalletName } from '@/store/walletsListState'
 import { setSelectedWallet } from '@/store/walletState'
 import { useSelectedTonWallet } from '@/utils/wallets'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { IWallet } from '@/types'
 import { AddressRow } from './AddressRow'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrashCan, faArrowRight, faShareFromSquare } from '@fortawesome/free-solid-svg-icons'
+import {
+  faTrashCan,
+  faArrowRight,
+  faShareFromSquare,
+  faFileEdit,
+} from '@fortawesome/free-solid-svg-icons'
 import { WalletJazzicon } from './WalletJazzicon'
 import { Address } from '@ton/core'
 import {
@@ -30,6 +35,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { cn } from '@/utils/cn'
+import { Input } from '@/components/ui/input'
 
 // const defaultHighloadId = 1
 // const defaultTonWalletId = 698983191
@@ -41,6 +47,23 @@ const deleteWallet = (walletId: number) => {
 function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolean }) {
   const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
   const liteClient = useLiteclient()
+  const [isEditing, setIsEditing] = useState(false)
+  const [name, setName] = useState(wallet.name || '')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleNameSubmit = async () => {
+    await UpdateKeyWalletName(wallet.id, name)
+    setIsEditing(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleNameSubmit()
+    } else if (e.key === 'Escape') {
+      setIsEditing(false)
+      setName(wallet.name || '')
+    }
+  }
 
   const [balance, setBalance] = useState('')
   const updateBalance = async () => {
@@ -65,21 +88,46 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
     <Card className={cn(isSelected && 'bg-accent')}>
       <CardHeader>
         <CardTitle className={'flex items-center justify-between'}>
+          <div className="flex items-center h-9">
+            <WalletJazzicon wallet={wallet} className="mr-2" />
+            {isEditing ? (
+              <Input
+                ref={inputRef}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onBlur={handleNameSubmit}
+                className="w-48 border-primary"
+                autoFocus
+              />
+            ) : (
+              <div className="flex items-center gap-2">
+                <span>{name || `Wallet ${wallet.type}`}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="h-6 w-6 p-0"
+                >
+                  <FontAwesomeIcon icon={faFileEdit} className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
           <a
             href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }))}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center h-9"
+            className="ml-2"
           >
-            <WalletJazzicon wallet={wallet} className="mr-2" />
-            Wallet {wallet.type}
-            <FontAwesomeIcon icon={faShareFromSquare} className="ml-2" />
+            <FontAwesomeIcon icon={faShareFromSquare} />
           </a>
         </CardTitle>
         <CardDescription>
           Balance: {balance ? parseFloat(balance) / 10 ** 9 : 0} TON
         </CardDescription>
         <CardDescription>Subwallet ID: {wallet.subwalletId.toString()}</CardDescription>
+        <CardDescription>Wallet Type: {wallet.type}</CardDescription>
         {wallet.type === 'highload_v3' && (
           <CardDescription>Timeout: {wallet.timeout} seconds</CardDescription>
         )}

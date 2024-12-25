@@ -75,6 +75,7 @@ export function getWalletFromKey(
       key: encryptedData,
       id: wallet.id,
       subwalletId: parseInt(wallet.subwallet_id),
+      name: wallet.name,
     }
     return result
   } else if (wallet.type === 'highload_v2r2') {
@@ -91,6 +92,7 @@ export function getWalletFromKey(
       key: encryptedData,
       id: wallet.id,
       subwalletId: parseInt(wallet.subwallet_id),
+      name: wallet.name,
     }
     return result
   } else if (wallet.type === 'highload_v3') {
@@ -116,6 +118,7 @@ export function getWalletFromKey(
       id: wallet.id,
       subwalletId: parseInt(wallet.subwallet_id),
       timeout,
+      name: wallet.name,
     }
     return result
   } else if (wallet.type === 'v3R2') {
@@ -134,6 +137,7 @@ export function getWalletFromKey(
       key: encryptedData,
       id: wallet.id,
       subwalletId: parseInt(wallet.subwallet_id),
+      name: wallet.name,
     }
     return result
   } else if (wallet.type === 'multisig_v2_v4r2') {
@@ -159,6 +163,7 @@ export function getWalletFromKey(
       key: encryptedData,
       id: wallet.id,
       subwalletId: parseInt(wallet.subwallet_id),
+      name: wallet.name,
     }
     return result
   } else if (wallet.type === 'v4R2') {
@@ -177,6 +182,7 @@ export function getWalletFromKey(
       key: encryptedData,
       id: wallet.id,
       subwalletId: parseInt(wallet.subwallet_id),
+      name: wallet.name,
     }
     return result
   } else if (wallet.type === 'v5R1') {
@@ -204,6 +210,7 @@ export function getWalletFromKey(
       key: encryptedData,
       id: wallet.id,
       subwalletId: BigInt(wallet.subwallet_id),
+      name: wallet.name,
     }
     return result
   }

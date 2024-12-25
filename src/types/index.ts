@@ -31,6 +31,7 @@ export interface ITonWalletV3 {
   key: EncryptedWalletData
   id: number
   subwalletId: number
+  name?: string | null
 }
 
 export interface ITonWalletV4 {
@@ -41,6 +42,7 @@ export interface ITonWalletV4 {
   key: EncryptedWalletData
   id: number
   subwalletId: number
+  name?: string | null
 }
 
 export interface ITonWalletV5 {
@@ -51,6 +53,7 @@ export interface ITonWalletV5 {
   key: EncryptedWalletData
   id: number
   subwalletId: bigint
+  name?: string | null
 }
 
 export interface ITonHighloadWalletV2 {
@@ -61,6 +64,7 @@ export interface ITonHighloadWalletV2 {
   key: EncryptedWalletData
   id: number
   subwalletId: number
+  name?: string | null
 }
 
 export interface ITonHighloadWalletV2R2 {
@@ -71,6 +75,7 @@ export interface ITonHighloadWalletV2R2 {
   key: EncryptedWalletData
   id: number
   subwalletId: number
+  name?: string | null
 }
 
 export interface ITonHighloadWalletV3 {
@@ -82,6 +87,7 @@ export interface ITonHighloadWalletV3 {
   id: number
   subwalletId: number
   timeout: number
+  name?: string | null
 }
 
 export interface ITonMultisigWalletV2V4R2 {
@@ -92,11 +98,13 @@ export interface ITonMultisigWalletV2V4R2 {
   key: EncryptedWalletData
   id: number
   subwalletId: number
+  name?: string | null
 }
 
 export interface ITonExternalWallet {
   type: 'external'
   id: string
+  name?: string | null
 }
 
 export type ITonWallet = ITonWalletV3 | ITonWalletV4 | ITonWalletV5
@@ -123,4 +131,5 @@ export interface SavedWallet {
   subwallet_id: string
   wallet_address?: string | null
   extra_data?: string | null // json object with wallet specific data
+  name?: string | null
 }

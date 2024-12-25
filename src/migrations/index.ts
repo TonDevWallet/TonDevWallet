@@ -18,3 +18,4 @@ export * as m_16_fix_connect_sessions_foreign_keys from './16_fix_connect_sessio
 export * as m_17_fix_last_selected_wallets_foreign_keys from './17_fix_last_selected_wallets_foreign_keys'
 export * as m_18_change_subwallet_id_type from './18_change_subwallet_id_type'
 export * as m_19_add_wallet_extra_data from './19_add_wallet_extra_data'
+export * as m_20_add_wallet_name from './20_add_wallet_name'
