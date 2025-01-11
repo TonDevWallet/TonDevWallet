@@ -2,7 +2,7 @@ import { useSeed } from '@/hooks/useKeyPair'
 import { saveKeyFromData } from '@/store/walletsListState'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mnemonicValidate, mnemonicToSeed } from '@ton/crypto'
+import { mnemonicToSeed } from '@ton/crypto'
 import Copier from '../copier'
 import { cn } from '@/utils/cn'
 import { Textarea } from '../ui/textarea'
@@ -21,10 +21,11 @@ export function FromMnemonic() {
       setWords(e.target.value)
       const mnemonic = e.target.value.split(' ')
 
-      if (await mnemonicValidate(mnemonic)) {
-        const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
-        setSeed(ls)
-      }
+      // debugger
+      // if (await mnemonicValidate(mnemonic)) {
+      const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
+      setSeed(ls)
+      // }
     } catch (e) {
       console.log('onWordsChange error', e)
     }
