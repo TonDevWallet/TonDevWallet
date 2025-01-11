@@ -2,12 +2,22 @@ import { useSeed } from '@/hooks/useKeyPair'
 import { saveKeyFromData } from '@/store/walletsListState'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mnemonicToSeed } from '@ton/crypto'
+import { keyPairFromSeed, mnemonicToSeed } from '@ton/crypto'
 import Copier from '../copier'
 import { cn } from '@/utils/cn'
 import { Textarea } from '../ui/textarea'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
+import { mnemonicToSeed as bip39MnemonicToSeed, validateMnemonic as validBip39Mnemonic } from 'bip39'
+import {deriveEd25519Path} from '@ton/crypto'
+
+
+async function bip39ToPrivateKey(mnemonic: string[]) {
+  const seed = await bip39MnemonicToSeed(mnemonic.join(' '))
+  const TON_DERIVATION_PATH = [44, 607, 0]
+  const seedContainer = await deriveEd25519Path(seed, TON_DERIVATION_PATH)
+  return keyPairFromSeed(seedContainer.subarray(0,32))
+}
 
 export function FromMnemonic() {
   const navigate = useNavigate()
@@ -15,22 +25,28 @@ export function FromMnemonic() {
   const [name, setName] = useState('')
   const [words, setWords] = useState('')
   const [seed, setSeed] = useState<Buffer | undefined>()
+  const [mnemonicType, setMnemonicType] = useState<'bip39' | 'ton'>('ton')
 
   const onWordsChange = async (e: any) => {
     try {
       setWords(e.target.value)
       const mnemonic = e.target.value.split(' ')
 
-      // debugger
-      // if (await mnemonicValidate(mnemonic)) {
-      const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
-      setSeed(ls)
-      // }
+
+      if (mnemonicType === 'bip39') {
+        const ls = await bip39ToPrivateKey(mnemonic)
+        setSeed(ls.secretKey.subarray(0, 32))
+      } else {
+        const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
+        setSeed(ls)
+      }
+
     } catch (e) {
       console.log('onWordsChange error', e)
     }
   }
 
+  
   const walletKeyPair = useSeed(seed)
 
   const saveSeed = async () => {
@@ -43,17 +59,45 @@ export function FromMnemonic() {
 
   return (
     <div>
-      <div className="flex flex-col">
-        <label htmlFor="mnemonicInput">Mnemonic</label>
-        <Textarea
-          className="w-3/4 h-24 outline-none border p-1"
-          id="mnemonicInput"
-          onChange={onWordsChange}
-          value={words}
-          spellCheck={false}
-          autoFocus
-        />
-        {/* <input type="text" id="mnemonicInput" className="border rounded p-2 w-96" /> */}
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-4 items-center">
+          <label className="text-sm font-medium">Mnemonic Type:</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="mnemonicType"
+                value="ton"
+                checked={mnemonicType === 'ton'}
+                onChange={(e) => setMnemonicType(e.target.value as 'ton' | 'bip39')}
+              />
+              TON
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="mnemonicType"
+                value="bip39"
+                checked={mnemonicType === 'bip39'}
+                onChange={(e) => setMnemonicType(e.target.value as 'ton' | 'bip39')}
+              />
+              BIP39
+            </label>
+          </div>
+        </div>
+
+        <div className="flex flex-col">
+          <label htmlFor="mnemonicInput">Mnemonic</label>
+          <Textarea
+            className="w-3/4 h-24 outline-none border p-1"
+            id="mnemonicInput"
+            onChange={onWordsChange}
+            value={words}
+            spellCheck={false}
+            autoFocus
+          />
+          {/* <input type="text" id="mnemonicInput" className="border rounded p-2 w-96" /> */}
+        </div>
       </div>
 
       {seed && (
