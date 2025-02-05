@@ -47,7 +47,8 @@ export const MessageRow = memo(function MessageRow({
   const password = usePassword().password.get()
 
   const amountOut =
-    Number(s?.payload?.get()?.messages?.reduce((acc, c) => acc + BigInt(c.amount), 0n)) / 10 ** 9
+    Number(s?.payload?.get()?.messages?.reduce((acc, c) => acc + BigInt(c.amount ?? 0), 0n)) /
+    10 ** 9
 
   const key = useMemo(() => {
     return keys.find((k) => k.id.get() === s.key_id.get())
