@@ -1,6 +1,6 @@
 import { bigIntToBuffer } from '@/utils/ton'
 import { memo } from 'react'
-import { Handle, Position } from 'reactflow'
+import { Handle, Position } from '@xyflow/react'
 import { Address, beginCell, storeTransaction } from '@ton/core'
 import { AddressRow } from '../AddressRow'
 import { TxNodeData } from './MessageFlow'
@@ -111,6 +111,16 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
           <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
         </>
       )}
+      {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_burn' && (
+        <>
+          <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
+          <div>
+            Custom Payload:{' '}
+            {tx.parsed.data.custom_payload?.kind === 'Maybe_just' &&
+              tx.parsed.data.custom_payload.value.data.toBoc().toString('hex')}
+          </div>
+        </>
+      )}
       <div>
         <button
           onClick={() => {
@@ -139,13 +149,20 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
         </button>
       </div>
 
-      <Handle type="target" position={Position.Top} draggable={false} isConnectable={false} />
+      <Handle
+        type="target"
+        position={Position.Left}
+        draggable={false}
+        isConnectable={false}
+        id="b"
+      />
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         isConnectable={false}
         draggable={false}
         className=""
+        id="a"
       ></Handle>
     </div>
   )

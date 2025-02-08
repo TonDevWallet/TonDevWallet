@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import ReactFlow, {
+import {
   Controls,
   Background,
   useNodesState,
@@ -8,13 +8,11 @@ import ReactFlow, {
   Node,
   Edge,
   ReactFlowInstance,
-  // FlowElement as IFlowElement,
-  // OnLoadFunc as TOnLoadFunc,
-  // OnLoadParams as TReactFlowInstance,
-} from 'reactflow'
+  ReactFlow,
+} from '@xyflow/react'
 import ELK from 'elkjs/lib/elk.bundled'
 
-import 'reactflow/dist/style.css'
+import '@xyflow/react/dist/style.css'
 import { TxEdge } from './TxEdge'
 import { TxNode } from './TxNode'
 import { ParsedTransaction } from '@/utils/ManagedBlockchain'
@@ -42,9 +40,9 @@ export function MessageFlow({
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
-  const instanceRef = useRef<ReactFlowInstance | null>(null)
+  const instanceRef = useRef<ReactFlowInstance<any, any> | null>(null)
 
-  const onLoad = (reactFlowInstance: ReactFlowInstance) => {
+  const onLoad = (reactFlowInstance: ReactFlowInstance<any, any>) => {
     instanceRef.current = reactFlowInstance
   }
 
@@ -58,7 +56,7 @@ export function MessageFlow({
       transactions[i].id = i
     }
 
-    const nodes: Node<any, string | undefined>[] = []
+    const nodes: Node<any, string>[] = []
     const edges: Edge<any>[] = []
 
     const elk = new ELK()
@@ -74,8 +72,9 @@ export function MessageFlow({
     } = {
       id: 'root',
       layoutOptions: {
-        'elk.algorithm': 'mrtree',
+        'elk.algorithm': 'layered',
         'org.eclipse.elk.spacing.nodeNode': 10,
+        'elk.layered.spacing.nodeNodeBetweenLayers': '200',
       },
       children: [],
       edges: [],
@@ -158,15 +157,18 @@ export function MessageFlow({
           })
         }
 
-        setNodes(nodes)
-        setEdges(edges)
+        setNodes(nodes as any)
+        setEdges(edges as any)
         setTimeout(() => {
           instanceRef.current?.fitView()
         }, 64)
       })
   }, [_txes, _txes?.length, instanceRef])
 
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge(params, eds) as any),
+    [setEdges]
+  )
 
   return (
     <ReactFlow
@@ -179,7 +181,7 @@ export function MessageFlow({
       edgeTypes={edgeTypes}
       minZoom={0.1}
       fitView
-      onInit={onLoad}
+      onInit={onLoad as any}
     >
       <Controls />
       <Background />
@@ -194,7 +196,7 @@ function getTxHeight(tx: ParsedTransaction) {
   }
 
   if (tx?.parsed?.internal === 'jetton_transfer') {
-    start += 120
+    start += 70
   }
 
   return start

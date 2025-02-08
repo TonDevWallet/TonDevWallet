@@ -7,9 +7,11 @@ import DoneSvg from './icons/done'
 export default function Copier({
   text,
   className = 'w-6 h-6',
+  style,
 }: {
   text: string
   className?: string
+  style?: React.CSSProperties
 }) {
   const [copied, setCopied] = useState(false)
 
@@ -22,7 +24,7 @@ export default function Copier({
   }
 
   return (
-    <button className={className} onClick={pressCopy}>
+    <button className={className} onClick={pressCopy} style={style}>
       {copied ? <DoneSvg /> : <CopySvg className="text-red" />}
     </button>
   )

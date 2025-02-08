@@ -1,9 +1,10 @@
 import { cn } from '@/utils/cn'
 import { bigIntToBuffer } from '@/utils/ton'
 import { FC } from 'react'
-import { EdgeProps, getBezierPath, EdgeLabelRenderer } from 'reactflow'
+import { EdgeProps, getBezierPath, EdgeLabelRenderer, BaseEdge } from '@xyflow/react'
 import { Address } from '@ton/core'
 import { GraphTx } from './MessageFlow'
+import Copier from '../copier'
 
 export const TxEdge: FC<EdgeProps> = ({
   id,
@@ -24,8 +25,8 @@ export const TxEdge: FC<EdgeProps> = ({
     targetPosition,
   })
 
-  const from = data.from as GraphTx
-  const to = data.to as GraphTx
+  const from = data?.from as GraphTx
+  const to = data?.to as GraphTx
 
   const toInMessage = to.inMessage?.info
 
@@ -43,26 +44,51 @@ export const TxEdge: FC<EdgeProps> = ({
     return <></>
   }
 
-  const rootAddress = new Address(0, bigIntToBuffer(data.rootTx.address))
+  const rootAddress = new Address(0, bigIntToBuffer((data?.rootTx as any)?.address))
   const fromAddress = new Address(0, bigIntToBuffer(from.address))
   const toAddress = outMessage.info.dest
 
+  const tonAmount = Number(outMessage?.info.value.coins) / 10 ** 9
+
   return (
     <>
-      <path id={id} className="react-flow__edge-path" d={edgePath} />
+      <BaseEdge id={id} path={edgePath} />
+      {/* <path id={id} className="react-flow__edge-path" d={edgePath} /> */}
+      {/* <EdgeLabelRenderer>
+        <button
+          style={{
+            position: 'absolute',
+            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            pointerEvents: 'all',
+          }}
+          className="nodrag nopan"
+          onClick={() => {
+            console.log('test')
+            // setEdges((es) => es.filter((e) => e.id !== id))
+          }}
+        >
+          delete
+        </button>
+      </EdgeLabelRenderer> */}
       <EdgeLabelRenderer>
         <div
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            pointerEvents: 'all',
           }}
           className={cn(
-            'nodrag nopan p-2 rounded bg-foreground text-background',
+            'nodrag nopan p-2 rounded bg-foreground text-background flex items-center gap-2',
             rootAddress.equals(fromAddress) && 'bg-red-500 text-foreground',
             rootAddress.equals(toAddress) && 'bg-green-700 text-foreground'
           )}
         >
-          {Number(outMessage?.info.value.coins) / 10 ** 9} TON
+          <span>{tonAmount} TON</span>
+          <Copier
+            className="w-4 h-4"
+            text={tonAmount.toString()}
+            style={{ pointerEvents: 'all' }}
+          />
         </div>
       </EdgeLabelRenderer>
     </>
