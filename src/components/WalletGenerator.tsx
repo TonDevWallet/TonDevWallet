@@ -270,19 +270,27 @@ function AddWalletPopup() {
                       <SelectItem value="highload_v2r2">Highload V2R2</SelectItem>
                       <SelectItem value="highload_v3">Highload V3</SelectItem>
                       <SelectItem value="multisig_v2_v4r2">MultisigV2 + V4R2</SelectItem>
+                      <SelectItem value="v3R1">v3R1</SelectItem>
+                      <SelectItem value="v2R2">v2R2</SelectItem>
+                      <SelectItem value="v2R1">v2R1</SelectItem>
+                      <SelectItem value="v1R3">v1R3</SelectItem>
+                      <SelectItem value="v1R2">v1R2</SelectItem>
+                      <SelectItem value="v1R1">v1R1</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="flex items-center gap-2">
-                SubwalletId:{' '}
-                <Input
-                  type="number"
-                  ref={subwalletIdRef}
-                  defaultValue={workchainId === '-1' ? 698983190 : 698983191}
-                />
-              </div>
+              {!walletType.startsWith('v1') && !walletType.startsWith('v2') && (
+                <div className="flex items-center gap-2">
+                  SubwalletId:{' '}
+                  <Input
+                    type="number"
+                    ref={subwalletIdRef}
+                    defaultValue={workchainId === '-1' ? 698983190 : 698983191}
+                  />
+                </div>
+              )}
 
               {walletType !== 'multisig_v2_v4r2' && (
                 <div className="flex items-center gap-2">

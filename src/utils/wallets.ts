@@ -12,20 +12,27 @@ import {
   ITonHighloadWalletV2R2,
   ITonHighloadWalletV3,
   ITonMultisigWalletV2V4R2,
+  ITonWalletsV1,
+  ITonWalletV1R1,
+  ITonWalletV1R2,
+  ITonWalletV1R3,
+  ITonWalletV2R1,
+  ITonWalletV2R2,
   ITonWalletV3,
+  ITonWalletV3R1,
   ITonWalletV4,
   ITonWalletV5,
   IWallet,
   OpenedContract,
-  SavedWallet,
-} from '@/types'
+  SavedWallet
+} from "@/types";
 import { Key } from '@/types/Key'
 import { ImmutableObject } from '@hookstate/core'
 import { useEffect, useMemo, useState } from 'react'
 import {
   Address,
   beginCell,
-  Cell,
+  Cell, Contract,
   contractAddress,
   Dictionary,
   external,
@@ -35,10 +42,19 @@ import {
   SendMode,
   StateInit,
   storeMessage,
-  toNano,
-} from '@ton/core'
+  toNano
+} from "@ton/core";
 
-import { WalletContractV3R2, WalletContractV4 } from '@ton/ton'
+import {
+  WalletContractV1R1,
+  WalletContractV1R2,
+  WalletContractV1R3,
+  WalletContractV2R1,
+  WalletContractV2R2,
+  WalletContractV3R1,
+  WalletContractV3R2,
+  WalletContractV4,
+} from '@ton/ton'
 import { KeyPair, sign } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV3'
@@ -120,6 +136,110 @@ export function getWalletFromKey(
       id: wallet.id,
       subwalletId: parseInt(wallet.subwallet_id),
       timeout,
+      name: wallet.name,
+    }
+    return result
+  } else if (wallet.type === 'v1R1') {
+    const tonWallet = liteClient.open(
+      WalletContractV1R1.create({
+        workchain: workchainId,
+        publicKey: Buffer.from(key.public_key, 'base64'),
+      })
+    )
+    const result: ITonWalletV1R1 = {
+      type: 'v1R1',
+      address: tonWallet.address,
+      wallet: tonWallet,
+      getExternalMessageCell: getExternalMessageCellFromTonWalletV1(tonWallet),
+      key: encryptedData,
+      id: wallet.id,
+      name: wallet.name,
+    }
+    return result
+  } else if (wallet.type === 'v1R2') {
+    const tonWallet = liteClient.open(
+      WalletContractV1R2.create({
+        workchain: workchainId,
+        publicKey: Buffer.from(key.public_key, 'base64'),
+      })
+    )
+    const result: ITonWalletV1R2 = {
+      type: 'v1R2',
+      address: tonWallet.address,
+      wallet: tonWallet,
+      getExternalMessageCell: getExternalMessageCellFromTonWalletV1(tonWallet),
+      key: encryptedData,
+      id: wallet.id,
+      name: wallet.name,
+    }
+    return result
+  } else if (wallet.type === 'v1R3') {
+    const tonWallet = liteClient.open(
+      WalletContractV1R3.create({
+        workchain: workchainId,
+        publicKey: Buffer.from(key.public_key, 'base64'),
+      })
+    )
+    const result: ITonWalletV1R3 = {
+      type: 'v1R3',
+      address: tonWallet.address,
+      wallet: tonWallet,
+      getExternalMessageCell: getExternalMessageCellFromTonWalletV1(tonWallet),
+      key: encryptedData,
+      id: wallet.id,
+      name: wallet.name,
+    }
+    return result
+  } else if (wallet.type === 'v2R1') {
+    const tonWallet = liteClient.open(
+      WalletContractV2R1.create({
+        workchain: workchainId,
+        publicKey: Buffer.from(key.public_key, 'base64'),
+      })
+    )
+    const result: ITonWalletV2R1 = {
+      type: 'v2R1',
+      address: tonWallet.address,
+      wallet: tonWallet,
+      getExternalMessageCell: getExternalMessageCellFromTonWallet(tonWallet),
+      key: encryptedData,
+      id: wallet.id,
+      name: wallet.name,
+    }
+    return result
+  } else if (wallet.type === 'v2R2') {
+    const tonWallet = liteClient.open(
+      WalletContractV2R2.create({
+        workchain: workchainId,
+        publicKey: Buffer.from(key.public_key, 'base64'),
+      })
+    )
+    const result: ITonWalletV2R2 = {
+      type: 'v2R2',
+      address: tonWallet.address,
+      wallet: tonWallet,
+      getExternalMessageCell: getExternalMessageCellFromTonWallet(tonWallet),
+      key: encryptedData,
+      id: wallet.id,
+      name: wallet.name,
+    }
+    return result
+  } else if (wallet.type === 'v3R1') {
+    const tonWallet = liteClient.open(
+      WalletContractV3R1.create({
+        workchain: workchainId,
+        publicKey: Buffer.from(key.public_key, 'base64'),
+        walletId: parseInt(wallet.subwallet_id),
+      })
+    )
+    const result: ITonWalletV3R1 = {
+      type: 'v3R1',
+      address: tonWallet.address,
+      wallet: tonWallet,
+      getExternalMessageCell: getExternalMessageCellFromTonWallet(tonWallet),
+      key: encryptedData,
+      id: wallet.id,
+      subwalletId: parseInt(wallet.subwallet_id),
       name: wallet.name,
     }
     return result
@@ -289,8 +409,52 @@ function getExternalMessageCellFromHighloadV3(wallet: HighloadWalletV3): GetExte
   }
 }
 
+function getExternalMessageCellFromTonWalletV1(
+  wallet: OpenedContract<WalletContractV1R1 | WalletContractV1R2 | WalletContractV1R3>
+): GetExternalMessageCell {
+  return async (keyPair: KeyPair, transfers: WalletTransfer[]) => {
+    if (keyPair.secretKey.length === 32) {
+      keyPair.secretKey = Buffer.concat([
+        Uint8Array.from(keyPair.secretKey),
+        Uint8Array.from(keyPair.publicKey),
+      ])
+    }
+    if (transfers.length > 1) {
+      throw new Error('V1 wallets can send only one message at a time')
+    }
+    const m = transfers[0]
+    const msg = internal({
+      body: m.body,
+      to: m.destination,
+      value: m.amount,
+      bounce: m.bounce,
+    })
+    if (m.state) {
+      msg.init = loadStateInit(m.state.asSlice())
+    }
+    const transfer = wallet.createTransfer({
+      seqno: await wallet.getSeqno(),
+      secretKey: keyPair.secretKey,
+      message: msg,
+      sendMode: SendMode.IGNORE_ERRORS | SendMode.PAY_GAS_SEPARATELY,
+    })
+    const ext = external({
+      to: wallet.address,
+      init: wallet.init,
+      body: transfer,
+    })
+    return beginCell().store(storeMessage(ext)).endCell()
+  }
+}
+
 function getExternalMessageCellFromTonWallet(
-  wallet: OpenedContract<WalletContractV3R2 | WalletContractV4>
+  wallet: OpenedContract<
+    | WalletContractV2R1
+    | WalletContractV2R2
+    | WalletContractV3R1
+    | WalletContractV3R2
+    | WalletContractV4
+  >
 ): GetExternalMessageCell {
   return async (keyPair: KeyPair, transfers: WalletTransfer[]) => {
     if (keyPair.secretKey.length === 32) {

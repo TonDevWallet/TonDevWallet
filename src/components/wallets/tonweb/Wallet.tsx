@@ -76,9 +76,8 @@ function Wallet() {
           </div>
         </div>
       </Block>
-
-      <SendTon seqno={seqno} wallet={wallet} updateBalance={updateBalance} />
-
+      <SendTon wallet={wallet} /> {/* TODO: seqno and updateBalance do not exist on SendTon */}
+      {/* <SendTon seqno={seqno} wallet={wallet} updateBalance={updateBalance} /> */}
       {/* <SendNft seqno={seqno} wallet={wallet} updateBalance={updateBalance} /> */}
     </div>
   )

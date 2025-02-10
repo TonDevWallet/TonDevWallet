@@ -5,7 +5,16 @@ import {
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import { EncryptedWalletData } from '@/store/passwordManager'
 import type { Address, MessageRelaxed, SendMode, ContractProvider, Cell } from '@ton/core'
-import type { WalletContractV4, WalletContractV3R2 } from '@ton/ton'
+import {
+  WalletContractV4,
+  WalletContractV3R2,
+  WalletContractV3R1,
+  WalletContractV2R1,
+  WalletContractV2R2,
+  WalletContractV1R3,
+  WalletContractV1R2,
+  WalletContractV1R1,
+} from '@ton/ton'
 import { KeyPair } from '@ton/crypto'
 import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV3'
 import { WalletV5 } from '@/contracts/w5/WalletV5R1'
@@ -23,82 +32,86 @@ export type GetExternalMessageCell = (
   transfers: WalletTransfer[]
 ) => Promise<Cell>
 
-export interface ITonWalletV3 {
+export interface ITonWalletBase {
+  address: Address
+  getExternalMessageCell: GetExternalMessageCell
+  key: EncryptedWalletData
+  id: number
+  name?: string | null
+}
+
+export interface ITonWalletV1R1 extends ITonWalletBase {
+  type: 'v1R1'
+  wallet: OpenedContract<WalletContractV1R1>
+}
+
+export interface ITonWalletV1R2 extends ITonWalletBase {
+  type: 'v1R2'
+  wallet: OpenedContract<WalletContractV1R2>
+}
+
+export interface ITonWalletV1R3 extends ITonWalletBase {
+  type: 'v1R3'
+  wallet: OpenedContract<WalletContractV1R3>
+}
+
+export interface ITonWalletV2R1 extends ITonWalletBase {
+  type: 'v2R1'
+  wallet: OpenedContract<WalletContractV2R1>
+}
+
+export interface ITonWalletV2R2 extends ITonWalletBase {
+  type: 'v2R2'
+  wallet: OpenedContract<WalletContractV2R2>
+}
+
+export interface ITonWalletV3R1 extends ITonWalletBase {
+  type: 'v3R1'
+  wallet: OpenedContract<WalletContractV3R1>
+  subwalletId: number
+}
+
+export interface ITonWalletV3 extends ITonWalletBase {
   type: 'v3R2'
-  address: Address
   wallet: OpenedContract<WalletContractV3R2>
-  getExternalMessageCell: GetExternalMessageCell
-  key: EncryptedWalletData
-  id: number
   subwalletId: number
-  name?: string | null
 }
 
-export interface ITonWalletV4 {
+export interface ITonWalletV4 extends ITonWalletBase {
   type: 'v4R2'
-  address: Address
   wallet: OpenedContract<WalletContractV4>
-  getExternalMessageCell: GetExternalMessageCell
-  key: EncryptedWalletData
-  id: number
   subwalletId: number
-  name?: string | null
 }
 
-export interface ITonWalletV5 {
+export interface ITonWalletV5 extends ITonWalletBase {
   type: 'v5R1'
-  address: Address
   wallet: OpenedContract<WalletV5>
-  getExternalMessageCell: GetExternalMessageCell
-  key: EncryptedWalletData
-  id: number
   subwalletId: bigint
-  name?: string | null
 }
 
-export interface ITonHighloadWalletV2 {
+export interface ITonHighloadWalletV2 extends ITonWalletBase {
   type: 'highload'
-  address: Address
   wallet: HighloadWalletV2
-  getExternalMessageCell: GetExternalMessageCell
-  key: EncryptedWalletData
-  id: number
   subwalletId: number
-  name?: string | null
 }
 
-export interface ITonHighloadWalletV2R2 {
+export interface ITonHighloadWalletV2R2 extends ITonWalletBase {
   type: 'highload_v2r2'
-  address: Address
   wallet: HighloadWalletV2R2
-  getExternalMessageCell: GetExternalMessageCell
-  key: EncryptedWalletData
-  id: number
   subwalletId: number
-  name?: string | null
 }
 
-export interface ITonHighloadWalletV3 {
+export interface ITonHighloadWalletV3 extends ITonWalletBase {
   type: 'highload_v3'
-  address: Address
   wallet: HighloadWalletV3
-  getExternalMessageCell: GetExternalMessageCell
-  key: EncryptedWalletData
-  id: number
   subwalletId: number
   timeout: number
-  name?: string | null
 }
 
-export interface ITonMultisigWalletV2V4R2 {
+export interface ITonMultisigWalletV2V4R2 extends ITonWalletBase {
   type: 'multisig_v2_v4r2'
-  address: Address
   wallet: OpenedContract<WalletContractV4>
-  getExternalMessageCell: GetExternalMessageCell
-  key: EncryptedWalletData
-  id: number
   subwalletId: number
-  name?: string | null
 }
 
 export interface ITonExternalWallet {
@@ -107,7 +120,12 @@ export interface ITonExternalWallet {
   name?: string | null
 }
 
-export type ITonWallet = ITonWalletV3 | ITonWalletV4 | ITonWalletV5
+export type ITonWalletsV1 = ITonWalletV1R1 | ITonWalletV1R2 | ITonWalletV1R3
+export type ITonWalletsV2 = ITonWalletV2R1 | ITonWalletV2R2
+
+export type IOldTonWallet = ITonWalletV3R1 | ITonWalletsV2 | ITonWalletsV1
+
+export type ITonWallet = ITonWalletV3 | ITonWalletV4 | ITonWalletV5 | IOldTonWallet
 export type IHighloadWalletV2 = ITonHighloadWalletV2 | ITonHighloadWalletV2R2
 export type IHighloadWalletV3 = ITonHighloadWalletV3
 export type IMultisigWallet = ITonMultisigWalletV2V4R2
