@@ -61,11 +61,13 @@ export function getWalletFromKey(
     return
   }
 
+  const workchainId = wallet.workchain_id ?? 0
+
   if (wallet.type === 'highload') {
     const tonWallet = new HighloadWalletV2({
       publicKey: Buffer.from(key.public_key, 'base64'),
       subwalletId: parseInt(wallet.subwallet_id),
-      workchain: 0,
+      workchain: workchainId,
     })
     const result: ITonHighloadWalletV2 = {
       type: 'highload',
@@ -82,7 +84,7 @@ export function getWalletFromKey(
     const tonWallet = new HighloadWalletV2R2({
       publicKey: Buffer.from(key.public_key, 'base64'),
       subwalletId: parseInt(wallet.subwallet_id),
-      workchain: 0,
+      workchain: workchainId,
     })
     const result: ITonHighloadWalletV2R2 = {
       type: 'highload_v2r2',
@@ -104,7 +106,7 @@ export function getWalletFromKey(
         timeout,
       },
       HighloadWalletV3CodeCell,
-      0
+      workchainId
     )
     tonWallet.setSubwalletId(parseInt(wallet.subwallet_id))
     tonWallet.setTimeout(timeout)
@@ -124,7 +126,7 @@ export function getWalletFromKey(
   } else if (wallet.type === 'v3R2') {
     const tonWallet = liteClient.open(
       WalletContractV3R2.create({
-        workchain: 0,
+        workchain: workchainId,
         publicKey: Buffer.from(key.public_key, 'base64'),
         walletId: parseInt(wallet.subwallet_id),
       })
@@ -150,7 +152,7 @@ export function getWalletFromKey(
     }
     const tonWallet = liteClient.open(
       WalletContractV4.create({
-        workchain: 0,
+        workchain: 0, // not available for this type
         publicKey: Buffer.from(key.public_key, 'base64'),
         walletId: parseInt(wallet.subwallet_id),
       })
@@ -169,7 +171,7 @@ export function getWalletFromKey(
   } else if (wallet.type === 'v4R2') {
     const tonWallet = liteClient.open(
       WalletContractV4.create({
-        workchain: 0,
+        workchain: workchainId,
         publicKey: Buffer.from(key.public_key, 'base64'),
         walletId: parseInt(wallet.subwallet_id),
       })
@@ -196,7 +198,8 @@ export function getWalletFromKey(
           extensions: Dictionary.empty(),
           signatureAllowed: true,
         },
-        WalletV5R1CodeCell
+        WalletV5R1CodeCell,
+        workchainId
       )
     )
     const result: ITonWalletV5 = {

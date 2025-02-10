@@ -177,10 +177,22 @@ function AddWalletPopup() {
   const [walletAddress, setWalletAddress] = useState('')
   const [highloadV3Timeout, setHighloadV3Timeout] = useState(600)
   const [walletName, setWalletName] = useState('')
+  const [workchainId, setWorkchainId] = useState('0')
   const changeWalletType = (type: string) => {
     setWalletType(type as WalletType)
     if (type === 'highload_v3') {
       setHighloadV3Timeout(600)
+    }
+  }
+
+  const changeWorkchainId = (wc: string) => {
+    setWorkchainId(wc)
+    // Change to relevant ID if the default value is used
+    if (wc === '-1' && subwalletIdRef.current?.value === '698983191') {
+      subwalletIdRef.current.value = '698983190'
+    }
+    if (wc === '0' && subwalletIdRef.current?.value === '698983190') {
+      subwalletIdRef.current.value = '698983191'
     }
   }
 
@@ -207,13 +219,16 @@ function AddWalletPopup() {
       extraData.timeout = highloadV3Timeout
     }
 
+    const defaultName = walletType + (workchainId === '-1' ? '-MC' : '')
+
     await CreateNewKeyWallet({
       type: walletType as WalletType,
       subwalletId: BigInt(subwalletIdRef.current?.value || ''),
       keyId: selectedKey?.id.get() || 0,
       walletAddress: saveWalletAddress,
       extraData: JSON.stringify(extraData),
-      name: walletName || walletType,
+      name: walletName || defaultName,
+      workchainId: parseInt(workchainId ?? '0'),
     })
     close()
   }
@@ -261,8 +276,30 @@ function AddWalletPopup() {
               </div>
 
               <div className="flex items-center gap-2">
-                SubwalletId: <Input type="number" ref={subwalletIdRef} defaultValue={698983191} />
+                SubwalletId:{' '}
+                <Input
+                  type="number"
+                  ref={subwalletIdRef}
+                  defaultValue={workchainId === '-1' ? 698983190 : 698983191}
+                />
               </div>
+
+              {walletType !== 'multisig_v2_v4r2' && (
+                <div className="flex items-center gap-2">
+                  Workchain ID:
+                  <Select defaultValue={workchainId} onValueChange={changeWorkchainId}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select workchain ID" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="0">Basechain (0)</SelectItem>
+                        <SelectItem value="-1">Masterchain (-1)</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {walletType === 'multisig_v2_v4r2' && (
                 <div className="flex items-center gap-2">

@@ -166,6 +166,7 @@ export async function CreateNewKeyWallet({
   walletAddress,
   extraData,
   name,
+  workchainId,
 }: {
   type: WalletType
   subwalletId: bigint
@@ -173,6 +174,7 @@ export async function CreateNewKeyWallet({
   walletAddress: string | null
   extraData: string | null
   name?: string | null
+  workchainId?: number | null
 }) {
   const db = await getDatabase()
   const wallets = await db<SavedWallet>('wallets')
@@ -183,6 +185,7 @@ export async function CreateNewKeyWallet({
       wallet_address: walletAddress,
       extra_data: extraData,
       name,
+      workchain_id: workchainId,
     })
     .returning('*')
 

@@ -132,4 +132,5 @@ export interface SavedWallet {
   wallet_address?: string | null
   extra_data?: string | null // json object with wallet specific data
   name?: string | null
+  workchain_id?: number | null
 }
