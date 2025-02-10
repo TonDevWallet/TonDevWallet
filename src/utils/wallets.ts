@@ -12,7 +12,6 @@ import {
   ITonHighloadWalletV2R2,
   ITonHighloadWalletV3,
   ITonMultisigWalletV2V4R2,
-  ITonWalletsV1,
   ITonWalletV1R1,
   ITonWalletV1R2,
   ITonWalletV1R3,
@@ -24,15 +23,15 @@ import {
   ITonWalletV5,
   IWallet,
   OpenedContract,
-  SavedWallet
-} from "@/types";
+  SavedWallet,
+} from '@/types'
 import { Key } from '@/types/Key'
 import { ImmutableObject } from '@hookstate/core'
 import { useEffect, useMemo, useState } from 'react'
 import {
   Address,
   beginCell,
-  Cell, Contract,
+  Cell,
   contractAddress,
   Dictionary,
   external,
@@ -42,8 +41,8 @@ import {
   SendMode,
   StateInit,
   storeMessage,
-  toNano
-} from "@ton/core";
+  toNano,
+} from '@ton/core'
 
 import {
   WalletContractV1R1,
