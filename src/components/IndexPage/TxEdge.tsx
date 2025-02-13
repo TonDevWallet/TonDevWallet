@@ -77,18 +77,37 @@ export const TxEdge: FC<EdgeProps> = ({
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
           }}
-          className={cn(
-            'nodrag nopan p-2 rounded bg-foreground text-background flex items-center gap-2',
-            rootAddress.equals(fromAddress) && 'bg-red-500 text-foreground',
-            rootAddress.equals(toAddress) && 'bg-green-700 text-foreground'
-          )}
+          className="flex flex-col gap-2"
         >
-          <span>{tonAmount} TON</span>
-          <Copier
-            className="w-4 h-4"
-            text={tonAmount.toString()}
-            style={{ pointerEvents: 'all' }}
-          />
+          <div
+            className={cn(
+              'nodrag nopan p-2 rounded bg-foreground text-background flex items-center gap-2',
+              rootAddress.equals(fromAddress) && 'bg-red-500 text-foreground',
+              rootAddress.equals(toAddress) && 'bg-green-700 text-foreground'
+            )}
+          >
+            <span>{tonAmount} TON</span>
+            <Copier
+              className="w-4 h-4"
+              text={tonAmount.toString()}
+              style={{ pointerEvents: 'all' }}
+            />
+          </div>
+          {from.shard && to.shard && (
+            <div
+              className={cn(
+                'nodrag nopan p-2 rounded bg-foreground text-background flex items-center gap-2',
+                from.shard !== to.shard && 'bg-orange-100 text-orange-800',
+                from.shard === to.shard && 'bg-emerald-100 text-emerald-800'
+              )}
+            >
+              <span>
+                Shard {from.shard} → {to.shard}
+                <br />
+                {to.totalDelay ? `Delay: ${to.totalDelay * 7}s-${to.totalDelay * 9}s` : ''}
+              </span>
+            </div>
+          )}
         </div>
       </EdgeLabelRenderer>
     </>

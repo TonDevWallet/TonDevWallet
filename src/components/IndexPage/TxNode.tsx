@@ -54,10 +54,8 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       forward?.skip(64)
 
       notificationErrorCode = forward?.loadUint(32) || 0
-      console.log('notificationErrorCode', notificationErrorCode)
     } catch (e) {
       //
-      // console.log('err', e)
     }
   }
 
@@ -101,6 +99,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_transfer' && (
         <>
           <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
+          <div>Forward Amount: {tx.parsed.data.forward_ton_amount.toString()}</div>
           <div>
             To: <AddressRow address={tx.parsed.data.destination ?? ''} />
           </div>
@@ -119,6 +118,11 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
             {tx.parsed.data.custom_payload?.kind === 'Maybe_just' &&
               tx.parsed.data.custom_payload.value.data.toBoc().toString('hex')}
           </div>
+        </>
+      )}
+      {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_notify' && (
+        <>
+          <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
         </>
       )}
       <div>

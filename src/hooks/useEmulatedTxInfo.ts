@@ -2,11 +2,13 @@ import { useLiteclient } from '@/store/liteClient'
 import { LiteClientBlockchainStorage } from '@/utils/liteClientBlockchainStorage'
 import { ManagedSendMessageResult, ParsedTransaction } from '@/utils/ManagedBlockchain'
 import { useState, useEffect } from 'react'
-import { beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
+import { Address, beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 import { parseInternal } from '@truecarry/tlb-abi'
 import { Blockchain, BlockchainStorage } from '@ton/sandbox'
 import { bigIntToBuffer } from '@/utils/ton'
+import { AllShardsResponse } from 'ton-lite-client/dist/types'
+import { getShardBitMask, isSameShard } from '@/utils/shards'
 
 const libs: Record<string, Buffer> = {}
 let megaLibsCell = beginCell().endCell()
@@ -29,16 +31,12 @@ async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
         const libHash = current.beginParse(true).skip(8).loadBuffer(32)
 
         if (libs[libHash.toString('hex')]) {
-          console.log('lib already found', libHash.toString('hex'))
           continue
         }
 
         const libData = await liteClient.getLibraries([libHash])
         if (libData.result.length === 0) {
-          console.log('lib not found', libHash.toString('hex'))
           continue
-        } else {
-          console.log('lib found', libHash.toString('hex'))
         }
 
         for (const lib of libData.result) {
@@ -116,8 +114,9 @@ async function checkAndLoadLibraries(
       messageCells.push(genericTx.inMessage.init.code)
     }
     const contracts = await storage.knownContracts()
+    const currentContractHash = bigIntToBuffer(genericTx.address) as any
     for (const contract of contracts) {
-      if (contract.address.hash.equals(bigIntToBuffer(genericTx.address))) {
+      if (contract.address.hash.equals(currentContractHash)) {
         if (contract.accountState?.type === 'active') {
           if (contract.accountState.state.code) {
             messageCells.push(contract.accountState.state.code)
@@ -132,7 +131,6 @@ async function checkAndLoadLibraries(
 
     const libFound = await checkForLibraries(messageCells, liteClient)
     if (libFound) {
-      console.log('lib found in init, restarting emulator')
       return true
     }
   }
@@ -191,6 +189,18 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
     const runEmulator = async (blockchain: Blockchain, storage: BlockchainStorage, msg: any) => {
       const iter = await blockchain.sendMessageIter(msg, { ignoreChksig: ignoreChecksig })
       const transactions: ParsedTransaction[] = []
+
+      let shards: AllShardsResponse | undefined
+      const getShards = async () => {
+        try {
+          const masterchainInfo = await liteClient.getMasterchainInfo()
+          shards = await liteClient.getAllShardsInfo(masterchainInfo.last)
+        } catch (err) {
+          console.log('error getting shards', err)
+        }
+      }
+      await getShards()
+
       for await (const tx of iter) {
         if (isStopped) break
 
@@ -201,6 +211,24 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
           liteClient
         )
         if (shouldRestart) return { transactions, shouldRestart }
+        ;(tx as ParsedTransaction).shards = shards
+
+        const txAddress = new Address(0, bigIntToBuffer(tx.address))
+        const shard = Object.keys(shards?.shards[0] || {}).find((shard) =>
+          isSameShard(txAddress, BigInt.asUintN(64, BigInt(shard)))
+        )
+        ;(tx as ParsedTransaction).shard = getShardBitMask(
+          BigInt.asUintN(64, BigInt(shard || '0'))
+        ).toString()
+
+        // const avgDelay = 1 // 7 seconds
+        const isTxSameShard =
+          (tx as ParsedTransaction)?.shard === (tx as ParsedTransaction)?.parent?.shard
+
+        const delay = !(tx as ParsedTransaction)?.parent?.shard ? 0 : isTxSameShard ? 0 : 1
+        ;(tx as ParsedTransaction).delay = delay
+        ;(tx as ParsedTransaction).totalDelay =
+          delay + ((tx as ParsedTransaction)?.parent?.totalDelay || 0)
 
         updateProgress()
 
@@ -232,6 +260,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
           restart = shouldRestart
 
           if (!restart) {
+            console.log('emulation finished', transactions)
             setResponse({ transactions })
             setIsLoading(false)
           }
