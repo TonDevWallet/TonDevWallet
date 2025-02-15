@@ -11,7 +11,6 @@ import {
 import { getWalletFromKey, useWalletExternalMessageCell } from '@/utils/wallets'
 import { ImmutableObject, State } from '@hookstate/core'
 import { memo, useMemo, useState } from 'react'
-import { Cell } from '@ton/core'
 import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
@@ -25,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { faExpand } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { ManagedSendMessageResult } from '@/utils/ManagedBlockchain'
 
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
@@ -45,10 +45,6 @@ export const MessageRow = memo(function MessageRow({
   const liteClient = useLiteclient() as unknown as LiteClient
   const sessions = useTonConnectSessions()
   const password = usePassword().password.get()
-
-  const amountOut =
-    Number(s?.payload?.get()?.messages?.reduce((acc, c) => acc + BigInt(c.amount ?? 0), 0n)) /
-    10 ** 9
 
   const key = useMemo(() => {
     return keys.find((k) => k.id.get() === s.key_id.get())
@@ -115,6 +111,40 @@ export const MessageRow = memo(function MessageRow({
     }).then()
   }
 
+  const { response: txInfo, isLoading } = useEmulatedTxInfo(messageCell, !walletKeyPair)
+  const tonFlow = useMemo(() => {
+    if (!txInfo || !txInfo.transactions) {
+      return {
+        outputs: 0n,
+        inputs: 0n,
+      }
+    }
+
+    const ourTxes = txInfo.transactions.filter((t) => t.address === txInfo.transactions[0].address)
+
+    const messagesFrom = ourTxes.flatMap((t) => t.outMessages.values())
+    const messagesTo = ourTxes.flatMap((t) => t.inMessage)
+
+    const outputs = messagesFrom.reduce((acc, m) => {
+      if (m.info.type === 'internal') {
+        return acc + m.info.value.coins
+      }
+      return acc + 0n
+    }, 0n)
+
+    const inputs = messagesTo.reduce((acc, m) => {
+      if (m?.info?.type === 'internal') {
+        return acc + m?.info?.value.coins
+      }
+      return acc + 0n
+    }, 0n)
+
+    return {
+      outputs,
+      inputs,
+    }
+  }, [txInfo])
+
   return (
     <Block className="">
       {session?.url.get() && (
@@ -139,13 +169,28 @@ export const MessageRow = memo(function MessageRow({
           />
         }
       </div>
-      <div className="flex">
-        <div>Messages count:&nbsp;</div>
-        <div className="break-words break-all">
-          {s?.payload?.get()?.messages?.length} ({amountOut.toString()} TON)
+      <div className="flex gap-4">
+        <div className="flex items-center gap-2">
+          <div>Messages count:</div>
+          <div className="break-words break-all">{s?.payload?.get()?.messages?.length}</div>
         </div>
       </div>
 
+      <div className="flex gap-4">
+        <div className="flex items-center gap-2">
+          <div>Ton Flow:</div>
+          <div className="break-words break-all">
+            {Number(tonFlow.outputs.toString()) / 10 ** 9} TON →{' '}
+            {Number(tonFlow.inputs.toString()) / 10 ** 9} TON
+          </div>
+          <div>
+            Diff:{' '}
+            {Number(tonFlow.inputs.toString()) / 10 ** 9 -
+              Number(tonFlow.outputs.toString()) / 10 ** 9}{' '}
+            TON
+          </div>
+        </div>
+      </div>
       {password ? (
         <>
           <div className="flex items-center gap-2 my-2">
@@ -170,23 +215,19 @@ export const MessageRow = memo(function MessageRow({
         </>
       )}
 
-      <MessageEmulationResult
-        messageCell={messageCell}
-        ignoreChecksig={!walletKeyPair} // do not ignore checksig if we use real keypair
-      />
+      <MessageEmulationResult txInfo={txInfo} isLoading={isLoading} />
     </Block>
   )
 })
 
 export function MessageEmulationResult({
-  messageCell,
-  ignoreChecksig,
+  txInfo,
+  isLoading,
 }: {
-  messageCell?: Cell
-  ignoreChecksig?: boolean
+  txInfo: ManagedSendMessageResult | undefined
+  isLoading: boolean
 }) {
   const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
-  const { response: txInfo, isLoading } = useEmulatedTxInfo(messageCell, ignoreChecksig)
   const [max, setMax] = useState(false)
 
   return (

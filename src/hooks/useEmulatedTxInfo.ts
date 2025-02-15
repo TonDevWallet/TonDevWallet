@@ -1,7 +1,7 @@
 import { useLiteclient } from '@/store/liteClient'
 import { LiteClientBlockchainStorage } from '@/utils/liteClientBlockchainStorage'
 import { ManagedSendMessageResult, ParsedTransaction } from '@/utils/ManagedBlockchain'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Address, beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 import { parseInternal } from '@truecarry/tlb-abi'
@@ -167,12 +167,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
   const [progress, setProgress] = useState<{ total: number; done: number }>({ done: 0, total: 0 })
   const [isLoading, setIsLoading] = useState(false)
   const liteClient = useLiteclient() as LiteClient
-
-  const setInitialState = () => {
-    setResponse(undefined)
-    setProgress({ done: 0, total: 0 })
-    setIsLoading(true)
-  }
+  const txesRef = useRef<ParsedTransaction[]>([])
 
   const updateProgress = () => {
     setProgress((p) => ({ total: p.total + 1, done: p.done + 1 }))
@@ -188,7 +183,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
 
     const runEmulator = async (blockchain: Blockchain, storage: BlockchainStorage, msg: any) => {
       const iter = await blockchain.sendMessageIter(msg, { ignoreChksig: ignoreChecksig })
-      const transactions: ParsedTransaction[] = []
+      const transactions: ParsedTransaction[] = [...(txesRef?.current || [])]
 
       let shards: AllShardsResponse | undefined
       const getShards = async () => {
@@ -201,6 +196,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
       }
       await getShards()
 
+      let i = 0
       for await (const tx of iter) {
         if (isStopped) break
 
@@ -210,7 +206,10 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
           storage,
           liteClient
         )
-        if (shouldRestart) return { transactions, shouldRestart }
+        if (shouldRestart) {
+          txesRef.current = transactions
+          return { transactions, shouldRestart }
+        }
         ;(tx as ParsedTransaction).shards = shards
 
         const txAddress = new Address(0, bigIntToBuffer(tx.address))
@@ -239,11 +238,13 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
           }
         }
 
-        transactions.push(tx as any)
+        transactions[i] = tx as any
+        i++
         setResponse({ transactions })
         setIsLoading(false)
       }
 
+      txesRef.current = transactions
       return { transactions, shouldRestart: false }
     }
 
@@ -254,7 +255,6 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
         let restart = true
         // eslint-disable-next-line no-unmodified-loop-condition
         while (restart && !isStopped) {
-          setInitialState()
           const { blockchain, storage } = await initializeBlockchain(liteClient)
           const { transactions, shouldRestart } = await runEmulator(blockchain, storage, msg)
           restart = shouldRestart
