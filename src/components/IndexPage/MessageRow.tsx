@@ -10,7 +10,7 @@ import {
 } from '@/utils/tonConnect'
 import { getWalletFromKey, useWalletExternalMessageCell } from '@/utils/wallets'
 import { ImmutableObject, State } from '@hookstate/core'
-import { memo, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
@@ -21,10 +21,11 @@ import { useEmulatedTxInfo } from '@/hooks/useEmulatedTxInfo'
 import { MessageFlow } from './MessageFlow'
 import { secretKeyToED25519 } from '@/utils/ed25519'
 import { Button } from '@/components/ui/button'
-import { faExpand } from '@fortawesome/free-solid-svg-icons'
+import { faDownload, faExpand } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { ManagedSendMessageResult } from '@/utils/ManagedBlockchain'
+import { DeserializeTransactionsList, SerializeTransactionsList } from '@/utils/txSerializer'
 
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
@@ -230,14 +231,39 @@ export function MessageEmulationResult({
   const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
   const [max, setMax] = useState(false)
 
+  const downloadGraph = useCallback(async () => {
+    if (!txInfo?.transactions) {
+      return
+    }
+    const dump = SerializeTransactionsList(txInfo?.transactions)
+
+    // save dump to browser as graph.json
+    const blob = new Blob([dump], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'graph.json'
+    a.click()
+  }, [txInfo])
+
+  // for test purposes, use serdes graph to display it
+  const serdesGraph = DeserializeTransactionsList(
+    SerializeTransactionsList(txInfo?.transactions || [])
+  )
+
   return (
     <>
       <div className="flex flex-col">
         <div className="break-words break-all flex flex-col gap-2">
-          <div>
+          <div className="flex gap-2">
             <Button variant={'outline'} className={'mt-4'} onClick={() => setMax((v) => !v)}>
               <FontAwesomeIcon icon={faExpand} className={'mr-2'} />
               Toggle Preview Size
+            </Button>
+
+            <Button variant={'outline'} className={'mt-4'} onClick={() => downloadGraph()}>
+              <FontAwesomeIcon icon={faDownload} className={'mr-2'} />
+              Download graph
             </Button>
           </div>
 
@@ -245,7 +271,7 @@ export function MessageEmulationResult({
             className={cn('h-[50vh]', max && 'h-[90vh]', 'p-0')}
             bg={isTestnet ? 'bg-[#22351f]' : 'bg-transparent'}
           >
-            {!isLoading && <MessageFlow transactions={txInfo?.transactions} />}
+            {!isLoading && <MessageFlow transactions={serdesGraph.transactions} />}
           </Block>
         </div>
       </div>
