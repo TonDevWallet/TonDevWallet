@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2024-02-17
+
+### Added
+- Support for saving emulation traces and viewing them in the app
+- Show shards in transaction emulation preview
+- Search for wallets by name in tonconnect popup
+
+### Fixed
+- Patched @ton/core to parse anycast address
+
 ## [0.4.6] - 2025-02-10
 
 ### Added
