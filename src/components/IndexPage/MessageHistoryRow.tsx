@@ -48,6 +48,27 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
     [liteClient, wallet, key]
   )
 
+  // const messageHash = useMemo(() => {
+  //   return connectMessage.message_cell
+  //     ? Cell.fromBase64(connectMessage.message_cell).hash()
+  //     : undefined
+  // }, [connectMessage.message_cell])
+
+  // const [tonapiTx, setTonapiTx] = useState<any>(null)
+  // const tonapiClient = useTonapiClient()
+
+  // useEffect(() => {
+  //   if (messageHash) {
+  //     const f = async () => {
+  //       const trace = await tonapiClient?.traces.getTrace(messageHash.toString('hex'))
+  //       console.log('trace', trace)
+  //     }
+  //     f()
+  //   }
+  // }, [messageHash])
+
+  // console.log('messageHash', messageHash)
+
   return (
     <Block className="">
       {session?.url.get() && (
@@ -107,6 +128,16 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
           )
         })}
       </div>
+
+      {/* <div>
+        <button
+          onClick={() => {
+            console.log(connectMessage.message_cell)
+          }}
+        >
+          Show message cell
+        </button>
+      </div> */}
     </Block>
   )
 })

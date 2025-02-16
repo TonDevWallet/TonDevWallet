@@ -48,7 +48,7 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "@rollup/plugin-inject": "^5.0.5",
     "@tauri-apps/api": "^1.5.3",
-    "@ton/core": "^0.56.1",
+    "@ton/core": "^0.60.0",
     "@ton/crypto": "^3.2.0",
     "@ton/sandbox": "^0.22.0",
     "@ton/ton": "^13.11.1",
@@ -94,6 +94,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9",
     "ton-lite-client": "npm:@truecarry/ton-lite-client@^3.3.1",
+    "tonapi-sdk-js": "^2.0.8",
     "use-local-storage-state": "^19.1.0",
     "vaul": "^0.9.0",
     "vite-bundle-analyzer": "^0.8.1",
@@ -119,5 +120,10 @@
     "typescript": "^5.3.3",
     "vite": "^5.4.8"
   },
-  "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903"
+  "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903",
+  "pnpm": {
+    "patchedDependencies": {
+      "@ton/core@0.60.0": "patches/@ton__core@0.60.0.patch"
+    }
+  }
 }

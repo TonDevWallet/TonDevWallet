@@ -5,9 +5,12 @@ import { Address, beginCell, storeTransaction } from '@ton/core'
 import { AddressRow } from '../AddressRow'
 import { TxNodeData } from './MessageFlow'
 import { cn } from '@/utils/cn'
+import { useSelectedTx, setSelectedTx } from '@/store/tracerState'
 import { WebviewWindow } from '@tauri-apps/api/window'
 
 export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
+  const selectedTx = useSelectedTx()
+
   const tx = data.tx
   const txAddress = new Address(0, bigIntToBuffer(tx.address))
   const rootAddress = new Address(0, bigIntToBuffer(data.rootTx.address))
@@ -38,9 +41,6 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       if (op !== 0xf8a7ea5) {
         throw new Error('a')
       }
-      // if (inSlice.remainingBits < 64 + 4 + 267 + 267 + 1) {
-      //   throw new Error('b')
-      // }
 
       inSlice.skip(64) // query id
       inSlice.loadCoins() // amount
@@ -54,22 +54,28 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       forward?.skip(64)
 
       notificationErrorCode = forward?.loadUint(32) || 0
-      console.log('notificationErrorCode', notificationErrorCode)
     } catch (e) {
       //
-      // console.log('err', e)
     }
+  }
+
+  const handleClick = () => {
+    setSelectedTx(tx)
   }
 
   return (
     <div
       className={cn(
-        'p-2 rounded border',
+        'p-2 rounded border-2 cursor-pointer transition-all duration-200',
         rootAddress.equals(txAddress)
           ? 'bg-blue-500 text-white'
           : 'bg-secondary text-secondary-foreground',
-        isTxError && 'bg-red-500 text-white'
+        isTxError && 'bg-red-500 text-white',
+        selectedTx?.value?.lt === tx.lt
+          ? 'border-primary ring-8 ring-primary/50'
+          : 'border-transparent hover:border-primary/50'
       )}
+      onClick={handleClick}
     >
       <AddressRow address={txAddress} />
       <div>ID: {tx.id}</div>
@@ -101,6 +107,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_transfer' && (
         <>
           <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
+          <div>Forward Amount: {tx.parsed.data.forward_ton_amount.toString()}</div>
           <div>
             To: <AddressRow address={tx.parsed.data.destination ?? ''} />
           </div>
@@ -119,6 +126,11 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
             {tx.parsed.data.custom_payload?.kind === 'Maybe_just' &&
               tx.parsed.data.custom_payload.value.data.toBoc().toString('hex')}
           </div>
+        </>
+      )}
+      {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_notify' && (
+        <>
+          <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
         </>
       )}
       <div>

@@ -6,11 +6,13 @@ import { delay } from '@/utils'
 import { Functions } from 'ton-lite-client/dist/schema'
 import { LSConfigData, Network } from '@/types/network'
 import { fetch as tFetch } from '@tauri-apps/api/http'
+import { Api, HttpClient } from 'tonapi-sdk-js'
 
 const LiteClientState = hookstate<{
   liteClient: LiteClient
   networks: Network[]
   selectedNetwork: Network
+  tonapiClient?: Api<unknown>
 }>(async () => {
   const db = await getDatabase()
 
@@ -67,15 +69,43 @@ const LiteClientState = hookstate<{
   }
   // const isTestnet = testnetSetting?.value === 'true'
 
+  const tonapiToken = await db<{ name: string; value: string }>('settings')
+    .where('name', 'tonapi_token')
+    .first()
+
+  const headers: Record<string, string> = {
+    'Content-type': 'application/json',
+  }
+
+  if (tonapiToken?.value) {
+    headers.Authorization = `Bearer ${tonapiToken.value}`
+  }
+
+  const baseUrl = selectedNetwork.is_testnet ? 'https://testnet.tonapi.io' : 'https://tonapi.io'
+
+  const httpClient = new HttpClient({
+    baseUrl,
+    baseApiParams: {
+      headers,
+    },
+  })
+
+  const tonapiClient = new Api(httpClient)
+
   return {
     networks,
     selectedNetwork,
     liteClient: getLiteClient(selectedNetwork.url),
+    tonapiClient,
   }
 })
 
 export function useLiteclient() {
   return useHookstate(LiteClientState).liteClient.get({ noproxy: true })
+}
+
+export function useTonapiClient() {
+  return useHookstate(LiteClientState).tonapiClient.get({ noproxy: true })
 }
 
 export function useLiteclientState() {
@@ -257,4 +287,34 @@ async function checkEngine(engine: LiteSingleEngine): Promise<boolean> {
 
   doChecks()
   return promise
+}
+
+export async function updateTonapiClient() {
+  const db = await getDatabase()
+  const tonapiToken = await db<{ name: string; value: string }>('settings')
+    .where('name', 'tonapi_token')
+    .first()
+
+  const selectedNetwork = LiteClientState.selectedNetwork.get()
+
+  const headers: Record<string, string> = {
+    'Content-type': 'application/json',
+  }
+
+  if (tonapiToken?.value) {
+    headers.Authorization = `Bearer ${tonapiToken.value}`
+  }
+
+  const baseUrl = selectedNetwork.is_testnet ? 'https://testnet.tonapi.io' : 'https://tonapi.io'
+
+  const httpClient = new HttpClient({
+    baseUrl,
+    baseApiParams: {
+      headers,
+    },
+  })
+
+  const tonapiClient = new Api(httpClient)
+
+  LiteClientState.tonapiClient.set(tonapiClient)
 }

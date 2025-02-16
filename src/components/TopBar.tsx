@@ -19,6 +19,7 @@ import {
   faMoon,
   faPlus,
   faSun,
+  faProjectDiagram,
 } from '@fortawesome/free-solid-svg-icons'
 import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
 import { cn } from '@/utils/cn'
@@ -40,6 +41,7 @@ export function TopBar() {
       <ThemeSwitcher />
 
       <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
+      <TopBarLinkWrapper to="/app/tracer" icon={faProjectDiagram} text="Tracer" />
       <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
 
       <PasswordUnlock />

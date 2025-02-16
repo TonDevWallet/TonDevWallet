@@ -6,6 +6,7 @@ import { WalletPage } from './components/IndexPage/WalletPage'
 import { Layout } from './components/Layout'
 import { TxInfoPage } from './components/TxInfoPage/TxInfoPage'
 import { SettingsPage } from './components/SettingsPage/SettingsPage'
+import { TracerPage } from './components/TracerPage/TracerPage'
 
 export const router = createBrowserRouter([
   {
@@ -24,7 +25,10 @@ export const router = createBrowserRouter([
         path: '/app/new_wallet',
         element: <NewWalletPage />,
       },
-
+      {
+        path: '/app/tracer',
+        element: <TracerPage />,
+      },
       {
         path: '/app/wallets/:walletId',
         element: <WalletPage />,
