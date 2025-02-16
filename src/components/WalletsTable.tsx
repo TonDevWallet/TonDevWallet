@@ -126,7 +126,9 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
         <CardDescription>
           Balance: {balance ? parseFloat(balance) / 10 ** 9 : 0} TON
         </CardDescription>
-        <CardDescription>Subwallet ID: {wallet.subwalletId.toString()}</CardDescription>
+        {'subwalletId' in wallet && (
+          <CardDescription>Subwallet ID: {wallet.subwalletId.toString()}</CardDescription>
+        )}
         <CardDescription>Wallet Type: {wallet.type}</CardDescription>
         {wallet.type === 'highload_v3' && (
           <CardDescription>Timeout: {wallet.timeout} seconds</CardDescription>

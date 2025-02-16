@@ -19,4 +19,5 @@ export * as m_17_fix_last_selected_wallets_foreign_keys from './17_fix_last_sele
 export * as m_18_change_subwallet_id_type from './18_change_subwallet_id_type'
 export * as m_19_add_wallet_extra_data from './19_add_wallet_extra_data'
 export * as m_20_add_wallet_name from './20_add_wallet_name'
+export * as m_21_add_wallet_workchain_id from './21_add_wallet_workchain_id'
 // export * as m_22_add_message_cell from './22_add_message_cell'
