@@ -38,6 +38,7 @@ export interface ITonWalletBase {
   key: EncryptedWalletData
   id: number
   name?: string | null
+  workchainId?: number | null
 }
 
 export interface ITonWalletV1R1 extends ITonWalletBase {
