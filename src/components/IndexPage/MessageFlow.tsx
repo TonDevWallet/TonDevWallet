@@ -33,11 +33,11 @@ const edgeTypes = {
   tx: TxEdge,
 }
 
-export function MessageFlow({
-  transactions: _txes,
-}: {
+export interface MessageFlowProps {
   transactions: ParsedTransaction[] | undefined
-}) {
+}
+
+export function MessageFlow({ transactions: _txes }: MessageFlowProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const instanceRef = useRef<ReactFlowInstance<any, any> | null>(null)
@@ -128,12 +128,13 @@ export function MessageFlow({
           return
         }
         for (const node of elkG.children) {
+          const tx = transactions.find((t) => t.id === parseInt(node.id))
           nodes.push({
             id: node.id,
             position: { x: node.x || 0, y: node.y || 0 },
             data: {
               label: node.id.toString(),
-              tx: transactions.find((t) => t.id === parseInt(node.id)),
+              tx,
               rootTx: transactions[0],
             },
             style: {

@@ -3,9 +3,16 @@ import { DeserializeTransactionsList } from '@/utils/txSerializer'
 import { FileUploadArea } from './FileUploadArea'
 import { GraphDisplay } from './GraphDisplay'
 import { Button } from '@/components/ui/button'
+import { TxInfo } from './TxInfo'
+import { useSelectedTx, setSelectedTx } from '@/store/tracerState'
+
+interface GraphData {
+  transactions: any[]
+}
 
 export function TracerPage() {
-  const [graphData, setGraphData] = useState<any>(null)
+  const [graphData, setGraphData] = useState<GraphData | null>(null)
+  const selectedTx = useSelectedTx()
 
   const handleFileProcessed = (jsonData: any) => {
     const data = DeserializeTransactionsList(JSON.stringify(jsonData))
@@ -14,6 +21,7 @@ export function TracerPage() {
 
   const handleClearGraph = () => {
     setGraphData(null)
+    setSelectedTx(null)
   }
 
   return (
@@ -30,7 +38,13 @@ export function TracerPage() {
       {!graphData ? (
         <FileUploadArea onFileProcessed={handleFileProcessed} />
       ) : (
-        <GraphDisplay transactions={graphData.transactions} />
+        <>
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-semibold">Transaction Graph</h2>
+            <GraphDisplay transactions={graphData.transactions} />
+          </div>
+          <TxInfo tx={selectedTx.value} />
+        </>
       )}
     </div>
   )
