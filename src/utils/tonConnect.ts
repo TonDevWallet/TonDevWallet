@@ -67,7 +67,7 @@ export async function ApproveTonConnectMessage({
   }
 
   if (connectMessage) {
-    await changeConnectMessageStatus(connectMessage.id, ConnectMessageStatus.APPROVED)
+    await changeConnectMessageStatus(connectMessage.id, ConnectMessageStatus.APPROVED, messageCell)
   }
 }
 

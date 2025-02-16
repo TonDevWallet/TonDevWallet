@@ -25,6 +25,8 @@ export function MessagesHistoryList() {
           status: m.status,
           key_id: m.key_id,
           wallet_id: m.wallet_id,
+          message_cell: m.message_cell,
+          wallet_address: m.wallet_address,
           payload: JSON.parse(m.payload),
         }
       })

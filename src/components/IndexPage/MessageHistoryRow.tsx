@@ -1,14 +1,15 @@
 import { TonConnectMessageTransaction } from '@/store/connectMessages'
-import { useLiteclient } from '@/store/liteClient'
+import { useLiteclient, useTonapiClient } from '@/store/liteClient'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
 import { getWalletFromKey } from '@/utils/wallets'
-import { memo, useMemo } from 'react'
+import { memo, useEffe, useStatect, useMemo, useState, useEffect } from 'react'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { BocContainer } from '../BocContainer'
+import { beginCell, Cell } from '@ton/core'
 
 export const MessageHistoryRow = memo(function MessageHistoryRow({
   connectMessage,
@@ -47,6 +48,27 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
     () => getWalletFromKey(liteClient, key.get(), wallet),
     [liteClient, wallet, key]
   )
+
+  const messageHash = useMemo(() => {
+    return connectMessage.message_cell
+      ? Cell.fromBase64(connectMessage.message_cell).hash()
+      : undefined
+  }, [connectMessage.message_cell])
+
+  const [tonapiTx, setTonapiTx] = useState<any>(null)
+  const tonapiClient = useTonapiClient()
+
+  useEffect(() => {
+    if (messageHash) {
+      const f = async () => {
+        const trace = await tonapiClient?.traces.getTrace(messageHash.toString('hex'))
+        console.log('trace', trace)
+      }
+      f()
+    }
+  }, [messageHash])
+
+  console.log('messageHash', messageHash)
 
   return (
     <Block className="">
@@ -95,17 +117,27 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
               <div>Amount: {m.amount}</div>
               {m.payload && (
                 <div className="flex gap-2 my-2">
-                  <BocContainer boc={m.payload} label="Payload" />
+                  {/* <BocContainer boc={m.payload} label="Payload" /> */}
                 </div>
               )}
               {m.stateInit && (
                 <div className="flex gap-2">
-                  <BocContainer boc={m.stateInit} label="StateInit" />
+                  {/* <BocContainer boc={m.stateInit} label="StateInit" /> */}
                 </div>
               )}
             </Block>
           )
         })}
+      </div>
+
+      <div>
+        <button
+          onClick={() => {
+            console.log(connectMessage.message_cell)
+          }}
+        >
+          Show message cell
+        </button>
       </div>
     </Block>
   )

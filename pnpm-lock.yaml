@@ -271,6 +271,9 @@ importers:
       ton-lite-client:
         specifier: npm:@truecarry/ton-lite-client@^3.3.1
         version: '@truecarry/ton-lite-client@3.3.1(@ton/core@0.60.0(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.2.0))'
+      tonapi-sdk-js:
+        specifier: ^2.0.8
+        version: 2.0.8
       use-local-storage-state:
         specifier: ^19.1.0
         version: 19.1.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -4019,6 +4022,9 @@ packages:
 
   ton-tl@1.0.1:
     resolution: {integrity: sha512-dAHJSWEW0CRNm/sdWVhola9/OZc/yHmLOXlSNr9I6l0WaVZmGhwkmDuzvMm1ZJ3Dvhf5tYN+iAUSSgmf8Q+P0g==}
+
+  tonapi-sdk-js@2.0.8:
+    resolution: {integrity: sha512-WsQRT+PLWBcgp0uIwbWyb27yeiyVdOdONKKA93PT5RYq9PEXl8o4FMTaHxuZgqywBHz+6CGehZss3qJLhyl1Mw==}
 
   totalist@3.0.1:
     resolution: {integrity: sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ==}
@@ -8107,6 +8113,8 @@ snapshots:
       case-shift: 2.5.3
       crc-32: 1.2.2
       pegjs: 0.10.0
+
+  tonapi-sdk-js@2.0.8: {}
 
   totalist@3.0.1: {}
 

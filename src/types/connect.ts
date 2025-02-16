@@ -26,6 +26,7 @@ export interface ConnectMessageTransaction {
   status: number // 0 - new, 1 - approved, 2 - rejected
   payload: string // ConnectMessageTransactionPayload
   wallet_address?: string
+  message_cell?: string
 
   created_at: Date
   updated_at: Date

@@ -1,6 +1,7 @@
 import { getDatabase } from '@/db'
 import { ConnectMessageTransaction, ConnectMessageTransactionPayload } from '@/types/connect'
 import { hookstate, none, useHookstate } from '@hookstate/core'
+import { Cell } from '@ton/core'
 
 export interface TonConnectMessageTransaction {
   id: number
@@ -11,6 +12,7 @@ export interface TonConnectMessageTransaction {
   wallet_id: number
   status: number
   payload: ConnectMessageTransactionPayload
+  message_cell?: string
 
   wallet_address?: string
   created_at?: Date
@@ -74,7 +76,11 @@ export async function addConnectMessage(input: Omit<TonConnectMessageTransaction
   messagesState.merge([message])
 }
 
-export async function changeConnectMessageStatus(messageId: number, newStatus: 0 | 1 | 2) {
+export async function changeConnectMessageStatus(
+  messageId: number,
+  newStatus: 0 | 1 | 2,
+  messageCell?: Cell
+) {
   const db = await getDatabase()
   await db<ConnectMessageTransaction>('connect_message_transactions')
     .where({
@@ -83,6 +89,7 @@ export async function changeConnectMessageStatus(messageId: number, newStatus: 0
     .update({
       status: newStatus,
       updated_at: new Date(),
+      message_cell: messageCell?.toBoc().toString('base64'),
     })
 
   await removeConnectMessages()
