@@ -3,6 +3,7 @@ import { Address } from '@ton/core'
 import { Blockchain } from '@ton/sandbox'
 import { BlockchainStorage } from '@ton/sandbox/dist/blockchain/BlockchainStorage'
 import { SmartContract } from '@ton/sandbox/dist/blockchain/SmartContract'
+import { extractEc } from '@ton/sandbox/dist/utils/ec'
 import { LiteClient } from 'ton-lite-client'
 // eslint-disable-next-line camelcase
 import { liteServer_masterchainInfo } from 'ton-lite-client/dist/schema'
@@ -28,6 +29,9 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
       ) {
         existing = SmartContract.empty(blockchain, address)
         existing.balance = BigInt(account.balance.coins)
+        if (account.balance.other) {
+          existing.ec = extractEc(account.balance.other)
+        }
       } else {
         existing = SmartContract.create(blockchain, {
           address,
@@ -35,6 +39,9 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
           code: account.state.storage.state.state.code,
           balance: BigInt(account.balance.coins),
         })
+        if (account.balance.other) {
+          existing.ec = extractEc(account.balance.other)
+        }
       }
 
       this.contracts.set(address.toString(), existing)

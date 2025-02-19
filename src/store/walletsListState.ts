@@ -125,23 +125,29 @@ export async function saveKeyAndWallets(
 
   const defaultWallets: Omit<SavedWallet, 'id'>[] = [
     {
-      type: 'v4R2',
+      type: 'v5R1',
       key_id: newWallet.id,
-      subwallet_id: '698983191',
-      name: 'v4R2',
+      subwallet_id: '2147483409',
+      name: 'v5R1',
     },
-    {
-      type: 'v3R2',
-      key_id: newWallet.id,
-      subwallet_id: '698983191',
-      name: 'v3R2',
-    },
-    {
-      type: 'highload',
-      key_id: newWallet.id,
-      subwallet_id: '1',
-      name: 'Highload V2',
-    },
+    // {
+    //   type: 'v4R2',
+    //   key_id: newWallet.id,
+    //   subwallet_id: '698983191',
+    //   name: 'v4R2',
+    // },
+    // {
+    //   type: 'v3R2',
+    //   key_id: newWallet.id,
+    //   subwallet_id: '698983191',
+    //   name: 'v3R2',
+    // },
+    // {
+    //   type: 'highload',
+    //   key_id: newWallet.id,
+    //   subwallet_id: '1',
+    //   name: 'Highload V2',
+    // },
   ]
 
   await setWalletKey(newWallet.id)

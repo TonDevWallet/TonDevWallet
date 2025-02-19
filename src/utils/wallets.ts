@@ -520,6 +520,7 @@ function getExternalMessageCellFromTonWalletV5(
           to: m.destination,
           value: m.amount,
           bounce: m.bounce,
+          extracurrency: m.extraCurrency,
         })
 
         if (m.state) {
