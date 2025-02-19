@@ -183,6 +183,9 @@ function AddWalletPopup() {
     if (type === 'highload_v3') {
       setHighloadV3Timeout(600)
     }
+    if (type === 'v5R1' && subwalletIdRef.current) {
+      subwalletIdRef.current.value = '2147483409'
+    }
   }
 
   const changeWorkchainId = (wc: string) => {

@@ -9,6 +9,7 @@ export interface ConnectMessageTransactionMessage {
   amount: string
   payload?: string // boc
   stateInit?: string
+  extra_currency?: { [k: number]: string }
 }
 
 export interface ConnectMessageTransactionPayload {

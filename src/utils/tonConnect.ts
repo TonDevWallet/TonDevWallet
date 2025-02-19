@@ -132,6 +132,8 @@ export function GetTransfersFromTCMessage(
       const stateInitData = m.stateInit
       const state = stateInitData ? Cell.fromBase64(stateInitData) : undefined
 
+      const extraCurrency = m.extra_currency
+
       return {
         body: payload,
         destination,
@@ -139,6 +141,7 @@ export function GetTransfersFromTCMessage(
         mode: 3,
         state,
         bounce: bounce ?? true,
+        extraCurrency,
       }
     })
     .filter((m) => m) as WalletTransfer[]

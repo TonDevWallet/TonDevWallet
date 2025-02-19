@@ -234,6 +234,7 @@ export async function sendTonConnectStartMessage(
                 : wallet.type === 'highload_v3'
                   ? 500
                   : 4,
+            extraCurrencySupported: true,
           },
         ],
       },

@@ -13,7 +13,7 @@ import {
   faFileEdit,
 } from '@fortawesome/free-solid-svg-icons'
 import { WalletJazzicon } from './WalletJazzicon'
-import { Address } from '@ton/core'
+import { Address, ExtraCurrency } from '@ton/core'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/card'
 import { cn } from '@/utils/cn'
 import { Input } from '@/components/ui/input'
+import { extractEc } from '@ton/sandbox/dist/utils/ec'
 
 // const defaultHighloadId = 1
 // const defaultTonWalletId = 698983191
@@ -66,16 +67,21 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
   }
 
   const [balance, setBalance] = useState('')
+  const [extraBalances, setExtraBalances] = useState<ExtraCurrency>({})
   const updateBalance = async () => {
     const state = await liteClient.getAccountState(
       Address.parse(wallet.address.toString({ bounceable: true, urlSafe: true })),
       (await liteClient.getMasterchainInfo()).last
     )
     setBalance(state.balance.coins.toString())
+    if (state.balance.other) {
+      setExtraBalances(extractEc(state.balance.other))
+    }
   }
 
   useEffect(() => {
     setBalance('0')
+    setExtraBalances({})
     updateBalance().then()
   }, [wallet, liteClient])
 
@@ -125,6 +131,15 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
         </CardTitle>
         <CardDescription>
           Balance: {balance ? parseFloat(balance) / 10 ** 9 : 0} TON
+          {Object.entries(extraBalances).length > 0 && (
+            <div className="mt-1 space-y-1">
+              {Object.entries(extraBalances).map(([currency, amount]) => (
+                <div key={currency} className="text-sm text-muted-foreground">
+                  Currency #{currency}: {Number(amount)} units
+                </div>
+              ))}
+            </div>
+          )}
         </CardDescription>
         {'subwalletId' in wallet && (
           <CardDescription>Subwallet ID: {wallet.subwalletId.toString()}</CardDescription>
