@@ -1,5 +1,6 @@
 import { ChangePasswordPopup } from '../SavedWalletsList/ChangePasswordPopup'
 import NetworkSettings from './NetworkSettings'
+import ExtraCurrencySettings from './ExtraCurrencySettings'
 
 export function SettingsPage() {
   return (
@@ -8,6 +9,7 @@ export function SettingsPage() {
 
       <ChangePasswordPopup />
       <NetworkSettings />
+      <ExtraCurrencySettings />
     </div>
   )
 }
