@@ -19,6 +19,8 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
   const [message, setMessage] = useState('')
   const [stateInit, setStateInit] = useState('')
   const [message64, setMessage64] = useState(false)
+  const [extraCurrencyAmount, setExtraCurrencyAmount] = useState('0')
+  const [extraCurrencyCode, setExtraCurrencyCode] = useState('')
 
   useEffect(() => {
     setAmount('0')
@@ -26,6 +28,8 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
     setMessage('')
     setStateInit('')
     setMessage64(false)
+    setExtraCurrencyAmount('0')
+    setExtraCurrencyCode('')
   }, [wallet])
 
   const addMessageToEmulation = async () => {
@@ -48,6 +52,9 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
             address: recepient,
             amount: BigInt(Math.floor(parseFloat(amount) * 10 ** 9)).toString(),
             payload: textToWalletBody(message, message64)?.toBoc()?.toString('base64'),
+            extra_currency: {
+              [extraCurrencyCode]: extraCurrencyAmount,
+            },
           },
         ],
         valid_until: Date.now(),
@@ -88,7 +95,33 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
       </div>
 
       <div className="mt-2 flex flex-col">
-        <label htmlFor="amountInput">Message:</label>
+        <label htmlFor="extraCurrencyInput">Extra Currency Amount:</label>
+        <div className="flex gap-2">
+          <Input
+            className="border rounded p-2 flex-1"
+            id="extraCurrencyInput"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={extraCurrencyAmount}
+            onChange={(e: any) => setExtraCurrencyAmount(e.target.value)}
+            autoComplete="off"
+            placeholder="0"
+          />
+          <Input
+            className="border rounded p-2 w-24"
+            id="extraCurrencyCode"
+            type="text"
+            value={extraCurrencyCode}
+            onChange={(e: any) => setExtraCurrencyCode(e.target.value)}
+            autoComplete="off"
+            placeholder="100"
+          />
+        </div>
+      </div>
+
+      <div className="mt-2 flex flex-col">
+        <label htmlFor="messageInput">Message:</label>
         <div className="flex items-center">
           <label htmlFor="base64Check" className="text-sm text-foreground/75 my-1 cursor-pointer">
             Base64 cell?
@@ -105,10 +138,8 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
         </div>
         <Input
           className="border rounded p-2"
-          id="amountInput"
+          id="messageInput"
           type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
           value={message}
           onChange={(e: any) => setMessage(e.target.value)}
           autoComplete="off"
@@ -116,14 +147,12 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
       </div>
 
       <div className="mt-2 flex flex-col">
-        <label htmlFor="amountInput">StateInit:</label>
+        <label htmlFor="stateInitInput">StateInit:</label>
         <p className="text-foreground/75 text-sm my-1">Base64 encoded state init cell</p>
         <Input
           className="border rounded p-2"
-          id="amountInput"
+          id="stateInitInput"
           type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
           value={stateInit}
           onChange={(e: any) => setStateInit(e.target.value)}
           autoComplete="off"
