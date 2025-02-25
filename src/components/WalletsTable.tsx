@@ -37,6 +37,7 @@ import {
 import { cn } from '@/utils/cn'
 import { Input } from '@/components/ui/input'
 import { extractEc } from '@ton/sandbox/dist/utils/ec'
+import useExtraCurrencies from '@/hooks/useExtraCurrencies'
 
 // const defaultHighloadId = 1
 // const defaultTonWalletId = 698983191
@@ -51,6 +52,7 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(wallet.name || '')
   const inputRef = useRef<HTMLInputElement>(null)
+  const { currentNetworkCurrencies: currencies } = useExtraCurrencies()
 
   const handleNameSubmit = async () => {
     await UpdateKeyWalletName(wallet.id, name)
@@ -133,11 +135,19 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
           Balance: {balance ? parseFloat(balance) / 10 ** 9 : 0} TON
           {Object.entries(extraBalances).length > 0 && (
             <div className="mt-1 space-y-1">
-              {Object.entries(extraBalances).map(([currency, amount]) => (
-                <div key={currency} className="text-sm text-muted-foreground">
-                  Currency #{currency}: {Number(amount)} units
-                </div>
-              ))}
+              {Object.entries(extraBalances).map(([currency, amount]) => {
+                const currencyMeta = currencies[currency]
+                const decimals = currencyMeta?.decimals || 0
+                const symbol = currencyMeta?.symbol || `Currency #${currency}`
+                const formattedAmount =
+                  decimals > 0 ? Number(amount) / 10 ** decimals : Number(amount)
+
+                return (
+                  <div key={currency} className="text-sm text-muted-foreground">
+                    {symbol}: {formattedAmount} {currencyMeta && `(ID: ${currency})`}
+                  </div>
+                )
+              })}
             </div>
           )}
         </CardDescription>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { ExtraCurrencyConfig, ExtraCurrencyMeta } from '@/types/network'
 import { getDatabase } from '@/db'
 import { Setting } from '@/types/settings'
@@ -137,8 +137,12 @@ export function useExtraCurrencies() {
   // Get all currencies for the currently selected network
   const getCurrentNetworkCurrencies = useCallback((): Record<string, ExtraCurrencyMeta> => {
     if (!selectedNetwork || loading) return {}
-    return config[selectedNetwork.network_id] || {}
+    return config[selectedNetwork.is_testnet ? -3 : -239] || {}
   }, [selectedNetwork, loading, config])
+
+  const currentNetworkCurrencies = useMemo(() => {
+    return getCurrentNetworkCurrencies()
+  }, [getCurrentNetworkCurrencies])
 
   // Get a specific currency by ID for the current network
   const getCurrency = useCallback(
@@ -163,6 +167,7 @@ export function useExtraCurrencies() {
   return {
     loading,
     config,
+    currentNetworkCurrencies,
     getCurrentNetworkCurrencies,
     getCurrency,
     getNetworkCurrencies,

@@ -9,10 +9,19 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { addConnectMessage } from '@/store/connectMessages'
 import { useSelectedKey } from '@/store/walletState'
 import { useNavigate } from 'react-router-dom'
+import useExtraCurrencies from '@/hooks/useExtraCurrencies'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadWalletV2 }) {
   const selectedKey = useSelectedKey()
   const navigate = useNavigate()
+  const { currentNetworkCurrencies: currencies } = useExtraCurrencies()
 
   const [amount, setAmount] = useState('0')
   const [recepient, setRecepient] = useState('')
@@ -21,15 +30,19 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
   const [message64, setMessage64] = useState(false)
   const [extraCurrencyAmount, setExtraCurrencyAmount] = useState('0')
   const [extraCurrencyCode, setExtraCurrencyCode] = useState('')
+  // const [availableCurrencies, setAvailableCurrencies] = useState<Record<string, any>>({})
 
   useEffect(() => {
+    if (extraCurrencyCode && !currencies[extraCurrencyCode] && extraCurrencyCode !== 'none') {
+      setExtraCurrencyCode('')
+    }
+
     setAmount('0')
     setRecepient('')
     setMessage('')
     setStateInit('')
     setMessage64(false)
     setExtraCurrencyAmount('0')
-    setExtraCurrencyCode('')
   }, [wallet])
 
   const addMessageToEmulation = async () => {
@@ -39,6 +52,18 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
     if (typeof keyId === 'undefined') {
       return
     }
+
+    // Only include extra currency if one is selected and not 'none'
+    const extraCurrency =
+      extraCurrencyCode && extraCurrencyCode !== 'none'
+        ? {
+            [extraCurrencyCode]: BigInt(
+              Math.floor(
+                parseFloat(extraCurrencyAmount) * 10 ** currencies[extraCurrencyCode].decimals
+              )
+            ).toString(),
+          }
+        : {}
 
     await addConnectMessage({
       connect_event_id: 0,
@@ -50,11 +75,9 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
         messages: [
           {
             address: recepient,
-            amount: BigInt(Math.floor(parseFloat(amount) * 10 ** 9)).toString(),
+            amount: BigInt(Math.floor(parseFloat(amount) * 10 ** 9) || 0).toString(),
             payload: textToWalletBody(message, message64)?.toBoc()?.toString('base64'),
-            extra_currency: {
-              [extraCurrencyCode]: extraCurrencyAmount,
-            },
+            extra_currency: extraCurrency,
           },
         ],
         valid_until: Date.now(),
@@ -95,7 +118,7 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
       </div>
 
       <div className="mt-2 flex flex-col">
-        <label htmlFor="extraCurrencyInput">Extra Currency Amount:</label>
+        <label htmlFor="extraCurrencySelect">Extra Currency:</label>
         <div className="flex gap-2">
           <Input
             className="border rounded p-2 flex-1"
@@ -108,16 +131,26 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
             autoComplete="off"
             placeholder="0"
           />
-          <Input
-            className="border rounded p-2 w-24"
-            id="extraCurrencyCode"
-            type="text"
-            value={extraCurrencyCode}
-            onChange={(e: any) => setExtraCurrencyCode(e.target.value)}
-            autoComplete="off"
-            placeholder="100"
-          />
+          <Select value={extraCurrencyCode} onValueChange={setExtraCurrencyCode}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Currency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {Object.entries(currencies).map(([id, meta]) => (
+                <SelectItem key={id} value={id}>
+                  {meta.symbol || id}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+        {extraCurrencyCode && extraCurrencyCode !== 'none' && currencies[extraCurrencyCode] && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {currencies[extraCurrencyCode].symbol || extraCurrencyCode} (Decimals:{' '}
+            {currencies[extraCurrencyCode].decimals})
+          </p>
+        )}
       </div>
 
       <div className="mt-2 flex flex-col">

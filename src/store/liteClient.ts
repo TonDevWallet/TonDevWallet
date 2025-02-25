@@ -25,7 +25,6 @@ const LiteClientState = hookstate<{
       is_default: true,
       is_testnet: false,
       scanner_url: 'https://tonviewer.com/',
-
       created_at: new Date(),
       updated_at: new Date(),
     })
