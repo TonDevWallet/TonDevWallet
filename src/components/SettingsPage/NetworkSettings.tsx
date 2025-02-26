@@ -10,9 +10,9 @@ import { getDatabase } from '@/db'
 import { Network } from '@/types/network'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Label } from '../ui/label'
-import { Badge } from '../ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { cn } from '@/utils/cn'
+import { Switch } from '../ui/switch'
 
 interface NetworkSettingsProps {
   name: string
@@ -79,6 +79,7 @@ function NetworkSettings() {
         await db<Network>('networks').where('network_id', network.network_id).update({
           name: network.name,
           url: network.url,
+          is_testnet: network.is_testnet,
         })
       }
       await updateNetworksList()
@@ -133,22 +134,28 @@ function NetworkSettings() {
                     key={field.id}
                     className={cn(
                       'bg-card/50 rounded-lg border-2 border-border/50 hover:border-primary/20 transition-all p-4 group',
-                      field.is_testnet ? 'bg-blue-50/50 dark:bg-blue-950/10' : ''
+                      form.watch(`networks.${index}.is_testnet`)
+                        ? 'bg-blue-50/50 dark:bg-blue-950/10'
+                        : ''
                     )}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-2">
                         <div
                           className={cn(
-                            'bg-primary/10 rounded-full p-2',
-                            field.is_testnet ? 'bg-blue-100 dark:bg-blue-900/30' : ''
+                            'bg-primary/10 rounded-full p-2 w-8 h-8 flex items-center justify-center',
+                            form.watch(`networks.${index}.is_testnet`)
+                              ? 'bg-blue-100 dark:bg-blue-900/30'
+                              : ''
                           )}
                         >
                           <FontAwesomeIcon
                             icon={faGlobe}
                             className={cn(
                               'text-primary',
-                              field.is_testnet ? 'text-blue-600 dark:text-blue-400' : ''
+                              form.watch(`networks.${index}.is_testnet`)
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : ''
                             )}
                           />
                         </div>
@@ -171,45 +178,56 @@ function NetworkSettings() {
                                 </FormItem>
                               )}
                             />
-                            {field.is_default && (
-                              <Badge variant="secondary" className="ml-1">
-                                Default
-                              </Badge>
-                            )}
-                            {field.is_testnet && (
-                              <Badge
-                                variant="outline"
-                                className="bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700"
-                              >
-                                Testnet
-                              </Badge>
-                            )}
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            Network ID: {field.network_id}
-                          </p>
+                          <p className="text-xs text-muted-foreground">ID: {field.network_id}</p>
                         </div>
                       </div>
 
-                      {!field.is_default && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeField(field)}
-                                className="opacity-50 hover:opacity-100 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950/30 transition-all"
-                              >
-                                <FontAwesomeIcon icon={faTrash} size="sm" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Remove network</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <FormField
+                            control={form.control}
+                            name={`networks.${index}.is_testnet`}
+                            render={({ field }) => (
+                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    id={`network-testnet-switch-${index}`}
+                                  />
+                                </FormControl>
+                                <Label
+                                  htmlFor={`network-testnet-switch-${index}`}
+                                  className="text-sm font-medium cursor-pointer"
+                                >
+                                  Testnet
+                                </Label>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        {!field.is_default && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeField(field)}
+                                  className="opacity-50 hover:opacity-100 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950/30 transition-all"
+                                >
+                                  <FontAwesomeIcon icon={faTrash} size="sm" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Remove network</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-4">
