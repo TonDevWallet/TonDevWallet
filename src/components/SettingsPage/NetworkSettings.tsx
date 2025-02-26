@@ -104,7 +104,7 @@ function NetworkSettings() {
   return (
     <div className="space-y-6">
       <Card className="border shadow overflow-hidden">
-        <CardHeader className="border-b bg-muted/30 pb-3">
+        <CardHeader className="border-b bg-muted/30 pt-6 pb-6">
           <div className="flex items-center gap-2">
             <FontAwesomeIcon icon={faNetworkWired} className="text-primary" />
             <div>

@@ -4,7 +4,6 @@ import ExtraCurrencySettings from './ExtraCurrencySettings'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faKey,
   faNetworkWired,
   faDollarSign,
   faGear,
@@ -84,11 +83,16 @@ export function SettingsPage() {
         {/* General Settings Tab - Commented out
         <TabsContent value="general" className="pt-6">
           <Card>
-            <CardHeader>
-              <CardTitle>General Settings</CardTitle>
-              <CardDescription>Configure basic application settings</CardDescription>
+            <CardHeader className="border-b bg-muted/30 pt-6 pb-6">
+              <div className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faGear} className="text-primary" />
+                <div>
+                  <CardTitle className="text-lg">General Settings</CardTitle>
+                  <CardDescription>Configure basic application settings</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <p className="text-muted-foreground">
                 No general settings are available at this time.
               </p>
@@ -99,17 +103,17 @@ export function SettingsPage() {
 
         {/* Security Settings Tab */}
         <TabsContent value="security" className="pt-6">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border shadow overflow-hidden">
+            <CardHeader className="border-b bg-muted/30 pt-6 pb-6">
               <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faKey} className="text-primary" />
+                <FontAwesomeIcon icon={faShieldHalved} className="text-primary" />
                 <div>
-                  <CardTitle>Password Settings</CardTitle>
+                  <CardTitle className="text-lg">Password Settings</CardTitle>
                   <CardDescription>Manage your account password</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <ChangePasswordPopup />
             </CardContent>
           </Card>

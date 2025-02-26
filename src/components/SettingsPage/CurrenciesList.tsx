@@ -19,7 +19,7 @@ const CurrenciesList = memo(
 
     return (
       <Card className="border shadow-sm overflow-hidden">
-        <CardHeader className="pb-3 border-b bg-muted/30">
+        <CardHeader className="pt-4 pb-4 border-b bg-muted/30">
           <div className="flex items-center gap-2">
             <FontAwesomeIcon icon={faCoins} className="text-primary" />
             <div>
