@@ -8,6 +8,11 @@ import { cn } from '@/utils/cn'
 import { Textarea } from '../ui/textarea'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faKey } from '@fortawesome/free-solid-svg-icons'
+import { Separator } from '../ui/separator'
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
+import { InfoCircledIcon } from '@radix-ui/react-icons'
 
 export function FromMnemonic() {
   const navigate = useNavigate()
@@ -15,18 +20,30 @@ export function FromMnemonic() {
   const [name, setName] = useState('')
   const [words, setWords] = useState('')
   const [seed, setSeed] = useState<Buffer | undefined>()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const onWordsChange = async (e: any) => {
+  const onWordsChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     try {
       setWords(e.target.value)
+      setError(null)
+      setSeed(undefined)
+
       const mnemonic = e.target.value.split(' ')
+
+      if (mnemonic.length !== 24) {
+        return // Not enough words yet
+      }
 
       if (await mnemonicValidate(mnemonic)) {
         const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
         setSeed(ls)
+      } else {
+        setError('Invalid mnemonic phrase. Please check for typos.')
       }
     } catch (e) {
       console.log('onWordsChange error', e)
+      setError('Error validating mnemonic phrase')
     }
   }
 
@@ -34,83 +51,118 @@ export function FromMnemonic() {
 
   const saveSeed = async () => {
     if (!seed || seed.length !== 32) {
-      throw new Error('Seed must be 64 characters')
+      setError('Seed must be 64 characters')
+      return
     }
 
-    await saveKeyFromData(name || '', navigate, seed, words)
+    try {
+      setIsLoading(true)
+      await saveKeyFromData(name || '', navigate, seed, words)
+    } catch (error: any) {
+      console.error('Error saving wallet:', error)
+      setError(error.message || 'Error saving wallet')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div>
-      <div className="flex flex-col">
-        <label htmlFor="mnemonicInput">Mnemonic</label>
+    <div className="space-y-6">
+      <Alert>
+        <InfoCircledIcon className="h-4 w-4" />
+        <AlertTitle>Enter Your Recovery Phrase</AlertTitle>
+        <AlertDescription>
+          Enter your 24-word recovery phrase to restore access to your wallet.
+        </AlertDescription>
+      </Alert>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="mnemonicInput">
+          Mnemonic Phrase (24 words):
+        </label>
         <Textarea
-          className="w-3/4 h-24 outline-none border p-1"
+          className="font-mono text-sm min-h-[100px]"
           id="mnemonicInput"
           onChange={onWordsChange}
           value={words}
           spellCheck={false}
           autoFocus
+          placeholder="Enter your 24-word mnemonic phrase separated by spaces..."
         />
-        {/* <input type="text" id="mnemonicInput" className="border rounded p-2 w-96" /> */}
+        {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+        <p className="text-xs text-muted-foreground">
+          Words should be separated by spaces. The phrase is case-sensitive.
+        </p>
       </div>
 
       {seed && (
-        <>
-          <div>
-            <div className="text-lg font-medium my-2 flex items-center">Seed:</div>
-            <div className="flex">
-              <div className="w-100 overflow-hidden text-ellipsis text-xs">
-                {seed.toString('hex')}
+        <div className="space-y-6">
+          <Separator />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <FontAwesomeIcon icon={faKey} className="text-primary" />
+                Seed:
+              </label>
+              <div className="flex items-center p-2 bg-muted rounded-md">
+                <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
+                  {seed.toString('hex')}
+                </code>
+                <Copier className="w-5 h-5 ml-2 shrink-0" text={seed.toString('hex') || ''} />
               </div>
-              <Copier className="w-6 h-6 ml-2" text={seed.toString('hex') || ''} />
             </div>
-          </div>
-          <div>
-            <div className="text-lg font-medium my-2 flex items-center">Public key:</div>
-            <div className="flex">
-              <div className="w-100 overflow-hidden text-ellipsis text-xs">
-                {Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <FontAwesomeIcon icon={faKey} className="text-primary" />
+                Public Key:
+              </label>
+              <div className="flex items-center p-2 bg-muted rounded-md">
+                <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
+                  {Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
+                </code>
+                <Copier
+                  className="w-5 h-5 ml-2 shrink-0"
+                  text={Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
+                />
               </div>
-              <Copier
-                className="w-6 h-6 ml-2"
-                text={Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
-              />
-            </div>
-          </div>
-          <div>
-            <div className="text-lg font-medium my-2 flex items-center">Secret key:</div>
-            <div className="flex">
-              <div className="w-100 overflow-hidden text-ellipsis text-xs">
-                {Buffer.from(walletKeyPair?.secretKey || []).toString('hex')}
-              </div>
-              <Copier
-                className="w-6 h-6 ml-2"
-                text={Buffer.from(walletKeyPair?.secretKey || []).toString('hex')}
-              />
             </div>
           </div>
 
-          <div className="py-4 flex flex-col">
-            <label htmlFor="nameRef">Name:</label>
-            <Input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              id="nameRef"
-              className="border w-3/4 outline-none rounded px-2 py-1"
-              autoFocus
-            />
+          <Separator />
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="nameRef">
+                Wallet Name:
+              </label>
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                id="nameRef"
+                className="max-w-md"
+                placeholder="My TON Wallet"
+                autoComplete="off"
+              />
+              <p className="text-xs text-muted-foreground">
+                Give your wallet a name to easily identify it later
+              </p>
+            </div>
 
             <Button
               onClick={saveSeed}
-              className={cn('mt-2 w-24', !name && 'opacity-50')}
-              disabled={!name}
+              className={cn('', !name && 'opacity-50')}
+              disabled={!name || isLoading}
+              size="lg"
             >
-              Save
+              {isLoading ? 'Saving...' : 'Restore Wallet'}
             </Button>
           </div>
-        </>
+
+          <div className="h-10"></div>
+        </div>
       )}
     </div>
   )

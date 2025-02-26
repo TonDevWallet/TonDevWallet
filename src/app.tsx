@@ -11,6 +11,7 @@ import { useTheme } from './hooks/useTheme'
 import { useOs } from './hooks/useOs'
 import { usePassword } from './store/passwordManager'
 import { useLiteclientState } from './store/liteClient'
+import { Toaster } from '@/components/ui/toaster'
 
 export function App({ db }: { db: Knex }) {
   const keysList = useWalletListState()
@@ -30,7 +31,9 @@ export function App({ db }: { db: Knex }) {
           suspend(passwordState) ||
           suspend(tonConnectState) ||
           suspend(liteClientState) || <RouterProvider router={router} />}
+        sonne
         {/* {suspend(wallet) || <IndexPage />} */}
+        <Toaster />
       </React.Suspense>
     </DbContext.Provider>
   )
