@@ -48,3 +48,14 @@ export interface LSConfigData {
     }
   }
 }
+
+export interface ExtraCurrencyMeta {
+  symbol: string
+  decimals: number
+}
+
+export type ExtraCurrencyConfig = {
+  [networkId: number]: {
+    [extraCurrencyId: string]: ExtraCurrencyMeta
+  }
+}

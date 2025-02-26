@@ -1,22 +1,19 @@
 import { useFieldArray, useForm } from 'react-hook-form'
-import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
-import { Input } from '../ui/input'
-import { useEffect } from 'react'
+import { Form } from '../ui/form'
+import { useEffect, useState } from 'react'
 import { Button } from '../ui/button'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faNetworkWired, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { updateNetworksList, useLiteclientState } from '@/store/liteClient'
 import { getDatabase } from '@/db'
 import { Network } from '@/types/network'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import NetworkRow, { NetworkSettingsProps } from './NetworkRow'
 
-interface NetworkSettingsProps {
-  name: string
-  url: string
-  is_default: boolean
-  network_id: number
-}
 function NetworkSettings() {
   const liteClientState = useLiteclientState()
+  const [isAdding, setIsAdding] = useState(false)
+
   const form = useForm<{
     networks: NetworkSettingsProps[]
   }>({
@@ -27,10 +24,12 @@ function NetworkSettings() {
           url: network.url,
           is_default: network.is_default,
           network_id: network.network_id,
+          is_testnet: network.is_testnet,
         }
       }),
     },
   })
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'networks',
@@ -49,6 +48,7 @@ function NetworkSettings() {
         url: network.url,
         is_default: network.is_default,
         network_id: network.network_id,
+        is_testnet: network.is_testnet,
       })
     }
   }, [liteClientState.networks])
@@ -67,6 +67,7 @@ function NetworkSettings() {
         await db<Network>('networks').where('network_id', network.network_id).update({
           name: network.name,
           url: network.url,
+          is_testnet: network.is_testnet,
         })
       }
       await updateNetworksList()
@@ -75,90 +76,67 @@ function NetworkSettings() {
   }, [form])
 
   const addCustomNetwork = async () => {
-    const db = await getDatabase()
-    await db<Network>('networks').insert({
-      name: `Custom network #${fields.length}`,
-      url: 'https://ton-blockchain.github.io/global.config.json',
-      item_order: fields.length + 1,
-      is_default: false,
-      is_testnet: false,
-      scanner_url: 'https://tonviewer.com/',
-
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-    await updateNetworksList()
+    setIsAdding(true)
+    try {
+      const db = await getDatabase()
+      await db<Network>('networks').insert({
+        name: `Custom network #${fields.length}`,
+        url: 'https://ton-blockchain.github.io/global.config.json',
+        item_order: fields.length + 1,
+        is_default: false,
+        is_testnet: false,
+        scanner_url: 'https://tonviewer.com/',
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      await updateNetworksList()
+    } finally {
+      setIsAdding(false)
+    }
   }
 
-  const removeField = async (field: {
-    name: string
-    url: string
-    is_default: boolean
-    network_id: number
-  }) => {
+  const removeField = async (field: NetworkSettingsProps) => {
     const db = await getDatabase()
     await db<Network>('networks').where('network_id', field.network_id).delete()
     await updateNetworksList()
   }
 
   return (
-    <div>
-      <h2 className="mt-10 scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight transition-colors">
-        Networks Settings
-      </h2>
-
-      {/* <p className="mt-4">asd</p> */}
-
-      <Form {...form}>
-        <div className="flex flex-col gap-4">
-          {fields.map((field, index) => {
-            return (
-              <div key={field.id}>
-                <div className="flex justify-between items-center">
-                  <FormField
-                    control={form.control}
-                    name={`networks.${index}.name`}
-                    render={({ field }) => (
-                      <FormItem className="w-full">
-                        <FormControl>
-                          <Input
-                            placeholder=""
-                            {...field}
-                            className="border-0 px-0 outline-none focus-visible:ring-0 w-full"
-                            spellCheck={false}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {!field.is_default && (
-                    <div onClick={() => removeField(field)} className="cursor-pointer">
-                      <FontAwesomeIcon icon={faTrash} size="xs" />
-                    </div>
-                  )}
-                </div>
-                <FormField
+    <div className="space-y-6">
+      <Card className="border shadow overflow-hidden">
+        <CardHeader className="border-b bg-muted/30 pt-6 pb-6">
+          <div className="flex items-center gap-2">
+            <FontAwesomeIcon icon={faNetworkWired} className="text-primary" />
+            <div>
+              <CardTitle className="text-lg">Network Configurations</CardTitle>
+              <CardDescription>Configure blockchain networks for your wallet</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          <Form {...form}>
+            <div className="space-y-5">
+              {fields.map((field, index) => (
+                <NetworkRow
+                  key={field.id}
+                  field={field}
+                  index={index}
                   control={form.control}
-                  name={`networks.${index}.url`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input placeholder="" {...field} spellCheck={false} className="w-full" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  watch={form.watch}
+                  onRemove={removeField}
                 />
-              </div>
-            )
-          })}
-        </div>
-      </Form>
+              ))}
+            </div>
+          </Form>
 
-      <Button className="mt-4" onClick={addCustomNetwork}>
-        Add Network
-      </Button>
+          <div className="mt-6">
+            <Button onClick={addCustomNetwork} className="w-full sm:w-auto" disabled={isAdding}>
+              <FontAwesomeIcon icon={faPlus} className={`mr-2 ${isAdding ? 'animate-spin' : ''}`} />
+              {isAdding ? 'Adding...' : 'Add Custom Network'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

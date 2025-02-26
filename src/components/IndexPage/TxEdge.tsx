@@ -5,6 +5,8 @@ import { EdgeProps, getBezierPath, EdgeLabelRenderer, BaseEdge } from '@xyflow/r
 import { Address } from '@ton/core'
 import { GraphTx } from './MessageFlow'
 import Copier from '../copier'
+import { extractEc } from '@ton/sandbox/dist/utils/ec'
+import useExtraCurrencies from '@/hooks/useExtraCurrencies'
 
 export const TxEdge: FC<EdgeProps> = ({
   id,
@@ -16,6 +18,7 @@ export const TxEdge: FC<EdgeProps> = ({
   targetPosition,
   data,
 }) => {
+  const { currentNetworkCurrencies: currencies } = useExtraCurrencies()
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -49,6 +52,9 @@ export const TxEdge: FC<EdgeProps> = ({
   const toAddress = outMessage.info.dest
 
   const tonAmount = Number(outMessage?.info.value.coins) / 10 ** 9
+  const extraCurrencies = outMessage?.info.value.other
+    ? extractEc(outMessage?.info.value.other)
+    : {}
 
   return (
     <>
@@ -93,6 +99,35 @@ export const TxEdge: FC<EdgeProps> = ({
               style={{ pointerEvents: 'all' }}
             />
           </div>
+
+          {extraCurrencies &&
+            Object.entries(extraCurrencies).map(([currencyId, amount]) => {
+              const currencyInfo = currencies[currencyId]
+              const decimals = currencyInfo?.decimals || 9
+              const symbol = currencyInfo?.symbol || currencyId
+              const formattedAmount = Number(amount) / 10 ** decimals
+
+              return (
+                <div
+                  key={currencyId}
+                  className={cn(
+                    'nodrag nopan p-2 rounded bg-foreground text-background flex items-center gap-2',
+                    rootAddress.equals(fromAddress) && 'bg-red-500 text-foreground',
+                    rootAddress.equals(toAddress) && 'bg-green-700 text-foreground'
+                  )}
+                >
+                  <span>
+                    {formattedAmount} {symbol}
+                  </span>
+                  <Copier
+                    className="w-4 h-4"
+                    text={formattedAmount.toString()}
+                    style={{ pointerEvents: 'all' }}
+                  />
+                </div>
+              )
+            })}
+
           {from.shard && to.shard && (
             <div
               className={cn(
