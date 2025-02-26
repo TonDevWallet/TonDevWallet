@@ -12,6 +12,7 @@ interface AddCurrencyFormProps {
 const AddCurrencyForm = memo(({ onAddCurrency }: AddCurrencyFormProps) => {
   const [currencyId, setCurrencyId] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,33 +23,50 @@ const AddCurrencyForm = memo(({ onAddCurrency }: AddCurrencyFormProps) => {
       return
     }
 
-    const success = await onAddCurrency(currencyId)
+    setIsSubmitting(true)
 
-    if (success) {
-      setCurrencyId('')
-    } else {
-      setError('A currency with this ID already exists')
+    try {
+      const success = await onAddCurrency(currencyId)
+
+      if (success) {
+        setCurrencyId('')
+      } else {
+        setError('A currency with this ID already exists')
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-4 mb-4">
-      <div className="flex-1">
-        <Label htmlFor="new-currency-id">Currency ID</Label>
-        <Input
-          id="new-currency-id"
-          value={currencyId}
-          onChange={(e) => setCurrencyId(e.target.value)}
-          placeholder="Enter currency ID (e.g. USDT)"
-          aria-invalid={error ? 'true' : 'false'}
-        />
-        {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
-      </div>
-      <div className="pt-6">
-        <Button type="submit">
-          <FontAwesomeIcon icon={faPlus} className="mr-2" />
-          Add Currency
-        </Button>
+    <form onSubmit={handleSubmit}>
+      <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
+        <div className="flex-1">
+          <Label htmlFor="new-currency-id" className="text-sm font-medium">
+            Currency ID
+          </Label>
+          <div className="mt-1 relative">
+            <Input
+              id="new-currency-id"
+              value={currencyId}
+              onChange={(e) => setCurrencyId(e.target.value)}
+              placeholder="Enter currency ID (e.g. USDT)"
+              aria-invalid={error ? 'true' : 'false'}
+              className={`w-full ${error ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+              disabled={isSubmitting}
+            />
+            {error && <p className="text-sm text-red-500 mt-1 absolute">{error}</p>}
+          </div>
+        </div>
+        <div className="flex items-end">
+          <Button type="submit" className="w-full md:w-auto transition-all" disabled={isSubmitting}>
+            <FontAwesomeIcon
+              icon={faPlus}
+              className={`mr-2 ${isSubmitting ? 'animate-spin' : ''}`}
+            />
+            {isSubmitting ? 'Adding...' : 'Add Currency'}
+          </Button>
+        </div>
       </div>
     </form>
   )

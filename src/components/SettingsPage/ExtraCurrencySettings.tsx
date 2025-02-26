@@ -1,11 +1,14 @@
 import { memo, useState, useCallback, useEffect } from 'react'
 import { useLiteclientState } from '@/store/liteClient'
 import { ExtraCurrencyMeta } from '@/types/network'
-import { Label } from '../ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import useExtraCurrencies from '@/hooks/useExtraCurrencies'
 import CurrenciesList from './CurrenciesList'
 import AddCurrencyForm from './AddCurrencyForm'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faDollarSign, faNetworkWired } from '@fortawesome/free-solid-svg-icons'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { cn } from '@/utils/cn'
 
 // Fixed network IDs for mainnet and testnet
 const MAINNET_ID = -239
@@ -61,55 +64,151 @@ const ExtraCurrencySettings = memo(() => {
   // Get currencies for the selected network
   const currencies = selectedNetworkId ? getNetworkCurrencies(selectedNetworkId) : {}
 
-  // Get network name based on selected ID
-  const getNetworkName = (networkId: number): string => {
-    if (networkId === MAINNET_ID) return 'Mainnet'
-    if (networkId === TESTNET_ID) return 'Testnet'
-    return 'Unknown Network'
-  }
-
   return (
-    <div>
-      <h2 className="mt-10 scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight transition-colors">
-        Extra Currency Configuration
-      </h2>
-
-      <p className="text-sm text-muted-foreground mt-2 mb-4">
-        Configure additional currencies for each network
-      </p>
-
-      <div className="mb-4">
-        <Label htmlFor="network-select">Select Network</Label>
-        <Select value={selectedNetworkId?.toString() || ''} onValueChange={handleNetworkChange}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select a network" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem key={MAINNET_ID} value={MAINNET_ID.toString()}>
-              Mainnet
-            </SelectItem>
-            <SelectItem key={TESTNET_ID} value={TESTNET_ID.toString()}>
-              Testnet
-            </SelectItem>
-          </SelectContent>
-        </Select>
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Header Section */}
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">
+          <FontAwesomeIcon icon={faDollarSign} className="mr-3 text-primary" />
+          Extra Currency Configuration
+        </h2>
+        <p className="text-muted-foreground">
+          Configure additional currencies to use across different networks in your application.
+        </p>
       </div>
 
-      {selectedNetworkId && (
-        <>
-          <CurrenciesList
-            networkName={getNetworkName(selectedNetworkId)}
-            currencies={currencies}
+      {/* Network Selection as Tabs */}
+      <Tabs
+        defaultValue={selectedNetworkId?.toString() || MAINNET_ID.toString()}
+        onValueChange={handleNetworkChange}
+        className="w-full"
+      >
+        <TabsList className="grid grid-cols-2 mb-6">
+          <TabsTrigger value={MAINNET_ID.toString()} className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-green-500 inline-block"></span>
+            Mainnet
+          </TabsTrigger>
+          <TabsTrigger value={TESTNET_ID.toString()} className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-blue-500 inline-block"></span>
+            Testnet
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab Content for each network */}
+        <TabsContent value={MAINNET_ID.toString()} className="mt-0 space-y-6">
+          <NetworkContent
+            networkId={MAINNET_ID}
+            networkName="Mainnet"
+            currencies={selectedNetworkId === MAINNET_ID ? currencies : {}}
             onUpdateMeta={handleUpdateMeta}
             onRemoveCurrency={handleRemoveCurrency}
+            onAddCurrency={handleAddCurrency}
           />
+        </TabsContent>
 
-          <AddCurrencyForm onAddCurrency={handleAddCurrency} />
-        </>
-      )}
+        <TabsContent value={TESTNET_ID.toString()} className="mt-0 space-y-6">
+          <NetworkContent
+            networkId={TESTNET_ID}
+            networkName="Testnet"
+            currencies={selectedNetworkId === TESTNET_ID ? currencies : {}}
+            onUpdateMeta={handleUpdateMeta}
+            onRemoveCurrency={handleRemoveCurrency}
+            onAddCurrency={handleAddCurrency}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 })
+
+// Network Content Component
+interface NetworkContentProps {
+  networkId: number
+  networkName: string
+  currencies: Record<string, ExtraCurrencyMeta>
+  onUpdateMeta: (currencyId: string, field: keyof ExtraCurrencyMeta, value: string | number) => void
+  onRemoveCurrency: (currencyId: string) => void
+  onAddCurrency: (currencyId: string) => Promise<boolean>
+}
+
+const NetworkContent = memo(
+  ({
+    networkId,
+    networkName,
+    currencies,
+    onUpdateMeta,
+    onRemoveCurrency,
+    onAddCurrency,
+  }: NetworkContentProps) => {
+    const networkBgClass =
+      networkId === MAINNET_ID
+        ? 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/10'
+        : 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/10'
+
+    const currencyCount = Object.keys(currencies).length
+
+    return (
+      <>
+        {/* Network Info Card */}
+        <Card className={cn('border-0 shadow-md', networkBgClass)}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div
+                  className={cn(
+                    'mr-4 rounded-full p-3',
+                    networkId === MAINNET_ID
+                      ? 'bg-green-100 dark:bg-green-900/30'
+                      : 'bg-blue-100 dark:bg-blue-900/30'
+                  )}
+                >
+                  <FontAwesomeIcon
+                    icon={faNetworkWired}
+                    className={cn(
+                      'text-lg',
+                      networkId === MAINNET_ID
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-blue-600 dark:text-blue-400'
+                    )}
+                  />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">{networkName}</CardTitle>
+                  <CardDescription>
+                    {currencyCount
+                      ? `${currencyCount} ${currencyCount === 1 ? 'currency' : 'currencies'} configured`
+                      : 'No currencies configured yet'}
+                  </CardDescription>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Currencies List */}
+        <CurrenciesList
+          networkName={networkName}
+          currencies={currencies}
+          onUpdateMeta={onUpdateMeta}
+          onRemoveCurrency={onRemoveCurrency}
+        />
+
+        {/* Add Currency Form */}
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Add New Currency</CardTitle>
+            <CardDescription>Define a new currency for {networkName}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AddCurrencyForm onAddCurrency={onAddCurrency} />
+          </CardContent>
+        </Card>
+      </>
+    )
+  }
+)
+
+NetworkContent.displayName = 'NetworkContent'
 
 ExtraCurrencySettings.displayName = 'ExtraCurrencySettings'
 
