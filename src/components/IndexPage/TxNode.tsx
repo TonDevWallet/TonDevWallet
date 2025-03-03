@@ -7,6 +7,7 @@ import { TxNodeData } from './MessageFlow'
 import { cn } from '@/utils/cn'
 import { useSelectedTx, setSelectedTx } from '@/store/tracerState'
 import { WebviewWindow } from '@tauri-apps/api/window'
+import Copier from '../copier'
 
 export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
   const selectedTx = useSelectedTx()
@@ -83,7 +84,10 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       <div>Self Fees: {Number(tx.totalFees.coins) / 10 ** 9}</div>
       {/* <div>Total Fees: {tonToNumber(tx.gasFull)}</div> */}
       {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
-        <div>OpCode: 0x{opCode.toString(16)}</div>
+        <div className="flex items-center gap-2">
+          <span>OpCode: 0x{opCode.toString(16)}</span>
+          <Copier className="w-5 h-5" text={`0x${opCode.toString(16)}`} />
+        </div>
       )}
       {notificationErrorCode ? (
         <div>
