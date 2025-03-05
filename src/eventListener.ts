@@ -11,8 +11,16 @@ export function useTauriEventListener() {
   const tonConnectState = useTonConnectState()
 
   const doConnect = async (arg: string) => {
+    console.log('doConnect', arg)
     if (arg.startsWith('--url=')) {
       arg.replace('--url=', '')
+    }
+
+    if (arg.startsWith('tondevwallet://trace/')) {
+      console.log('trace', arg)
+      // const traceId = arg.replace('tondevwallet://trace/', '')
+      // navigate('/app/tracer', { state: { traceId } })
+      return
     }
 
     if (!arg.startsWith('tondevwallet://connect/')) {

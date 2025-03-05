@@ -1,6 +1,7 @@
 import { ChangePasswordPopup } from '../SavedWalletsList/ChangePasswordPopup'
 import NetworkSettings from './NetworkSettings'
 import ExtraCurrencySettings from './ExtraCurrencySettings'
+import AddressBookSettings from './AddressBookSettings'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -8,6 +9,7 @@ import {
   faDollarSign,
   faGear,
   faShieldHalved,
+  faAddressBook,
 } from '@fortawesome/free-solid-svg-icons'
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
@@ -77,6 +79,16 @@ export function SettingsPage() {
               <FontAwesomeIcon icon={faDollarSign} className="mr-2" />
               Currencies
             </TabsTrigger>
+            <TabsTrigger
+              value="address-book"
+              className={cn(
+                'rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent py-3 px-6',
+                activeTab === 'address-book' && 'text-primary font-medium'
+              )}
+            >
+              <FontAwesomeIcon icon={faAddressBook} className="mr-2" />
+              Address Book
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -127,6 +139,11 @@ export function SettingsPage() {
         {/* Currencies Settings Tab */}
         <TabsContent value="currencies" className="pt-6">
           <ExtraCurrencySettings />
+        </TabsContent>
+
+        {/* Address Book Tab */}
+        <TabsContent value="address-book" className="pt-6">
+          <AddressBookSettings />
         </TabsContent>
       </Tabs>
     </div>

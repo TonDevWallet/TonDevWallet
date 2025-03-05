@@ -8,6 +8,13 @@ import { cn } from '@/utils/cn'
 import { useSelectedTx, setSelectedTx } from '@/store/tracerState'
 import { WebviewWindow } from '@tauri-apps/api/window'
 import Copier from '../copier'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
+import { InfoCircledIcon } from '@radix-ui/react-icons'
+import { useAddressInfo } from '@/hooks/useAddressInfo'
+
+function formatTon(amount: bigint) {
+  return Number(amount) / 10 ** 9
+}
 
 export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
   const selectedTx = useSelectedTx()
@@ -60,6 +67,8 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
     }
   }
 
+  const addressInfo = useAddressInfo(txAddress)
+
   const handleClick = () => {
     setSelectedTx(tx)
   }
@@ -79,9 +88,29 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       onClick={handleClick}
     >
       <AddressRow address={txAddress} />
+
+      {addressInfo && (
+        <div className="flex items-center gap-1 text-sm mt-1 mb-2">
+          <span className="font-medium">{addressInfo.title}</span>
+
+          {addressInfo.description && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <InfoCircledIcon className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>{addressInfo.description}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+      )}
+
       <div>ID: {tx.id}</div>
       <div>LT: {tx.lt.toString()}</div>
-      <div>Self Fees: {Number(tx.totalFees.coins) / 10 ** 9}</div>
+      <div>Self Fees: {formatTon(tx.totalFees.coins)}</div>
       {/* <div>Total Fees: {tonToNumber(tx.gasFull)}</div> */}
       {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
         <div className="flex items-center gap-2">
@@ -111,7 +140,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_transfer' && (
         <>
           <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
-          <div>Forward Amount: {tx.parsed.data.forward_ton_amount.toString()}</div>
+          <div>Forward Amount: {formatTon(tx.parsed.data.forward_ton_amount)}</div>
           <div>
             To: <AddressRow address={tx.parsed.data.destination ?? ''} />
           </div>
@@ -120,6 +149,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_internal_transfer' && (
         <>
           <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
+          <div>Forward Amount: {formatTon(tx.parsed.data.forward_ton_amount)}</div>
         </>
       )}
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_burn' && (

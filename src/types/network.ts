@@ -59,3 +59,16 @@ export type ExtraCurrencyConfig = {
     [extraCurrencyId: string]: ExtraCurrencyMeta
   }
 }
+
+export interface AddressEntry {
+  address: string
+  title: string
+  description: string
+  createdAt: number // timestamp
+}
+
+export type AddressBookConfig = {
+  [networkId: number]: {
+    [addressId: string]: AddressEntry
+  }
+}
