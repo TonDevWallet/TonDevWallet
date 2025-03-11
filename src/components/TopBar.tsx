@@ -20,6 +20,7 @@ import {
   faPlus,
   faSun,
   faProjectDiagram,
+  faHome,
 } from '@fortawesome/free-solid-svg-icons'
 import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
 import { cn } from '@/utils/cn'
@@ -33,6 +34,8 @@ export function TopBar() {
   return (
     <div className={cn('flex flex-wrap py-2 px-4 gap-4 w-full')}>
       <NetworkSelector />
+
+      <TopBarLinkWrapper to="/app" icon={faHome} text="Home" />
 
       <DetectTonConnect />
 
