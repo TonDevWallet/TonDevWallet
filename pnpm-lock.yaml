@@ -187,6 +187,9 @@ importers:
       comlink:
         specifier: ^4.4.2
         version: 4.4.2
+      dataloader:
+        specifier: ^2.2.3
+        version: 2.2.3
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -211,6 +214,9 @@ importers:
       knex:
         specifier: npm:@truecarry/knex@^2.3.0
         version: '@truecarry/knex@2.3.0'
+      lru_map:
+        specifier: ^0.4.1
+        version: 0.4.1
       next-themes:
         specifier: ^0.2.1
         version: 0.2.1(next@15.1.7(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.85.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -2477,9 +2483,6 @@ packages:
   d3-zoom@3.0.0:
     resolution: {integrity: sha512-b8AmV3kfQaqWAuacbPuNbL6vahnOJflOhexLzMMNLga62+/nh0JzvJ0aO/5a5MVgUFGS7Hu1P9P03o3fJkDCyw==}
     engines: {node: '>=12'}
-
-  dataloader@2.2.2:
-    resolution: {integrity: sha512-8YnDaaf7N3k/q5HnTJVuzSyLETjoZjVmHc4AeKAzOvKHEFQKcn64OKBfzHYtE9zGjctNM7V9I0MfnUVLpi7M5g==}
 
   dataloader@2.2.3:
     resolution: {integrity: sha512-y2krtASINtPFS1rSDjacrFgn1dcUuoREVabwlOGOe4SdxenREqwjwjElAdwvbGM7kgZz9a3KVicWR7vcz8rnzA==}
@@ -5903,7 +5906,7 @@ snapshots:
     dependencies:
       '@ton/core': 0.60.0(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0)
       adnl: 1.0.3
-      dataloader: 2.2.2
+      dataloader: 2.2.3
       lru_map: 0.4.1
       teslabot: 1.5.0
       ton-tl: 1.0.1
@@ -6476,8 +6479,6 @@ snapshots:
       d3-interpolate: 3.0.1
       d3-selection: 3.0.0
       d3-transition: 3.0.1(d3-selection@3.0.0)
-
-  dataloader@2.2.2: {}
 
   dataloader@2.2.3: {}
 

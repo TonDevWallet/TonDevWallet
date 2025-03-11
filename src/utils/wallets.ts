@@ -656,6 +656,7 @@ export function useWalletExternalMessageCell(
     }
 
     wallet.getExternalMessageCell(keyPair, transfers).then((c) => {
+      console.log('set external message cell', transfers)
       setCell(c)
     })
   }, [wallet?.id, transfers, liteClient, keyPair])

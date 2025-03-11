@@ -168,6 +168,16 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
           <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
         </>
       )}
+      {tx?.parsed?.internal && tx?.parsed?.internal === 'stonfi_deposit_ref_fee_v2' && (
+        <>
+          <div>Jetton Amount: {tx.parsed.data.jetton_amount.toString(10)}</div>
+        </>
+      )}
+      {tx?.parsed?.internal && tx?.parsed?.internal === 'dedust_swap_peer' && (
+        <>
+          <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
+        </>
+      )}
       <div>
         <button
           onClick={() => {

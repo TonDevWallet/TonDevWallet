@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Address, beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 import { parseInternal } from '@truecarry/tlb-abi'
-import { Blockchain, BlockchainStorage } from '@ton/sandbox'
+import { Blockchain, BlockchainSnapshot, BlockchainStorage } from '@ton/sandbox'
 import { bigIntToBuffer } from '@/utils/ton'
 import { AllShardsResponse } from 'ton-lite-client/dist/types'
 import { getShardBitMask, isSameShard } from '@/utils/shards'
@@ -165,6 +165,7 @@ function setBlockchainVerbosityVerbose(blockchain: Blockchain) {
 export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
   const [response, setResponse] = useState<ManagedSendMessageResult | undefined>()
   const [progress, setProgress] = useState<{ total: number; done: number }>({ done: 0, total: 0 })
+  const [snapshot, setSnapshot] = useState<BlockchainSnapshot | undefined>()
   const [isLoading, setIsLoading] = useState(false)
   const liteClient = useLiteclient() as LiteClient
   const txesRef = useRef<ParsedTransaction[]>([])
@@ -242,10 +243,11 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
         i++
         setResponse({ transactions })
         setIsLoading(false)
+        setSnapshot(blockchain.snapshot())
       }
 
       txesRef.current = transactions
-      return { transactions, shouldRestart: false }
+      return { transactions, snapshot, shouldRestart: false }
     }
 
     const emulateTransaction = async () => {
@@ -281,5 +283,5 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
     }
   }, [cell, liteClient, ignoreChecksig])
 
-  return { response, progress, isLoading }
+  return { response, progress, isLoading, snapshot }
 }
