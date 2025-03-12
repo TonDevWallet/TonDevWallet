@@ -6,6 +6,7 @@ import { sha256_sync } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { fetch as tFetch } from '@tauri-apps/api/http'
 import { JettonContent } from '@/types/jetton'
+import { checkForLibraries, megaLibsCell } from '@/hooks/useEmulatedTxInfo'
 
 interface NFTDictValue {
   content: Buffer
@@ -164,15 +165,55 @@ export async function loadJettonMetadata(contentCell: Cell): Promise<JettonConte
 export async function fetchJettonInfo(address: Address, liteClient: LiteClient) {
   try {
     // Create blockchain instance with lite client storage
+    const storage = new LiteClientBlockchainStorage(liteClient as any)
     const blockchain = await Blockchain.create({
-      storage: new LiteClientBlockchainStorage(liteClient as any),
+      storage,
     })
 
     // Run get_jetton_data() method
-    const result = await blockchain.runGetMethod(address, 'get_jetton_data')
 
-    if (result.exitCode !== 0) {
-      throw new Error(`get_jetton_data failed with exit code ${result.exitCode}`)
+    let ok = false
+    let attempts = 0
+    let result: any
+    while (!ok && attempts < 3) {
+      try {
+        attempts++
+        blockchain.libs = megaLibsCell
+        result = await blockchain.runGetMethod(address, 'get_jetton_data')
+        ok = true
+      } catch (e) {
+        ok = true
+        if ((e as any)?.message?.includes('Got exit_code: 9')) {
+          const messageCells: Cell[] = []
+          const contracts = storage.knownContracts()
+          const currentContractHash = address.hash
+          for (const contract of contracts) {
+            if (contract.address.hash.equals(currentContractHash)) {
+              if (contract.accountState?.type === 'active') {
+                if (contract.accountState.state.code) {
+                  messageCells.push(contract.accountState.state.code)
+                }
+                if (contract.accountState.state.data) {
+                  messageCells.push(contract.accountState.state.data)
+                }
+              }
+            }
+          }
+          const libFound = await checkForLibraries(messageCells, liteClient)
+          if (libFound) {
+            ok = false
+          }
+        }
+      }
+    }
+
+    if (result?.exitCode !== 0) {
+      console.log(
+        'get_jetton_data failed with exit code',
+        address.toString({ urlSafe: true, bounceable: true }),
+        result?.exitCode
+      )
+      throw new Error(`get_jetton_data failed with exit code ${result?.exitCode}`)
     }
 
     // Parse results

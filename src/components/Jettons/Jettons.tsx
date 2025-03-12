@@ -43,3 +43,21 @@ export const JettonAmountDisplay = memo(function JettonAmountDisplay({
     </div>
   )
 })
+
+export const JettonImage = memo(function JettonImage({
+  jettonAddress,
+}: {
+  jettonAddress: Address | string | undefined
+}) {
+  const jettonInfo = useJettonInfo(
+    jettonAddress
+      ? typeof jettonAddress === 'string'
+        ? Address.parse(jettonAddress)
+        : jettonAddress
+      : null
+  )
+
+  return (
+    <img src={jettonInfo.jettonInfo?.metadata.image} alt={jettonInfo.jettonInfo?.metadata.name} />
+  )
+})

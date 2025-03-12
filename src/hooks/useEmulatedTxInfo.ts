@@ -11,9 +11,9 @@ import { AllShardsResponse } from 'ton-lite-client/dist/types'
 import { getShardBitMask, isSameShard } from '@/utils/shards'
 
 const libs: Record<string, Buffer> = {}
-let megaLibsCell = beginCell().endCell()
+export let megaLibsCell = beginCell().endCell()
 
-async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
+export async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
   const toCheck = [...cells]
   let libFound = false
   while (toCheck.length > 0) {
