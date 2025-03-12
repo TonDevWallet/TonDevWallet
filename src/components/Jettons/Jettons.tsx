@@ -2,6 +2,7 @@ import { useJettonInfo } from '@/hooks/useJettonInfo'
 import { Address } from '@ton/core'
 import { memo } from 'react'
 import { AddressRow } from '@/components/AddressRow'
+import { formatUnits } from '@/utils/units'
 
 export const JettonNameDisplay = memo(function JettonNameDisplay({
   jettonAddress,
@@ -38,7 +39,7 @@ export const JettonAmountDisplay = memo(function JettonAmountDisplay({
   const symbol = jettonInfo.jettonInfo?.metadata?.symbol || 'UNKWN'
   return (
     <div>
-      {parseFloat(amount.toString()) / 10 ** decimals} {symbol}
+      {formatUnits(amount, decimals)} {symbol}
     </div>
   )
 })

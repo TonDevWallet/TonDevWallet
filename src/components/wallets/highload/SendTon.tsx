@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { parseTon } from '@/utils/units'
 
 export default function SendTon({ wallet }: { wallet: ITonHighloadWalletV2 }) {
   const [amount, setAmount] = useState('0')
@@ -170,7 +171,7 @@ const SendModal = ({
   const sendMoney = async () => {
     const params: WalletTransfer = {
       destination: Address.parse(recepient),
-      amount: BigInt(Math.floor(parseFloat(amount) * 10 ** 9)),
+      amount: parseTon(amount),
       mode: 3,
       body: textToWalletBody(sendMessage, isBase64),
     }

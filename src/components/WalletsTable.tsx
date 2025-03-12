@@ -38,6 +38,7 @@ import { cn } from '@/utils/cn'
 import { Input } from '@/components/ui/input'
 import { extractEc } from '@ton/sandbox/dist/utils/ec'
 import useExtraCurrencies from '@/hooks/useExtraCurrencies'
+import { formatUnits } from '@/utils/units'
 
 // const defaultHighloadId = 1
 // const defaultTonWalletId = 698983191
@@ -132,15 +133,14 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
           </a>
         </CardTitle>
         <CardDescription>
-          Balance: {balance ? parseFloat(balance) / 10 ** 9 : 0} TON
+          Balance: {balance ? formatUnits(balance, 9) : 0} TON
           {Object.entries(extraBalances).length > 0 && (
             <div className="mt-1 space-y-1">
               {Object.entries(extraBalances).map(([currency, amount]) => {
                 const currencyMeta = currencies[currency]
                 const decimals = currencyMeta?.decimals || 0
                 const symbol = currencyMeta?.symbol || `Currency #${currency}`
-                const formattedAmount =
-                  decimals > 0 ? Number(amount) / 10 ** decimals : Number(amount)
+                const formattedAmount = formatUnits(amount, decimals)
 
                 return (
                   <div key={currency} className="text-sm text-muted-foreground">

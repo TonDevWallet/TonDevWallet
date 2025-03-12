@@ -30,6 +30,7 @@ import { Address } from '@ton/ton'
 import { bigIntToBuffer } from '@/utils/ton'
 import { JettonAmountDisplay, JettonNameDisplay } from '../Jettons/Jettons'
 import { SerializeTransactionsList } from '@/utils/txSerializer'
+import { formatUnits } from '@/utils/units'
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -242,15 +243,9 @@ export const MessageRow = memo(function MessageRow({
         <div className="flex items-center gap-2">
           <div>Ton Flow:</div>
           <div className="break-words break-all">
-            {Number(moneyFlow.outputs.toString()) / 10 ** 9} TON →{' '}
-            {Number(moneyFlow.inputs.toString()) / 10 ** 9} TON
+            {formatUnits(moneyFlow.outputs, 9)} TON → {formatUnits(moneyFlow.inputs, 9)} TON
           </div>
-          <div>
-            Diff:{' '}
-            {Number(moneyFlow.inputs.toString()) / 10 ** 9 -
-              Number(moneyFlow.outputs.toString()) / 10 ** 9}{' '}
-            TON
-          </div>
+          <div>Diff: {formatUnits(moneyFlow.inputs - moneyFlow.outputs, 9)} TON</div>
         </div>
       </div>
       <JettonFlow jettonTransfers={moneyFlow.jettonTransfers} ourAddress={moneyFlow.ourAddress} />

@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { parseTon, parseUnits } from '@/utils/units'
 
 export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadWalletV2 }) {
   const selectedKey = useSelectedKey()
@@ -57,10 +58,9 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
     const extraCurrency =
       extraCurrencyCode && extraCurrencyCode !== 'none'
         ? {
-            [extraCurrencyCode]: BigInt(
-              Math.floor(
-                parseFloat(extraCurrencyAmount) * 10 ** currencies[extraCurrencyCode].decimals
-              )
+            [extraCurrencyCode]: parseUnits(
+              extraCurrencyAmount,
+              currencies[extraCurrencyCode].decimals
             ).toString(),
           }
         : {}
@@ -75,7 +75,7 @@ export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadW
         messages: [
           {
             address: recepient,
-            amount: BigInt(Math.floor(parseFloat(amount) * 10 ** 9) || 0).toString(),
+            amount: parseTon(amount).toString(),
             payload: textToWalletBody(message, message64)?.toBoc()?.toString('base64'),
             extra_currency: extraCurrency,
           },

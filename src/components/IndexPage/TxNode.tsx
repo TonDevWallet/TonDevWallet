@@ -12,10 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { useAddressInfo } from '@/hooks/useAddressInfo'
 import { JettonAmountDisplay } from '../Jettons/Jettons'
-
-function formatTon(amount: bigint) {
-  return Number(amount) / 10 ** 9
-}
+import { formatTon, formatUnits } from '@/utils/units'
 
 export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
   const selectedTx = useSelectedTx()
@@ -111,7 +108,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
 
       <div>ID: {tx.id}</div>
       <div>LT: {tx.lt.toString()}</div>
-      <div>Self Fees: {formatTon(tx.totalFees.coins)}</div>
+      <div>Self Fees: {formatUnits(tx.totalFees.coins, 9)}</div>
       {/* <div>Total Fees: {tonToNumber(tx.gasFull)}</div> */}
       {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
         <div className="flex items-center gap-2">

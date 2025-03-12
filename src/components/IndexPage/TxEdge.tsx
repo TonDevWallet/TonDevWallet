@@ -8,6 +8,7 @@ import Copier from '../copier'
 import { extractEc } from '@ton/sandbox/dist/utils/ec'
 import useExtraCurrencies from '@/hooks/useExtraCurrencies'
 import { JettonAmountDisplay } from '../Jettons/Jettons'
+import { formatUnits } from '@/utils/units'
 
 export const TxEdge: FC<EdgeProps> = ({
   id,
@@ -52,7 +53,7 @@ export const TxEdge: FC<EdgeProps> = ({
   const fromAddress = new Address(0, bigIntToBuffer(from.address))
   const toAddress = outMessage.info.dest
 
-  const tonAmount = Number(outMessage?.info.value.coins) / 10 ** 9
+  const tonAmount = formatUnits(outMessage?.info.value.coins, 9)
   const extraCurrencies = outMessage?.info.value.other
     ? extractEc(outMessage?.info.value.other)
     : {}
@@ -142,7 +143,7 @@ export const TxEdge: FC<EdgeProps> = ({
               const currencyInfo = currencies[currencyId]
               const decimals = currencyInfo?.decimals || 9
               const symbol = currencyInfo?.symbol || currencyId
-              const formattedAmount = Number(amount) / 10 ** decimals
+              const formattedAmount = formatUnits(amount, decimals)
 
               return (
                 <div

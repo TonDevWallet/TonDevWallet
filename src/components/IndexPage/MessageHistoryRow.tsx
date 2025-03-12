@@ -9,6 +9,7 @@ import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { BocContainer } from '../BocContainer'
+import { formatUnits } from '@/utils/units'
 
 export const MessageHistoryRow = memo(function MessageHistoryRow({
   connectMessage,
@@ -19,9 +20,11 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
   const liteClient = useLiteclient() as unknown as LiteClient
   const sessions = useTonConnectSessions()
 
-  const amountOut =
-    Number(connectMessage?.payload?.messages?.reduce((acc, c) => acc + BigInt(c.amount), 0n)) /
-    10 ** 9
+  const totalAmountOut = connectMessage?.payload?.messages?.reduce(
+    (acc, c) => acc + BigInt(c.amount),
+    0n
+  )
+  const amountOut = formatUnits(totalAmountOut, 9)
 
   const key = useMemo(() => {
     return keys.find((k) => k.id.get() === connectMessage.key_id)
