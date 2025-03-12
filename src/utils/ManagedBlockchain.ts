@@ -1,3 +1,4 @@
+import { Address } from '@ton/core'
 import type { BlockchainTransaction } from '@ton/sandbox/dist/blockchain/Blockchain'
 import { Blockchain } from '@ton/sandbox/dist/blockchain/Blockchain'
 import { ParsedInternal } from '@truecarry/tlb-abi'
@@ -11,6 +12,11 @@ export type ParsedTransaction = BlockchainTransaction & {
   shard?: string
   delay?: number
   totalDelay?: number
+  jettonData?: {
+    balance: bigint
+    owner?: Address
+    jettonAddress?: Address
+  }
 }
 export type ManagedSendMessageResult = {
   transactions: ParsedTransaction[]

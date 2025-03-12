@@ -11,6 +11,7 @@ import Copier from '../copier'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { useAddressInfo } from '@/hooks/useAddressInfo'
+import { JettonAmountDisplay } from '../Jettons/Jettons'
 
 function formatTon(amount: bigint) {
   return Number(amount) / 10 ** 9
@@ -139,7 +140,13 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       {tx?.parsed?.internal && <div>Type: {tx.parsed?.internal}</div>}
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_transfer' && (
         <>
-          <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
+          <div className="flex gap-2">
+            Jetton Amount:
+            <JettonAmountDisplay
+              amount={tx.parsed.data.amount}
+              jettonAddress={tx.jettonData?.jettonAddress}
+            />
+          </div>
           <div>Forward Amount: {formatTon(tx.parsed.data.forward_ton_amount)}</div>
           <div>
             To: <AddressRow address={tx.parsed.data.destination ?? ''} />
@@ -149,7 +156,13 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_internal_transfer' && (
         <>
           <div>Query ID: {tx.parsed.data.query_id.toString()}</div>
-          <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
+          <div className="flex gap-2">
+            Jetton Amount:
+            <JettonAmountDisplay
+              amount={tx.parsed.data.amount}
+              jettonAddress={tx.jettonData?.jettonAddress}
+            />
+          </div>
           <div>Forward Amount: {formatTon(tx.parsed.data.forward_ton_amount)}</div>
         </>
       )}

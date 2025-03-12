@@ -237,6 +237,30 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
           if (parsed) {
             ;(tx as any).parsed = parsed
           }
+          if (
+            parsed?.internal === 'jetton_burn' ||
+            parsed?.internal === 'jetton_mint' ||
+            parsed?.internal === 'jetton_transfer' ||
+            parsed?.internal === 'jetton_internal_transfer'
+          ) {
+            try {
+              const jettonInfo = await blockchain.runGetMethod(
+                new Address(0, bigIntToBuffer(tx.address)),
+                'get_wallet_data'
+              )
+              const balance = jettonInfo.stackReader.readBigNumber()
+              const owner = jettonInfo.stackReader.readAddressOpt()
+              const jettonAddress = jettonInfo.stackReader.readAddressOpt()
+              const jettonData = {
+                balance,
+                owner,
+                jettonAddress,
+              }
+              ;(tx as any).jettonData = jettonData
+            } catch (err) {
+              console.log('error getting jetton info', err)
+            }
+          }
         }
 
         transactions[i] = tx as any

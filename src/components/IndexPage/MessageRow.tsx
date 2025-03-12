@@ -25,11 +25,11 @@ import { faDownload, faExpand } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { ManagedSendMessageResult } from '@/utils/ManagedBlockchain'
-import { DeserializeTransactionsList, SerializeTransactionsList } from '@/utils/txSerializer'
-import { Address, TupleItemSlice } from '@ton/ton'
-import { Blockchain } from '@ton/sandbox'
+// import { DeserializeTransactionsList, SerializeTransactionsList } from '@/utils/txSerializer'
+import { Address } from '@ton/ton'
 import { bigIntToBuffer } from '@/utils/ton'
-import { useJettonInfo } from '@/hooks/useJettonInfo'
+import { JettonAmountDisplay, JettonNameDisplay } from '../Jettons/Jettons'
+import { SerializeTransactionsList } from '@/utils/txSerializer'
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -187,19 +187,7 @@ export const MessageRow = memo(function MessageRow({
           continue
         }
 
-        let jettonAddress: Address | null = null
-        try {
-          const blockchain = await Blockchain.create()
-          await blockchain.loadFrom(snapshot)
-          const getResult = await blockchain.runGetMethod(
-            new Address(0, bigIntToBuffer(t.address)),
-            'get_wallet_data'
-          )
-          const jettonAddressSlice = getResult.stack[2] as TupleItemSlice
-          jettonAddress = jettonAddressSlice.cell.beginParse().loadAddress()
-        } catch (e) {
-          console.error(e)
-        }
+        const jettonAddress = t.jettonData?.jettonAddress || null
 
         jettonTransfers.push({
           from,
@@ -358,46 +346,6 @@ const JettonFlowItem = memo(function JettonFlowItem({
   )
 })
 
-const JettonNameDisplay = memo(function JettonNameDisplay({
-  jettonAddress,
-}: {
-  jettonAddress: Address | string | undefined
-}) {
-  const jettonInfo = useJettonInfo(
-    jettonAddress
-      ? typeof jettonAddress === 'string'
-        ? Address.parse(jettonAddress)
-        : jettonAddress
-      : null
-  )
-
-  const name = jettonInfo.jettonInfo?.metadata?.name
-  return <div>{<AddressRow address={jettonAddress} text={name} />}</div>
-})
-
-const JettonAmountDisplay = memo(function JettonAmountDisplay({
-  amount,
-  jettonAddress,
-}: {
-  amount: bigint
-  jettonAddress: Address | string | undefined
-}) {
-  const jettonInfo = useJettonInfo(
-    jettonAddress
-      ? typeof jettonAddress === 'string'
-        ? Address.parse(jettonAddress)
-        : jettonAddress
-      : null
-  )
-  const decimals = parseInt(jettonInfo.jettonInfo?.metadata.decimals || '9') || 9
-  const symbol = jettonInfo.jettonInfo?.metadata?.symbol || 'UNKWN'
-  return (
-    <div>
-      {parseFloat(amount.toString()) / 10 ** decimals} {symbol}
-    </div>
-  )
-})
-
 export function MessageEmulationResult({
   txInfo,
   isLoading,
@@ -424,9 +372,12 @@ export function MessageEmulationResult({
   }, [txInfo])
 
   // for test purposes, use serdes graph to display it
-  const serdesGraph = DeserializeTransactionsList(
-    SerializeTransactionsList(txInfo?.transactions || [])
-  )
+  // const serdesGraph = DeserializeTransactionsList(
+  //   SerializeTransactionsList(txInfo?.transactions || [])
+  // )
+  const serdesGraph = {
+    transactions: txInfo?.transactions,
+  }
 
   return (
     <>
