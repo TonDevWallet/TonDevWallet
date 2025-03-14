@@ -169,6 +169,7 @@ export function getLiteClient(configUrl: string): LiteClient {
   const client = new LiteClient({ engine })
 
   addWorkingEngineToRoundRobin(configUrl, engine)
+  ;(client as any).configUrl = configUrl
 
   return client
 }

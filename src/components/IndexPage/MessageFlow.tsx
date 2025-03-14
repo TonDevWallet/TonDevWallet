@@ -163,6 +163,7 @@ export function MessageFlow({ transactions: _txes }: MessageFlowProps) {
         setTimeout(() => {
           instanceRef.current?.fitView()
         }, 64)
+        // console.log('set nodes', nodes.length)
       })
   }, [_txes, _txes?.length, instanceRef])
 

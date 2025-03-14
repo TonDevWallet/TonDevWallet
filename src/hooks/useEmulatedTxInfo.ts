@@ -5,15 +5,15 @@ import { useState, useEffect, useRef } from 'react'
 import { Address, beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 import { parseInternal } from '@truecarry/tlb-abi'
-import { Blockchain, BlockchainStorage } from '@ton/sandbox'
+import { Blockchain, BlockchainSnapshot, BlockchainStorage } from '@ton/sandbox'
 import { bigIntToBuffer } from '@/utils/ton'
 import { AllShardsResponse } from 'ton-lite-client/dist/types'
 import { getShardBitMask, isSameShard } from '@/utils/shards'
 
 const libs: Record<string, Buffer> = {}
-let megaLibsCell = beginCell().endCell()
+export let megaLibsCell = beginCell().endCell()
 
-async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
+export async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
   const toCheck = [...cells]
   let libFound = false
   while (toCheck.length > 0) {
@@ -165,6 +165,7 @@ function setBlockchainVerbosityVerbose(blockchain: Blockchain) {
 export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolean = false) {
   const [response, setResponse] = useState<ManagedSendMessageResult | undefined>()
   const [progress, setProgress] = useState<{ total: number; done: number }>({ done: 0, total: 0 })
+  const [snapshot, setSnapshot] = useState<BlockchainSnapshot | undefined>()
   const [isLoading, setIsLoading] = useState(false)
   const liteClient = useLiteclient() as LiteClient
   const txesRef = useRef<ParsedTransaction[]>([])
@@ -236,16 +237,41 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
           if (parsed) {
             ;(tx as any).parsed = parsed
           }
+          if (
+            parsed?.internal === 'jetton_burn' ||
+            parsed?.internal === 'jetton_mint' ||
+            parsed?.internal === 'jetton_transfer' ||
+            parsed?.internal === 'jetton_internal_transfer'
+          ) {
+            try {
+              const jettonInfo = await blockchain.runGetMethod(
+                new Address(0, bigIntToBuffer(tx.address)),
+                'get_wallet_data'
+              )
+              const balance = jettonInfo.stackReader.readBigNumber()
+              const owner = jettonInfo.stackReader.readAddressOpt()
+              const jettonAddress = jettonInfo.stackReader.readAddressOpt()
+              const jettonData = {
+                balance,
+                owner,
+                jettonAddress,
+              }
+              ;(tx as any).jettonData = jettonData
+            } catch (err) {
+              console.log('error getting jetton info', err)
+            }
+          }
         }
 
         transactions[i] = tx as any
         i++
         setResponse({ transactions })
         setIsLoading(false)
+        setSnapshot(blockchain.snapshot())
       }
 
       txesRef.current = transactions
-      return { transactions, shouldRestart: false }
+      return { transactions, snapshot, shouldRestart: false }
     }
 
     const emulateTransaction = async () => {
@@ -281,5 +307,5 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
     }
   }, [cell, liteClient, ignoreChecksig])
 
-  return { response, progress, isLoading }
+  return { response, progress, isLoading, snapshot }
 }

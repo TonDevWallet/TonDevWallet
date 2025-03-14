@@ -1,21 +1,3 @@
-const previouslyMaxSafeInteger = 9007199254740991n
-export function formatTon(amount: bigint | number | undefined) {
-  if (!amount) {
-    return 0
-  }
-
-  if (typeof amount === 'number') {
-    return amount / 10 ** 9
-  }
-
-  let mul = 1
-  while (amount > previouslyMaxSafeInteger) {
-    amount /= 10n
-    mul *= 10
-  }
-  return (Number(amount) / 10 ** 9) * mul
-}
-
 // export function formatGasInfo(gasInfo: Map<string, GasInfo> | undefined) {
 //   if (!gasInfo) {
 //     return

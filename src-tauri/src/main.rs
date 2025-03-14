@@ -10,8 +10,10 @@ use rxing::multi::MultipleBarcodeReader;
 extern crate objc;
 
 mod proxy;
+mod ton_echo;
 
 use proxy::spawn_proxy;
+use ton_echo::{start_ton_echo_server, get_ton_echo_port};
 use screenshots::Screen;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU16, Ordering};
@@ -127,6 +129,11 @@ fn get_ws_port() -> String {
     return PORT.load(Ordering::Relaxed).to_string();
 }
 
+#[tauri::command]
+fn get_ton_echo_ws_port() -> String {
+    return get_ton_echo_port().to_string();
+}
+
 fn main() {
     tauri_plugin_deep_link::prepare("de.fabianlars.deep-link-test");
     // register_urlhandler(None).unwrap();
@@ -152,6 +159,18 @@ fn main() {
                 };
             });
 
+            // Start TON echo server
+            tauri::async_runtime::spawn(async move {
+                match start_ton_echo_server().await {
+                    Ok(port) => {
+                        println!("TON echo server started on port {}", port);
+                    },
+                    Err(e) => {
+                        eprintln!("Failed to start TON echo server: {}", e);
+                    }
+                };
+            });
+
             // let window = app.get_window("main").unwrap();
 
             let handle = app.handle();
@@ -167,6 +186,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             get_ws_port,
+            get_ton_echo_ws_port,
             get_os_name,
             detect_qr_code,
             detect_qr_code_from_image,

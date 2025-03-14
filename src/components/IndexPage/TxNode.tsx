@@ -1,5 +1,5 @@
 import { bigIntToBuffer } from '@/utils/ton'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { Handle, Position } from '@xyflow/react'
 import { Address, beginCell, storeTransaction } from '@ton/core'
 import { AddressRow } from '../AddressRow'
@@ -8,13 +8,50 @@ import { cn } from '@/utils/cn'
 import { useSelectedTx, setSelectedTx } from '@/store/tracerState'
 import { WebviewWindow } from '@tauri-apps/api/window'
 import Copier from '../copier'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
+import { InfoCircledIcon } from '@radix-ui/react-icons'
+import { useAddressInfo } from '@/hooks/useAddressInfo'
+import { JettonAmountDisplay } from '../Jettons/Jettons'
+import { formatTon, formatUnits } from '@/utils/units'
+
+const addressColors = [
+  // 'bg-secondary',
+  'bg-green-500',
+  'bg-red-500',
+  'bg-yellow-500',
+  'bg-purple-500',
+  'bg-orange-500',
+  'bg-teal-500',
+  'bg-cyan-500',
+  'bg-sky-500',
+  'bg-indigo-500',
+  'bg-fuchsia-500',
+]
+
+const getAddressColor = (address: Address) => {
+  return addressColors[
+    Number(BigInt('0x' + address.hash.toString('hex')) % BigInt(addressColors.length))
+  ]
+}
 
 export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
   const selectedTx = useSelectedTx()
 
   const tx = data.tx
-  const txAddress = new Address(0, bigIntToBuffer(tx.address))
-  const rootAddress = new Address(0, bigIntToBuffer(data.rootTx.address))
+  const { txAddress, rootAddress, jettonOwnerAddress, addressColor } = useMemo(() => {
+    const txAddress = new Address(0, bigIntToBuffer(tx.address))
+    const rootAddress = new Address(0, bigIntToBuffer(data.rootTx.address))
+    const jettonOwnerAddress = tx.jettonData?.owner
+
+    const addressColor = getAddressColor(jettonOwnerAddress || txAddress)
+
+    return {
+      txAddress,
+      rootAddress,
+      jettonOwnerAddress,
+      addressColor,
+    }
+  }, [tx, data.rootTx])
 
   const isTxError =
     (tx.description.type === 'generic' &&
@@ -25,40 +62,46 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       tx.description.actionPhase?.resultCode !== 0) ||
     (tx.description.type === 'generic' && tx.description.bouncePhase?.type)
 
-  let opCode = 0
-  if (tx.inMessage?.body) {
-    try {
-      opCode = tx.inMessage.body.asSlice().preloadUint(32)
-    } catch (e) {
-      //
-    }
-  }
-
-  let notificationErrorCode = 0
-  if (tx.inMessage?.body) {
-    try {
-      const inSlice = tx.inMessage.body.asSlice()
-      const op = inSlice.loadUint(32)
-      if (op !== 0xf8a7ea5) {
-        throw new Error('a')
+  const opCode = useMemo(() => {
+    if (tx.inMessage?.body) {
+      try {
+        return tx.inMessage.body.asSlice().preloadUint(32)
+      } catch (e) {
+        //
       }
-
-      inSlice.skip(64) // query id
-      inSlice.loadCoins() // amount
-      inSlice.loadAddress() // destination
-      inSlice.loadAddress() // response_destination
-      inSlice.loadMaybeRef() // ?
-      inSlice.loadCoins() // forward_ton_amount
-      const forward = inSlice.loadMaybeRef()?.asSlice()
-
-      forward?.skip(32)
-      forward?.skip(64)
-
-      notificationErrorCode = forward?.loadUint(32) || 0
-    } catch (e) {
-      //
     }
-  }
+    return 0
+  }, [tx])
+
+  const notificationErrorCode = useMemo(() => {
+    if (tx.inMessage?.body) {
+      try {
+        const inSlice = tx.inMessage.body.asSlice()
+        const op = inSlice.loadUint(32)
+        if (op !== 0xf8a7ea5) {
+          throw new Error('a')
+        }
+
+        inSlice.skip(64) // query id
+        inSlice.loadCoins() // amount
+        inSlice.loadAddress() // destination
+        inSlice.loadAddress() // response_destination
+        inSlice.loadMaybeRef() // ?
+        inSlice.loadCoins() // forward_ton_amount
+        const forward = inSlice.loadMaybeRef()?.asSlice()
+
+        forward?.skip(32)
+        forward?.skip(64)
+
+        return forward?.loadUint(32) || 0
+      } catch (e) {
+        //
+      }
+    }
+    return 0
+  }, [tx])
+
+  const addressInfo = useAddressInfo(txAddress)
 
   const handleClick = () => {
     setSelectedTx(tx)
@@ -67,10 +110,10 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
   return (
     <div
       className={cn(
-        'p-2 rounded border-2 cursor-pointer transition-all duration-200',
-        rootAddress.equals(txAddress)
+        'relative p-2 rounded border-2 cursor-pointer transition-all duration-200',
+        rootAddress.equals(txAddress) || jettonOwnerAddress?.equals(rootAddress)
           ? 'bg-blue-500 text-white'
-          : 'bg-secondary text-secondary-foreground',
+          : addressColor + ' text-secondary-foreground',
         isTxError && 'bg-red-500 text-white',
         selectedTx?.value?.lt === tx.lt
           ? 'border-primary ring-8 ring-primary/50'
@@ -79,9 +122,29 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       onClick={handleClick}
     >
       <AddressRow address={txAddress} />
+
+      {addressInfo && (
+        <div className="flex items-center gap-1 text-sm mt-1 mb-2">
+          <span className="font-medium">{addressInfo.title}</span>
+
+          {addressInfo.description && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <InfoCircledIcon className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>{addressInfo.description}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+      )}
+
       <div>ID: {tx.id}</div>
       <div>LT: {tx.lt.toString()}</div>
-      <div>Self Fees: {Number(tx.totalFees.coins) / 10 ** 9}</div>
+      <div>Self Fees: {formatUnits(tx.totalFees.coins, 9)}</div>
       {/* <div>Total Fees: {tonToNumber(tx.gasFull)}</div> */}
       {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
         <div className="flex items-center gap-2">
@@ -110,8 +173,14 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       {tx?.parsed?.internal && <div>Type: {tx.parsed?.internal}</div>}
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_transfer' && (
         <>
-          <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
-          <div>Forward Amount: {tx.parsed.data.forward_ton_amount.toString()}</div>
+          <div className="flex gap-2">
+            Jetton Amount:
+            <JettonAmountDisplay
+              amount={tx.parsed.data.amount}
+              jettonAddress={tx.jettonData?.jettonAddress}
+            />
+          </div>
+          <div>Forward Amount: {formatTon(tx.parsed.data.forward_ton_amount)}</div>
           <div>
             To: <AddressRow address={tx.parsed.data.destination ?? ''} />
           </div>
@@ -119,7 +188,15 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       )}
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_internal_transfer' && (
         <>
-          <div>Jetton Amount: {tx.parsed.data.amount.toString()}</div>
+          <div>Query ID: {tx.parsed.data.query_id.toString()}</div>
+          <div className="flex gap-2">
+            Jetton Amount:
+            <JettonAmountDisplay
+              amount={tx.parsed.data.amount}
+              jettonAddress={tx.jettonData?.jettonAddress}
+            />
+          </div>
+          <div>Forward Amount: {formatTon(tx.parsed.data.forward_ton_amount)}</div>
         </>
       )}
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_burn' && (
@@ -133,6 +210,16 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
         </>
       )}
       {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_notify' && (
+        <>
+          <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
+        </>
+      )}
+      {tx?.parsed?.internal && tx?.parsed?.internal === 'stonfi_deposit_ref_fee_v2' && (
+        <>
+          <div>Jetton Amount: {tx.parsed.data.jetton_amount.toString(10)}</div>
+        </>
+      )}
+      {tx?.parsed?.internal && tx?.parsed?.internal === 'dedust_swap_peer' && (
         <>
           <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
         </>

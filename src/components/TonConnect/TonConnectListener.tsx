@@ -31,11 +31,13 @@ import { getWalletFromKey } from '@/utils/wallets'
 import { ApproveTonConnectMessage, GetTransfersFromTCMessage } from '@/utils/tonConnect'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
 import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
+import { useNavigate } from 'react-router-dom'
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
   const liteClient = useLiteclient() as unknown as LiteClient
   const tonConnectState = useTonConnectState()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const listener = (event: ClipboardEvent) => {
@@ -67,6 +69,14 @@ export function TonConnectListener() {
           reader.readAsDataURL(blob)
         } else if (item.kind === 'string' && item.type === 'text/plain') {
           item.getAsString(async (pastedString: string) => {
+            if (pastedString.includes('tondevwallet://trace/')) {
+              const traceId = pastedString.split('tondevwallet://trace/')[1]
+              console.log('traceId', pastedString, traceId)
+              if (traceId) {
+                navigate('/app/tracer', { state: { traceId } })
+              }
+              return
+            }
             if (
               !pastedString ||
               !pastedString.includes('id') ||
@@ -99,7 +109,7 @@ export function TonConnectListener() {
     return () => {
       window.removeEventListener('paste', listener)
     }
-  }, [])
+  }, [navigate])
 
   useEffect(() => {
     const bridgeUrl = 'https://bridge.tonapi.io/bridge'

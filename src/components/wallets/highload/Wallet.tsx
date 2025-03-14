@@ -6,6 +6,7 @@ import { useLiteclient } from '@/store/liteClient'
 import { useSelectedTonWallet } from '@/utils/wallets'
 import { Block } from '@/components/ui/Block'
 import { Button } from '@/components/ui/button'
+import { formatTon } from '@/utils/units'
 
 function Wallet() {
   const wallet = useSelectedTonWallet() as ITonHighloadWalletV2
@@ -40,7 +41,7 @@ function Wallet() {
         </div>
 
         <div className="flex items-center justify-between">
-          <div>Balance: {balance && parseFloat(balance) / 10 ** 9}</div>
+          <div>Balance: {balance && formatTon(balance)}</div>
           <Button onClick={updateBalance} variant={'outline'} className="ml-2 px-2 py-0 w-auto">
             Refresh Balance
           </Button>

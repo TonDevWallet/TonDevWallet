@@ -1,12 +1,14 @@
 import { cn } from '@/utils/cn'
 import { bigIntToBuffer } from '@/utils/ton'
-import { FC } from 'react'
+import { FC, useMemo } from 'react'
 import { EdgeProps, getBezierPath, EdgeLabelRenderer, BaseEdge } from '@xyflow/react'
 import { Address } from '@ton/core'
 import { GraphTx } from './MessageFlow'
 import Copier from '../copier'
 import { extractEc } from '@ton/sandbox/dist/utils/ec'
 import useExtraCurrencies from '@/hooks/useExtraCurrencies'
+import { JettonAmountDisplay } from '../Jettons/Jettons'
+import { formatUnits } from '@/utils/units'
 
 export const TxEdge: FC<EdgeProps> = ({
   id,
@@ -51,10 +53,46 @@ export const TxEdge: FC<EdgeProps> = ({
   const fromAddress = new Address(0, bigIntToBuffer(from.address))
   const toAddress = outMessage.info.dest
 
-  const tonAmount = Number(outMessage?.info.value.coins) / 10 ** 9
+  const tonAmount = formatUnits(outMessage?.info.value.coins, 9)
   const extraCurrencies = outMessage?.info.value.other
     ? extractEc(outMessage?.info.value.other)
     : {}
+  const jettonData = useMemo(() => {
+    if (from.parsed?.internal === 'jetton_transfer') {
+      return {
+        amount: from.parsed.data.amount,
+        data: from.jettonData,
+      }
+    }
+    if (to.parsed?.internal === 'jetton_transfer') {
+      return {
+        amount: to.parsed.data.amount,
+        data: to.jettonData,
+      }
+    }
+
+    if (from.parsed?.internal === 'jetton_internal_transfer') {
+      if (from.outMessagesCount > 1) {
+        if (to.inMessage?.info.type !== 'internal') {
+          return null
+        }
+        const lt = to.inMessage?.info.createdLt
+        const currentOutIndex = from.outMessages
+          .values()
+          .findIndex((m) => m.info.type === 'internal' && m.info.createdLt === lt)
+
+        if (currentOutIndex > 0) {
+          return null
+        }
+      }
+      return {
+        amount: from.parsed.data.amount,
+        data: from.jettonData,
+      }
+    }
+
+    return null
+  }, [from, to])
 
   return (
     <>
@@ -105,7 +143,7 @@ export const TxEdge: FC<EdgeProps> = ({
               const currencyInfo = currencies[currencyId]
               const decimals = currencyInfo?.decimals || 9
               const symbol = currencyInfo?.symbol || currencyId
-              const formattedAmount = Number(amount) / 10 ** decimals
+              const formattedAmount = formatUnits(amount, decimals)
 
               return (
                 <div
@@ -127,6 +165,28 @@ export const TxEdge: FC<EdgeProps> = ({
                 </div>
               )
             })}
+
+          {jettonData && (
+            <div
+              className={cn(
+                'nodrag nopan p-2 rounded bg-foreground text-background flex items-center gap-2',
+                rootAddress.equals(fromAddress) && 'bg-red-500 text-foreground',
+                rootAddress.equals(toAddress) && 'bg-green-700 text-foreground'
+              )}
+            >
+              <span>
+                <JettonAmountDisplay
+                  amount={jettonData.amount}
+                  jettonAddress={jettonData.data?.jettonAddress}
+                />
+              </span>
+              <Copier
+                className="w-4 h-4"
+                text={jettonData.amount.toString()}
+                style={{ pointerEvents: 'all' }}
+              />
+            </div>
+          )}
 
           {from.shard && to.shard && (
             <div

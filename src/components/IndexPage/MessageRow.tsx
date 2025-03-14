@@ -10,7 +10,7 @@ import {
 } from '@/utils/tonConnect'
 import { getWalletFromKey, useWalletExternalMessageCell } from '@/utils/wallets'
 import { ImmutableObject, State } from '@hookstate/core'
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
@@ -25,8 +25,12 @@ import { faDownload, faExpand } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { ManagedSendMessageResult } from '@/utils/ManagedBlockchain'
-import { DeserializeTransactionsList, SerializeTransactionsList } from '@/utils/txSerializer'
-
+// import { DeserializeTransactionsList, SerializeTransactionsList } from '@/utils/txSerializer'
+import { Address } from '@ton/ton'
+import { bigIntToBuffer } from '@/utils/ton'
+import { JettonAmountDisplay, JettonNameDisplay } from '../Jettons/Jettons'
+import { SerializeTransactionsList } from '@/utils/txSerializer'
+import { formatUnits } from '@/utils/units'
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -112,38 +116,96 @@ export const MessageRow = memo(function MessageRow({
     }).then()
   }
 
-  const { response: txInfo, isLoading } = useEmulatedTxInfo(messageCell, !walletKeyPair)
-  const tonFlow = useMemo(() => {
-    if (!txInfo || !txInfo.transactions) {
-      return {
-        outputs: 0n,
-        inputs: 0n,
+  const { response: txInfo, isLoading, snapshot } = useEmulatedTxInfo(messageCell, !walletKeyPair)
+  const [moneyFlow, setMoneyFlow] = useState<{
+    outputs: bigint
+    inputs: bigint
+    jettonTransfers: { from: Address; to: Address; jetton: Address | null; amount: bigint }[]
+    ourAddress: Address | null
+  }>({
+    outputs: 0n,
+    inputs: 0n,
+    jettonTransfers: [],
+    ourAddress: null,
+  })
+  useEffect(() => {
+    async function getMoneyFlow() {
+      if (!txInfo || !txInfo.transactions) {
+        setMoneyFlow({
+          outputs: 0n,
+          inputs: 0n,
+          jettonTransfers: [],
+          ourAddress: null,
+        })
+        return
       }
+
+      // const ourAddress = txInfo.transactions[0].address
+      const ourTxes = txInfo.transactions.filter(
+        (t) => t.address === txInfo.transactions[0].address
+      )
+
+      const messagesFrom = ourTxes.flatMap((t) => t.outMessages.values())
+      const messagesTo = ourTxes.flatMap((t) => t.inMessage)
+
+      const outputs = messagesFrom.reduce((acc, m) => {
+        if (m.info.type === 'internal') {
+          return acc + m.info.value.coins
+        }
+        return acc + 0n
+      }, 0n)
+
+      const inputs = messagesTo.reduce((acc, m) => {
+        if (m?.info?.type === 'internal') {
+          return acc + m?.info?.value.coins
+        }
+        return acc + 0n
+      }, 0n)
+
+      const jettonTransfers: {
+        from: Address
+        to: Address
+        jetton: Address | null
+        amount: bigint
+      }[] = []
+      for (const t of txInfo.transactions) {
+        if (!t.inMessage?.info?.src || !(t.inMessage?.info?.src instanceof Address)) {
+          continue
+        }
+
+        if (t.parsed?.internal !== 'jetton_transfer') {
+          continue
+        }
+
+        const from = t.inMessage.info.src
+        const to = t.parsed.data.destination instanceof Address ? t.parsed.data.destination : null
+        if (!to) {
+          continue
+        }
+        const jettonAmount = t.parsed.data.amount
+
+        if (!snapshot) {
+          continue
+        }
+
+        const jettonAddress = t.jettonData?.jettonAddress || null
+
+        jettonTransfers.push({
+          from,
+          to,
+          jetton: jettonAddress, // jettonAddress,
+          amount: jettonAmount,
+        })
+      }
+
+      setMoneyFlow({
+        outputs,
+        inputs,
+        jettonTransfers,
+        ourAddress: new Address(0, bigIntToBuffer(txInfo.transactions[0].address)),
+      })
     }
-
-    const ourTxes = txInfo.transactions.filter((t) => t.address === txInfo.transactions[0].address)
-
-    const messagesFrom = ourTxes.flatMap((t) => t.outMessages.values())
-    const messagesTo = ourTxes.flatMap((t) => t.inMessage)
-
-    const outputs = messagesFrom.reduce((acc, m) => {
-      if (m.info.type === 'internal') {
-        return acc + m.info.value.coins
-      }
-      return acc + 0n
-    }, 0n)
-
-    const inputs = messagesTo.reduce((acc, m) => {
-      if (m?.info?.type === 'internal') {
-        return acc + m?.info?.value.coins
-      }
-      return acc + 0n
-    }, 0n)
-
-    return {
-      outputs,
-      inputs,
-    }
+    getMoneyFlow()
   }, [txInfo])
 
   return (
@@ -181,17 +243,12 @@ export const MessageRow = memo(function MessageRow({
         <div className="flex items-center gap-2">
           <div>Ton Flow:</div>
           <div className="break-words break-all">
-            {Number(tonFlow.outputs.toString()) / 10 ** 9} TON →{' '}
-            {Number(tonFlow.inputs.toString()) / 10 ** 9} TON
+            {formatUnits(moneyFlow.outputs, 9)} TON → {formatUnits(moneyFlow.inputs, 9)} TON
           </div>
-          <div>
-            Diff:{' '}
-            {Number(tonFlow.inputs.toString()) / 10 ** 9 -
-              Number(tonFlow.outputs.toString()) / 10 ** 9}{' '}
-            TON
-          </div>
+          <div>Diff: {formatUnits(moneyFlow.inputs - moneyFlow.outputs, 9)} TON</div>
         </div>
       </div>
+      <JettonFlow jettonTransfers={moneyFlow.jettonTransfers} ourAddress={moneyFlow.ourAddress} />
       {password ? (
         <>
           <div className="flex items-center gap-2 my-2">
@@ -221,6 +278,69 @@ export const MessageRow = memo(function MessageRow({
   )
 })
 
+const JettonFlow = memo(function JettonFlow({
+  jettonTransfers,
+  ourAddress,
+}: {
+  jettonTransfers: { from: Address; to: Address; jetton: Address | null; amount: bigint }[]
+  ourAddress: Address | null
+}) {
+  // Group transfers by jetton and calculate net flow
+  const jettonFlows = useMemo(
+    () =>
+      jettonTransfers.reduce<Record<string, bigint>>((acc, transfer) => {
+        const jettonKey = transfer.jetton?.toString() || 'unknown'
+        if (!acc[jettonKey]) {
+          acc[jettonKey] = 0n
+        }
+
+        // Add to balance if receiving tokens (to our address)
+        // Subtract from balance if sending tokens (from our address)
+        if (ourAddress && transfer.to.equals(ourAddress)) {
+          acc[jettonKey] += transfer.amount
+        } else if (ourAddress && transfer.from.equals(ourAddress)) {
+          acc[jettonKey] -= transfer.amount
+        }
+
+        return acc
+      }, {}),
+    [jettonTransfers, ourAddress?.toRawString()]
+  )
+
+  return (
+    <div className="mt-2">
+      <div className="font-semibold mb-1">Jetton Flow:</div>
+      {Object.entries(jettonFlows).length > 0 ? (
+        Object.entries(jettonFlows).map(([jettonAddr, amount]) => (
+          <JettonFlowItem key={jettonAddr} jettonAddress={jettonAddr} amount={amount} />
+        ))
+      ) : (
+        <div className="text-gray-500">No jetton transfers</div>
+      )}
+    </div>
+  )
+})
+
+const JettonFlowItem = memo(function JettonFlowItem({
+  jettonAddress,
+  amount,
+}: {
+  jettonAddress: Address | string | undefined
+  amount: bigint
+}) {
+  return (
+    <div className="flex items-center">
+      <span className="truncate max-w-[200px]">
+        <JettonNameDisplay jettonAddress={jettonAddress} />
+      </span>
+      <div className={`flex ml-2 font-medium ${amount >= 0n ? 'text-green-600' : 'text-red-600'}`}>
+        {amount >= 0n ? '+' : ''}
+        <JettonAmountDisplay amount={amount} jettonAddress={jettonAddress} />
+      </div>
+    </div>
+  )
+})
+
 export function MessageEmulationResult({
   txInfo,
   isLoading,
@@ -247,9 +367,12 @@ export function MessageEmulationResult({
   }, [txInfo])
 
   // for test purposes, use serdes graph to display it
-  const serdesGraph = DeserializeTransactionsList(
-    SerializeTransactionsList(txInfo?.transactions || [])
-  )
+  // const serdesGraph = DeserializeTransactionsList(
+  //   SerializeTransactionsList(txInfo?.transactions || [])
+  // )
+  const serdesGraph = {
+    transactions: txInfo?.transactions,
+  }
 
   return (
     <>
