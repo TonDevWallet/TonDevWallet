@@ -16,12 +16,12 @@ import { formatTon, formatUnits } from '@/utils/units'
 
 const addressColors = [
   // 'bg-secondary',
-  'bg-green-500',
-  'bg-yellow-500',
-  'bg-purple-500',
-  'bg-orange-500',
-  'bg-teal-500',
-  'bg-fuchsia-500',
+  'bg-green-900',
+  'bg-yellow-900',
+  'bg-purple-900',
+  'bg-orange-900',
+  'bg-teal-900',
+  'bg-fuchsia-900',
 ]
 
 const getAddressColor = (address: Address, addresses: string[]): string => {
@@ -110,9 +110,9 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       className={cn(
         'relative p-2 rounded border-2 cursor-pointer transition-all duration-200',
         rootAddress.equals(txAddress) || jettonOwnerAddress?.equals(rootAddress)
-          ? 'bg-blue-500 text-white'
+          ? 'bg-blue-900 text-white'
           : addressColor + ' text-secondary-foreground',
-        isTxError && 'bg-red-500 text-white',
+        isTxError && 'bg-red-900 text-white',
         selectedTx?.value?.lt === tx.lt
           ? 'border-primary ring-8 ring-primary/50'
           : 'border-transparent hover:border-primary/50'
