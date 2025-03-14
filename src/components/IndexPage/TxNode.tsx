@@ -17,21 +17,19 @@ import { formatTon, formatUnits } from '@/utils/units'
 const addressColors = [
   // 'bg-secondary',
   'bg-green-500',
-  'bg-red-500',
   'bg-yellow-500',
   'bg-purple-500',
   'bg-orange-500',
   'bg-teal-500',
-  'bg-cyan-500',
-  'bg-sky-500',
-  'bg-indigo-500',
   'bg-fuchsia-500',
 ]
 
-const getAddressColor = (address: Address) => {
-  return addressColors[
-    Number(BigInt('0x' + address.hash.toString('hex')) % BigInt(addressColors.length))
-  ]
+const getAddressColor = (address: Address, addresses: string[]): string => {
+  const index = addresses.indexOf(address.toRawString())
+  if (index === -1) {
+    return 'bg-secondary'
+  }
+  return addressColors[index % addressColors.length]
 }
 
 export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
@@ -43,7 +41,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
     const rootAddress = new Address(0, bigIntToBuffer(data.rootTx.address))
     const jettonOwnerAddress = tx.jettonData?.owner
 
-    const addressColor = getAddressColor(jettonOwnerAddress || txAddress)
+    const addressColor = getAddressColor(jettonOwnerAddress || txAddress, data.addresses)
 
     return {
       txAddress,

@@ -16,6 +16,8 @@ import '@xyflow/react/dist/style.css'
 import { TxEdge } from './TxEdge'
 import { TxNode } from './TxNode'
 import { ParsedTransaction } from '@/utils/ManagedBlockchain'
+import { Address } from '@ton/core'
+import { bigIntToBuffer } from '@/utils/ton'
 
 export type GraphTx = ParsedTransaction & { id: number }
 
@@ -23,6 +25,7 @@ export interface TxNodeData {
   label: string
   tx: GraphTx
   rootTx: GraphTx
+  addresses: string[] // list of all addresses in the trace
 }
 
 const nodeTypes = {
@@ -51,10 +54,15 @@ export function MessageFlow({ transactions: _txes }: MessageFlowProps) {
       return
     }
 
+    const addressesSet = new Set<string>()
+
     const transactions = _txes as GraphTx[]
     for (let i = 0; i < transactions?.length; i++) {
       transactions[i].id = i
+      addressesSet.add(new Address(0, bigIntToBuffer(transactions[i].address)).toRawString())
     }
+
+    const addresses = [...addressesSet]
 
     const nodes: Node<any, string>[] = []
     const edges: Edge<any>[] = []
@@ -136,6 +144,7 @@ export function MessageFlow({ transactions: _txes }: MessageFlowProps) {
               label: node.id.toString(),
               tx,
               rootTx: transactions[0],
+              addresses,
             },
             style: {
               width: 400,
