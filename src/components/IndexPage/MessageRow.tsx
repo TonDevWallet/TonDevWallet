@@ -227,7 +227,7 @@ export const MessageRow = memo(function MessageRow({
       <div className="break-keep">
         {
           <AddressRow
-            text={<div className="w-40 flex-shrink-0">{`Wallet (${wallet.type}): `}</div>}
+            text={<div className="w-40 shrink-0">{`Wallet (${wallet.type}): `}</div>}
             address={tonWallet?.address}
           />
         }

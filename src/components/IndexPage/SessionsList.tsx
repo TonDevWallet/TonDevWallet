@@ -50,7 +50,7 @@ export function SessionsList() {
 
         return (
           <Block
-            // className="dark:bg-foreground/5 bg-background rounded dark:shadow border-2 dark:border-none p-2"
+            // className="dark:bg-foreground/5 bg-background rounded dark:shadow-sm border-2 dark:border-none p-2"
             className="overflow-hidden flex flex-col gap-2"
             key={s.id.get()}
           >
@@ -130,7 +130,7 @@ export function SessionsList() {
             </div>
 
             <AddressRow
-              text={<span className="w-24 flex-shrink-0">Address:</span>}
+              text={<span className="w-24 shrink-0">Address:</span>}
               address={tonWallet?.address}
             />
 

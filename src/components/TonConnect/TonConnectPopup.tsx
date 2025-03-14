@@ -216,7 +216,7 @@ function ConnectPopupContent() {
                 {connectLinkInfo.iconUrl ? (
                   <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
                 ) : (
-                  <div className="blur-sm w-16 h-16 rounded-full bg-stone-800" />
+                  <div className="blur-xs w-16 h-16 rounded-full bg-stone-800" />
                 )}
                 <div className="mt-2">
                   <b>{connectLinkInfo.name}</b> wants to connect to your wallet
@@ -227,11 +227,11 @@ function ConnectPopupContent() {
               </>
             ) : (
               <>
-                <div className="blur-sm w-16 h-16 rounded-full bg-stone-800" />
+                <div className="blur-xs w-16 h-16 rounded-full bg-stone-800" />
                 <div className="mt-2">
-                  <b className="blur-sm">Wallet</b> wants to connect to your wallet
+                  <b className="blur-xs">Wallet</b> wants to connect to your wallet
                 </div>
-                <div className="text-accent blur-sm">https://wallet.link</div>
+                <div className="text-accent blur-xs">https://wallet.link</div>
               </>
             )}
           </div>
@@ -256,9 +256,9 @@ function ConnectPopupContent() {
                     <div
                       onClick={() => setChosenKeyId(k.id.get())}
                       className={cn(
-                        'flex flex-shrink-0 flex-wrap items-center p-2 rounded mb-2',
+                        'flex shrink-0 flex-wrap items-center p-2 rounded mb-2',
                         'text-center cursor-pointer hover:bg-gray-600 h-12',
-                        k.id.get() === chosenKeyId && '!bg-gray-500'
+                        k.id.get() === chosenKeyId && 'bg-gray-500!'
                       )}
                       key={k.id.get()}
                     >
@@ -278,9 +278,9 @@ function ConnectPopupContent() {
                       <div
                         onClick={() => setChosenWalletId(w.id)}
                         className={cn(
-                          'flex flex-shrink-0 flex-wrap items-center justify-start',
+                          'flex shrink-0 flex-wrap items-center justify-start',
                           'p-2 rounded gap-2 hover:bg-gray-600 h-12 cursor-pointer mb-2',
-                          w.id === chosenWalletId && '!bg-gray-500'
+                          w.id === chosenWalletId && 'bg-gray-500!'
                         )}
                         key={w.id}
                       >

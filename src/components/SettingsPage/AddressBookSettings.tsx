@@ -44,7 +44,7 @@ const AddressBookSettings = memo(() => {
 
   return (
     <div className="space-y-6">
-      <Card className="border shadow overflow-hidden">
+      <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="border-b bg-muted/30 pt-6 pb-6">
           <div className="flex items-center gap-2">
             <FontAwesomeIcon icon={faAddressBook} className="text-primary" />
@@ -123,7 +123,7 @@ const NetworkContent = memo(
     return (
       <>
         {/* Network Info Card */}
-        <Card className="border shadow-sm">
+        <Card className="border shadow-xs">
           <CardHeader className="pt-4 pb-4">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ const NetworkContent = memo(
         <AddressesList networkId={networkId} networkName={networkName} addressBook={addressBook} />
 
         {/* Add Address Form */}
-        <Card className="border shadow-sm">
+        <Card className="border shadow-xs">
           <CardHeader className="pt-4 pb-4">
             <CardTitle className="text-lg">Add New Address</CardTitle>
             <CardDescription>Save a new address for {networkName}</CardDescription>

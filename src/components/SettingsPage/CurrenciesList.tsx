@@ -18,7 +18,7 @@ const CurrenciesList = memo(
     const isEmpty = currencyEntries.length === 0
 
     return (
-      <Card className="border shadow-sm overflow-hidden">
+      <Card className="border shadow-xs overflow-hidden">
         <CardHeader className="pt-4 pb-4 border-b bg-muted/30">
           <div className="flex items-center gap-2">
             <FontAwesomeIcon icon={faCoins} className="text-primary" />

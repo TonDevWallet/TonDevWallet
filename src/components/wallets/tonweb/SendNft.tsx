@@ -33,7 +33,7 @@ export {}
 //   }, [wallet, liteClient])
 
 //   return (
-//     <div className="flex flex-col mt-4 p-4 border rounded shadow">
+//     <div className="flex flex-col mt-4 p-4 border rounded shadow-sm">
 //       <div className="font-medium text-lg text-accent my-2">Transfer NFT:</div>
 
 //       <div className="mt-2 flex flex-col">

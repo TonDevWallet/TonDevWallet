@@ -137,7 +137,7 @@ export function TonConnect() {
         type="text"
         id="tonconnectLink"
         autoComplete="off"
-        className="border w-full outline-none rounded p-2"
+        className="border w-full outline-hidden rounded p-2"
         value={connectLink}
         onChange={(e) => setConnectLink(e.target.value)}
       />

@@ -267,7 +267,7 @@ const AddressesList = ({ networkId, networkName, addressBook }: AddressesListPro
   }, [])
 
   return (
-    <Card className="border shadow-sm">
+    <Card className="border shadow-xs">
       <CardHeader className="pt-4 pb-2">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>

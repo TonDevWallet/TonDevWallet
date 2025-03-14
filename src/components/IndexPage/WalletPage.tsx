@@ -94,12 +94,12 @@ export function WalletPage() {
 
   return (
     <div className="grid grid-cols-[1fr_1fr] gap-4 justify-center flex-col md:flex-row">
-      <div className="md:max-w-xl min-w-0 w-full flex-grow-0 flex flex-col">
+      <div className="md:max-w-xl min-w-0 w-full grow-0 flex flex-col">
         <WalletHeader name={key?.name.get()} keyId={key?.id.get() || 0} />
         <WalletGenerator />
         <WalletsTable walletsToShow={walletsToShow} />
       </div>
-      <div className="md:max-w-xl min-w-0 w-full flex-grow-0 flex flex-col mt-[7rem]">
+      <div className="md:max-w-xl min-w-0 w-full grow-0 flex flex-col mt-[7rem]">
         {selectedWallet ? (
           selectedWallet?.type === 'highload' ? (
             <HighloadWallet />

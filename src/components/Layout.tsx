@@ -19,8 +19,8 @@ export function Layout() {
           <div
             className="grid
 
-              grid-cols-[128px_minmax(128px,_1fr)]
-              grid-rows-[minmax(auto,max-content)_minmax(120px,_1fr)] lg:grid-rows-[64px_minmax(120px,_1fr)]
+              grid-cols-[128px_minmax(128px,1fr)]
+              grid-rows-[minmax(auto,max-content)_minmax(120px,1fr)] lg:grid-rows-[64px_minmax(120px,1fr)]
 
               h-screen w-full overflow-y-hidden"
           >
@@ -33,7 +33,7 @@ export function Layout() {
               <SavedWalletsList />
             </div>
             <div
-              className="w-full h-full overflow-y-scroll bg-window-background px-6 shadow pt-4"
+              className="w-full h-full overflow-y-scroll bg-window-background px-6 shadow-sm pt-4"
               id="outlet"
             >
               <Outlet />

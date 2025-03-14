@@ -90,7 +90,7 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
       <div className="break-keep">
         {
           <AddressRow
-            text={<div className="w-40 flex-shrink-0">{`Wallet (${wallet.type}): `}</div>}
+            text={<div className="w-40 shrink-0">{`Wallet (${wallet.type}): `}</div>}
             address={tonWallet?.address}
           />
         }
@@ -111,7 +111,7 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
               <div className="flex items-center gap-2 w-full overflow-hidden">
                 {/* <div>To:</div> */}
                 <AddressRow
-                  text={<div className="w-8 flex-shrink-0">To:</div>}
+                  text={<div className="w-8 shrink-0">To:</div>}
                   address={m.address}
                   containerClassName="w-full items-center"
                 />
