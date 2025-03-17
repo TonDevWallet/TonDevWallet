@@ -68,7 +68,7 @@ export const MessageRow = memo(function MessageRow({
     [sessions]
   )
 
-  const { decryptedData } = useDecryptWalletData(password, key.encrypted.get())
+  const { decryptedData } = useDecryptWalletData(password, key.encrypted?.get() || undefined)
 
   const walletKeyPair = useMemo(() => {
     if (!decryptedData) {
@@ -92,7 +92,7 @@ export const MessageRow = memo(function MessageRow({
 
   const messageCell = useWalletExternalMessageCell(
     tonWallet,
-    password ? walletKeyPair : emptyKeyPair,
+    password && walletKeyPair ? walletKeyPair : emptyKeyPair,
     transfers
   )
 

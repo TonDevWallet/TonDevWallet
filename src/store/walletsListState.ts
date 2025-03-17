@@ -244,3 +244,80 @@ export async function UpdateKeyWalletName(walletId: number, name: string) {
     .update({ name })
   await updateWalletsList()
 }
+
+export async function savePublicKeyOnly(
+  name: string,
+  navigate: NavigateFunction,
+  publicKey: string
+) {
+  // Normalize the public key format if needed (assuming base64 is preferred storage format)
+  let normalizedPublicKey = publicKey
+
+  // If it's a hex string, convert it to base64
+  if (/^[0-9a-fA-F]+$/.test(publicKey) || /^0x[0-9a-fA-F]+$/.test(publicKey)) {
+    if (publicKey.startsWith('0x')) {
+      normalizedPublicKey = publicKey.slice(2)
+    }
+    const buffer = Buffer.from(normalizedPublicKey, 'hex')
+    normalizedPublicKey = buffer.toString('base64')
+  }
+
+  const key: Key = {
+    id: 0,
+    name: '',
+    encrypted: undefined, // No encrypted data for view-only wallet
+    public_key: normalizedPublicKey,
+  }
+
+  const db = await getDatabase()
+  await savePublicKeyAndWallets(db, key, name, navigate)
+}
+
+export async function savePublicKeyAndWallets(
+  db: Knex,
+  key: Key,
+  walletName: string,
+  navigate: NavigateFunction
+) {
+  // Check if the public key already exists
+  const existing = await db('keys').where('public_key', key.public_key).first()
+  if (existing) {
+    throw new Error('Public key already exists')
+  }
+
+  // Insert the key without requiring encrypted data
+  const res = await db.raw<Key>(
+    `
+    INSERT INTO keys (public_key, name)
+    VALUES (?, ?)
+    RETURNING *
+  `,
+    [key.public_key, walletName]
+  )
+
+  const newWallet = res[0]
+  await updateWalletsList()
+
+  const defaultWallets: Omit<SavedWallet, 'id'>[] = [
+    {
+      type: 'v5R1',
+      key_id: newWallet.id,
+      subwallet_id: '2147483409',
+      name: 'v5R1',
+    },
+  ]
+
+  await setWalletKey(newWallet.id)
+
+  const wallets = await db<SavedWallet>('wallets').insert(defaultWallets).returning('*')
+  await updateWalletsList()
+
+  const walletState = getWalletState()
+  const stateKey = state.find((k) => k.id === walletState.keyId)
+
+  if (stateKey) {
+    stateKey.wallets.set(wallets)
+  }
+
+  navigate(`/app/wallets/${newWallet?.id}`)
+}

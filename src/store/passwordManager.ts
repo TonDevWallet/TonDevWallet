@@ -177,7 +177,13 @@ export async function setNewPassword(oldPassword: string, newPassword: string) {
 
     const walletKeys = await tx<Key>('keys').select()
     for (const key of walletKeys) {
+      if (key.encrypted === '') {
+        continue
+      }
       const decrypted = await decryptWalletData(oldPassword, key.encrypted)
+      if (!decrypted) {
+        throw new Error('Failed to decrypt wallet data')
+      }
       const encrypted = await encryptWalletData(newPassword, decrypted)
 
       await tx<Key>('keys').where({ id: key.id }).update({ encrypted })
@@ -265,8 +271,11 @@ export async function encryptWalletData(password: string, data: SensitiveWalletD
 
 export async function decryptWalletData(
   password: string,
-  data: string | EncryptedWalletData
-): Promise<DecryptedWalletData> {
+  data: string | EncryptedWalletData | null | undefined
+): Promise<DecryptedWalletData | undefined> {
+  if (!data || data === null || data === '') {
+    return undefined
+  }
   const encrypted = typeof data === 'string' ? (JSON.parse(data) as EncryptedWalletData) : data
   if (!encrypted.N || !encrypted.p || !encrypted.r || !encrypted.salt) {
     throw new Error('Unknown box')
