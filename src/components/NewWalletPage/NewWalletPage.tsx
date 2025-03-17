@@ -1,6 +1,7 @@
 import { FromMnemonic } from './FromMnemonic'
 import { FromRandom } from './FromRandom'
 import { FromSeed } from './FromSeed'
+import { FromPublicKey } from './FromPublicKey'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export function NewWalletPage() {
@@ -11,6 +12,7 @@ export function NewWalletPage() {
           <TabsTrigger value="random">Create random wallet</TabsTrigger>
           <TabsTrigger value="mnemonic">From Mnemonic</TabsTrigger>
           <TabsTrigger value="seed">From Seed</TabsTrigger>
+          <TabsTrigger value="public-key">From Public Key</TabsTrigger>
         </TabsList>
         <TabsContent
           value="random" /* forceMount={true} className="hidden data-[state=active]:block" */
@@ -22,6 +24,9 @@ export function NewWalletPage() {
         </TabsContent>
         <TabsContent value="seed">
           <FromSeed />
+        </TabsContent>
+        <TabsContent value="public-key">
+          <FromPublicKey />
         </TabsContent>
       </Tabs>
     </div>

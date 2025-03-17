@@ -5,7 +5,7 @@ export interface Key {
   id: number
   // words: string
   // seed: string | undefined
-  encrypted: string
+  encrypted: string | null | undefined
   public_key: string
   name: string
 

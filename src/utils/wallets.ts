@@ -71,9 +71,16 @@ export function getWalletFromKey(
   wallet: SavedWallet
 ): IWallet | undefined {
   // debugger
-  const encryptedData = JSON.parse(key.encrypted)
-  if (!encryptedData) {
-    return
+  let encryptedData: any = {} // Default empty object instead of null
+
+  try {
+    // Handle both cases: empty string (view-only wallet) or valid encrypted data
+    if (key.encrypted) {
+      encryptedData = JSON.parse(key.encrypted)
+    }
+  } catch (e) {
+    console.error('Error parsing encrypted data:', e)
+    // Continue with empty object for view-only wallets
   }
 
   const workchainId = wallet.workchain_id ?? 0
