@@ -16,22 +16,20 @@ import { formatTon, formatUnits } from '@/utils/units'
 
 const addressColors = [
   // 'bg-secondary',
-  'bg-green-500',
-  'bg-red-500',
-  'bg-yellow-500',
-  'bg-purple-500',
-  'bg-orange-500',
-  'bg-teal-500',
-  'bg-cyan-500',
-  'bg-sky-500',
-  'bg-indigo-500',
-  'bg-fuchsia-500',
+  'bg-green-900',
+  'bg-yellow-900',
+  'bg-purple-900',
+  'bg-orange-900',
+  'bg-teal-900',
+  'bg-fuchsia-900',
 ]
 
-const getAddressColor = (address: Address) => {
-  return addressColors[
-    Number(BigInt('0x' + address.hash.toString('hex')) % BigInt(addressColors.length))
-  ]
+const getAddressColor = (address: Address, addresses: string[]): string => {
+  const index = addresses.indexOf(address.toRawString())
+  if (index === -1) {
+    return 'bg-secondary'
+  }
+  return addressColors[index % addressColors.length]
 }
 
 export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
@@ -43,7 +41,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
     const rootAddress = new Address(0, bigIntToBuffer(data.rootTx.address))
     const jettonOwnerAddress = tx.jettonData?.owner
 
-    const addressColor = getAddressColor(jettonOwnerAddress || txAddress)
+    const addressColor = getAddressColor(jettonOwnerAddress || txAddress, data.addresses)
 
     return {
       txAddress,
@@ -112,9 +110,9 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       className={cn(
         'relative p-2 rounded border-2 cursor-pointer transition-all duration-200',
         rootAddress.equals(txAddress) || jettonOwnerAddress?.equals(rootAddress)
-          ? 'bg-blue-500 text-white'
+          ? 'bg-blue-900 text-white'
           : addressColor + ' text-secondary-foreground',
-        isTxError && 'bg-red-500 text-white',
+        isTxError && 'bg-red-900 text-white',
         selectedTx?.value?.lt === tx.lt
           ? 'border-primary ring-8 ring-primary/50'
           : 'border-transparent hover:border-primary/50'

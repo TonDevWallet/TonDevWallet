@@ -166,7 +166,6 @@ function ThemeSwitcher() {
   return (
     <TopBarLinkWrapper
       onClick={() => {
-        console.log('click', setTheme)
         setTheme((theme === 'light' ? 'dark' : 'light') as Theme)
       }}
       icon={theme === 'dark' ? faMoon : faSun}

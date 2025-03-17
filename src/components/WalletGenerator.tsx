@@ -115,7 +115,12 @@ export function OpenedWalletInfo() {
               Words
               <Copier className="w-6 h-6 ml-2" text={words} />
             </label>
-            <Textarea className="w-full h-24 outline-none" id="wordsInput" value={words} readOnly />
+            <Textarea
+              className="w-full h-24 outline-hidden"
+              id="wordsInput"
+              value={words}
+              readOnly
+            />
           </>
         )}
 

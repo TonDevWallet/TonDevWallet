@@ -7,7 +7,7 @@ interface BlockParams extends React.HTMLProps<HTMLDivElement> {
 
 export function Block({ children, className, bg, ...options }: BlockParams) {
   return (
-    <div {...options} className={cn(bg, 'rounded-xl dark:shadow border p-4', className)}>
+    <div {...options} className={cn(bg, 'rounded-xl dark:shadow-sm border p-4', className)}>
       {children}
     </div>
   )

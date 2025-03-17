@@ -15,7 +15,7 @@ export default function SendMessage() {
   }, [liteClient])
 
   return (
-    <div className="flex flex-col p-4 border rounded shadow">
+    <div className="flex flex-col p-4 border rounded shadow-sm">
       <div className="font-medium text-lg text-accent my-2">Send TON:</div>
 
       <div className="mt-2 flex flex-col">

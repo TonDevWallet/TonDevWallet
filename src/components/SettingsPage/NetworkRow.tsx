@@ -62,7 +62,7 @@ const NetworkRow = ({ field, index, control, watch, onRemove }: NetworkRowProps)
                       <Input
                         placeholder="Network Name"
                         {...nameField}
-                        className="border-0 px-0 outline-none focus-visible:ring-0 w-full font-semibold text-lg"
+                        className="border-0 px-0 outline-hidden focus-visible:ring-0 w-full font-semibold text-lg"
                         spellCheck={false}
                       />
                     </FormControl>

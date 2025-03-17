@@ -115,7 +115,7 @@ export function SettingsPage() {
 
         {/* Security Settings Tab */}
         <TabsContent value="security" className="pt-6">
-          <Card className="border shadow overflow-hidden">
+          <Card className="border shadow-sm overflow-hidden">
             <CardHeader className="border-b bg-muted/30 pt-6 pb-6">
               <div className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faShieldHalved} className="text-primary" />

@@ -32,7 +32,6 @@ export function DetectTonConnect() {
     <Dialog
       open={connectState.qrcodeOpen.get()}
       onOpenChange={(v) => {
-        console.log('onOpenChange', v)
         connectState.qrcodeOpen.set(v)
       }}
     >

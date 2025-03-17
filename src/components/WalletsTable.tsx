@@ -164,7 +164,7 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
       <CardContent>
         <div className="flex flex-col">
           <AddressRow
-            text={<span className="w-32 flex-shrink-0">Bouncable:</span>}
+            text={<span className="w-32 shrink-0">Bouncable:</span>}
             address={wallet.address.toString({
               bounceable: true,
               urlSafe: true,
@@ -173,7 +173,7 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
             containerClassName={'hover:text-accent-light'}
           />
           <AddressRow
-            text={<span className="w-32 flex-shrink-0">UnBouncable:</span>}
+            text={<span className="w-32 shrink-0">UnBouncable:</span>}
             address={wallet.address.toString({
               urlSafe: true,
               bounceable: false,
@@ -182,7 +182,7 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
             containerClassName={'hover:text-accent-light'}
           />
           <AddressRow
-            text={<span className="w-32 flex-shrink-0">Raw:</span>}
+            text={<span className="w-32 shrink-0">Raw:</span>}
             address={wallet.address.toRawString()}
             containerClassName={'hover:text-accent-light'}
           />
