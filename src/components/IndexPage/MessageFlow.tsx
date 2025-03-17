@@ -201,7 +201,7 @@ export function MessageFlow({ transactions: _txes }: MessageFlowProps) {
 }
 
 function getTxHeight(tx: ParsedTransaction) {
-  let start = 300
+  let start = 350
   if (isTxError(tx)) {
     start += 50
   }
