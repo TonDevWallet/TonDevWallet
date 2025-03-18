@@ -79,16 +79,20 @@ export function VmLogsInfo({
   }, [logsData, filterText])
 
   return (
-    <div className="relative h-full overflow-hidden">
-      <div className="relative flex flex-col w-full h-full overflow-y-scroll overflow-x-hidden px-8 pt-2">
-        <div className="grid grid-cols-[60px_1fr_60px] h-6">
-          <div>#</div>
-          <div>CMD</div>
-          <div className="text-right">Gas</div>
+    <div className="h-full overflow-auto">
+      <div className="sticky top-0 z-10 bg-secondary border-b border-border px-4 py-2">
+        <div className="grid grid-cols-[60px_1fr_80px] text-sm font-medium text-muted-foreground">
+          <div>Step</div>
+          <div>Command</div>
+          <div className="text-right">Gas Used</div>
         </div>
+      </div>
 
-        {filteredLogs.map((command) => {
-          return (
+      <div className="pb-6">
+        {filteredLogs.length === 0 ? (
+          <div className="py-8 text-center text-muted-foreground">No commands match the filter</div>
+        ) : (
+          filteredLogs.map((command) => (
             <LogsRow
               command={command}
               logsData={logsData}
@@ -97,8 +101,8 @@ export function VmLogsInfo({
               selectedStack={selectedStack}
               key={command.i}
             />
-          )
-        })}
+          ))
+        )}
       </div>
     </div>
   )
@@ -120,33 +124,43 @@ function LogsRow({
   const prevCommand = logsData[i - 1]
   const nextCommand = logsData[i + 1]
   const gas = parseInt(prevCommand?.gas || '1000000') - parseInt(command.gas)
+
+  const hasException = command.exception || command.exceptionHandler
+
   return (
     <div
       className={cn(
-        'grid grid-cols-[60px_1fr_60px] h-6',
-        command.exception || command.exceptionHandler ? 'bg-red-900' : '',
-        i === selectedStack ? 'bg-blue-900' : ''
+        'py-1.5 px-4 border-b border-border/50 group cursor-pointer',
+        hasException ? 'bg-destructive/10 border-destructive/30' : '',
+        i === selectedStack ? 'bg-primary/10 border-primary/30' : ''
       )}
-      key={i}
+      onClick={() => {
+        setStack({
+          old: command?.stack || '',
+          new: nextCommand?.stack || '',
+          i,
+        })
+      }}
     >
-      <div>{i}.</div>
-      <div
-        className="min-w-0 overflow-hidden break-all cursor-pointer hover:bg-gray-500 rounded transition-all duration-200 px-1"
-        onClick={() => {
-          setStack({
-            old: command?.stack || '',
-            new: nextCommand?.stack || '',
-            i,
-          })
-        }}
-      >
-        {command.cmd}
+      <div className="grid grid-cols-[60px_1fr_80px]">
+        <div className="text-muted-foreground">{i}.</div>
+        <div
+          className={cn(
+            'min-w-0 overflow-hidden text-ellipsis cursor-pointer rounded transition-all duration-200 px-1.5 py-0.5',
+            'text-foreground',
+            'group-hover:bg-accent/50'
+          )}
+          title={command.cmd}
+        >
+          {command.cmd || '(Empty Command)'}
+        </div>
+        <div className="text-right text-foreground">{gas || '-'}</div>
       </div>
-      <div className="text-right">{gas || ''}</div>
-      {(command.exception || command.exceptionHandler) && (
-        <div className="col-span-3">
-          <div>exception: {command.exception}</div>
-          <div>exceptionHandler: {command.exceptionHandler}</div>
+
+      {hasException && (
+        <div className="mt-1 pl-[60px] text-sm text-destructive">
+          {command.exception && <div className="mb-1">Exception: {command.exception}</div>}
+          {command.exceptionHandler && <div>Handler: {command.exceptionHandler}</div>}
         </div>
       )}
     </div>

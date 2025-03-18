@@ -3,13 +3,18 @@ import { Block } from '@/components/ui/Block'
 import { VmLogsInfo } from '../TxInfoPage/VmLogsInfo'
 import { VmStackInfo } from '../TxInfoPage/VmStackInfo'
 import { Separator } from '@/components/ui/separator'
+import { StackInfo } from '../TxInfoPage/TxInfoPage'
 
 interface TxInfoProps {
   tx: any
 }
 
 export function TxInfo({ tx }: TxInfoProps) {
-  const [stack, setStack] = useState('')
+  const [stack, setStack] = useState<StackInfo>({
+    old: '',
+    new: '',
+    i: -1,
+  })
 
   if (!tx) return null
 
@@ -21,7 +26,12 @@ export function TxInfo({ tx }: TxInfoProps) {
         <div className="flex flex-col gap-2">
           <h3 className="text-lg font-medium">VM Logs</h3>
           <Block>
-            <VmLogsInfo logs={tx.vmLogs || ''} setStack={setStack} />
+            <VmLogsInfo
+              logs={tx.vmLogs || ''}
+              setStack={setStack}
+              filterText={''}
+              selectedStack={stack.i}
+            />
           </Block>
         </div>
         <div className="h-full">
