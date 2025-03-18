@@ -248,7 +248,11 @@ export const MessageRow = memo(function MessageRow({
           <div>Diff: {formatUnits(moneyFlow.inputs - moneyFlow.outputs, 9)} TON</div>
         </div>
       </div>
-      <JettonFlow jettonTransfers={moneyFlow.jettonTransfers} ourAddress={moneyFlow.ourAddress} />
+      <JettonFlow
+        jettonTransfers={moneyFlow.jettonTransfers}
+        ourAddress={moneyFlow.ourAddress}
+        tonDifference={moneyFlow.inputs - moneyFlow.outputs}
+      />
       {password ? (
         <>
           <div className="flex items-center gap-2 my-2">
@@ -280,10 +284,12 @@ export const MessageRow = memo(function MessageRow({
 
 const JettonFlow = memo(function JettonFlow({
   jettonTransfers,
+  tonDifference,
   ourAddress,
 }: {
   jettonTransfers: { from: Address; to: Address; jetton: Address | null; amount: bigint }[]
   ourAddress: Address | null
+  tonDifference: bigint
 }) {
   // Group transfers by jetton and calculate net flow
   const jettonFlows = useMemo(
@@ -309,14 +315,15 @@ const JettonFlow = memo(function JettonFlow({
 
   return (
     <div className="mt-2">
-      <div className="font-semibold mb-1">Jetton Flow:</div>
+      <div className="font-semibold mb-1">Money Flow:</div>
       {Object.entries(jettonFlows).length > 0 ? (
         Object.entries(jettonFlows).map(([jettonAddr, amount]) => (
           <JettonFlowItem key={jettonAddr} jettonAddress={jettonAddr} amount={amount} />
         ))
       ) : (
-        <div className="text-gray-500">No jetton transfers</div>
+        <></>
       )}
+      <JettonFlowItem jettonAddress={'TON'} amount={tonDifference} />
     </div>
   )
 })

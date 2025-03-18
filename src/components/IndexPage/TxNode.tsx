@@ -231,6 +231,8 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
               url: '/txinfo',
               center: true,
               title: `Transaction ${tx.lt} ${tx.address.toString()}`,
+              height: 800,
+              width: 1200,
             })
             // since the webview window is created asynchronously,
             // Tauri emits the `tauri://created` and `tauri://error` to notify you of the creation response

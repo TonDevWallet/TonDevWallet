@@ -37,7 +37,7 @@ const jettonInfoDataLoader = new DataLoader(
  * @param address Jetton master contract address
  * @returns Jetton information including metadata and supply
  */
-export function useJettonInfo(address: Address | null) {
+export function useJettonInfo(address: Address | string | null) {
   const [jettonInfo, setJettonInfo] = useState<JettonInfo | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,12 +52,27 @@ export function useJettonInfo(address: Address | null) {
         return
       }
 
+      if (address === 'TON') {
+        setJettonInfo({
+          metadata: {
+            name: 'TON',
+            symbol: 'TON',
+            image: 'https://ton.space/images/ton.png',
+            decimals: '9',
+          },
+          totalSupply: 1000000000000000000n,
+          mintable: false,
+          adminAddress: null,
+        })
+        return
+      }
+
       setLoading(true)
       setError(null)
 
       try {
         const info = await jettonInfoDataLoader.load({
-          address,
+          address: address as Address,
           liteClient: liteClient as LiteClient,
         })
         setJettonInfo(info)
@@ -71,7 +86,7 @@ export function useJettonInfo(address: Address | null) {
     }
 
     loadJettonInfo()
-  }, [address?.toRawString(), liteClient])
+  }, [(address as Address)?.toString(), liteClient])
 
   return {
     jettonInfo,

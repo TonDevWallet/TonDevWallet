@@ -11,7 +11,7 @@ export const JettonNameDisplay = memo(function JettonNameDisplay({
 }) {
   const jettonInfo = useJettonInfo(
     jettonAddress
-      ? typeof jettonAddress === 'string'
+      ? typeof jettonAddress === 'string' && jettonAddress !== 'TON'
         ? Address.parse(jettonAddress)
         : jettonAddress
       : null
@@ -30,7 +30,7 @@ export const JettonAmountDisplay = memo(function JettonAmountDisplay({
 }) {
   const jettonInfo = useJettonInfo(
     jettonAddress
-      ? typeof jettonAddress === 'string'
+      ? typeof jettonAddress === 'string' && jettonAddress !== 'TON'
         ? Address.parse(jettonAddress)
         : jettonAddress
       : null

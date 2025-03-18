@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { StackInfo } from './TxInfoPage'
 
 interface StackInt {
   _: 'int'
@@ -19,45 +20,62 @@ interface StackSlice {
 
 type StackItem = StackInt | StackCell | StackSlice
 
-export function VmStackInfo({ stack }: { stack: string }) {
-  const stackInfo = useMemo(() => {
-    const lines = stack.split(' ')
-    const res: StackItem[] = []
-    let i = 1
-    while (i < lines.length - 2) {
-      const l = lines[i]
-      if (l.startsWith('CS{')) {
-        const bits = lines[i + 2].replace(';', '').split('..')
-        const refs = lines[i + 4].replace('}', '').split('..')
+function getStackInfo(stackData: string) {
+  const lines = stackData.split(' ')
+  const res: StackItem[] = []
+  let i = 1
+  while (i < lines.length - 2) {
+    const l = lines[i]
+    if (l.startsWith('CS{')) {
+      const bits = lines[i + 2].replace(';', '').split('..')
+      const refs = lines[i + 4].replace('}', '').split('..')
 
-        res.push({
-          _: 'slice',
-          value: l.slice(8, -1),
-          bits: [parseInt(bits[0]), parseInt(bits[1])],
-          refs: [parseInt(refs[0]), parseInt(refs[1])],
-        })
-        i += 5
-      } else if (l.startsWith('C{')) {
-        res.push({
-          _: 'cell',
-          value: l.slice(2, -1),
-        })
-        i++
-      } else {
-        res.push({
-          _: 'int',
-          value: l,
-        })
-        i++
-      }
+      res.push({
+        _: 'slice',
+        value: l.slice(8, -1),
+        bits: [parseInt(bits[0]), parseInt(bits[1])],
+        refs: [parseInt(refs[0]), parseInt(refs[1])],
+      })
+      i += 5
+    } else if (l.startsWith('C{')) {
+      res.push({
+        _: 'cell',
+        value: l.slice(2, -1),
+      })
+      i++
+    } else {
+      res.push({
+        _: 'int',
+        value: l,
+      })
+      i++
     }
+  }
 
-    return res
-  }, [stack])
+  return res
+}
+
+export function VmStackInfo({ stack }: { stack: StackInfo }) {
+  const oldStackInfo = useMemo(() => {
+    return getStackInfo(stack.old)
+  }, [stack.old])
+  const newStackInfo = useMemo(() => {
+    return getStackInfo(stack.new)
+  }, [stack.new])
+
   return (
-    <div className="relative h-full overflow-hidden">
-      <div className="relative flex flex-col gap-2 h-full w-full overflow-y-scroll overflow-x-hidden px-8">
-        {stackInfo.map((r, i) => {
+    <>
+      <StackList stack={oldStackInfo} />
+      <StackList stack={newStackInfo} />
+    </>
+  )
+}
+
+function StackList({ stack }: { stack: StackItem[] }) {
+  return (
+    <div className="relative h-full overflow-hidden border-l">
+      <div className="relative flex flex-col gap-2 h-full w-full overflow-y-scroll overflow-x-hidden px-2">
+        {stack.map((r, i) => {
           return (
             <div key={i} className="grid grid-cols-[30px_1fr]">
               <div className="text-sm text-stone-300">{i}.</div>
