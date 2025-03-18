@@ -17,8 +17,8 @@ export function useKeyboardNavigation({
   onSelect,
   enabled = true,
   keys = {
-    up: ['ArrowUp'],
-    down: ['ArrowDown'],
+    up: ['ArrowUp', 'k'],
+    down: ['ArrowDown', 'j'],
   },
 }: UseKeyboardNavigationOptions) {
   const handleKeyDown = useCallback(
@@ -39,13 +39,11 @@ export function useKeyboardNavigation({
   )
 
   useEffect(() => {
-    if (enabled) {
-      window.addEventListener('keydown', handleKeyDown)
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown)
-      }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [handleKeyDown, enabled])
+  }, [handleKeyDown])
 
   // Function to scroll selected item into view
   const scrollIntoView = useCallback((elementId: string) => {

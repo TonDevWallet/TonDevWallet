@@ -1,12 +1,13 @@
 import { setTransactionState, useTransactionState } from '@/store/txInfo'
 import { listen } from '@tauri-apps/api/event'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Cell, loadTransaction } from '@ton/core'
 import { VmLogsInfo } from './VmLogsInfo'
 import { VmStackInfo } from './VmStackInfo'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch, faCircleExclamation, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { StackInfo } from '@/hooks/useVmLogsNavigation'
+import { KeyboardShortcutHint } from './KeyboardShortcutHint'
 
 export function TxInfoPage() {
   const transactionState = useTransactionState()
@@ -18,6 +19,33 @@ export function TxInfoPage() {
     new: '',
     i: -1,
   })
+
+  // Parse the logs to determine if data is available
+  const hasLogData = useMemo(() => {
+    const vmLogs = transactionState.vmLogs.get()
+    return vmLogs && vmLogs.includes('stack:')
+  }, [transactionState.vmLogs])
+
+  // Auto-select first line when logs are loaded
+  useEffect(() => {
+    if (hasLogData && stack.i === -1 && !isLoading) {
+      // Get the first command from logs
+      const vmLogs = transactionState.vmLogs.get()
+      const instructions = vmLogs.split('stack: ').slice(1)
+
+      if (instructions.length > 0) {
+        const lines = instructions[0].split('\n').filter((l) => l)
+        const firstStack = lines[0]
+        const secondStack = instructions[1]?.split('\n').filter((l) => l)[0] || ''
+
+        setStack({
+          old: firstStack,
+          new: secondStack,
+          i: 0,
+        })
+      }
+    }
+  }, [hasLogData, stack.i, isLoading, transactionState.vmLogs])
 
   useEffect(() => {
     const unsubscribe = listen(
@@ -139,6 +167,9 @@ export function TxInfoPage() {
           )}
         </div>
       </div>
+
+      {/* Keyboard Shortcut Hint */}
+      {hasLogData && <KeyboardShortcutHint />}
     </div>
   )
 }
