@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { StackInfo } from './TxInfoPage'
 import { diffLines } from 'diff'
 import { StackItem } from '@/types/stack'
 import { StackItemComponent } from './StackItem/StackItem'
+import { StackInfo } from '@/hooks/useVmLogsNavigation'
 
 function stackItemToText(item: StackItem) {
   if (item._ === 'tuple') {

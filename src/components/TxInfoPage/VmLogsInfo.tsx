@@ -1,17 +1,6 @@
 import { useMemo } from 'react'
-import { StackInfo } from './TxInfoPage'
 import { cn } from '@/utils/cn'
-
-type LogRowData = {
-  stack: string
-  codeHash: string
-  cmd: string
-  gas: string
-  exception: string
-  exceptionHandler: string
-  i: number
-  raw: string
-}
+import { LogRowData, StackInfo, useVmLogsNavigation } from '@/hooks/useVmLogsNavigation'
 
 export function VmLogsInfo({
   logs,
@@ -78,6 +67,9 @@ export function VmLogsInfo({
     )
   }, [logsData, filterText])
 
+  // Use the updated hook with parent component's state
+  const { selectRow } = useVmLogsNavigation(logsData, selectedStack, setStack)
+
   return (
     <div className="h-full overflow-auto">
       <div className="sticky top-0 z-10 bg-secondary border-b border-border px-4 py-2">
@@ -97,7 +89,7 @@ export function VmLogsInfo({
               command={command}
               logsData={logsData}
               i={command.i}
-              setStack={setStack}
+              setStack={selectRow}
               selectedStack={selectedStack}
               key={command.i}
             />
@@ -118,29 +110,23 @@ function LogsRow({
   command: LogRowData
   logsData: LogRowData[]
   i: number
-  setStack: (stack: StackInfo) => void
+  setStack: (index: number) => void
   selectedStack: number
 }) {
   const prevCommand = logsData[i - 1]
-  const nextCommand = logsData[i + 1]
   const gas = parseInt(prevCommand?.gas || '1000000') - parseInt(command.gas)
 
   const hasException = command.exception || command.exceptionHandler
 
   return (
     <div
+      id={`vm-log-row-${i}`}
       className={cn(
         'py-1.5 px-4 border-b border-border/50 group cursor-pointer',
         hasException ? 'bg-destructive/10 border-destructive/30' : '',
         i === selectedStack ? 'bg-primary/10 border-primary/30' : ''
       )}
-      onClick={() => {
-        setStack({
-          old: command?.stack || '',
-          new: nextCommand?.stack || '',
-          i,
-        })
-      }}
+      onClick={() => setStack(i)}
     >
       <div className="grid grid-cols-[60px_1fr_80px]">
         <div className="text-muted-foreground">{i}.</div>

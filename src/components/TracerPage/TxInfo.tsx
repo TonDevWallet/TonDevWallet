@@ -3,7 +3,7 @@ import { Block } from '@/components/ui/Block'
 import { VmLogsInfo } from '../TxInfoPage/VmLogsInfo'
 import { VmStackInfo } from '../TxInfoPage/VmStackInfo'
 import { Separator } from '@/components/ui/separator'
-import { StackInfo } from '../TxInfoPage/TxInfoPage'
+import { StackInfo } from '@/hooks/useVmLogsNavigation'
 
 interface TxInfoProps {
   tx: any

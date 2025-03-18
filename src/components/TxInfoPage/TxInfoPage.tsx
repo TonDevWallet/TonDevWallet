@@ -6,18 +6,18 @@ import { VmLogsInfo } from './VmLogsInfo'
 import { VmStackInfo } from './VmStackInfo'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch, faCircleExclamation, faArrowRight } from '@fortawesome/free-solid-svg-icons'
-
-export type StackInfo = {
-  old: string
-  new: string
-  i: number
-}
+import { StackInfo } from '@/hooks/useVmLogsNavigation'
 
 export function TxInfoPage() {
   const transactionState = useTransactionState()
   const [filterText, setFilterText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [stack, setStack] = useState<StackInfo>({
+    old: '',
+    new: '',
+    i: -1,
+  })
 
   useEffect(() => {
     const unsubscribe = listen(
@@ -56,12 +56,6 @@ export function TxInfoPage() {
       unsubscribe.then((fn) => fn())
     }
   }, [])
-
-  const [stack, setStack] = useState<StackInfo>({
-    old: '',
-    new: '',
-    i: -1,
-  })
 
   return (
     <div className="flex flex-col h-screen bg-background">
