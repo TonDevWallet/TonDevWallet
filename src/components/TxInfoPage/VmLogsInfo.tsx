@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { StackInfo } from './TxInfoPage'
+import { cn } from '@/utils/cn'
 
 type LogRowData = {
   stack: string
@@ -16,10 +17,12 @@ export function VmLogsInfo({
   logs,
   setStack,
   filterText,
+  selectedStack,
 }: {
   logs: string
   setStack: (stack: StackInfo) => void
   filterText: string
+  selectedStack: number
 }) {
   const logsData: LogRowData[] = useMemo(() => {
     const instructions = logs.split('stack: ').slice(1)
@@ -91,6 +94,7 @@ export function VmLogsInfo({
               logsData={logsData}
               i={command.i}
               setStack={setStack}
+              selectedStack={selectedStack}
               key={command.i}
             />
           )
@@ -105,17 +109,26 @@ function LogsRow({
   logsData,
   i,
   setStack,
+  selectedStack,
 }: {
   command: LogRowData
   logsData: LogRowData[]
   i: number
   setStack: (stack: StackInfo) => void
+  selectedStack: number
 }) {
   const prevCommand = logsData[i - 1]
   const nextCommand = logsData[i + 1]
   const gas = parseInt(prevCommand?.gas || '1000000') - parseInt(command.gas)
   return (
-    <div className="grid grid-cols-[60px_1fr_60px] h-6" key={i}>
+    <div
+      className={cn(
+        'grid grid-cols-[60px_1fr_60px] h-6',
+        command.exception || command.exceptionHandler ? 'bg-red-900' : '',
+        i === selectedStack ? 'bg-blue-900' : ''
+      )}
+      key={i}
+    >
       <div>{i}.</div>
       <div
         className="min-w-0 overflow-hidden break-all cursor-pointer hover:bg-gray-500 rounded transition-all duration-200 px-1"
@@ -123,6 +136,7 @@ function LogsRow({
           setStack({
             old: command?.stack || '',
             new: nextCommand?.stack || '',
+            i,
           })
         }}
       >

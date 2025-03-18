@@ -70,6 +70,7 @@
     "dataloader": "^2.2.3",
     "date-fns": "^4.1.0",
     "debug": "^4.4.0",
+    "diff": "^7.0.0",
     "elkjs": "^0.10.0",
     "embla-carousel-react": "8.5.2",
     "events": "^3.3.0",
@@ -104,6 +105,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.5.10",
+    "@types/diff": "^7.0.1",
     "@types/node": "^22.13.10",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",

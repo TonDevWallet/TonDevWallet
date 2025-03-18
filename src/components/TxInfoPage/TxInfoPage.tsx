@@ -8,6 +8,7 @@ import { VmStackInfo } from './VmStackInfo'
 export type StackInfo = {
   old: string
   new: string
+  i: number
 }
 
 export function TxInfoPage() {
@@ -39,15 +40,16 @@ export function TxInfoPage() {
     )
   }, [])
 
-  const [stack, setStack] = useState({
+  const [stack, setStack] = useState<StackInfo>({
     old: '',
     new: '',
+    i: -1,
   })
 
   return (
     <div className="h-screen">
       <div className="sticky top-0 bg-background z-10 border-b">
-        <div className="grid grid-cols-3 gap-2 md:grid-cols-[400px_1fr_1fr] h-full overflow-hidden relative">
+        <div className="grid grid-cols-3 md:grid-cols-[400px_1fr_1fr] h-full overflow-hidden relative">
           <div className="flex p-2">
             <input
               type="text"
@@ -65,11 +67,12 @@ export function TxInfoPage() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2 md:grid-cols-[400px_1fr_1fr] h-full overflow-hidden relative">
+      <div className="grid grid-cols-3 md:grid-cols-[400px_1fr_1fr] h-full overflow-hidden relative">
         <VmLogsInfo
           logs={transactionState.vmLogs.get()}
           setStack={setStack}
           filterText={filterText}
+          selectedStack={stack.i}
         />
         <VmStackInfo stack={stack} />
       </div>
