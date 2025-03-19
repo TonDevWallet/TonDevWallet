@@ -31,6 +31,9 @@ import { bigIntToBuffer } from '@/utils/ton'
 import { JettonAmountDisplay, JettonNameDisplay } from '../Jettons/Jettons'
 import { SerializeTransactionsList } from '@/utils/txSerializer'
 import { formatUnits } from '@/utils/units'
+// For Tauri filesystem access
+import { save } from '@tauri-apps/api/dialog'
+import { writeTextFile } from '@tauri-apps/api/fs'
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -359,18 +362,52 @@ export function MessageEmulationResult({
   const [max, setMax] = useState(false)
 
   const downloadGraph = useCallback(async () => {
-    if (!txInfo?.transactions) {
-      return
-    }
-    const dump = SerializeTransactionsList(txInfo?.transactions)
+    try {
+      if (!txInfo?.transactions) {
+        console.warn('No transactions to download')
+        return
+      }
 
-    // save dump to browser as graph.json
-    const blob = new Blob([dump], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'graph.json'
-    a.click()
+      const dump = SerializeTransactionsList(txInfo?.transactions)
+
+      // Use Tauri file dialog to get the save path
+      try {
+        // Open save dialog and get a path from the user
+        const filePath = await save({
+          filters: [
+            {
+              name: 'JSON',
+              extensions: ['json'],
+            },
+          ],
+          defaultPath: 'graph.json',
+        })
+
+        if (filePath) {
+          console.log('saving filePath', filePath)
+          // Write the file to the selected path
+          await writeTextFile(filePath, dump)
+          console.log('File saved successfully to:', filePath)
+        } else {
+          console.log('Save dialog was canceled')
+        }
+      } catch (fsError) {
+        console.error('Tauri file system error:', fsError)
+
+        // Fallback to browser method if Tauri API fails or is not available
+        const blob = new Blob([dump], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'graph.json'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
+    } catch (error) {
+      console.error('Error downloading graph:', error)
+    }
   }, [txInfo])
 
   // for test purposes, use serdes graph to display it

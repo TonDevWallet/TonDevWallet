@@ -82,7 +82,11 @@
           "$APPDATA/databases/*",
           "$APPDATA/databases/data.db",
           "$APPDATA/databases"
-        ]
+        ],
+        "writeFile": true
+      },
+      "dialog": {
+        "save": true
       }
     },
     "bundle": {
