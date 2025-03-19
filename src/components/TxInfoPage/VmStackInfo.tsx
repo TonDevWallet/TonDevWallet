@@ -17,6 +17,10 @@ function stackItemToText(item: StackItem) {
     return 'Cont'
   }
 
+  if (item._ === 'null') {
+    return '()'
+  }
+
   if (item._ === 'builder') {
     return item.value
   }
@@ -85,10 +89,7 @@ function getStackInfo(stackData: string) {
       const tupleToParse = lines.slice(i + firstBracket, i + lastBracket + 1).join(' ')
 
       // Process nested arrays
-      console.log('parsing tuple stack')
       const tupleStack = getStackInfo(tupleToParse)
-
-      console.log('Got tuple stack', tupleStack)
 
       res.push({
         _: 'tuple',
@@ -137,6 +138,11 @@ function getStackInfo(stackData: string) {
       res.push({
         _: 'builder',
         value: l.slice(3, -1),
+      })
+      i++
+    } else if (l === '()' || l === '(null)') {
+      res.push({
+        _: 'null',
       })
       i++
     } else {

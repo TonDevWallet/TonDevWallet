@@ -3,6 +3,7 @@ import { Address } from '@ton/core'
 import { memo } from 'react'
 import { AddressRow } from '@/components/AddressRow'
 import { formatUnits } from '@/utils/units'
+import { SafeParseAddress } from '@/utils/address'
 
 export const JettonNameDisplay = memo(function JettonNameDisplay({
   jettonAddress,
@@ -12,7 +13,7 @@ export const JettonNameDisplay = memo(function JettonNameDisplay({
   const jettonInfo = useJettonInfo(
     jettonAddress
       ? typeof jettonAddress === 'string' && jettonAddress !== 'TON'
-        ? Address.parse(jettonAddress)
+        ? SafeParseAddress(jettonAddress)
         : jettonAddress
       : null
   )
@@ -31,7 +32,7 @@ export const JettonAmountDisplay = memo(function JettonAmountDisplay({
   const jettonInfo = useJettonInfo(
     jettonAddress
       ? typeof jettonAddress === 'string' && jettonAddress !== 'TON'
-        ? Address.parse(jettonAddress)
+        ? SafeParseAddress(jettonAddress)
         : jettonAddress
       : null
   )

@@ -26,6 +26,10 @@ export interface StackCont {
   _: 'cont'
 }
 
+export interface StackNull {
+  _: 'null'
+}
+
 export type StackItem = (
   | StackInt
   | StackCell
@@ -34,6 +38,7 @@ export type StackItem = (
   | StackBuilder
   // eslint-disable-next-line no-use-before-define
   | StackTuple
+  | StackNull
 ) & {
   added?: boolean
   removed?: boolean

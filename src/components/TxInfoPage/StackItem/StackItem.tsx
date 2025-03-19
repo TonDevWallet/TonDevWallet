@@ -34,6 +34,10 @@ export function StackItemComponent({ item, index }: { item: StackItem; index: nu
       return 'Tuple'
     }
 
+    if (item._ === 'null') {
+      return 'Null'
+    }
+
     return 'Unknown'
   }, [item])
 
