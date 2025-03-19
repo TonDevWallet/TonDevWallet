@@ -1,8 +1,6 @@
 import { useMemo } from 'react'
 import { cn } from '@/utils/cn'
 import { LogRowData, StackInfo, useVmLogsNavigation } from '@/hooks/useVmLogsNavigation'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faKeyboard } from '@fortawesome/free-solid-svg-icons'
 
 export function VmLogsInfo({
   logs,
@@ -74,32 +72,6 @@ export function VmLogsInfo({
 
   return (
     <div className="h-full overflow-auto">
-      <div className="sticky top-0 z-10 bg-secondary border-b border-border px-4 py-2">
-        <div className="grid grid-cols-[60px_1fr_80px] text-sm font-medium text-muted-foreground">
-          <div>Step</div>
-          <div className="flex items-center">
-            Command
-            <div className="relative ml-2 group">
-              <FontAwesomeIcon
-                icon={faKeyboard}
-                size="sm"
-                className="text-muted-foreground/50 hover:text-muted-foreground cursor-help"
-              />
-              <div className="absolute left-0 top-6 z-50 hidden group-hover:block bg-popover border border-border rounded-md shadow-md p-2 text-xs text-foreground w-52">
-                <p className="font-semibold mb-1">Keyboard Navigation:</p>
-                <div className="grid grid-cols-[70px_1fr] gap-1">
-                  <span className="font-mono bg-accent px-1 rounded">↑ / k</span>
-                  <span>Previous instruction</span>
-                  <span className="font-mono bg-accent px-1 rounded">↓ / j</span>
-                  <span>Next instruction</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="text-right">Gas Used</div>
-        </div>
-      </div>
-
       <div className="pb-6">
         {filteredLogs.length === 0 ? (
           <div className="py-8 text-center text-muted-foreground">No commands match the filter</div>
