@@ -158,8 +158,8 @@ importers:
         specifier: ^3.0.7
         version: 3.0.7
       '@truecarry/tlb-abi':
-        specifier: ^0.1.4
-        version: 0.1.4(@ton/core@0.60.0(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0))
+        specifier: 0.2.0-beta.4
+        version: 0.2.0-beta.4(@ton/core@0.60.0(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0))
       '@types/bn.js':
         specifier: ^5.1.6
         version: 5.1.6
@@ -292,6 +292,9 @@ importers:
       vite-bundle-analyzer:
         specifier: ^0.17.3
         version: 0.17.3
+      yaml:
+        specifier: ^2.7.0
+        version: 2.7.0
       zod:
         specifier: ^3.24.2
         version: 3.24.2
@@ -1737,8 +1740,8 @@ packages:
       tedious:
         optional: true
 
-  '@truecarry/tlb-abi@0.1.4':
-    resolution: {integrity: sha512-g4pTdzX8UEcMbA9Nskb4JustM6f8LDsxkKCX0wPKkBRI3lTAdP14XmXnwa/055xyCpGn+tTmq7Ly0Nyx8OZF0g==}
+  '@truecarry/tlb-abi@0.2.0-beta.4':
+    resolution: {integrity: sha512-SKo+6PMQnn2zO/iydqNp7SWSFFUePKNOdz52DkQJfqNDPKiK2U6qolE/f/dSjRzrjVsjubZZXeKjIJFUpCgD2Q==}
     peerDependencies:
       '@ton/core': ^0.56.3
 
@@ -5187,9 +5190,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@truecarry/tlb-abi@0.1.4(@ton/core@0.60.0(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0))':
+  '@truecarry/tlb-abi@0.2.0-beta.4(@ton/core@0.60.0(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0))':
     dependencies:
       '@ton/core': 0.60.0(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0)
+      debug: 4.4.0
+    transitivePeerDependencies:
+      - supports-color
 
   '@truecarry/ton-lite-client@3.3.1(@ton/core@0.60.0(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0))':
     dependencies:
@@ -7537,8 +7543,7 @@ snapshots:
 
   yallist@4.0.0: {}
 
-  yaml@2.7.0:
-    optional: true
+  yaml@2.7.0: {}
 
   yocto-queue@0.1.0: {}
 

@@ -4,7 +4,7 @@ import { ManagedSendMessageResult, ParsedTransaction } from '@/utils/ManagedBloc
 import { useState, useEffect, useRef } from 'react'
 import { Address, beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
-import { parseInternal } from '@truecarry/tlb-abi'
+import { parseWithPayloads } from '@truecarry/tlb-abi'
 import { Blockchain, BlockchainSnapshot, BlockchainStorage } from '@ton/sandbox'
 import { bigIntToBuffer } from '@/utils/ton'
 import { AllShardsResponse } from 'ton-lite-client/dist/types'
@@ -233,7 +233,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
         updateProgress()
 
         if (tx?.inMessage?.body) {
-          const parsed = parseInternal(tx.inMessage.body.asSlice())
+          const parsed = parseWithPayloads(tx.inMessage.body.asSlice())
           if (parsed) {
             ;(tx as any).parsed = parsed
           }

@@ -18,6 +18,7 @@ import { TxNode } from './TxNode'
 import { ParsedTransaction } from '@/utils/ManagedBlockchain'
 import { Address } from '@ton/core'
 import { bigIntToBuffer } from '@/utils/ton'
+import { checkForJettonPayload } from '@/utils/jettonPayload'
 
 export type GraphTx = ParsedTransaction & { id: number }
 
@@ -82,7 +83,7 @@ export function MessageFlow({ transactions: _txes }: MessageFlowProps) {
       layoutOptions: {
         'elk.algorithm': 'layered',
         'org.eclipse.elk.spacing.nodeNode': 10,
-        'elk.layered.spacing.nodeNodeBetweenLayers': '200',
+        'elk.layered.spacing.nodeNodeBetweenLayers': '250',
       },
       children: [],
       edges: [],
@@ -208,6 +209,10 @@ function getTxHeight(tx: ParsedTransaction) {
 
   if (tx?.parsed?.internal === 'jetton_transfer') {
     start += 70
+  }
+
+  if (checkForJettonPayload(tx?.parsed)) {
+    start += 250
   }
 
   return start

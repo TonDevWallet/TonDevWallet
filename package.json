@@ -56,7 +56,7 @@
     "@ton/ton": "^15.2.1",
     "@tonconnect/protocol": "2.2.7",
     "@tonconnect/sdk": "^3.0.7",
-    "@truecarry/tlb-abi": "^0.1.4",
+    "@truecarry/tlb-abi": "0.2.0-beta.4",
     "@types/bn.js": "^5.1.6",
     "@xyflow/react": "^12.4.4",
     "bn.js": "^5.2.1",
@@ -101,6 +101,7 @@
     "use-local-storage-state": "^19.5.0",
     "vaul": "^1.1.2",
     "vite-bundle-analyzer": "^0.17.3",
+    "yaml": "^2.7.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

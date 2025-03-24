@@ -1,11 +1,11 @@
 import { Address } from '@ton/core'
 import type { BlockchainTransaction } from '@ton/sandbox/dist/blockchain/Blockchain'
 import { Blockchain } from '@ton/sandbox/dist/blockchain/Blockchain'
-import { ParsedInternal } from '@truecarry/tlb-abi'
+import { ParsedInternalWithPayload } from '@truecarry/tlb-abi'
 import { AllShardsResponse } from 'ton-lite-client'
 
 export type ParsedTransaction = BlockchainTransaction & {
-  parsed?: ParsedInternal
+  parsed?: ParsedInternalWithPayload
   parent?: ParsedTransaction | undefined
   children?: ParsedTransaction[]
   shards?: AllShardsResponse

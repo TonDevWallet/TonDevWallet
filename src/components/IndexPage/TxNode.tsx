@@ -1,7 +1,7 @@
 import { bigIntToBuffer } from '@/utils/ton'
 import { memo, useMemo } from 'react'
 import { Handle, Position } from '@xyflow/react'
-import { Address, beginCell, storeTransaction } from '@ton/core'
+import { Address, beginCell, Cell, storeTransaction } from '@ton/core'
 import { AddressRow } from '../AddressRow'
 import { TxNodeData } from './MessageFlow'
 import { cn } from '@/utils/cn'
@@ -13,6 +13,9 @@ import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { useAddressInfo } from '@/hooks/useAddressInfo'
 import { JettonAmountDisplay } from '../Jettons/Jettons'
 import { formatTon, formatUnits } from '@/utils/units'
+import { ParsedTransaction } from '@/utils/ManagedBlockchain'
+import { stringify } from 'yaml'
+import { checkForJettonPayload } from '@/utils/jettonPayload'
 
 const addressColors = [
   // 'bg-secondary',
@@ -222,6 +225,9 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
           <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
         </>
       )}
+
+      <JettonPayloadWrapper tx={tx} />
+
       <div>
         <button
           onClick={() => {
@@ -270,3 +276,104 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
     </div>
   )
 })
+
+function JettonPayloadWrapper({ tx }: { tx: ParsedTransaction }) {
+  // recursively check if we have JettonPayloadWithParsed
+  const parsedJettonPayload = useMemo(() => {
+    // Check in common locations where payload might exist
+    return checkForJettonPayload(tx.parsed)
+  }, [tx])
+
+  const sanitizeObject = (obj: any) => {
+    if (obj instanceof Cell) {
+      return obj.toBoc().toString('hex')
+    }
+
+    if (obj instanceof Address) {
+      return obj.toString()
+    }
+
+    if (obj instanceof Buffer) {
+      return obj.toString('hex')
+    }
+
+    if (typeof obj === 'object' && obj !== null) {
+      const sanitized = {}
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          sanitized[key] = sanitizeObject(obj[key])
+        }
+      }
+      return sanitized
+    }
+
+    if (typeof obj === 'bigint') {
+      return obj.toString()
+    }
+
+    if (typeof obj === 'function') {
+      return undefined
+    }
+
+    return obj
+  }
+
+  return (
+    parsedJettonPayload && (
+      <div className="flex flex-col gap-3 p-3 my-2 bg-secondary/50 backdrop-blur-sm rounded-lg border border-secondary-foreground/10">
+        <div className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M13 16H12V12H11M12 8H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Forward Payload
+        </div>
+        {parsedJettonPayload.parsed?.data && (
+          <div className="relative">
+            <div className="max-h-[200px] overflow-y-auto rounded-md bg-secondary/80 p-3 text-secondary-foreground/90 shadow-sm">
+              <pre className="whitespace-pre-wrap break-words text-sm font-mono leading-relaxed">
+                {stringify(sanitizeObject(parsedJettonPayload.parsed?.data), null, 2)}
+              </pre>
+            </div>
+            <div className="absolute top-0 right-0 p-2">
+              <button
+                className="p-1.5 rounded-md hover:bg-secondary-foreground/10 transition-colors"
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    stringify(sanitizeObject(parsedJettonPayload.parsed?.data), null, 2)
+                  )
+                }}
+                title="Copy payload"
+              >
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 16H6C4.89543 16 4 15.1046 4 14V6C4 4.89543 4.89543 4 6 4H14C15.1046 4 16 4.89543 16 6V8M10 20H18C19.1046 20 20 19.1046 20 18V10C20 8.89543 19.1046 8 18 8H10C8.89543 8 8 8.89543 8 10V18C8 19.1046 8.89543 20 10 20Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  )
+}
