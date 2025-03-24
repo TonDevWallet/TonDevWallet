@@ -18,19 +18,18 @@ import { stringify } from 'yaml'
 import { checkForJettonPayload } from '@/utils/jettonPayload'
 
 const addressColors = [
-  // 'bg-secondary',
-  'bg-green-900',
-  'bg-yellow-900',
-  'bg-purple-900',
-  'bg-orange-900',
-  'bg-teal-900',
-  'bg-fuchsia-900',
+  'bg-green-900/90',
+  'bg-yellow-900/90',
+  'bg-purple-900/90',
+  'bg-orange-900/90',
+  'bg-teal-900/90',
+  'bg-fuchsia-900/90',
 ]
 
 const getAddressColor = (address: Address, addresses: string[]): string => {
   const index = addresses.indexOf(address.toRawString())
   if (index === -1) {
-    return 'bg-secondary'
+    return 'bg-secondary/90'
   }
   return addressColors[index % addressColors.length]
 }
@@ -74,34 +73,6 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
     return 0
   }, [tx])
 
-  const notificationErrorCode = useMemo(() => {
-    if (tx.inMessage?.body) {
-      try {
-        const inSlice = tx.inMessage.body.asSlice()
-        const op = inSlice.loadUint(32)
-        if (op !== 0xf8a7ea5) {
-          throw new Error('a')
-        }
-
-        inSlice.skip(64) // query id
-        inSlice.loadCoins() // amount
-        inSlice.loadAddress() // destination
-        inSlice.loadAddress() // response_destination
-        inSlice.loadMaybeRef() // ?
-        inSlice.loadCoins() // forward_ton_amount
-        const forward = inSlice.loadMaybeRef()?.asSlice()
-
-        forward?.skip(32)
-        forward?.skip(64)
-
-        return forward?.loadUint(32) || 0
-      } catch (e) {
-        //
-      }
-    }
-    return 0
-  }, [tx])
-
   const addressInfo = useAddressInfo(txAddress)
 
   const handleClick = () => {
@@ -111,152 +82,285 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
   return (
     <div
       className={cn(
-        'relative p-2 rounded border-2 cursor-pointer transition-all duration-200',
+        'relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 backdrop-blur-sm shadow-lg',
         rootAddress.equals(txAddress) || jettonOwnerAddress?.equals(rootAddress)
-          ? 'bg-blue-900 text-white'
+          ? 'bg-blue-900/95 text-white'
           : addressColor + ' text-secondary-foreground',
-        isTxError && 'bg-red-900 text-white',
+        isTxError && 'bg-red-900/95 text-white',
         selectedTx?.value?.lt === tx.lt
-          ? 'border-primary ring-8 ring-primary/50'
-          : 'border-transparent hover:border-primary/50'
+          ? 'border-primary ring-4 ring-primary/30'
+          : 'border-transparent hover:border-primary/30'
       )}
       onClick={handleClick}
     >
-      <AddressRow address={txAddress} />
+      {/* Header Section */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-secondary-foreground/70">ID</span>
+                <span className="font-medium">{tx.id}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-secondary-foreground/70">LT</span>
+                <span className="font-medium">{tx.lt.toString()}</span>
+              </div>
+            </div>
+            {isTxError && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full bg-red-500/20 text-red-100 text-xs font-medium">
+                Error
+              </span>
+            )}
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              const webview = new WebviewWindow(`txinfo:${tx.lt}:${tx.address.toString()}`, {
+                focus: true,
+                url: '/txinfo',
+                center: true,
+                title: `Transaction ${tx.lt} ${tx.address.toString()}`,
+                height: 800,
+                width: 1200,
+              })
+              webview.once('tauri://created', function () {
+                setTimeout(() => {
+                  webview.emit('txinfo', {
+                    tx: beginCell()
+                      .store(storeTransaction(tx))
+                      .endCell()
+                      .toBoc()
+                      .toString('base64'),
+                    vmLogs: (tx as any).vmLogs,
+                    debugLogs: (tx as any).debugLogs,
+                    blockchainLogs: (tx as any).blockchainLogs,
+                  })
+                }, 1000)
+              })
+            }}
+            className="px-3 py-1.5 rounded-lg bg-secondary/30 hover:bg-secondary/40 transition-colors text-xs font-medium"
+          >
+            View Details
+          </button>
+        </div>
+        <AddressRow address={txAddress} />
+        {addressInfo && (
+          <div className="flex items-center gap-1 text-sm mt-2">
+            <span className="font-medium">{addressInfo.title}</span>
+            {addressInfo.description && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <InfoCircledIcon className="h-4 w-4 text-muted-foreground/70 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>{addressInfo.description}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        )}
+      </div>
 
-      {addressInfo && (
-        <div className="flex items-center gap-1 text-sm mt-1 mb-2">
-          <span className="font-medium">{addressInfo.title}</span>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="flex flex-col gap-1 p-2 rounded bg-secondary/30">
+          <span className="text-xs text-secondary-foreground/70">Self Fees</span>
+          <span className="font-medium text-sm truncate" title={formatUnits(tx.totalFees.coins, 9)}>
+            {formatUnits(tx.totalFees.coins, 9)}
+          </span>
+        </div>
+        {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
+          <div className="flex flex-col gap-1 p-2 rounded bg-secondary/30">
+            <span className="text-xs text-secondary-foreground/70">OpCode</span>
+            <div className="flex items-center gap-2">
+              <span
+                className="font-medium text-sm font-mono truncate"
+                title={`0x${opCode.toString(16)}`}
+              >
+                0x{opCode.toString(16)}
+              </span>
+              <Copier
+                className="w-4 h-4 opacity-70 hover:opacity-100 flex-shrink-0"
+                text={`0x${opCode.toString(16)}`}
+              />
+            </div>
+          </div>
+        )}
+        {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
+          <div className="flex flex-col gap-1 p-2 rounded bg-secondary/30">
+            <span className="text-xs text-secondary-foreground/70">Compute Code</span>
+            <span className="font-medium text-sm truncate">
+              {tx.description.computePhase.exitCode}
+            </span>
+          </div>
+        )}
+        {tx.description.type === 'generic' &&
+          tx.description.actionPhase?.resultCode !== undefined && (
+            <div className="flex flex-col gap-1 p-2 rounded bg-secondary/30">
+              <span className="text-xs text-secondary-foreground/70">Action Code</span>
+              <span className="font-medium text-sm truncate">
+                {tx.description.actionPhase.resultCode}
+              </span>
+            </div>
+          )}
+      </div>
 
-          {addressInfo.description && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <InfoCircledIcon className="h-4 w-4 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p>{addressInfo.description}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+      {/* Schema & Type Info */}
+      {(tx?.parsed?.schema || tx?.parsed?.internal) && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {tx.parsed.schema && (
+            <span className="px-2 py-1 rounded-full bg-secondary/30 text-xs font-medium">
+              {tx.parsed.schema}
+            </span>
+          )}
+          {tx.parsed.internal && (
+            <span className="px-2 py-1 rounded-full bg-primary/30 text-xs font-medium">
+              {tx.parsed.internal}
+            </span>
           )}
         </div>
       )}
 
-      <div>ID: {tx.id}</div>
-      <div>LT: {tx.lt.toString()}</div>
-      <div>Self Fees: {formatUnits(tx.totalFees.coins, 9)}</div>
-      {/* <div>Total Fees: {tonToNumber(tx.gasFull)}</div> */}
-      {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
-        <div className="flex items-center gap-2">
-          <span>OpCode: 0x{opCode.toString(16)}</span>
-          <Copier className="w-5 h-5" text={`0x${opCode.toString(16)}`} />
-        </div>
-      )}
-      {notificationErrorCode ? (
-        <div>
-          NotificationErrorCode: {notificationErrorCode} {notificationErrorCode.toString(16)}
-        </div>
-      ) : (
-        <></>
-      )}
-      {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
-        <div>Compute Code: {tx.description.computePhase.exitCode}</div>
-      )}
-      {tx.description.type === 'generic' && (
-        <div>Action Code: {tx.description.actionPhase?.resultCode}</div>
-      )}
-      {tx.description.type === 'generic' && tx.description.bouncePhase?.type && (
-        <div>Bounce Phase Type: {tx.description.bouncePhase?.type}</div>
-      )}
-
-      {tx?.parsed?.schema && <div>Schema: {tx.parsed?.schema}</div>}
-      {tx?.parsed?.internal && <div>Type: {tx.parsed?.internal}</div>}
-      {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_transfer' && (
-        <>
-          <div className="flex gap-2">
-            Jetton Amount:
-            <JettonAmountDisplay
-              amount={tx.parsed.data.amount}
-              jettonAddress={tx.jettonData?.jettonAddress}
-            />
+      {/* Jetton Transfer Info */}
+      {tx?.parsed?.internal &&
+        ['jetton_transfer', 'jetton_internal_transfer', 'jetton_burn', 'jetton_notify'].includes(
+          tx.parsed.internal
+        ) && (
+          <div className="space-y-3 p-3 rounded-lg bg-secondary/30">
+            <h4 className="text-sm font-medium">Jetton Information</h4>
+            <div className="flex flex-col gap-2 text-sm">
+              {tx.parsed.internal === 'jetton_transfer' && (
+                <>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-secondary-foreground/70 flex-shrink-0">Amount</span>
+                    <div className="overflow-hidden text-right">
+                      <JettonAmountDisplay
+                        amount={tx.parsed.data.amount}
+                        jettonAddress={tx.jettonData?.jettonAddress}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-secondary-foreground/70 flex-shrink-0">
+                      Forward Amount
+                    </span>
+                    <span
+                      className="truncate text-right"
+                      title={formatTon(tx.parsed.data.forward_ton_amount)}
+                    >
+                      {formatTon(tx.parsed.data.forward_ton_amount)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-secondary-foreground/70">Destination</span>
+                    <div className="overflow-hidden">
+                      <div className="truncate">
+                        <AddressRow address={tx.parsed.data.destination ?? ''} />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+              {tx.parsed.internal === 'jetton_internal_transfer' && (
+                <>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-secondary-foreground/70 flex-shrink-0">Query ID</span>
+                    <span
+                      className="truncate text-right font-mono"
+                      title={tx.parsed.data.query_id.toString()}
+                    >
+                      {tx.parsed.data.query_id.toString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-secondary-foreground/70 flex-shrink-0">Amount</span>
+                    <div className="overflow-hidden text-right">
+                      <JettonAmountDisplay
+                        amount={tx.parsed.data.amount}
+                        jettonAddress={tx.jettonData?.jettonAddress}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-secondary-foreground/70 flex-shrink-0">
+                      Forward Amount
+                    </span>
+                    <span
+                      className="truncate text-right"
+                      title={formatTon(tx.parsed.data.forward_ton_amount)}
+                    >
+                      {formatTon(tx.parsed.data.forward_ton_amount)}
+                    </span>
+                  </div>
+                </>
+              )}
+              {tx.parsed.internal === 'jetton_burn' && (
+                <>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-secondary-foreground/70 flex-shrink-0">Amount</span>
+                    <span
+                      className="truncate text-right font-mono"
+                      title={tx.parsed.data.amount.toString(10)}
+                    >
+                      {tx.parsed.data.amount.toString(10)}
+                    </span>
+                  </div>
+                  {tx.parsed.data.custom_payload?.kind === 'Maybe_just' && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-secondary-foreground/70">Custom Payload</span>
+                      <div className="overflow-hidden">
+                        <span
+                          className="truncate font-mono text-xs block"
+                          title={tx.parsed.data.custom_payload.value.data.toBoc().toString('hex')}
+                        >
+                          {tx.parsed.data.custom_payload.value.data.toBoc().toString('hex')}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+              {tx.parsed.internal === 'jetton_notify' && (
+                <div className="flex justify-between items-center gap-2">
+                  <span className="text-secondary-foreground/70 flex-shrink-0">Amount</span>
+                  <span
+                    className="truncate text-right font-mono"
+                    title={tx.parsed.data.amount.toString(10)}
+                  >
+                    {tx.parsed.data.amount.toString(10)}
+                  </span>
+                </div>
+              )}
+              {tx.parsed.internal === 'stonfi_deposit_ref_fee_v2' && (
+                <div className="flex justify-between items-center gap-2">
+                  <span className="text-secondary-foreground/70 flex-shrink-0">Amount</span>
+                  <span
+                    className="truncate text-right font-mono"
+                    title={tx.parsed.data.jetton_amount.toString(10)}
+                  >
+                    {tx.parsed.data.jetton_amount.toString(10)}
+                  </span>
+                </div>
+              )}
+              {tx.parsed.internal === 'dedust_swap_peer' && (
+                <div className="flex justify-between items-center gap-2">
+                  <span className="text-secondary-foreground/70 flex-shrink-0">Amount</span>
+                  <span
+                    className="truncate text-right font-mono"
+                    title={tx.parsed.data.amount.toString(10)}
+                  >
+                    {tx.parsed.data.amount.toString(10)}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-          <div>Forward Amount: {formatTon(tx.parsed.data.forward_ton_amount)}</div>
-          <div>
-            To: <AddressRow address={tx.parsed.data.destination ?? ''} />
-          </div>
-        </>
-      )}
-      {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_internal_transfer' && (
-        <>
-          <div>Query ID: {tx.parsed.data.query_id.toString()}</div>
-          <div className="flex gap-2">
-            Jetton Amount:
-            <JettonAmountDisplay
-              amount={tx.parsed.data.amount}
-              jettonAddress={tx.jettonData?.jettonAddress}
-            />
-          </div>
-          <div>Forward Amount: {formatTon(tx.parsed.data.forward_ton_amount)}</div>
-        </>
-      )}
-      {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_burn' && (
-        <>
-          <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
-          <div>
-            Custom Payload:{' '}
-            {tx.parsed.data.custom_payload?.kind === 'Maybe_just' &&
-              tx.parsed.data.custom_payload.value.data.toBoc().toString('hex')}
-          </div>
-        </>
-      )}
-      {tx?.parsed?.internal && tx?.parsed?.internal === 'jetton_notify' && (
-        <>
-          <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
-        </>
-      )}
-      {tx?.parsed?.internal && tx?.parsed?.internal === 'stonfi_deposit_ref_fee_v2' && (
-        <>
-          <div>Jetton Amount: {tx.parsed.data.jetton_amount.toString(10)}</div>
-        </>
-      )}
-      {tx?.parsed?.internal && tx?.parsed?.internal === 'dedust_swap_peer' && (
-        <>
-          <div>Jetton Amount: {tx.parsed.data.amount.toString(10)}</div>
-        </>
-      )}
+        )}
 
       <JettonPayloadWrapper tx={tx} />
-
-      <div>
-        <button
-          onClick={() => {
-            const webview = new WebviewWindow(`txinfo:${tx.lt}:${tx.address.toString()}`, {
-              focus: true,
-              // transparent: true,
-              url: '/txinfo',
-              center: true,
-              title: `Transaction ${tx.lt} ${tx.address.toString()}`,
-              height: 800,
-              width: 1200,
-            })
-            // since the webview window is created asynchronously,
-            // Tauri emits the `tauri://created` and `tauri://error` to notify you of the creation response
-            webview.once('tauri://created', function () {
-              setTimeout(() => {
-                webview.emit('txinfo', {
-                  tx: beginCell().store(storeTransaction(tx)).endCell().toBoc().toString('base64'),
-                  vmLogs: (tx as any).vmLogs,
-                  debugLogs: (tx as any).debugLogs,
-                  blockchainLogs: (tx as any).blockchainLogs,
-                })
-              }, 1000)
-            })
-          }}
-        >
-          Open full tx info
-        </button>
-      </div>
 
       <Handle
         type="target"
@@ -264,15 +368,16 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
         draggable={false}
         isConnectable={false}
         id="b"
+        className="w-3 h-3 bg-secondary border-2 border-background"
       />
       <Handle
         type="source"
         position={Position.Right}
         isConnectable={false}
         draggable={false}
-        className=""
+        className="w-3 h-3 bg-secondary border-2 border-background"
         id="a"
-      ></Handle>
+      />
     </div>
   )
 })

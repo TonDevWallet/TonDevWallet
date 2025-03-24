@@ -202,13 +202,13 @@ export function MessageFlow({ transactions: _txes }: MessageFlowProps) {
 }
 
 function getTxHeight(tx: ParsedTransaction) {
-  let start = 350
+  let start = 500
   if (isTxError(tx)) {
     start += 50
   }
 
   if (tx?.parsed?.internal === 'jetton_transfer') {
-    start += 70
+    start += 150
   }
 
   if (checkForJettonPayload(tx?.parsed)) {
