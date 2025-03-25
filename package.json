@@ -50,13 +50,13 @@
     "@tailwindcss/postcss": "^4.0.14",
     "@tailwindcss/vite": "^4.0.14",
     "@tauri-apps/api": "^1.5.3",
-    "@ton/core": "0.60.0",
+    "@ton/core": "0.60.1",
     "@ton/crypto": "^3.3.0",
     "@ton/sandbox": "^0.27.1",
     "@ton/ton": "^15.2.1",
     "@tonconnect/protocol": "2.2.7",
     "@tonconnect/sdk": "^3.0.7",
-    "@truecarry/tlb-abi": "0.2.0-beta.4",
+    "@truecarry/tlb-abi": "0.2.0-beta.8",
     "@types/bn.js": "^5.1.6",
     "@xyflow/react": "^12.4.4",
     "bn.js": "^5.2.1",
@@ -128,7 +128,7 @@
   "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903",
   "pnpm": {
     "patchedDependencies": {
-      "@ton/core@0.60.0": "patches/@ton__core@0.60.0.patch"
+      "@ton/core@0.60.1": "patches/@ton__core@0.60.0.patch"
     }
   }
 }

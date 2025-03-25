@@ -233,9 +233,14 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
         updateProgress()
 
         if (tx?.inMessage?.body) {
-          const parsed = parseWithPayloads(tx.inMessage.body.asSlice())
-          if (parsed) {
-            ;(tx as any).parsed = parsed
+          let parsed: any
+          try {
+            parsed = parseWithPayloads(tx.inMessage.body.asSlice())
+            if (parsed) {
+              ;(tx as any).parsed = parsed
+            }
+          } catch (err) {
+            console.log('error parsing tx', err)
           }
           if (
             parsed?.internal === 'jetton_burn' ||

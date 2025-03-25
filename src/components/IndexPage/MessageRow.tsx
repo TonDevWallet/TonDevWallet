@@ -295,26 +295,24 @@ const JettonFlow = memo(function JettonFlow({
   tonDifference: bigint
 }) {
   // Group transfers by jetton and calculate net flow
-  const jettonFlows = useMemo(
-    () =>
-      jettonTransfers.reduce<Record<string, bigint>>((acc, transfer) => {
-        const jettonKey = transfer.jetton?.toString() || 'unknown'
-        if (!acc[jettonKey]) {
-          acc[jettonKey] = 0n
-        }
+  const jettonFlows = useMemo(() => {
+    return jettonTransfers.reduce<Record<string, bigint>>((acc, transfer) => {
+      const jettonKey = transfer.jetton?.toString() || 'unknown'
+      if (!acc[jettonKey]) {
+        acc[jettonKey] = 0n
+      }
 
-        // Add to balance if receiving tokens (to our address)
-        // Subtract from balance if sending tokens (from our address)
-        if (ourAddress && transfer.to.equals(ourAddress)) {
-          acc[jettonKey] += transfer.amount
-        } else if (ourAddress && transfer.from.equals(ourAddress)) {
-          acc[jettonKey] -= transfer.amount
-        }
+      // Add to balance if receiving tokens (to our address)
+      // Subtract from balance if sending tokens (from our address)
+      if (ourAddress && transfer.to.equals(ourAddress)) {
+        acc[jettonKey] += transfer.amount
+      } else if (ourAddress && transfer.from.equals(ourAddress)) {
+        acc[jettonKey] -= transfer.amount
+      }
 
-        return acc
-      }, {}),
-    [jettonTransfers, ourAddress?.toRawString()]
-  )
+      return acc
+    }, {})
+  }, [jettonTransfers, ourAddress?.toRawString()])
 
   return (
     <div className="mt-2">

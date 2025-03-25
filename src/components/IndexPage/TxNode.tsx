@@ -82,7 +82,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
   return (
     <div
       className={cn(
-        'relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 backdrop-blur-sm shadow-lg',
+        'relative p-4 rounded-lg border-2 cursor-pointer shadow-lg',
         rootAddress.equals(txAddress) || jettonOwnerAddress?.equals(rootAddress)
           ? 'bg-blue-900/95 text-white'
           : addressColor + ' text-secondary-foreground',
