@@ -45,6 +45,7 @@ export function TopBar() {
 
       <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
       <TopBarLinkWrapper to="/app/tracer" icon={faProjectDiagram} text="Tracer" />
+      <TopBarLinkWrapper to="/app/editor" icon={faProjectDiagram} text="Editor" />
       <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
 
       <PasswordUnlock />

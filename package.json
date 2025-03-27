@@ -50,6 +50,7 @@
     "@tailwindcss/postcss": "^4.0.14",
     "@tailwindcss/vite": "^4.0.14",
     "@tauri-apps/api": "^1.5.3",
+    "@ton-community/func-js": "^0.9.1",
     "@ton/core": "0.60.1",
     "@ton/crypto": "^3.3.0",
     "@ton/sandbox": "^0.27.1",

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { compileFunc } from '@ton-community/func-js'
 import { stdlib } from './stdlib'
-import { Blockchain, SmartContract } from '@ton-community/sandbox'
-import { Address, Cell, beginCell } from 'ton-core'
+import { Blockchain, SmartContract } from '@ton/sandbox'
+import { Address, Cell, beginCell } from '@ton/core'
 
 export function EditorPage() {
   const [funcCode, setFuncCode] = useState('')
+  const [fiftCode, setFiftCode] = useState('')
 
   useEffect(() => {
     ;(async () => {
@@ -13,13 +14,15 @@ export function EditorPage() {
         #include "stdlib.fc";
 
         () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
-          ~dump(get_call());
+         return ();
         }
 
         (cell) get_call() method_id {
           ${funcCode}
         }
       `
+
+      console.log('compiling', funcTemplate)
       const result = await compileFunc({
         // Targets of your project
         targets: ['main.fc'],
@@ -32,19 +35,34 @@ export function EditorPage() {
       })
 
       if (result.status !== 'ok') {
-        throw new Error('ok')
+        throw new Error('!ok')
       }
+
+      setFiftCode(result.fiftCode)
+
       const blockchain = await Blockchain.create()
-      const ctr = blockchain.openContract({
-        address: new Address(0, Buffer.from([0])),
-        init: {
-          code: Cell.fromBase64(result.codeBoc),
-          data: beginCell().endCell(),
-        },
-      })
+      // const ctr = blockchain.openContract({
+      //   address: new Address(
+      //     0,
+      //     Buffer.from([
+      //       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      //       0, 0, 0,
+      //     ])
+      //   ),
+      //   init: {
+      //     code: Cell.fromBase64(result.codeBoc),
+      //     data: beginCell().endCell(),
+      //   },
+      // })
       console.log('war', result)
       const smc = SmartContract.create(blockchain, {
-        address: new Address(0, Buffer.from([0])),
+        address: new Address(
+          0,
+          Buffer.from([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+          ])
+        ),
         balance: 1000000000n,
         code: Cell.fromBase64(result.codeBoc),
         data: beginCell().endCell(),
@@ -94,7 +112,13 @@ export function EditorPage() {
         id="func-code"
         value={funcCode}
         onChange={(e) => setFuncCode(e.target.value)}
+        rows={10}
       ></textarea>
+      <div id="fift-code">
+        <code>
+          <pre>{fiftCode}</pre>
+        </code>
+      </div>
     </div>
   )
 }

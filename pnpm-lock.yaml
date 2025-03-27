@@ -139,6 +139,9 @@ importers:
       '@tauri-apps/api':
         specifier: ^1.5.3
         version: 1.5.3
+      '@ton-community/func-js':
+        specifier: ^0.9.1
+        version: 0.9.1
       '@ton/core':
         specifier: 0.60.1
         version: 0.60.1(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0)
@@ -1678,6 +1681,13 @@ packages:
     engines: {node: '>= 10'}
     hasBin: true
 
+  '@ton-community/func-js-bin@0.4.6-wasmfix.0':
+    resolution: {integrity: sha512-WZfyihhrcT+t1EyWNHOAtB1deQ1IkbCgo+qgPRaAIgpQEQnKxwbCHT8+3Ow1zRIXH/7ku4Bxh5c4pM4uOLjb2A==}
+
+  '@ton-community/func-js@0.9.1':
+    resolution: {integrity: sha512-V+o8QQ7mNiz3MLxK7Q3Uch8auMziJjLAVpRmxuFiJtXo9oX9azgkv/clJScRa+/+MtdFW7eqkz95eZgGJTp2Jg==}
+    hasBin: true
+
   '@ton/core@0.60.1':
     resolution: {integrity: sha512-8FwybYbfkk57C3l9gvnlRhRBHbLYmeu0LbB1z9N+dhDz0Z+FJW8w0TJlks8CgHrAFxsT3FlR2LsqFnsauMp38w==}
     peerDependencies:
@@ -1911,6 +1921,9 @@ packages:
   ansi-styles@4.3.0:
     resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
     engines: {node: '>=8'}
+
+  arg@5.0.2:
+    resolution: {integrity: sha512-PYjyFOLKQ9y57JvQ6QLo8dAgNqswh8M1RMJYdQduT6xbWSgK36P/Z/v+p888pM69jMMfS8Xd8F6I1kQ/I9HUGg==}
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
@@ -5117,6 +5130,13 @@ snapshots:
       '@tauri-apps/cli-win32-ia32-msvc': 1.5.10
       '@tauri-apps/cli-win32-x64-msvc': 1.5.10
 
+  '@ton-community/func-js-bin@0.4.6-wasmfix.0': {}
+
+  '@ton-community/func-js@0.9.1':
+    dependencies:
+      '@ton-community/func-js-bin': 0.4.6-wasmfix.0
+      arg: 5.0.2
+
   '@ton/core@0.60.1(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0)':
     dependencies:
       '@ton/crypto': 3.3.0
@@ -5417,6 +5437,8 @@ snapshots:
   ansi-styles@4.3.0:
     dependencies:
       color-convert: 2.0.1
+
+  arg@5.0.2: {}
 
   argparse@2.0.1: {}
 
