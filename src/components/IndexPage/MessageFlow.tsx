@@ -215,6 +215,10 @@ function getTxHeight(tx: ParsedTransaction) {
     start += 250
   }
 
+  if (tx?.parsedRaw) {
+    start += 250
+  }
+
   return start
 }
 

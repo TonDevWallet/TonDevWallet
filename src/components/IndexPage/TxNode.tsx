@@ -1,7 +1,7 @@
 import { bigIntToBuffer } from '@/utils/ton'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { Handle, Position } from '@xyflow/react'
-import { Address, beginCell, Cell, storeTransaction } from '@ton/core'
+import { Address, beginCell, storeTransaction } from '@ton/core'
 import { AddressRow } from '../AddressRow'
 import { TxNodeData } from './MessageFlow'
 import { cn } from '@/utils/cn'
@@ -16,6 +16,7 @@ import { formatTon, formatUnits } from '@/utils/units'
 import { ParsedTransaction } from '@/utils/ManagedBlockchain'
 import { stringify } from 'yaml'
 import { checkForJettonPayload } from '@/utils/jettonPayload'
+import { sanitizeObject } from '@/utils/tlb/cellParser'
 
 const addressColors = [
   'bg-green-900/90',
@@ -361,6 +362,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
         )}
 
       <JettonPayloadWrapper tx={tx} />
+      <RawPayloadWrapper tx={tx} />
 
       <Handle
         type="target"
@@ -389,38 +391,10 @@ function JettonPayloadWrapper({ tx }: { tx: ParsedTransaction }) {
     return checkForJettonPayload(tx.parsed)
   }, [tx])
 
-  const sanitizeObject = (obj: any) => {
-    if (obj instanceof Cell) {
-      return obj.toBoc().toString('hex')
-    }
+  const [isExpanded, setIsExpanded] = useState(false)
 
-    if (obj instanceof Address) {
-      return obj.toString()
-    }
-
-    if (obj instanceof Buffer) {
-      return obj.toString('hex')
-    }
-
-    if (typeof obj === 'object' && obj !== null) {
-      const sanitized = {}
-      for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          sanitized[key] = sanitizeObject(obj[key])
-        }
-      }
-      return sanitized
-    }
-
-    if (typeof obj === 'bigint') {
-      return obj.toString()
-    }
-
-    if (typeof obj === 'function') {
-      return undefined
-    }
-
-    return obj
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded)
   }
 
   return (
@@ -445,15 +419,21 @@ function JettonPayloadWrapper({ tx }: { tx: ParsedTransaction }) {
         </div>
         {parsedJettonPayload.parsed?.data && (
           <div className="relative">
-            <div className="max-h-[200px] overflow-y-auto rounded-md bg-secondary/80 p-3 text-secondary-foreground/90 shadow-sm">
+            <div
+              className={`${isExpanded ? '' : 'max-h-[200px]'} overflow-y-auto rounded-md bg-secondary/80 p-3 text-secondary-foreground/90 shadow-sm relative`}
+            >
               <pre className="whitespace-pre-wrap break-words text-sm font-mono leading-relaxed">
                 {stringify(sanitizeObject(parsedJettonPayload.parsed?.data), null, 2)}
               </pre>
+              {!isExpanded && (
+                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-secondary/90 to-transparent" />
+              )}
             </div>
             <div className="absolute top-0 right-0 p-2">
               <button
                 className="p-1.5 rounded-md hover:bg-secondary-foreground/10 transition-colors"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation()
                   navigator.clipboard.writeText(
                     stringify(sanitizeObject(parsedJettonPayload.parsed?.data), null, 2)
                   )
@@ -476,8 +456,151 @@ function JettonPayloadWrapper({ tx }: { tx: ParsedTransaction }) {
                 </svg>
               </button>
             </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleExpand()
+              }}
+              className="flex items-center justify-center w-full py-1 mt-1 text-xs text-secondary-foreground/70 hover:text-secondary-foreground transition-colors"
+            >
+              {isExpanded ? (
+                <>
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M18 15L12 9L6 15"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Collapse
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M6 9L12 15L18 9"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Expand
+                </>
+              )}
+            </button>
           </div>
         )}
+      </div>
+    )
+  )
+}
+
+function RawPayloadWrapper({ tx }: { tx: ParsedTransaction }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded)
+  }
+
+  return (
+    tx.parsedRaw && (
+      <div className="flex flex-col gap-3 p-3 my-2 bg-secondary/50 backdrop-blur-sm rounded-lg border border-secondary-foreground/10">
+        <div className="flex items-center justify-between gap-2 text-sm font-medium text-secondary-foreground/80">
+          <span>Raw Payload</span>
+          <button
+            className="p-1.5 rounded-md hover:bg-secondary-foreground/10 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation()
+              navigator.clipboard.writeText(stringify(sanitizeObject(tx.parsedRaw), null, 2))
+            }}
+            title="Copy payload"
+          >
+            <svg
+              className="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M8 16H6C4.89543 16 4 15.1046 4 14V6C4 4.89543 4.89543 4 6 4H14C15.1046 4 16 4.89543 16 6V8M10 20H18C19.1046 20 20 19.1046 20 18V10C20 8.89543 19.1046 8 18 8H10C8.89543 8 8 8.89543 8 10V18C8 19.1046 8.89543 20 10 20Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+        <div className="relative">
+          <div
+            className={`${isExpanded ? '' : 'max-h-[200px]'} overflow-y-auto rounded-md p-3 text-secondary-foreground/90 shadow-sm relative`}
+          >
+            <pre className="whitespace-pre-wrap break-words text-sm font-mono leading-relaxed">
+              {stringify(sanitizeObject(tx.parsedRaw), null, 2)}
+            </pre>
+            {!isExpanded && (
+              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-secondary/90 to-transparent" />
+            )}
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleExpand()
+            }}
+            className="flex items-center justify-center w-full py-1 mt-1 text-xs text-secondary-foreground/70 hover:text-secondary-foreground transition-colors"
+          >
+            {isExpanded ? (
+              <>
+                <svg
+                  className="w-4 h-4 mr-1"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18 15L12 9L6 15"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Collapse
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-4 h-4 mr-1"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M6 9L12 15L18 9"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Expand
+              </>
+            )}
+          </button>
+        </div>
       </div>
     )
   )

@@ -6,6 +6,7 @@ import { AllShardsResponse } from 'ton-lite-client'
 
 export type ParsedTransaction = BlockchainTransaction & {
   parsed?: ParsedInternalWithPayload
+  parsedRaw?: any
   parent?: ParsedTransaction | undefined
   children?: ParsedTransaction[]
   shards?: AllShardsResponse

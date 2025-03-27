@@ -9,6 +9,7 @@ import { Blockchain, BlockchainSnapshot, BlockchainStorage } from '@ton/sandbox'
 import { bigIntToBuffer } from '@/utils/ton'
 import { AllShardsResponse } from 'ton-lite-client/dist/types'
 import { getShardBitMask, isSameShard } from '@/utils/shards'
+import { RecursivelyParseCellWithBlock } from '@/utils/tlb/cellParser'
 
 const libs: Record<string, Buffer> = {}
 export let megaLibsCell = beginCell().endCell()
@@ -241,6 +242,14 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
             }
           } catch (err) {
             console.log('error parsing tx', err)
+          }
+          try {
+            const dataParsed = RecursivelyParseCellWithBlock(tx.inMessage.body)
+            if (dataParsed) {
+              ;(tx as any).parsedRaw = dataParsed
+            }
+          } catch (err) {
+            //
           }
           if (
             parsed?.internal === 'jetton_burn' ||
