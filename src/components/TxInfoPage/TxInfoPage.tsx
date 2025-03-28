@@ -1,7 +1,7 @@
 import { setTransactionState, useTransactionState } from '@/store/txInfo'
 import { listen } from '@tauri-apps/api/event'
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { Cell, loadTransaction } from '@ton/core'
+import { Cell, loadTransaction, Transaction } from '@ton/core'
 import { VmLogsInfo } from './VmLogsInfo'
 import { VmStackInfo } from './VmStackInfo'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -13,6 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { StackInfo } from '@/hooks/useVmLogsNavigation'
 import { KeyboardShortcutHint } from './KeyboardShortcutHint'
+import { RawTransactionInfo } from './RawTransactionInfo'
 
 export function TxInfoPage() {
   const transactionState = useTransactionState()
@@ -24,6 +25,7 @@ export function TxInfoPage() {
     new: '',
     i: -1,
   })
+  const [activeTab, setActiveTab] = useState<'logs' | 'raw'>('logs')
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Parse the logs to determine if data is available
@@ -119,13 +121,37 @@ export function TxInfoPage() {
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div
-        className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3 gap-2
-          flex flex-row items-center justify-between
+        className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3 gap-4
+          flex flex-row items-center
       "
       >
-        <h1 className="text-xl font-semibold text-foreground w-64">Transaction Details</h1>
+        <h1 className="text-xl font-semibold text-foreground flex-shrink-0">Transaction Details</h1>
 
-        <div className="relative w-full">
+        {/* Tabs */}
+        <div className="flex flex-shrink-0">
+          <button
+            className={`px-4 py-2 font-medium ${
+              activeTab === 'logs'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => setActiveTab('logs')}
+          >
+            Logs
+          </button>
+          <button
+            className={`px-4 py-2 font-medium ${
+              activeTab === 'raw'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => setActiveTab('raw')}
+          >
+            Raw
+          </button>
+        </div>
+
+        <div className="relative flex-1 min-w-0">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
             <FontAwesomeIcon icon={faSearch} size="sm" />
           </div>
@@ -157,78 +183,84 @@ export function TxInfoPage() {
       )}
 
       {/* Main Content */}
-      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-        {/* VM Logs Panel */}
-        <div className="w-full md:w-[40%] md:max-w-[350px] flex flex-col h-full overflow-hidden border-r border-border">
-          <div className="flex-none bg-secondary/30">
-            <div className="p-3 border-b border-border">
-              <h2 className="font-medium text-foreground">VM Execution Log</h2>
-            </div>
+      {activeTab === 'logs' ? (
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          {/* VM Logs Panel */}
+          <div className="w-full md:w-[40%] md:max-w-[350px] flex flex-col h-full overflow-hidden border-r border-border">
+            <div className="flex-none bg-secondary/30">
+              <div className="p-3 border-b border-border">
+                <h2 className="font-medium text-foreground">VM Execution Log</h2>
+              </div>
 
-            <div className="bg-secondary border-b border-border px-4 py-2">
-              <div className="grid grid-cols-[60px_1fr_80px] text-sm font-medium text-muted-foreground">
-                <div>Step</div>
-                <div className="flex items-center">
-                  Command
-                  <div className="relative ml-2 group">
-                    <FontAwesomeIcon
-                      icon={faKeyboard}
-                      size="sm"
-                      className="text-muted-foreground/50 hover:text-muted-foreground cursor-help"
-                    />
-                    <div className="absolute left-0 top-6 z-50 hidden group-hover:block bg-popover border border-border rounded-md shadow-md p-2 text-xs text-foreground w-52">
-                      <p className="font-semibold mb-1">Keyboard Navigation:</p>
-                      <div className="grid grid-cols-[70px_1fr] gap-1">
-                        <span className="font-mono bg-accent px-1 rounded">↑ / k</span>
-                        <span>Previous instruction</span>
-                        <span className="font-mono bg-accent px-1 rounded">↓ / j</span>
-                        <span>Next instruction</span>
+              <div className="bg-secondary border-b border-border px-4 py-2">
+                <div className="grid grid-cols-[60px_1fr_80px] text-sm font-medium text-muted-foreground">
+                  <div>Step</div>
+                  <div className="flex items-center">
+                    Command
+                    <div className="relative ml-2 group">
+                      <FontAwesomeIcon
+                        icon={faKeyboard}
+                        size="sm"
+                        className="text-muted-foreground/50 hover:text-muted-foreground cursor-help"
+                      />
+                      <div className="absolute left-0 top-6 z-50 hidden group-hover:block bg-popover border border-border rounded-md shadow-md p-2 text-xs text-foreground w-52">
+                        <p className="font-semibold mb-1">Keyboard Navigation:</p>
+                        <div className="grid grid-cols-[70px_1fr] gap-1">
+                          <span className="font-mono bg-accent px-1 rounded">↑ / k</span>
+                          <span>Previous instruction</span>
+                          <span className="font-mono bg-accent px-1 rounded">↓ / j</span>
+                          <span>Next instruction</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <div className="text-right">Gas Used</div>
                 </div>
-                <div className="text-right">Gas Used</div>
               </div>
             </div>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <VmLogsInfo
-              logs={transactionState.vmLogs.get()}
-              setStack={setStack}
-              filterText={filterText}
-              selectedStack={stack.i}
-            />
-          </div>
-        </div>
-
-        {/* Stack Comparison Panel */}
-        <div className="w-full md:w-full flex flex-col h-full overflow-hidden">
-          <div className="grid grid-cols-2 flex-none">
-            <div className="p-3 bg-secondary/30 border-r border-border">
-              <h2 className="font-medium text-foreground">Stack Before</h2>
-            </div>
-            <div className="p-3 bg-secondary/30">
-              <h2 className="font-medium text-foreground">Stack After</h2>
+            <div className="flex-1 overflow-hidden">
+              <VmLogsInfo
+                logs={transactionState.vmLogs.get()}
+                setStack={setStack}
+                filterText={filterText}
+                selectedStack={stack.i}
+              />
             </div>
           </div>
 
-          <div className="flex-1 overflow-hidden">
-            <VmStackInfo stack={stack} />
-          </div>
-
-          {stack.i === -1 && (
-            <div className="absolute inset-0 md:inset-auto md:right-0 md:w-[60%] md:top-[109px] md:bottom-0 flex flex-col items-center justify-center h-full text-muted-foreground p-6 z-10 pointer-events-none">
-              <div className="mb-3 flex justify-center">
-                <FontAwesomeIcon icon={faArrowRight} size="2x" />
+          {/* Stack Comparison Panel */}
+          <div className="w-full md:w-full flex flex-col h-full overflow-hidden">
+            <div className="grid grid-cols-2 flex-none">
+              <div className="p-3 bg-secondary/30 border-r border-border">
+                <h2 className="font-medium text-foreground">Stack Before</h2>
               </div>
-              <p className="text-center">Select a command from the VM log to view stack changes</p>
+              <div className="p-3 bg-secondary/30">
+                <h2 className="font-medium text-foreground">Stack After</h2>
+              </div>
             </div>
-          )}
+
+            <div className="flex-1 overflow-hidden">
+              <VmStackInfo stack={stack} />
+            </div>
+
+            {stack.i === -1 && (
+              <div className="absolute inset-0 md:inset-auto md:right-0 md:w-[60%] md:top-[109px] md:bottom-0 flex flex-col items-center justify-center h-full text-muted-foreground p-6 z-10 pointer-events-none">
+                <div className="mb-3 flex justify-center">
+                  <FontAwesomeIcon icon={faArrowRight} size="2x" />
+                </div>
+                <p className="text-center">
+                  Select a command from the VM log to view stack changes
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <RawTransactionInfo tx={transactionState.tx.get() as Transaction} />
+      )}
 
       {/* Keyboard Shortcut Hint */}
-      {hasLogData && <KeyboardShortcutHint />}
+      {hasLogData && activeTab === 'logs' && <KeyboardShortcutHint />}
     </div>
   )
 }

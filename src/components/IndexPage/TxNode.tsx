@@ -140,7 +140,10 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
                 }, 1000)
               })
             }}
-            className="px-3 py-1.5 rounded-lg bg-secondary/30 hover:bg-secondary/40 transition-colors text-xs font-medium"
+            className="
+              cursor-pointer px-3 py-1.5 rounded-lg bg-secondary/30 transition-colors text-xs font-medium
+              hover:bg-secondary/60
+            "
           >
             View Details
           </button>
@@ -399,7 +402,7 @@ function JettonPayloadWrapper({ tx }: { tx: ParsedTransaction }) {
 
   return (
     parsedJettonPayload && (
-      <div className="flex flex-col gap-3 p-3 my-2 bg-secondary/50 backdrop-blur-sm rounded-lg border border-secondary-foreground/10">
+      <div className="flex flex-col gap-3 p-3 my-2 bg-secondary/50 backdrop-blur-sm rounded-lg">
         <div className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
           <svg
             className="w-4 h-4"
@@ -420,7 +423,7 @@ function JettonPayloadWrapper({ tx }: { tx: ParsedTransaction }) {
         {parsedJettonPayload.parsed?.data && (
           <div className="relative">
             <div
-              className={`${isExpanded ? '' : 'max-h-[200px]'} overflow-y-auto rounded-md bg-secondary/80 p-3 text-secondary-foreground/90 shadow-sm relative`}
+              className={`${isExpanded ? '' : 'max-h-[200px]'} overflow-y-auto rounded-md bg-secondary/80 p-2 pt-0 text-secondary-foreground/90 shadow-sm relative`}
             >
               <pre className="whitespace-pre-wrap break-words text-sm font-mono leading-relaxed">
                 {stringify(sanitizeObject(parsedJettonPayload.parsed?.data), null, 2)}
@@ -517,7 +520,7 @@ function RawPayloadWrapper({ tx }: { tx: ParsedTransaction }) {
 
   return (
     tx.parsedRaw && (
-      <div className="flex flex-col gap-3 p-3 my-2 bg-secondary/50 backdrop-blur-sm rounded-lg border border-secondary-foreground/10">
+      <div className="flex flex-col gap-3 p-3 my-2 bg-secondary/30 backdrop-blur-sm rounded-lg">
         <div className="flex items-center justify-between gap-2 text-sm font-medium text-secondary-foreground/80">
           <span>Raw Payload</span>
           <button
@@ -546,21 +549,18 @@ function RawPayloadWrapper({ tx }: { tx: ParsedTransaction }) {
         </div>
         <div className="relative">
           <div
-            className={`${isExpanded ? '' : 'max-h-[200px]'} overflow-y-auto rounded-md p-3 text-secondary-foreground/90 shadow-sm relative`}
+            className={`${isExpanded ? '' : 'max-h-[200px]'} overflow-y-auto rounded-md p-2 pt-0 text-secondary-foreground/90 relative`}
           >
             <pre className="whitespace-pre-wrap break-words text-sm font-mono leading-relaxed">
               {stringify(sanitizeObject(tx.parsedRaw), null, 2)}
             </pre>
-            {!isExpanded && (
-              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-secondary/90 to-transparent" />
-            )}
           </div>
           <button
             onClick={(e) => {
               e.stopPropagation()
               toggleExpand()
             }}
-            className="flex items-center justify-center w-full py-1 mt-1 text-xs text-secondary-foreground/70 hover:text-secondary-foreground transition-colors"
+            className="cursor-pointer flex items-center justify-center w-full py-1 mt-1 text-xs text-secondary-foreground/70 hover:text-secondary-foreground"
           >
             {isExpanded ? (
               <>
