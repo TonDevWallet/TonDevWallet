@@ -5,7 +5,7 @@ import { getWalletFromKey } from '@/utils/wallets'
 import { IWallet, SavedWallet } from '@/types'
 import { Address } from '@ton/core'
 import { Key } from '@/types/Key'
-import { useSearchQuery } from '@/store/searchState'
+import { useSearchState } from '@/store/searchState'
 import { GlobalSearch } from '../GlobalSearch/GlobalSearch'
 import { KeyGroup } from './KeyGroup'
 
@@ -22,29 +22,26 @@ const allOptionsPermutations = Object.keys(optionsMatrix).reduce(
   [{}]
 )
 
-// Check if a wallet matches the search query
-function isWalletMatch(wallet: IWallet, keyName: string, query: string) {
-  if (!query) return true
-
+function generateWalletSearchString(wallet: IWallet, keyName: string) {
   const addressStringifiers = [
     ...allOptionsPermutations.map((options) => (a: Address) => a.toString(options)),
     (a: Address) => a.toRawString(),
   ]
 
-  return (
-    wallet.type.toLowerCase().includes(query.toLowerCase()) ||
-    (wallet.name || '').toLowerCase().includes(query.toLowerCase()) ||
-    keyName.toLowerCase().includes(query.toLowerCase()) ||
-    addressStringifiers.some((stringify) =>
-      stringify(wallet.address).toLowerCase().includes(query.toLowerCase())
-    )
-  )
+  return [
+    wallet.type.toLowerCase() +
+      (wallet.name || '').toLowerCase() +
+      (keyName || '').toLowerCase() +
+      addressStringifiers.map((stringify) => stringify(wallet.address).toLowerCase()),
+  ]
+    .flat()
+    .join()
 }
 
 export function WalletsListPage() {
   const walletsList = useWalletListState()
   const liteClient = useLiteclient()
-  const searchQuery = useSearchQuery()
+  const searchState = useSearchState()
 
   // Process all wallets from all keys
   const processedWallets = useMemo(() => {
@@ -52,6 +49,7 @@ export function WalletsListPage() {
       wallet: IWallet
       keyName: string
       keyId: number
+      searchString: string
     }> = []
 
     try {
@@ -83,6 +81,7 @@ export function WalletsListPage() {
                   wallet,
                   keyName: key.name,
                   keyId: key.id,
+                  searchString: generateWalletSearchString(wallet, key.name),
                 })
               } else {
                 console.log('Failed to get wallet from key:', walletData)
@@ -104,12 +103,10 @@ export function WalletsListPage() {
 
   // Filter wallets based on search query
   const filteredWallets = useMemo(() => {
-    if (!searchQuery) return processedWallets
+    if (!searchState.wallet.get()) return processedWallets
 
-    return processedWallets.filter((item) =>
-      isWalletMatch(item.wallet, item.keyName, searchQuery.get())
-    )
-  }, [processedWallets, searchQuery])
+    return processedWallets.filter((item) => item.searchString.includes(searchState.wallet.get()))
+  }, [processedWallets, searchState.wallet])
 
   // Group by key name
   const groupedWallets = useMemo(() => {
@@ -140,7 +137,7 @@ export function WalletsListPage() {
         ))
       ) : (
         <div className="text-center py-10 bg-muted/20 rounded-lg">
-          {searchQuery
+          {searchState.wallet.get()
             ? 'No wallets match your search query.'
             : 'No wallets found. Try creating a wallet first.'}
         </div>

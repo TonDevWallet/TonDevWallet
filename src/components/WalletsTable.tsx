@@ -1,25 +1,14 @@
 import { useLiteclient, useLiteclientState } from '@/store/liteClient'
-import { DeleteKeyWallet, UpdateKeyWalletName } from '@/store/walletsListState'
+import { UpdateKeyWalletName } from '@/store/walletsListState'
 import { useSelectedKey } from '@/store/walletState'
 import { useSelectedTonWallet } from '@/utils/wallets'
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { IWallet } from '@/types'
 import { AddressRow } from './AddressRow'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrashCan, faShareFromSquare, faFileEdit } from '@fortawesome/free-solid-svg-icons'
+import { faShareFromSquare, faFileEdit } from '@fortawesome/free-solid-svg-icons'
 import { WalletJazzicon } from './WalletJazzicon'
 import { Address, ExtraCurrency } from '@ton/core'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -36,13 +25,7 @@ import useExtraCurrencies from '@/hooks/useExtraCurrencies'
 import { formatUnits } from '@/utils/units'
 import TransferButton from './wallets/tonweb/TransferButton'
 import { Key } from '@/types/Key'
-
-// const defaultHighloadId = 1
-// const defaultTonWalletId = 698983191
-
-const deleteWallet = (walletId: number) => {
-  return DeleteKeyWallet(walletId)
-}
+import DeleteButton from './wallets/tonweb/DeleteButton'
 
 function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolean }) {
   const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
@@ -189,30 +172,8 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
 
       {/* <div className="mt-1"> */}
       <CardFooter className="flex gap-2">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline">
-              <FontAwesomeIcon icon={faTrashCan} className="mr-1" />
-              Delete
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Wallet will be deleted from. You can add it back later.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => deleteWallet(wallet.id)}>
-                Continue
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
         <TransferButton wallet={wallet} selectedKey={selectedKey?.get() as Key} />
+        <DeleteButton wallet={wallet} />
       </CardFooter>
     </Card>
   )
@@ -223,13 +184,9 @@ export function WalletsTable({ walletsToShow }: { walletsToShow?: IWallet[] }) {
 
   return (
     <div className={'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4'}>
-      {walletsToShow?.map((wallet) =>
-        wallet.type === 'highload' ? (
-          <WalletRow wallet={wallet} isSelected={currentWallet?.id === wallet.id} key={wallet.id} />
-        ) : (
-          <WalletRow wallet={wallet} isSelected={currentWallet?.id === wallet.id} key={wallet.id} />
-        )
-      )}
+      {walletsToShow?.map((wallet) => (
+        <WalletRow wallet={wallet} isSelected={currentWallet?.id === wallet.id} key={wallet.id} />
+      ))}
     </div>
   )
 }

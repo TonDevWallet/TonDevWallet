@@ -22,7 +22,7 @@ import { randomX25519 } from '@/utils/ed25519'
 import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
 import { Address } from '@ton/core'
 import { GlobalSearch } from '../GlobalSearch/GlobalSearch'
-import { useSearchQuery } from '@/store/searchState'
+import { useSearchState } from '@/store/searchState'
 
 const optionsMatrix = {
   bounceable: [true, false],
@@ -73,7 +73,7 @@ function ConnectPopupContent() {
   const keys = useWalletListState()
   const liteClient = useLiteclient() as unknown as LiteClient
   const connectLinkInfo = useConnectLink(tonConnectState.connectArg.get())
-  const searchQuery = useSearchQuery()
+  const searchState = useSearchState()
 
   const [isLoading, setIsLoading] = useState(false)
   const [chosenKeyId, setChosenKeyIdValue] = useState<number | undefined>()
@@ -111,20 +111,20 @@ function ConnectPopupContent() {
   const chosenKey = useMemo(() => keys.find((k) => k.id.get() === chosenKeyId), [chosenKeyId, keys])
 
   const filteredKeys = useMemo(() => {
-    if (!searchQuery) return keys
+    if (!searchState.wallet.get()) return keys
 
     return keys.filter((k) => {
       const keyWallets = k.wallets.get() || []
       const keyName = k.name.get()
       return (
-        keyName.toLowerCase().includes(searchQuery.get().toLowerCase()) ||
+        keyName.toLowerCase().includes(searchState.wallet.get().toLowerCase()) ||
         keyWallets.some((w) => {
           const wallet = getWalletFromKey(liteClient, k.get(), w)
-          return wallet ? isWalletMatch(wallet, keyName, searchQuery.get()) : false
+          return wallet ? isWalletMatch(wallet, keyName, searchState.wallet.get()) : false
         })
       )
     })
-  }, [keys, searchQuery, liteClient])
+  }, [keys, searchState.wallet, liteClient])
 
   const wallets = useMemo<IWallet[]>(() => {
     if (!chosenKey?.public_key) {
@@ -153,15 +153,15 @@ function ConnectPopupContent() {
   )
 
   const filteredWallets = useMemo(() => {
-    if (!searchQuery || !wallets) return wallets
+    if (!searchState.wallet.get() || !wallets) return wallets
 
     const keyName = chosenKey?.name.get() || ''
-    const filtered = wallets.filter((w) => isWalletMatch(w, keyName, searchQuery.get()))
+    const filtered = wallets.filter((w) => isWalletMatch(w, keyName, searchState.wallet.get()))
     if (filtered.length === 0) {
       return wallets
     }
     return filtered
-  }, [wallets, searchQuery, chosenKey])
+  }, [wallets, searchState.wallet, chosenKey])
 
   const setChosenKeyId = (v: number | undefined, walletId?: number) => {
     setChosenKeyIdValue(v)

@@ -15,10 +15,6 @@ export function setSearchQuery(query: string) {
   searchState.wallet.set(query)
 }
 
-export function useSearchQuery() {
-  return searchState.wallet
-}
-
 export function getSearchQuery() {
   return searchState.wallet.get()
 }
