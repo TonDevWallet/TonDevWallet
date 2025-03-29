@@ -45,7 +45,7 @@ export function KeyGroup({
         </TableHeader>
         <TableBody>
           {wallets.map((item) => (
-            <WalletRow key={`${keyName}-${item.wallet.id}`} wallet={item.wallet} />
+            <WalletRow key={`${keyName}-${item.wallet.id}`} wallet={item.wallet} keyId={keyId} />
           ))}
         </TableBody>
       </Table>

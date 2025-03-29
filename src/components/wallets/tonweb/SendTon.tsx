@@ -1,4 +1,3 @@
-import { Block } from '@/components/ui/Block'
 import { useEffect, useState } from 'react'
 import { Address } from '@ton/core'
 import { IWallet } from '@/types'
@@ -7,7 +6,6 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { addConnectMessage } from '@/store/connectMessages'
-import { useSelectedKey } from '@/store/walletState'
 import { useNavigate } from 'react-router-dom'
 import useExtraCurrencies from '@/hooks/useExtraCurrencies'
 import {
@@ -18,9 +16,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { parseTon, parseUnits } from '@/utils/units'
+import { Key } from '@/types/Key'
 
-export default function SendTon({ wallet }: { wallet: IWallet }) {
-  const selectedKey = useSelectedKey()
+export default function SendTon({ wallet, selectedKey }: { wallet: IWallet; selectedKey: Key }) {
   const navigate = useNavigate()
   const { currentNetworkCurrencies: currencies } = useExtraCurrencies()
 
@@ -49,7 +47,7 @@ export default function SendTon({ wallet }: { wallet: IWallet }) {
   const addMessageToEmulation = async () => {
     Address.parseFriendly(recepient)
 
-    const keyId = selectedKey?.id.get()
+    const keyId = selectedKey?.id
     if (typeof keyId === 'undefined') {
       return
     }
@@ -88,8 +86,8 @@ export default function SendTon({ wallet }: { wallet: IWallet }) {
   }
 
   return (
-    <Block className="flex flex-col">
-      <div className="font-medium text-lg">Send TON:</div>
+    <div className="flex flex-col">
+      {/* <div className="font-medium text-lg">Send TON:</div> */}
 
       <div className="mt-2 flex flex-col">
         <label htmlFor="toInput">Recepient:</label>
@@ -195,6 +193,6 @@ export default function SendTon({ wallet }: { wallet: IWallet }) {
       <Button className="w-full mt-2" onClick={addMessageToEmulation}>
         Emulate
       </Button>
-    </Block>
+    </div>
   )
 }

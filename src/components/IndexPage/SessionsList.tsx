@@ -5,7 +5,7 @@ import {
   setTonConnectSessionAutoSend,
 } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
-import { setWalletKey, setSelectedWallet } from '@/store/walletState'
+import { setWalletKey } from '@/store/walletState'
 import { getWalletFromKey } from '@/utils/wallets'
 import { faClose, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -48,6 +48,9 @@ export function SessionsList() {
 
         const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
 
+        const subwalletId =
+          tonWallet && 'subwalletId' in tonWallet ? tonWallet.subwalletId.toString() : 'Default'
+
         return (
           <Block
             // className="dark:bg-foreground/5 bg-background rounded dark:shadow-sm border-2 dark:border-none p-2"
@@ -65,7 +68,6 @@ export function SessionsList() {
                   to={`/app/wallets/${key.id.get()}`}
                   onClick={() => {
                     setWalletKey(key.id.get())
-                    setSelectedWallet(tonWallet)
                   }}
                 >
                   <KeyJazzicon walletKey={key} diameter={32} alt={key.name.get()} />
@@ -125,7 +127,7 @@ export function SessionsList() {
               </div>
               <div className="flex">
                 <div>SubId:&nbsp;</div>
-                <div>{tonWallet?.subwalletId.toString() || 'Default'}</div>
+                <div>{subwalletId}</div>
               </div>
             </div>
 

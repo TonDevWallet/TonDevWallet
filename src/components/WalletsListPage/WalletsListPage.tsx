@@ -122,8 +122,6 @@ export function WalletsListPage() {
       grouped[item.keyName].push(item)
     }
 
-    console.log('Grouped wallet data:', Object.keys(grouped).length, 'key groups')
-
     return Object.entries(grouped)
   }, [filteredWallets])
 

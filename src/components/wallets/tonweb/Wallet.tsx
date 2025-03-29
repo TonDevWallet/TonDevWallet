@@ -9,10 +9,13 @@ import { Block } from '@/components/ui/Block'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatTon } from '@/utils/units'
+import { useSelectedKey } from '@/store/walletState'
+import { Key } from '@/types/Key'
 
 function Wallet() {
   const wallet = useSelectedTonWallet() as ITonWallet
   const liteClient = useLiteclient()
+  const selectedKey = useSelectedKey()
 
   const [balance, setBalance] = useState('')
 
@@ -77,9 +80,7 @@ function Wallet() {
           </div>
         </div>
       </Block>
-      <SendTon wallet={wallet} /> {/* TODO: seqno and updateBalance do not exist on SendTon */}
-      {/* <SendTon seqno={seqno} wallet={wallet} updateBalance={updateBalance} /> */}
-      {/* <SendNft seqno={seqno} wallet={wallet} updateBalance={updateBalance} /> */}
+      <SendTon wallet={wallet} selectedKey={selectedKey?.get() as Key} />{' '}
     </div>
   )
 }

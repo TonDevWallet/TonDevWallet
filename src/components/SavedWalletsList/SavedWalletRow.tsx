@@ -1,4 +1,4 @@
-import { setSelectedWallet, setWalletKey } from '@/store/walletState'
+import { setWalletKey } from '@/store/walletState'
 import { Key } from '@/types/Key'
 import { State } from '@hookstate/core'
 import clsx from 'clsx'
@@ -19,12 +19,6 @@ export function SavedWalletRow({ walletKey }: { walletKey: State<Key> }) {
       }
       onClick={() => {
         setWalletKey(walletKey.get().id)
-        const wallets = walletKey?.wallets?.get()
-        if (wallets && wallets[0]) {
-          setSelectedWallet(wallets[0].id)
-        } else {
-          setSelectedWallet(null)
-        }
       }}
     >
       <KeyJazzicon walletKey={walletKey} />

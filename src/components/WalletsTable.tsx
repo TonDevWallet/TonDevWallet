@@ -1,17 +1,12 @@
 import { useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { DeleteKeyWallet, UpdateKeyWalletName } from '@/store/walletsListState'
-import { setSelectedWallet } from '@/store/walletState'
+import { useSelectedKey } from '@/store/walletState'
 import { useSelectedTonWallet } from '@/utils/wallets'
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { IWallet } from '@/types'
 import { AddressRow } from './AddressRow'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {
-  faTrashCan,
-  faArrowRight,
-  faShareFromSquare,
-  faFileEdit,
-} from '@fortawesome/free-solid-svg-icons'
+import { faTrashCan, faShareFromSquare, faFileEdit } from '@fortawesome/free-solid-svg-icons'
 import { WalletJazzicon } from './WalletJazzicon'
 import { Address, ExtraCurrency } from '@ton/core'
 import {
@@ -39,6 +34,8 @@ import { Input } from '@/components/ui/input'
 import { extractEc } from '@ton/sandbox/dist/utils/ec'
 import useExtraCurrencies from '@/hooks/useExtraCurrencies'
 import { formatUnits } from '@/utils/units'
+import TransferButton from './wallets/tonweb/TransferButton'
+import { Key } from '@/types/Key'
 
 // const defaultHighloadId = 1
 // const defaultTonWalletId = 698983191
@@ -49,6 +46,7 @@ const deleteWallet = (walletId: number) => {
 
 function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolean }) {
   const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
+  const selectedKey = useSelectedKey()
   const liteClient = useLiteclient()
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(wallet.name || '')
@@ -190,7 +188,7 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
       </CardContent>
 
       {/* <div className="mt-1"> */}
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex gap-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="outline">
@@ -214,16 +212,7 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
           </AlertDialogContent>
         </AlertDialog>
 
-        {!isSelected && (
-          <Button
-            // className="cursor-pointer text-primary"
-            onClick={() => setSelectedWallet(wallet)}
-            variant={'ghost'}
-          >
-            Use this wallet
-            <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
-          </Button>
-        )}
+        <TransferButton wallet={wallet} selectedKey={selectedKey?.get() as Key} />
       </CardFooter>
     </Card>
   )
@@ -233,7 +222,7 @@ export function WalletsTable({ walletsToShow }: { walletsToShow?: IWallet[] }) {
   const currentWallet = useSelectedTonWallet()
 
   return (
-    <div className={'flex flex-col gap-4 py-4'}>
+    <div className={'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4'}>
       {walletsToShow?.map((wallet) =>
         wallet.type === 'highload' ? (
           <WalletRow wallet={wallet} isSelected={currentWallet?.id === wallet.id} key={wallet.id} />

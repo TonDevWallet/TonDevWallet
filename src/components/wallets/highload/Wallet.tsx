@@ -7,9 +7,12 @@ import { useSelectedTonWallet } from '@/utils/wallets'
 import { Block } from '@/components/ui/Block'
 import { Button } from '@/components/ui/button'
 import { formatTon } from '@/utils/units'
+import { useSelectedKey } from '@/store/walletState'
+import { Key } from '@/types/Key'
 
 function Wallet() {
   const wallet = useSelectedTonWallet() as ITonHighloadWalletV2
+  const selectedKey = useSelectedKey()
 
   const [balance, setBalance] = useState('')
   const liteClient = useLiteclient()
@@ -48,7 +51,7 @@ function Wallet() {
         </div>
       </Block>
 
-      <SendTon wallet={wallet} />
+      <SendTon wallet={wallet} selectedKey={selectedKey?.get() as Key} />
 
       {/* <SendNft wallet={wallet} updateBalance={updateBalance} /> */}
     </div>
