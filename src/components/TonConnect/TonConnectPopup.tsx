@@ -20,8 +20,9 @@ import { getDatabase } from '@/db'
 import { LastSelectedWallets } from '@/types/connect'
 import { randomX25519 } from '@/utils/ed25519'
 import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
-import { Input } from '@/components/ui/input'
 import { Address } from '@ton/core'
+import { GlobalSearch } from '../GlobalSearch/GlobalSearch'
+import { useSearchQuery } from '@/store/searchState'
 
 const optionsMatrix = {
   bounceable: [true, false],
@@ -34,14 +35,17 @@ const allOptionsPermutations = Object.keys(optionsMatrix).reduce(
   },
   [{}]
 )
-function isWalletMatch(wallet: IWallet, query: string) {
+function isWalletMatch(wallet: IWallet, keyName: string, query: string) {
+  if (!query) return true
+
   const addressStringifiers = [
     ...allOptionsPermutations.map((options) => (a: Address) => a.toString(options)),
     (a: Address) => a.toRawString(),
   ]
   return (
     wallet.type.toLowerCase().includes(query.toLowerCase()) ||
-    wallet.name?.toLowerCase().includes(query.toLowerCase()) ||
+    (wallet.name || '').toLowerCase().includes(query.toLowerCase()) ||
+    keyName.toLowerCase().includes(query.toLowerCase()) ||
     addressStringifiers.some((stringify) =>
       stringify(wallet.address).toLowerCase().includes(query.toLowerCase())
     )
@@ -69,11 +73,11 @@ function ConnectPopupContent() {
   const keys = useWalletListState()
   const liteClient = useLiteclient() as unknown as LiteClient
   const connectLinkInfo = useConnectLink(tonConnectState.connectArg.get())
+  const searchQuery = useSearchQuery()
 
   const [isLoading, setIsLoading] = useState(false)
   const [chosenKeyId, setChosenKeyIdValue] = useState<number | undefined>()
   const [chosenWalletId, setChosenWalletId] = useState<number | undefined>()
-  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     tonConnectState.qrcodeOpen.set(false)
@@ -111,11 +115,12 @@ function ConnectPopupContent() {
 
     return keys.filter((k) => {
       const keyWallets = k.wallets.get() || []
+      const keyName = k.name.get()
       return (
-        k.name.get().toLowerCase().includes(searchQuery.toLowerCase()) ||
+        keyName.toLowerCase().includes(searchQuery.get().toLowerCase()) ||
         keyWallets.some((w) => {
           const wallet = getWalletFromKey(liteClient, k.get(), w)
-          return wallet ? isWalletMatch(wallet, searchQuery) : false
+          return wallet ? isWalletMatch(wallet, keyName, searchQuery.get()) : false
         })
       )
     })
@@ -150,12 +155,13 @@ function ConnectPopupContent() {
   const filteredWallets = useMemo(() => {
     if (!searchQuery || !wallets) return wallets
 
-    const filtered = wallets.filter((w) => isWalletMatch(w, searchQuery))
+    const keyName = chosenKey?.name.get() || ''
+    const filtered = wallets.filter((w) => isWalletMatch(w, keyName, searchQuery.get()))
     if (filtered.length === 0) {
       return wallets
     }
     return filtered
-  }, [wallets, searchQuery])
+  }, [wallets, searchQuery, chosenKey])
 
   const setChosenKeyId = (v: number | undefined, walletId?: number) => {
     setChosenKeyIdValue(v)
@@ -237,13 +243,7 @@ function ConnectPopupContent() {
           </div>
 
           <div className="w-full px-4 pb-4">
-            <Input
-              type="text"
-              placeholder="Search by address/name/type..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-            />
+            <GlobalSearch placeholder="Search by address/name/type..." />
           </div>
         </div>
 

@@ -39,8 +39,9 @@ export function DetectTonConnect() {
       <DialogTrigger asChild>
         <button className={'cursor-pointer rounded flex flex-col items-center my-2 text-center'}>
           <div
-            className="rounded-full px-4 h-8 relative
-              flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
+            className="rounded-lg px-4 h-8 relative
+              flex items-center justify-center text-sm cursor-pointer text-foreground gap-2
+              hover:bg-muted/50 transition-colors"
           >
             <FontAwesomeIcon icon={faQrcode} size="xs" />
             <div className="hidden lg:block text-foreground">TonConnect</div>

@@ -1,7 +1,7 @@
 import { Block } from '@/components/ui/Block'
 import { useEffect, useState } from 'react'
 import { Address } from '@ton/core'
-import { ITonHighloadWalletV2, ITonWallet } from '@/types'
+import { IWallet } from '@/types'
 import { textToWalletBody } from '@/utils/textToWalletBody'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import { parseTon, parseUnits } from '@/utils/units'
 
-export default function SendTon({ wallet }: { wallet: ITonWallet | ITonHighloadWalletV2 }) {
+export default function SendTon({ wallet }: { wallet: IWallet }) {
   const selectedKey = useSelectedKey()
   const navigate = useNavigate()
   const { currentNetworkCurrencies: currencies } = useExtraCurrencies()

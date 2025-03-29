@@ -14,6 +14,7 @@ export function MessagesHistoryList() {
           status: 1,
         })
         .orderBy('id', 'desc')
+        .limit(100)
         .select('*')
 
       const messages: TonConnectMessageTransaction[] = dbMessages.map((m) => {

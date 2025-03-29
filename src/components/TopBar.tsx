@@ -21,6 +21,7 @@ import {
   faSun,
   faProjectDiagram,
   faHome,
+  faList,
 } from '@fortawesome/free-solid-svg-icons'
 import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
 import { cn } from '@/utils/cn'
@@ -35,19 +36,19 @@ export function TopBar() {
     <div className={cn('flex flex-wrap py-2 px-4 gap-4 w-full')}>
       <NetworkSelector />
 
-      <TopBarLinkWrapper to="/app" icon={faHome} text="Home" />
+      <ThemeSwitcher />
+      <PasswordUnlock />
 
-      <DetectTonConnect />
+      <TopBarLinkWrapper to="/app" icon={faHome} text="Home" />
 
       <PasswordPopup />
 
-      <ThemeSwitcher />
-
       <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
+      <TopBarLinkWrapper to="/app/wallets_list" icon={faList} text="All Wallets" />
       <TopBarLinkWrapper to="/app/tracer" icon={faProjectDiagram} text="Tracer" />
       <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
 
-      <PasswordUnlock />
+      <DetectTonConnect />
     </div>
   )
 }
@@ -152,9 +153,9 @@ function PasswordUnlock() {
   return (
     <>
       {passwordState.password.get() ? (
-        <TopBarLinkWrapper onClick={cleanPassword} icon={faLockOpen} text="Unlocked" />
+        <TopBarIconWrapper onClick={cleanPassword} icon={faLockOpen} />
       ) : (
-        <TopBarLinkWrapper onClick={openPasswordPopup} icon={faLock} text="Locked" />
+        <TopBarIconWrapper onClick={openPasswordPopup} icon={faLock} />
       )}
     </>
   )
@@ -164,13 +165,43 @@ function ThemeSwitcher() {
   const [theme, setTheme] = useTheme()
 
   return (
-    <TopBarLinkWrapper
+    <TopBarIconWrapper
       onClick={() => {
         setTheme((theme === 'light' ? 'dark' : 'light') as Theme)
       }}
       icon={theme === 'dark' ? faMoon : faSun}
-      text="Theme"
     />
+  )
+}
+
+function TopBarIconWrapper({
+  icon,
+  to,
+  onClick,
+}: {
+  icon: IconDefinition
+  to?: string
+  onClick?: () => void
+}) {
+  const children = (
+    <div
+      className="rounded-lg px-2 h-8 relative
+        flex items-center justify-center text-sm cursor-pointer text-foreground gap-2 hover:bg-muted/50 transition-colors"
+      onClick={onClick}
+    >
+      <FontAwesomeIcon icon={icon} size="xs" className="" />
+    </div>
+  )
+  return to ? (
+    <NavLink
+      to={to}
+      className="cursor-pointer rounded flex flex-col items-center my-2"
+      onClick={onClick}
+    >
+      {children}
+    </NavLink>
+  ) : (
+    <div className="cursor-pointer rounded flex flex-col items-center my-2">{children}</div>
   )
 }
 
@@ -187,8 +218,8 @@ function TopBarLinkWrapper({
 }) {
   const children = (
     <div
-      className="rounded-full px-4 h-8 relative
-        flex items-center justify-center text-sm cursor-pointer text-foreground gap-2"
+      className="rounded-lg px-4 h-8 relative
+        flex items-center justify-center text-sm cursor-pointer text-foreground gap-2 hover:bg-muted/50 transition-colors"
       onClick={onClick}
     >
       <FontAwesomeIcon icon={icon} size="xs" className="" />

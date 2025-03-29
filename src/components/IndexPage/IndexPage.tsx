@@ -9,9 +9,15 @@ export function IndexPage() {
     <div>
       <Tabs defaultValue="messages" className="flex flex-col">
         <TabsList className="mb-4 mx-auto">
-          <TabsTrigger value="messages">Messages</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-          <TabsTrigger value="sessions">Sessions</TabsTrigger>
+          <TabsTrigger value="messages" className="cursor-pointer">
+            Messages
+          </TabsTrigger>
+          <TabsTrigger value="history" className="cursor-pointer">
+            History
+          </TabsTrigger>
+          <TabsTrigger value="sessions" className="cursor-pointer">
+            Sessions
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="messages">
           <MessagesList />
