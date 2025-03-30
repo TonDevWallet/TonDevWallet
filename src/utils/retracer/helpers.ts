@@ -258,8 +258,17 @@ export async function fetchTransactions(
     if (params.offset !== undefined) url.searchParams.append('offset', params.offset.toString())
     if (params.sort !== undefined) url.searchParams.append('sort', params.sort)
 
-    const response = await fetch(url.toString())
-    const data = await response.json()
+    const data = await CallForSuccess(
+      async () => {
+        const res = await fetch(url.toString())
+        if (res.status !== 200) {
+          throw new Error('Failed to fetch transactions')
+        }
+        return res.json()
+      },
+      50,
+      250
+    )
     return data as TransactionList
   } catch (error) {
     console.error('Error fetching transactions:', error)
@@ -289,7 +298,14 @@ export async function mcSeqnoByShard(
     url.searchParams.append('shard', '0x' + shardUint.toString(16))
     url.searchParams.append('seqno', shard.seqno.toString())
 
-    const response = await fetch(url.toString()).then((res) => res.json())
+    const response = await CallForSuccess(async () => {
+      console.log('mcSeqnoByShard work')
+      const res = await fetch(url.toString())
+      if (res.status !== 200) {
+        throw new Error('Failed to fetch mc_seqno')
+      }
+      return res.json()
+    })
     const block = response.blocks[0]
     if (block.root_hash !== shard.rootHash) {
       throw new Error(

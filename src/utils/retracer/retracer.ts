@@ -1,4 +1,4 @@
-import { Blockchain } from '@ton/sandbox'
+import { Blockchain, SmartContractTransaction } from '@ton/sandbox'
 import {
   beginCell,
   Cell,
@@ -20,6 +20,7 @@ import {
 } from './helpers'
 import { EmulationResult, IExecutor } from '@ton/sandbox/dist/executor/Executor'
 import { checkForLibraries, megaLibsCell } from '@/hooks/useEmulatedTxInfo'
+import { ParsedTransaction } from '../ManagedBlockchain'
 
 /**
  * Emulates a transaction with full execution stack details
@@ -36,7 +37,7 @@ export async function getEmulationWithStack(
   forcedTestnet: boolean = false,
   sendStatus: (status: string) => void = () => {}
 ): Promise<{
-  tx: Transaction
+  tx: ParsedTransaction
 }> {
   // Parse transaction info from link or use provided info
   const { txInfo, testnet } = await parseTxInfo(txLink, forcedTestnet)
@@ -102,16 +103,17 @@ export async function getEmulationWithStack(
 
   // Validate emulation result
   if (!lastTxEmulated) throw new Error('No last tx emulated')
-  if (!lastTxEmulated.result.success) {
-    throw new Error('Last tx failed')
+
+  const parsedTx: ParsedTransaction = {
+    events: [],
+    parent: undefined,
+    children: [],
+    externals: [],
+    ...lastTxEmulated,
   }
-
-  // Return transaction result
-  const theTx = loadTransaction(Cell.fromBase64(lastTxEmulated.result.transaction).asSlice())
-
   // Build the EmulateWithStackResult object with proper properties
   return {
-    tx: theTx,
+    tx: parsedTx,
   }
 }
 
@@ -281,7 +283,7 @@ async function emulateTransactions(
   sendStatus: (status: string) => void
 ): Promise<{
   shardAccountStr: string
-  lastTxEmulated: EmulationResult | null
+  lastTxEmulated: SmartContractTransaction | null
 }> {
   // Prepare transactions in correct order
   const prevTxsInBlock = txs.slice(0)
@@ -299,7 +301,7 @@ async function emulateTransactions(
 
   // Emulate transactions
   sendStatus('Emulating')
-  let lastTxEmulated: EmulationResult | null = null
+  let lastTxEmulated: SmartContractTransaction | null = null
 
   while (prevTxsInBlock.length > 0) {
     let txCounter = 1
@@ -338,7 +340,15 @@ async function emulateTransactions(
 
     console.log('')
     txCounter++
-    lastTxEmulated = emulationResult
+    const tx = loadTransaction(Cell.fromBase64(emulationResult.result.transaction).asSlice())
+    lastTxEmulated = {
+      ...tx,
+      blockchainLogs: emulationResult.logs,
+      vmLogs: emulationResult.result.vmLog,
+      debugLogs: emulationResult.debugLogs,
+      oldStorage: undefined,
+      newStorage: undefined,
+    }
   }
 
   return { shardAccountStr, lastTxEmulated }

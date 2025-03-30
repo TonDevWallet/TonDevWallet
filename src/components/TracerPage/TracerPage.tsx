@@ -1,11 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { DeserializeTransactionsList } from '@/utils/txSerializer'
 import { FileUploadArea } from './FileUploadArea'
 import { GraphDisplay } from './GraphDisplay'
 import { Button } from '@/components/ui/button'
-import { TxInfo } from './TxInfo'
-import { useSelectedTx, setSelectedTx } from '@/store/tracerState'
+import { setSelectedTx } from '@/store/tracerState'
 import { useLocation } from 'react-router-dom'
+import { RemoteTracerViewer } from './RemoteTracerViewer'
+import {
+  clearRemoteTracerState,
+  useActiveHash,
+  useTracerTransactions,
+  useTraceLoading,
+  useTraceProgress,
+  useTraceError,
+} from '@/store/remoteTracerState'
+import { cn } from '@/utils/cn'
+import { downloadGraph } from '@/utils/graphDownloader'
+import { faDownload } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 interface GraphData {
   transactions: any[]
@@ -14,10 +26,15 @@ interface GraphData {
 export function TracerPage() {
   const isLoading = false
   const [graphData, setGraphData] = useState<GraphData | null>(null)
-  // const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const selectedTx = useSelectedTx()
   const location = useLocation()
+
+  // Get all remote tracer state
+  const activeHash = useActiveHash()
+  const tracerTransactions = useTracerTransactions()
+  const traceLoading = useTraceLoading()
+  const traceProgress = useTraceProgress()
+  const traceError = useTraceError()
 
   // Handle trace ID from location state (from clipboard)
   useEffect(() => {
@@ -31,31 +48,6 @@ export function TracerPage() {
         console.error('Error fetching trace data:', error)
         setError('Failed to load trace data. Please try again.')
       }
-      //   setIsLoading(true)
-      //   setError(null)
-      //   try {
-      //     // Fetch trace data from server using the trace ID
-      //     const response = await tFetch<any>(`https://trace.tondevwallet.io/api/traces/${traceId}`, {
-      //       method: 'GET',
-      //       timeout: { secs: 10, nanos: 0 },
-      //     })
-
-      //     if (response.status !== 200 || !response.data) {
-      //       throw new Error('Failed to fetch trace data')
-      //     }
-
-      //     // Process the data and set it for visualization
-      //     const data = DeserializeTransactionsList(JSON.stringify(response.data))
-      //     setGraphData(data)
-      //   } catch (error) {
-      //     console.error('Error fetching trace data:', error)
-      //     setError('Failed to load trace data. Please try again.')
-      //   } finally {
-      //     setIsLoading(false)
-      //   }
-      // }
-
-      // Check if traceId is passed in location state
     }
     const traceId = location.state?.traceId
     if (traceId) {
@@ -71,18 +63,46 @@ export function TracerPage() {
   const handleClearGraph = () => {
     setGraphData(null)
     setSelectedTx(null)
+    clearRemoteTracerState()
     setError(null)
   }
+
+  // Use remote tracer transactions when available
+  const displayData = activeHash.get()
+    ? { transactions: [...tracerTransactions.get({ noproxy: true })] }
+    : graphData
+
+  const handleDownloadGraph = useCallback(async () => {
+    if (displayData?.transactions) {
+      await downloadGraph(displayData.transactions)
+    }
+  }, [displayData])
 
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Transaction Tracer</h1>
-        {graphData && (
+        {displayData && (
           <Button variant="outline" onClick={handleClearGraph}>
             Clear Graph
           </Button>
         )}
+      </div>
+
+      <div
+        className={cn({
+          hidden: isLoading || displayData,
+        })}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+          <div className="border rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Upload Trace File</h2>
+            <FileUploadArea onFileProcessed={handleFileProcessed} />
+
+            <h2 className="text-xl font-semibold mb-4">Emulate transaction from chain</h2>
+            <RemoteTracerViewer />
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
@@ -91,19 +111,39 @@ export function TracerPage() {
         </div>
       ) : error ? (
         <div className="text-center py-8">
-          <div className="text-lg text-red-500 mb-2">{error}</div>
+          <div className="text-lg text-destructive mb-2">{error}</div>
           <FileUploadArea onFileProcessed={handleFileProcessed} />
         </div>
-      ) : !graphData ? (
-        <FileUploadArea onFileProcessed={handleFileProcessed} />
       ) : (
-        <>
-          <div className="flex flex-col gap-4">
-            <h2 className="text-xl font-semibold">Transaction Graph</h2>
-            <GraphDisplay transactions={graphData.transactions} />
-          </div>
-          <TxInfo tx={selectedTx.value} />
-        </>
+        displayData && (
+          <>
+            <div className="flex flex-col gap-4">
+              {activeHash.get() && (
+                <div className="bg-muted p-4 rounded-lg border">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium">Tracing: {activeHash.get()}</h3>
+                    <div className="flex items-center gap-2">
+                      {traceLoading.get() && (
+                        <div className="text-sm text-muted-foreground flex items-center">
+                          Loading {traceProgress.loaded.get()} of {traceProgress.total.get()}{' '}
+                          transactions
+                        </div>
+                      )}
+                      <Button variant="outline" size="sm" onClick={handleDownloadGraph}>
+                        <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                        Download Graph
+                      </Button>
+                    </div>
+                  </div>
+                  {traceError.get() && (
+                    <div className="text-destructive text-sm mt-2">{traceError.get()}</div>
+                  )}
+                </div>
+              )}
+              <GraphDisplay transactions={displayData.transactions} />
+            </div>
+          </>
+        )
       )}
     </div>
   )
