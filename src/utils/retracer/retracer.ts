@@ -7,28 +7,124 @@ import {
   loadShardAccount,
   Transaction,
   loadTransaction,
+  Address,
 } from '@ton/core'
 import { loadConfigParamsAsSlice, parseFullConfig, TonClient, TonClient4 } from '@ton/ton'
 import { LiteClient } from 'ton-lite-client'
 import {
   BaseTxInfo,
   createShardAccountFromAPI,
-  EmulateWithStackResult,
   getOtherTxs,
   linkToTx,
   mcSeqnoByShard,
 } from './helpers'
-import { EmulationResult } from '@ton/sandbox/dist/executor/Executor'
+import { EmulationResult, IExecutor } from '@ton/sandbox/dist/executor/Executor'
 import { checkForLibraries, megaLibsCell } from '@/hooks/useEmulatedTxInfo'
 
+/**
+ * Emulates a transaction with full execution stack details
+ *
+ * @param liteClient - The LiteClient instance for TON blockchain
+ * @param txLink - Transaction link or transaction info object
+ * @param forcedTestnet - Force using testnet instead of mainnet
+ * @param sendStatus - Optional callback for reporting status updates
+ * @returns Transaction emulation result with stack information
+ */
 export async function getEmulationWithStack(
   liteClient: LiteClient,
   txLink: string | BaseTxInfo,
   forcedTestnet: boolean = false,
   sendStatus: (status: string) => void = () => {}
-): Promise<EmulateWithStackResult> {
+): Promise<{
+  tx: Transaction
+}> {
+  // Parse transaction info from link or use provided info
+  const { txInfo, testnet } = await parseTxInfo(txLink, forcedTestnet)
+
+  // Initialize TON clients
+  const { clientV4, clientV2 } = initializeClients(testnet)
+
+  // Fetch transaction and blockchain data
+  const { tx, mcBlockSeqno, randSeed, fullBlock } = await fetchTransactionData(
+    clientV4,
+    txInfo,
+    testnet,
+    sendStatus
+  )
+
+  // Find minimum LT for account in block
+  const minLt = findMinLtInBlock(fullBlock, txInfo.addr, tx.tx.lt)
+
+  // Get previous transactions
+  sendStatus('Getting previous txs')
+  const txs = await getOtherTxs(clientV2, {
+    address: txInfo.addr,
+    lt: txInfo.lt,
+    minLt: minLt - 1n,
+    hash: txInfo.hash.toString('base64'),
+  })
+
+  console.log(txs.length, 'transactions found')
+  console.log('first:', txs[txs.length - 1].lt, 'last:', txs[0].lt)
+
+  // Get blockchain config
+  sendStatus('Getting blockchain config')
+  const { blockConfig, configInfo } = await getBlockchainConfig(clientV4, mcBlockSeqno)
+  console.log('Fees:', configInfo)
+
+  // Get account state from previous block
+  sendStatus('Getting account state')
+  const { initialShardAccount, libsToCheck } = await getAccountState(
+    clientV4,
+    mcBlockSeqno,
+    txInfo.addr,
+    tx
+  )
+
+  // Check libraries
+  await checkForLibraries(libsToCheck, liteClient)
+
+  // Create blockchain emulator
+  sendStatus('Creating emulator')
+  // const { emulateFunction } = await createEmulator(blockConfig, randSeed)
+  const blockchain = await Blockchain.create()
+  const executor = blockchain.executor
+
+  // Emulate previous transactions
+  const { lastTxEmulated } = await emulateTransactions(
+    executor,
+    blockConfig,
+    randSeed,
+    initialShardAccount,
+    txs,
+    sendStatus
+  )
+
+  // Validate emulation result
+  if (!lastTxEmulated) throw new Error('No last tx emulated')
+  if (!lastTxEmulated.result.success) {
+    throw new Error('Last tx failed')
+  }
+
+  // Return transaction result
+  const theTx = loadTransaction(Cell.fromBase64(lastTxEmulated.result.transaction).asSlice())
+
+  // Build the EmulateWithStackResult object with proper properties
+  return {
+    tx: theTx,
+  }
+}
+
+/**
+ * Parse transaction info from link or use provided info
+ */
+async function parseTxInfo(
+  txLink: string | BaseTxInfo,
+  forcedTestnet: boolean
+): Promise<{ txInfo: BaseTxInfo; testnet: boolean }> {
   let txInfo: BaseTxInfo
   let testnet = forcedTestnet || false
+
   if (typeof txLink === 'string') {
     const txGot = await linkToTx(txLink, forcedTestnet)
     txInfo = txGot.tx
@@ -37,8 +133,13 @@ export async function getEmulationWithStack(
     txInfo = txLink
   }
 
-  const { lt, hash, addr: address } = txInfo
+  return { txInfo, testnet }
+}
 
+/**
+ * Initialize TON clients for mainnet or testnet
+ */
+function initializeClients(testnet: boolean): { clientV4: TonClient4; clientV2: TonClient } {
   const endpointV4 = `https://${testnet ? 'sandbox' : 'mainnet'}-v4.tonhubapi.com`
   const endpointV2 = `https://${testnet ? 'testnet.' : ''}toncenter.com/api/v2/jsonRPC`
 
@@ -50,105 +151,143 @@ export async function getEmulationWithStack(
       return config
     },
   })
+
   const clientV2 = new TonClient({ endpoint: endpointV2, timeout: 10000 })
 
-  // 1. get tx alone to get the mc block seqno
+  return { clientV4, clientV2 }
+}
+
+/**
+ * Fetch transaction and blockchain data
+ */
+async function fetchTransactionData(
+  clientV4: TonClient4,
+  txInfo: BaseTxInfo,
+  testnet: boolean,
+  sendStatus: (status: string) => void
+): Promise<{
+  tx: any
+  mcBlockSeqno: number
+  randSeed: Buffer
+  fullBlock: any
+}> {
+  const { lt, hash, addr: address } = txInfo
+
   sendStatus('Getting the tx')
   const tx = (await clientV4.getAccountTransactions(address, lt, hash))[0]
   console.log(tx.tx.now, 'tx time')
-  // await waitForRateLimit()
+
   const { mcSeqno, randSeed } = await mcSeqnoByShard(tx.block, testnet)
-  // await waitForRateLimit()
   const fullBlock = await clientV4.getBlock(mcSeqno)
   const mcBlockSeqno = fullBlock.shards[0].seqno
 
-  // 2. find min lt tx on account in block
-  // let isOurTxLastTx = true
-  let minLt = tx.tx.lt
+  return { tx, mcBlockSeqno, randSeed, fullBlock }
+}
+
+/**
+ * Find minimum LT value for account in block
+ */
+function findMinLtInBlock(fullBlock: any, address: Address, currentLt: bigint): bigint {
+  let minLt = currentLt
   const addrStr = address.toString()
+
   for (const shard of fullBlock.shards) {
     for (const txInBlock of shard.transactions) {
-      if (txInBlock.account === addrStr) {
-        if (BigInt(txInBlock.lt) < minLt) {
-          minLt = BigInt(txInBlock.lt)
-        }
-        // won't check balance at the end if our tx
-        // is not last in block
-        // if (BigInt(txInBlock.lt) > tx.tx.lt) {
-        //   // isOurTxLastTx = false
-        // }
+      if (txInBlock.account === addrStr && BigInt(txInBlock.lt) < minLt) {
+        minLt = BigInt(txInBlock.lt)
       }
     }
   }
 
-  // 3. get txs from the mc block (maybe many shard blocks)
-  sendStatus('Getting previous txs')
-  const txs = await getOtherTxs(clientV2, {
-    address,
-    lt,
-    minLt: minLt - 1n,
-    hash: hash.toString('base64'),
-  })
+  return minLt
+}
 
-  console.log(txs.length, 'transactions found')
-  console.log('first:', txs[txs.length - 1].lt, 'last:', txs[0].lt)
-
-  // 3.1 get blockchain config
-  sendStatus('Getting blockchain config')
-  // await waitForRateLimit()
+/**
+ * Get blockchain config
+ */
+async function getBlockchainConfig(
+  clientV4: TonClient4,
+  mcBlockSeqno: number
+): Promise<{ blockConfig: string; configInfo: any }> {
   const getConfigResult = await clientV4.getConfig(mcBlockSeqno)
   const blockConfig = getConfigResult.config.cell
-  console.log('Fees:', parseFullConfig(loadConfigParamsAsSlice(blockConfig)).msgPrices)
+  const configInfo = parseFullConfig(loadConfigParamsAsSlice(blockConfig)).msgPrices
 
-  // 4. get prev. state from prev. block
-  sendStatus('Getting account state')
+  return { blockConfig, configInfo }
+}
+
+/**
+ * Get account state from previous block
+ */
+async function getAccountState(
+  clientV4: TonClient4,
+  mcBlockSeqno: number,
+  address: Address,
+  tx: any
+): Promise<{ initialShardAccount: any; libsToCheck: Cell[] }> {
   const getAccountResult = await clientV4.getAccount(mcBlockSeqno - 1, address)
   const account = getAccountResult.account
   const initialShardAccount = createShardAccountFromAPI(account, address)
 
   const libsToCheck: Cell[] = []
   const state = initialShardAccount.account?.storage.state
+
   if (state?.type === 'active' && state.state.code instanceof Cell) {
     libsToCheck.push(state.state.code)
   }
+
   const msgInit = tx.tx.inMessage?.init
   if (msgInit && msgInit.code instanceof Cell) {
     libsToCheck.push(msgInit.code)
   }
-  await checkForLibraries(libsToCheck, liteClient)
 
-  // 5. prep. emulator
-  sendStatus('Creating emulator')
-  const blockchain = await Blockchain.create()
-  const executor = blockchain.executor
+  return { initialShardAccount, libsToCheck }
+}
 
-  // function - to use in with prev txs
-  async function _emulate(_tx: Transaction, _shardAccountStr: string) {
-    const _msg = _tx.inMessage
-    if (!_msg) throw new Error('No in_message was found in tx')
+// Create transaction emulation function
+async function emulateFunction(
+  executor: IExecutor,
+  blockConfig: string,
+  randSeed: Buffer,
+  tx: Transaction,
+  shardAccountStr: string
+): Promise<EmulationResult> {
+  const msg = tx.inMessage
+  if (!msg) throw new Error('No in_message was found in tx')
 
-    const _txRes = executor.runTransaction({
-      config: blockConfig,
-      libs: megaLibsCell,
-      verbosity: 'full_location_stack_verbose',
-      shardAccount: _shardAccountStr,
-      message: beginCell().store(storeMessage(_msg)).endCell(),
-      now: _tx.now,
-      lt: _tx.lt,
-      randomSeed: randSeed,
-      ignoreChksig: false,
-      debugEnabled: true,
-    })
+  return executor.runTransaction({
+    config: blockConfig,
+    libs: megaLibsCell,
+    verbosity: 'full_location_stack_verbose',
+    shardAccount: shardAccountStr,
+    message: beginCell().store(storeMessage(msg)).endCell(),
+    now: tx.now,
+    lt: tx.lt,
+    randomSeed: randSeed,
+    ignoreChksig: false,
+    debugEnabled: true,
+  })
+}
 
-    return _txRes
-  }
-
-  // reverse the array because first txs
-  // in inital list are the new ones
+/**
+ * Emulate transactions
+ */
+async function emulateTransactions(
+  executor: IExecutor,
+  blockConfig: string,
+  randSeed: Buffer,
+  initialShardAccount: any,
+  txs: Transaction[],
+  sendStatus: (status: string) => void
+): Promise<{
+  shardAccountStr: string
+  lastTxEmulated: EmulationResult | null
+}> {
+  // Prepare transactions in correct order
   const prevTxsInBlock = txs.slice(0)
   prevTxsInBlock.reverse()
 
-  // for first transaction (executor doesn't know about last tx):
+  // Initialize shard account
   initialShardAccount.lastTransactionLt = 0n
   initialShardAccount.lastTransactionHash = 0n
 
@@ -158,45 +297,49 @@ export async function getEmulationWithStack(
     .toBoc()
     .toString('base64')
 
+  // Emulate transactions
   sendStatus('Emulating')
   let lastTxEmulated: EmulationResult | null = null
-  if (prevTxsInBlock.length > 0) {
-    let on = 1
-    for (const _tx of prevTxsInBlock) {
-      sendStatus(`Emulating ${on}/${prevTxsInBlock.length}`)
-      const midRes = await _emulate(_tx, shardAccountStr)
 
-      if (!midRes.result.success) {
-        console.log(midRes.logs)
-        console.log(midRes.debugLogs)
-        throw new Error(`Transaction failed for lt: ${_tx.lt}`)
-      }
+  while (prevTxsInBlock.length > 0) {
+    let txCounter = 1
+    const currentTx = prevTxsInBlock.pop()
+    if (!currentTx) break
 
-      const midTxOccured = loadTransaction(Cell.fromBase64(midRes.result.transaction).asSlice())
-      const stateOk = midTxOccured.stateUpdate.newHash.equals(_tx.stateUpdate.newHash)
+    // let txCounter = 1
+    sendStatus(`Emulating ${txCounter}/${prevTxsInBlock.length}`)
+    const emulationResult = await emulateFunction(
+      executor,
+      blockConfig,
+      randSeed,
+      currentTx,
+      shardAccountStr
+    )
 
-      console.log('State update ok:', stateOk)
-
-      shardAccountStr = midRes.result.shardAccount
-
-      const parsedShardAccount = loadShardAccount(Cell.fromBase64(shardAccountStr).asSlice())
-
-      const newBalance = parsedShardAccount.account?.storage.balance.coins
-      console.log(`lt: ${_tx.lt} balance: ${newBalance}`)
-
-      console.log('')
-      on++
-      lastTxEmulated = midRes
+    // Verify emulation success
+    if (!emulationResult.result.success) {
+      console.log(emulationResult.logs)
+      console.log(emulationResult.debugLogs)
+      throw new Error(`Transaction failed for lt: ${currentTx.lt}`)
     }
+
+    // Verify state consistency
+    const emulatedTx = loadTransaction(
+      Cell.fromBase64(emulationResult.result.transaction).asSlice()
+    )
+    const stateUpdateOk = emulatedTx.stateUpdate.newHash.equals(currentTx.stateUpdate.newHash)
+    console.log('State update ok:', stateUpdateOk)
+
+    // Update shard account
+    shardAccountStr = emulationResult.result.shardAccount
+    const parsedShardAccount = loadShardAccount(Cell.fromBase64(shardAccountStr).asSlice())
+    const newBalance = parsedShardAccount.account?.storage.balance.coins
+    console.log(`lt: ${currentTx.lt} balance: ${newBalance}`)
+
+    console.log('')
+    txCounter++
+    lastTxEmulated = emulationResult
   }
 
-  if (!lastTxEmulated) throw new Error('No last tx emulated')
-  if (!lastTxEmulated.result.success) {
-    throw new Error('Last tx failed')
-  }
-  const theTx = loadTransaction(Cell.fromBase64(lastTxEmulated.result.transaction).asSlice())
-
-  return {
-    tx: theTx,
-  } as any
+  return { shardAccountStr, lastTxEmulated }
 }
