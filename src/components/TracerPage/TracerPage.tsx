@@ -121,7 +121,10 @@ export function TracerPage() {
               {activeHash.get() && (
                 <div className="bg-muted p-4 rounded-lg border">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Tracing: {activeHash.get()}</h3>
+                    <h3 className="text-lg font-medium">
+                      Tracing:{' '}
+                      {activeHash.get()?.slice(0, 10) + '...' + activeHash.get()?.slice(-10)}
+                    </h3>
                     <div className="flex items-center gap-2">
                       {traceLoading.get() && (
                         <div className="text-sm text-muted-foreground flex items-center">

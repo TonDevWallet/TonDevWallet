@@ -1,6 +1,6 @@
 import { Address, Cell, Dictionary } from '@ton/core'
 import { parseWithPayloads } from '@truecarry/tlb-abi'
-import { parseUsingBlockTypes } from './blockParser'
+import { parseUsingBlockTypes } from './BlockParser'
 
 export function sanitizeObject(obj: any) {
   if (obj instanceof Cell) {
@@ -40,7 +40,7 @@ export function sanitizeObject(obj: any) {
 export function ParseCellWithBlock(cell: Cell) {
   let parsed: any
   try {
-    parsed = parseWithPayloads(cell.beginParse())
+    parsed = parseWithPayloads(cell.beginParse(true))
     if (parsed) {
       return parsed
     }

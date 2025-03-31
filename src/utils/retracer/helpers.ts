@@ -14,6 +14,8 @@ import {
 import { TonClient } from '@ton/ton'
 import { LiteClient } from 'ton-lite-client'
 import { CallForSuccess } from '../callForSuccess'
+import DataLoader from 'dataloader'
+import { LRUMap } from 'lru_map'
 
 export type StateFromAPI =
   | {
@@ -276,7 +278,7 @@ export async function fetchTransactions(
   }
 }
 
-export async function mcSeqnoByShard(
+export async function _mcSeqnoByShard(
   shard: {
     workchain: number
     seqno: number
@@ -321,6 +323,71 @@ export async function mcSeqnoByShard(
     console.error('Error fetching mc_seqno:', error)
     throw error
   }
+}
+
+type ShardKey = {
+  workchain: number
+  seqno: number
+  shard: string
+  rootHash: string
+  fileHash: string
+  testnet: boolean
+}
+
+type McSeqnoResult = {
+  mcSeqno: number
+  randSeed: Buffer
+}
+
+/**
+ * DataLoader for batching and caching mcSeqnoByShard requests
+ * Using string as cache key type (third type parameter)
+ */
+export const mcSeqnoByShardLoader = new DataLoader<ShardKey, McSeqnoResult, string>(
+  async (keys: readonly ShardKey[]) => {
+    // Process each key individually but batch them for efficiency
+    const results = await Promise.all(
+      keys.map(async (key) => {
+        const { testnet, ...shard } = key
+        return _mcSeqnoByShard(shard, testnet)
+      })
+    )
+    return results
+  },
+  {
+    // Use LRU cache with a maximum of 1000 entries
+    cacheMap: new LRUMap(1000),
+    // Define a cache key function that converts the ShardKey to a unique string
+    cacheKeyFn: (key) => `${key.workchain}/${key.seqno}/${key.shard}/${key.testnet}`,
+  }
+)
+
+/**
+ * Example function demonstrating how to use the mcSeqnoByShardLoader
+ * This provides a simpler interface that matches the original mcSeqnoByShard function
+ * but benefits from batching and caching
+ */
+export async function getMcSeqnoByShard(
+  shard: {
+    workchain: number
+    seqno: number
+    shard: string
+    rootHash: string
+    fileHash: string
+  },
+  testnet: boolean
+): Promise<{
+  mcSeqno: number
+  randSeed: Buffer
+}> {
+  // Create a key for the DataLoader
+  const key: ShardKey = {
+    ...shard,
+    testnet,
+  }
+
+  // Use the DataLoader to load the result
+  return mcSeqnoByShardLoader.load(key)
 }
 
 export async function getLib(

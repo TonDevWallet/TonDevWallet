@@ -16,7 +16,7 @@ import {
   createShardAccountFromAPI,
   getOtherTxs,
   linkToTx,
-  mcSeqnoByShard,
+  getMcSeqnoByShard,
 } from './helpers'
 import { EmulationResult, IExecutor } from '@ton/sandbox/dist/executor/Executor'
 import { checkForLibraries, megaLibsCell } from '@/hooks/useEmulatedTxInfo'
@@ -179,7 +179,7 @@ async function fetchTransactionData(
   const tx = (await clientV4.getAccountTransactions(address, lt, hash))[0]
   console.log(tx.tx.now, 'tx time')
 
-  const { mcSeqno, randSeed } = await mcSeqnoByShard(tx.block, testnet)
+  const { mcSeqno, randSeed } = await getMcSeqnoByShard(tx.block, testnet)
   const fullBlock = await clientV4.getBlock(mcSeqno)
   const mcBlockSeqno = fullBlock.shards[0].seqno
 
