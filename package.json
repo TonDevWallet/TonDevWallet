@@ -97,7 +97,7 @@
     "tailwindcss": "^4.0.14",
     "tailwindcss-animate": "^1.0.7",
     "tauri-plugin-sql-api": "github:tauri-apps/tauri-plugin-sql#013b002d72dde1a77ce6cda60007adbe36e146c9",
-    "ton-lite-client": "npm:@truecarry/ton-lite-client@^3.3.1",
+    "ton-lite-client": "npm:@truecarry/ton-lite-client@^3.3.2",
     "tonapi-sdk-js": "^2.0.9",
     "use-local-storage-state": "^19.5.0",
     "vaul": "^1.1.2",
