@@ -29,11 +29,9 @@ import { ManagedSendMessageResult } from '@/utils/ManagedBlockchain'
 import { Address } from '@ton/ton'
 import { bigIntToBuffer } from '@/utils/ton'
 import { JettonAmountDisplay, JettonNameDisplay } from '../Jettons/Jettons'
-import { SerializeTransactionsList } from '@/utils/txSerializer'
 import { formatUnits } from '@/utils/units'
 // For Tauri filesystem access
-import { save } from '@tauri-apps/api/dialog'
-import { writeTextFile } from '@tauri-apps/api/fs'
+import { downloadGraph } from '@/utils/graphDownloader'
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -359,52 +357,9 @@ export function MessageEmulationResult({
   const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
   const [max, setMax] = useState(false)
 
-  const downloadGraph = useCallback(async () => {
-    try {
-      if (!txInfo?.transactions) {
-        console.warn('No transactions to download')
-        return
-      }
-
-      const dump = SerializeTransactionsList(txInfo?.transactions)
-
-      // Use Tauri file dialog to get the save path
-      try {
-        // Open save dialog and get a path from the user
-        const filePath = await save({
-          filters: [
-            {
-              name: 'JSON',
-              extensions: ['json'],
-            },
-          ],
-          defaultPath: 'graph.json',
-        })
-
-        if (filePath) {
-          console.log('saving filePath', filePath)
-          // Write the file to the selected path
-          await writeTextFile(filePath, dump)
-          console.log('File saved successfully to:', filePath)
-        } else {
-          console.log('Save dialog was canceled')
-        }
-      } catch (fsError) {
-        console.error('Tauri file system error:', fsError)
-
-        // Fallback to browser method if Tauri API fails or is not available
-        const blob = new Blob([dump], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = 'graph.json'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-      }
-    } catch (error) {
-      console.error('Error downloading graph:', error)
+  const handleDownloadGraph = useCallback(async () => {
+    if (txInfo?.transactions) {
+      await downloadGraph(txInfo.transactions)
     }
   }, [txInfo])
 
@@ -426,7 +381,7 @@ export function MessageEmulationResult({
               Toggle Preview Size
             </Button>
 
-            <Button variant={'outline'} className={'mt-4'} onClick={() => downloadGraph()}>
+            <Button variant={'outline'} className={'mt-4'} onClick={handleDownloadGraph}>
               <FontAwesomeIcon icon={faDownload} className={'mr-2'} />
               Download graph
             </Button>

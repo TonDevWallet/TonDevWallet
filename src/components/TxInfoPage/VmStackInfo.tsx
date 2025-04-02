@@ -101,6 +101,16 @@ function getStackInfo(stackData: string) {
     }
 
     if (l.startsWith('CS{')) {
+      if (l.indexOf('{') !== -1 && l.indexOf('}') !== -1) {
+        res.push({
+          _: 'cell',
+          value: l.slice(3, -1),
+          bits: [0, 0],
+          refs: [0, 0],
+        })
+        i += 1
+        continue
+      }
       const bits = lines[i + 2].replace(';', '').split('..')
       const refs = lines[i + 4].replace('}', '').split('..')
 
