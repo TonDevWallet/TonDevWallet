@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { useLiteclient } from '@/store/liteClient'
+import { useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { getEmulationWithStack } from '@/utils/retracer/retracer'
 import { ToncenterV3TraceNode, ToncenterV3Traces } from '@/utils/retracer/traces'
 import { ParsedTransaction } from '@/utils/ManagedBlockchain'
 import { CallForSuccess } from '@/utils/callForSuccess'
 import { parseWithPayloads } from '@truecarry/tlb-abi'
 import { RecursivelyParseCellWithBlock } from '@/utils/tlb/cellParser'
+import { Address } from '@ton/ton'
 
 interface UseTraceDataResult {
   transactions: ParsedTransaction[]
@@ -24,6 +25,7 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
   const [progress, setProgress] = useState({ loaded: 0, total: 0 })
   const [error, setError] = useState<string | null>(null)
   const liteClient = useLiteclient()
+  const selectedNetwork = useLiteclientState()
 
   // Use refs to track the current execution and enable abortion
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -46,6 +48,7 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
     const fetchTraceData = async () => {
       if (!txHash || !liteClient) return
 
+      const isTestnet = selectedNetwork.selectedNetwork.get().is_testnet
       // Create a new AbortController for this execution
       const abortController = new AbortController()
       abortControllerRef.current = abortController
@@ -60,7 +63,7 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
         setProgress({ loaded: 0, total: 0 })
 
         // Fetch trace info from toncenter with abort signal
-        const apiUrl = `https://toncenter.com/api/v3/traces?tx_hash=${txHash}`
+        const apiUrl = `https://${isTestnet ? 'testnet.' : ''}toncenter.com/api/v3/traces?tx_hash=${txHash}`
         const response = await CallForSuccess(async () => {
           const res = await fetch(apiUrl, {
             signal: abortController.signal,
@@ -119,12 +122,24 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
               throw new Error('Trace node not found')
             }
 
-            const res = await getEmulationWithStack(liteClient as any, tx.hash, false, () => {
-              // Check if this execution is still valid during the emulation
-              if (abortController.signal.aborted || currentExecutionId !== executionIdRef.current) {
-                throw new Error('Operation was aborted')
+            const res = await getEmulationWithStack(
+              liteClient as any,
+              {
+                addr: Address.parse(tx.account),
+                hash: Buffer.from(tx.hash, 'base64'),
+                lt: BigInt(tx.lt),
+              },
+              isTestnet,
+              () => {
+                // Check if this execution is still valid during the emulation
+                if (
+                  abortController.signal.aborted ||
+                  currentExecutionId !== executionIdRef.current
+                ) {
+                  throw new Error('Operation was aborted')
+                }
               }
-            })
+            )
 
             // Check again after emulation completes
             if (abortController.signal.aborted || currentExecutionId !== executionIdRef.current) {
@@ -241,7 +256,7 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
       }
       executionIdRef.current++
     }
-  }, [txHash, liteClient])
+  }, [txHash, liteClient, selectedNetwork.selectedNetwork])
 
   return { transactions, loading, progress, error, abort }
 }

@@ -4,7 +4,6 @@ import {
   Cell,
   storeMessage,
   storeShardAccount,
-  loadShardAccount,
   Transaction,
   loadTransaction,
   Address,
@@ -65,13 +64,9 @@ export async function getEmulationWithStack(
     hash: txInfo.hash.toString('base64'),
   })
 
-  console.log(txs.length, 'transactions found')
-  console.log('first:', txs[txs.length - 1].lt, 'last:', txs[0].lt)
-
   // Get blockchain config
   sendStatus('Getting blockchain config')
-  const { blockConfig, configInfo } = await getBlockchainConfig(clientV4, mcBlockSeqno)
-  console.log('Fees:', configInfo)
+  const { blockConfig } = await getBlockchainConfig(clientV4, mcBlockSeqno)
 
   // Get account state from previous block
   sendStatus('Getting account state')
@@ -177,7 +172,6 @@ async function fetchTransactionData(
 
   sendStatus('Getting the tx')
   const tx = (await clientV4.getAccountTransactions(address, lt, hash))[0]
-  console.log(tx.tx.now, 'tx time')
 
   const { mcSeqno, randSeed } = await getMcSeqnoByShard(tx.block, testnet)
   const fullBlock = await clientV4.getBlock(mcSeqno)
@@ -330,15 +324,18 @@ async function emulateTransactions(
       Cell.fromBase64(emulationResult.result.transaction).asSlice()
     )
     const stateUpdateOk = emulatedTx.stateUpdate.newHash.equals(currentTx.stateUpdate.newHash)
-    console.log('State update ok:', stateUpdateOk)
+    if (!stateUpdateOk) {
+      console.log('State update failed')
+      console.log(emulationResult)
+      throw new Error(`State update failed for lt: ${currentTx.lt}`)
+    }
 
     // Update shard account
     shardAccountStr = emulationResult.result.shardAccount
-    const parsedShardAccount = loadShardAccount(Cell.fromBase64(shardAccountStr).asSlice())
-    const newBalance = parsedShardAccount.account?.storage.balance.coins
-    console.log(`lt: ${currentTx.lt} balance: ${newBalance}`)
+    // const parsedShardAccount = loadShardAccount(Cell.fromBase64(shardAccountStr).asSlice())
+    // const newBalance = parsedShardAccount.account?.storage.balance.coins
+    // console.log(`lt: ${currentTx.lt} balance: ${newBalance}`)
 
-    console.log('')
     txCounter++
     const tx = loadTransaction(Cell.fromBase64(emulationResult.result.transaction).asSlice())
     lastTxEmulated = {
