@@ -3,11 +3,6 @@
 @plugin 'tailwindcss-animate';
 
 @custom-variant dark (&:is(.dark *));
-// @import 'tailwindcss/base';
-
-// @import 'tailwindcss/components';
-
-// @import 'tailwindcss/utilities';
 
 @import 'reactjs-popup/dist/index.css';
 
@@ -167,9 +162,9 @@
 }
 
 body {
-  //color: var(--color-foreground);
+  /* //color: var(--color-foreground); */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  // overflow-y: scroll;
+  /* // overflow-y: scroll; */
   user-select: none;
   overflow: hidden;
   /* overflow-x: hidden; */
@@ -252,137 +247,7 @@ body {
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
-
-//html {
-//  --color-foreground: black;
-//  --color-foreground-rgb: 0 0 0;
-//
-//  input {
-//    color: black;
-//    background: white;
-//    border-width: 1px;
-//  }
-//
-//  textarea {
-//    color: black;
-//    background: white;
-//    border-width: 1px;
-//  }
-//
-//  .popup-content {
-//    width: auto;
-//    background: white;
-//    color: var(--color-foreground);
-//  }
-//
-//  .popup-arrow {
-//    color: var(--color-background);
-//    fill: var(--color-background);
-//    stroke: var(--color-background);
-//    border: none;
-//  }
-//
-//  a {
-//    color: var(--color-accent);
-//    text-decoration: none;
-//  }
-//}
-//
-//html.dark {
-//  input {
-//    @apply shadow-md;
-//    color: white;
-//    background: rgb(255 255 255 / 0.05);
-//    border: none;
-//    outline: none;
-//  }
-//
-//  select {
-//    @apply shadow-md;
-//    color: white;
-//    background: rgb(255 255 255 / 0.05);
-//    border: none;
-//    outline: none;
-//  }
-//
-//  select > option {
-//    color: white;
-//    background: rgb(55 55 55);
-//    // background: red;
-//    border: none;
-//  }
-//
-//  textarea {
-//    @apply shadow-md;
-//    color: white;
-//    background: rgb(255 255 255 / 0.05);
-//    border: none;
-//  }
-//
-//  .popup-content {
-//    @apply rounded;
-//    width: auto;
-//    background: rgb(55 55 55);
-//    color: var(--color-foreground);
-//    border: none;
-//  }
-//
-//  .popup-arrow {
-//    color: rgb(55 55 55);
-//    fill: rgb(55 55 55);
-//    stroke: rgb(55 55 55);
-//    border: none;
-//  }
-//
-//  a {
-//    color: var(--color-accent-light);
-//    text-decoration: none;
-//  }
-//}
-//
-//html.linux {
-//  &.dark {
-//    body {
-//      background: rgb(255 255 255 / 0.95);
-//    }
-//  }
-//
-//  body {
-//    background: white;
-//  }
-//}
-//
-//html.macos {
-//  &.dark {
-//    body {
-//      background: transparent;
-//      --color-window-background: rgb(55 55 55);
-//      --color-background-rgb: 55 55 55;
-//    }
-//  }
-//
-//  body {
-//    background: rgb(255 255 255 / 0.75);
-//    --color-window-background: rgb(255 255 255);
-//    --color-background-rgb: 255 255 255;
-//  }
-//}
-//
 html.windows {
-//  &.dark {
-//    body {
-//      background: rgb(55 55 55);
-//      --color-window-background: rgb(55 55 55);
-//      --color-background-rgb: 55 55 55;
-//    }
-//  }
-//
-//  body {
-//    background: rgb(255 255 255);
-//    --color-window-background: rgb(255 255 255);
-//    --color-background-rgb: 255 255 255;
-//  }
-//
   ::-webkit-scrollbar {
     width: 9px;
   }
@@ -398,9 +263,9 @@ html.windows {
     background: #272d38;
   }
 }
-//
+
 html.windows11 {
-  //--color-window-background: transparent;
+  /* //--color-window-background: transparent; */
   ::-webkit-scrollbar {
     width: 9px;
   }
@@ -417,10 +282,6 @@ html.windows11 {
     background: #272d38;
   }
 }
-
-//button {
-//  outline: none;
-//}
 
 .react-flow__controls-button {
   background: white;

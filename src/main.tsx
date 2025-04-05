@@ -1,6 +1,5 @@
 import { createRoot } from 'react-dom/client'
 import { App } from './app'
-import './index.scss'
 
 import '@hookstate/devtools'
 
