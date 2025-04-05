@@ -100,7 +100,19 @@ function getStackInfo(stackData: string) {
       continue
     }
 
-    if (l.startsWith('CS{')) {
+    if (l.startsWith('CS{Cell{')) {
+      const bits = lines[i + 2].replace(';', '').split('..')
+      const refs = lines[i + 4].replace('}', '').split('..')
+      // debugger
+      res.push({
+        _: 'cell',
+        value: l.slice(0, -1),
+        bits: [parseInt(bits[0]), parseInt(bits[1])],
+        refs: [parseInt(refs[0]), parseInt(refs[1])],
+      })
+      i += 5
+      continue
+    } else if (l.startsWith('CS{')) {
       if (l.indexOf('{') !== -1 && l.indexOf('}') !== -1) {
         res.push({
           _: 'cell',
@@ -129,16 +141,6 @@ function getStackInfo(stackData: string) {
         refs: [0, 0],
       })
       i++
-    } else if (l.startsWith('CS{Cell{')) {
-      const bits = lines[i + 2].replace(';', '').split('..')
-      const refs = lines[i + 4].replace('}', '').split('..')
-      res.push({
-        _: 'cell',
-        value: l.slice(0, -1),
-        bits: [parseInt(bits[0]), parseInt(bits[1])],
-        refs: [parseInt(refs[0]), parseInt(refs[1])],
-      })
-      i += 7
     } else if (l === 'Cont{vmc_std}') {
       res.push({
         _: 'cont',

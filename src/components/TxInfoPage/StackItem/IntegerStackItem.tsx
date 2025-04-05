@@ -3,7 +3,13 @@ import { formatUnits } from '@/utils/units'
 import Copier from '@/components/copier'
 
 export function IntegerStackItem({ item }: { item: StackInt }) {
-  const bigValue = BigInt(item.value)
+  let bigValue: bigint
+  try {
+    bigValue = BigInt(item.value)
+  } catch (error) {
+    console.log('IntegerStackItem error', item, error)
+    return null
+  }
   const isNegative = bigValue < 0n
   const absValue = isNegative ? -bigValue : bigValue
   return (
