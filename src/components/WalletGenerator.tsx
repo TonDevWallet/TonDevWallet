@@ -75,7 +75,10 @@ export function OpenedWalletInfo() {
   const db = useDatabase()
   const password = passwordState.password.get()
 
-  const { decryptedData, isLoading } = useDecryptWalletData(password, key?.encrypted.get())
+  const { decryptedData, isLoading } = useDecryptWalletData(
+    password,
+    key?.encrypted.get() || undefined
+  )
   // const seed = useSeed(decryptedData.)
 
   const words = decryptedData?.mnemonic

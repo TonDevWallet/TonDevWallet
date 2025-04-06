@@ -201,6 +201,8 @@ export async function CreateNewKeyWallet({
   if (stateKey) {
     stateKey.wallets.merge(wallets)
   }
+
+  await updateWalletsList()
 }
 
 export async function DeleteKeyWallet(walletId: number) {

@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { setWalletKey } from '@/store/walletState'
 import { WalletRow } from './WalletRow'
+import { FindActiveWalletsModal } from './FindActiveWalletsModal'
 
 export function KeyGroup({
   keyName,
@@ -25,12 +26,15 @@ export function KeyGroup({
     <div className="mb-10">
       <div className="flex items-center justify-between mb-2 px-4 py-3 bg-muted rounded-lg">
         <h2 className="text-lg font-medium">{keyName}</h2>
-        <Link to={`/app/wallets/${keyId}`} onClick={handleSelectWallet}>
-          <Button variant="outline" size="sm">
-            <FontAwesomeIcon icon={faPlus} className="mr-2" />
-            Create New Wallet
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <FindActiveWalletsModal keyName={keyName} keyId={keyId} existingWallets={wallets} />
+          <Link to={`/app/wallets/${keyId}`} onClick={handleSelectWallet}>
+            <Button variant="outline" size="sm">
+              <FontAwesomeIcon icon={faPlus} className="mr-2" />
+              Create New Wallet
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Table>
