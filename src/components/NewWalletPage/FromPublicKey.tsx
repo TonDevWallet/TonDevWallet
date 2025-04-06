@@ -9,6 +9,90 @@ import { faKey } from '@fortawesome/free-solid-svg-icons'
 import { savePublicKeyOnly } from '@/store/walletsListState'
 import { ActiveWalletsSelector } from './ActiveWalletsSelector'
 import { WalletNameInput, ImportButton, useWalletSelection } from './shared'
+import { LiteClient } from 'ton-lite-client'
+import { useLiteclient } from '@/store/liteClient'
+import { Address, Cell, parseTuple, TupleItemInt } from '@ton/core'
+import { bigIntToBuffer } from '@/utils/ton'
+
+// Custom hook to process public key
+function usePublicKeyFromRaw(rawPublicKey: string, liteClient: LiteClient) {
+  const [publicKeyBuffer, setPublicKeyBuffer] = useState<Buffer>(Buffer.from([]))
+
+  useEffect(() => {
+    let isMounted = true
+
+    const processPublicKey = async () => {
+      if (!rawPublicKey) {
+        setPublicKeyBuffer(Buffer.from([]))
+        return
+      }
+
+      try {
+        const normalizedPublicKey = rawPublicKey.replace(/^0x/i, '')
+        // Try base64 first
+        const base64Key = Buffer.from(normalizedPublicKey, 'base64')
+        if (base64Key.length === 32) {
+          if (isMounted) setPublicKeyBuffer(base64Key)
+          return
+        }
+
+        // Try hex
+        const hexKey = Buffer.from(normalizedPublicKey, 'hex')
+        if (hexKey.length === 32) {
+          if (isMounted) setPublicKeyBuffer(hexKey)
+          return
+        }
+      } catch (e) {
+        //
+      }
+
+      try {
+        const walletAddress = Address.parse(rawPublicKey)
+        const master = await liteClient.getMasterchainInfo()
+        const result = await liteClient.runMethod(
+          walletAddress,
+          'get_public_key',
+          Buffer.from([]),
+          master.last
+        )
+
+        console.log('result', result)
+
+        if (result.exitCode !== 0) {
+          if (isMounted) setPublicKeyBuffer(Buffer.from([]))
+          return
+        }
+
+        const resultCell = Cell.fromBase64(result.result as string)
+        const resultTuple = parseTuple(resultCell)
+        console.log('resultTuple', resultTuple)
+        if (resultTuple.length !== 1) {
+          if (isMounted) setPublicKeyBuffer(Buffer.from([]))
+          return
+        }
+
+        const key = resultTuple[0] as TupleItemInt
+        if (isMounted) setPublicKeyBuffer(Buffer.from(bigIntToBuffer(key.value)))
+      } catch (e) {
+        //
+        console.log('error', e)
+        if (isMounted) setPublicKeyBuffer(Buffer.from([]))
+      }
+    }
+
+    processPublicKey()
+
+    return () => {
+      isMounted = false
+    }
+  }, [rawPublicKey, liteClient])
+
+  const isValidPublicKey = useMemo(() => {
+    return publicKeyBuffer.length === 32
+  }, [publicKeyBuffer])
+
+  return { publicKeyBuffer, isValidPublicKey }
+}
 
 export function FromPublicKey() {
   const navigate = useNavigate()
@@ -17,36 +101,10 @@ export function FromPublicKey() {
   const [name, setName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const liteClient = useLiteclient() as LiteClient
 
-  // Function to decode public key (handles both hex and base64)
-  const publicKeyBuffer = useMemo(() => {
-    if (!publicKey) return Buffer.from([])
-
-    const normalizedPublicKey = publicKey.replace(/^0x/i, '')
-
-    try {
-      // Try base64 first
-      const base64Key = Buffer.from(normalizedPublicKey, 'base64')
-      if (base64Key.length === 32) {
-        return base64Key
-      }
-
-      // Try hex
-      const hexKey = Buffer.from(normalizedPublicKey, 'hex')
-      if (hexKey.length === 32) {
-        return hexKey
-      }
-
-      return Buffer.from([])
-    } catch (e) {
-      return Buffer.from([])
-    }
-  }, [publicKey])
-
-  // Validate if the public key is valid
-  const isValidPublicKey = useMemo(() => {
-    return publicKeyBuffer.length === 32
-  }, [publicKeyBuffer])
+  // Use the custom hook for public key processing
+  const { publicKeyBuffer, isValidPublicKey } = usePublicKeyFromRaw(publicKey, liteClient)
 
   // Use the wallet selection hook
   const {
@@ -110,7 +168,7 @@ export function FromPublicKey() {
       <div className="space-y-2">
         <label className="text-sm font-medium flex items-center gap-2" htmlFor="publicKeyInput">
           <FontAwesomeIcon icon={faKey} className="text-primary" />
-          Public Key (base64 or hex):
+          Public Key (base64 or hex) or Address:
         </label>
         <Input
           className="font-mono text-sm"
