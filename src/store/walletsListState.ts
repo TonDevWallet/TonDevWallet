@@ -4,7 +4,7 @@ import { hookstate, useHookstate } from '@hookstate/core'
 import { Knex } from 'knex'
 import { getWalletState, setWalletKey } from './walletState'
 import { NavigateFunction } from 'react-router-dom'
-import { SavedWallet, WalletType } from '@/types'
+import { IWallet, SavedWallet, WalletType } from '@/types'
 import { ConnectMessageTransaction, LastSelectedWallets } from '@/types/connect'
 import { encryptWalletData, getPasswordInteractive } from './passwordManager'
 import { secretKeyToED25519 } from '@/utils/ed25519'
@@ -96,7 +96,8 @@ export async function saveKeyFromData(
   name: string,
   navigate: NavigateFunction,
   seed: Buffer,
-  words?: string
+  words?: string,
+  wallets?: IWallet[]
 ) {
   const password = await getPasswordInteractive()
 
@@ -113,42 +114,32 @@ export async function saveKeyFromData(
   }
 
   const db = await getDatabase()
-  await saveKeyAndWallets(db, key, name, navigate)
+  await saveKeyAndWallets(db, key, name, navigate, wallets)
 }
 export async function saveKeyAndWallets(
   db: Knex,
   key: Key,
   walletName: string,
-  navigate: NavigateFunction
+  navigate: NavigateFunction,
+  walletsToSave?: IWallet[]
 ) {
   const newWallet = await saveKey(db, key, walletName)
 
-  const defaultWallets: Omit<SavedWallet, 'id'>[] = [
-    {
-      type: 'v5R1',
-      key_id: newWallet.id,
-      subwallet_id: '2147483409',
-      name: 'v5R1',
-    },
-    // {
-    //   type: 'v4R2',
-    //   key_id: newWallet.id,
-    //   subwallet_id: '698983191',
-    //   name: 'v4R2',
-    // },
-    // {
-    //   type: 'v3R2',
-    //   key_id: newWallet.id,
-    //   subwallet_id: '698983191',
-    //   name: 'v3R2',
-    // },
-    // {
-    //   type: 'highload',
-    //   key_id: newWallet.id,
-    //   subwallet_id: '1',
-    //   name: 'Highload V2',
-    // },
-  ]
+  const defaultWallets: Omit<SavedWallet, 'id'>[] = walletsToSave
+    ? walletsToSave.map((w) => ({
+        type: w.type,
+        key_id: newWallet.id,
+        subwallet_id: ((w as any)?.subwalletId || 0).toString(),
+        name: w.type,
+      }))
+    : [
+        {
+          type: 'v5R1',
+          key_id: newWallet.id,
+          subwallet_id: '2147483409',
+          name: 'v5R1',
+        },
+      ]
 
   await setWalletKey(newWallet.id)
 
@@ -250,7 +241,8 @@ export async function UpdateKeyWalletName(walletId: number, name: string) {
 export async function savePublicKeyOnly(
   name: string,
   navigate: NavigateFunction,
-  publicKey: string
+  publicKey: string,
+  walletsToSave?: IWallet[]
 ) {
   // Normalize the public key format if needed (assuming base64 is preferred storage format)
   let normalizedPublicKey = publicKey
@@ -272,14 +264,15 @@ export async function savePublicKeyOnly(
   }
 
   const db = await getDatabase()
-  await savePublicKeyAndWallets(db, key, name, navigate)
+  await savePublicKeyAndWallets(db, key, name, navigate, walletsToSave)
 }
 
 export async function savePublicKeyAndWallets(
   db: Knex,
   key: Key,
   walletName: string,
-  navigate: NavigateFunction
+  navigate: NavigateFunction,
+  walletsToSave?: IWallet[]
 ) {
   // Check if the public key already exists
   const existing = await db('keys').where('public_key', key.public_key).first()
@@ -300,14 +293,21 @@ export async function savePublicKeyAndWallets(
   const newWallet = res[0]
   await updateWalletsList()
 
-  const defaultWallets: Omit<SavedWallet, 'id'>[] = [
-    {
-      type: 'v5R1',
-      key_id: newWallet.id,
-      subwallet_id: '2147483409',
-      name: 'v5R1',
-    },
-  ]
+  const defaultWallets: Omit<SavedWallet, 'id'>[] = walletsToSave
+    ? walletsToSave.map((w) => ({
+        type: w.type,
+        key_id: newWallet.id,
+        subwallet_id: ((w as any)?.subwalletId || 0).toString(),
+        name: w.type,
+      }))
+    : [
+        {
+          type: 'v5R1',
+          key_id: newWallet.id,
+          subwallet_id: '2147483409',
+          name: 'v5R1',
+        },
+      ]
 
   await setWalletKey(newWallet.id)
 

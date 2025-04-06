@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { IWallet } from '@/types'
 import { Address } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
@@ -24,7 +24,11 @@ export function useFindActiveWallets(publicKey: Buffer): UseFindActiveWalletsRes
   const liteClient = useLiteclient() as LiteClient
 
   // Generate wallet addresses from the public key
-  const wallets = useCallback(() => {
+  const wallets = useMemo(() => {
+    if (!publicKey || publicKey.length !== 32) {
+      return []
+    }
+
     const walletsList: IWallet[] = []
 
     for (const factory of Object.values(WalletFactories)) {
@@ -45,7 +49,10 @@ export function useFindActiveWallets(publicKey: Buffer): UseFindActiveWalletsRes
   // Main function to find active wallets
   const findActiveWallets = useCallback(async () => {
     setIsSearching(true)
-    const walletsList = wallets()
+    const walletsList = wallets
+    if (walletsList.length === 0) {
+      return
+    }
     setTotalWallets(walletsList.length)
 
     try {
