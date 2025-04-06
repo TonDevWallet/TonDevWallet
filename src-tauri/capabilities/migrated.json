@@ -9,9 +9,14 @@
   "permissions": [
     "core:default",
     "fs:allow-exists",
+    "fs:allow-mkdir",
     {
       "identifier": "fs:scope",
-      "allow": [{ "path": "$APPDATA/*" }]
+      "allow": [
+        {
+          "path": "$APPDATA/*"
+        }
+      ]
     },
     "sql:allow-load",
     "sql:default",
@@ -19,8 +24,19 @@
     "http:allow-fetch",
     {
       "identifier": "http:default",
-      "allow": [{ "url": "http://*" }, { "url": "https://*" }],
-      "deny": [{ "url": "https://private.tauri.app" }]
+      "allow": [
+        {
+          "url": "http://*"
+        },
+        {
+          "url": "https://*"
+        }
+      ],
+      "deny": [
+        {
+          "url": "https://private.tauri.app"
+        }
+      ]
     },
     "cli:allow-cli-matches",
     "cli:default",
@@ -29,6 +45,7 @@
     "notification:default",
     "core:webview:allow-create-webview-window",
     "dialog:allow-save",
-    "fs:allow-write-text-file"
+    "fs:allow-write-text-file",
+    "log:default"
   ]
 }
