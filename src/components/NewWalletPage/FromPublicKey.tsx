@@ -145,7 +145,7 @@ export function FromPublicKey() {
 
     try {
       setIsLoading(true)
-      await savePublicKeyOnly(name, navigate, publicKey, getSelectedWalletsArray())
+      await savePublicKeyOnly(name, navigate, publicKeyBuffer, getSelectedWalletsArray())
     } catch (error: any) {
       console.error('Error saving wallet:', error)
       setError(error.message || 'Error saving wallet')
