@@ -251,26 +251,26 @@ export async function UpdateKeyWalletName(walletId: number, name: string) {
 export async function savePublicKeyOnly(
   name: string,
   navigate: NavigateFunction,
-  publicKey: string,
+  publicKey: Buffer,
   walletsToSave?: IWallet[]
 ) {
   // Normalize the public key format if needed (assuming base64 is preferred storage format)
   let normalizedPublicKey = publicKey
 
   // If it's a hex string, convert it to base64
-  if (/^[0-9a-fA-F]+$/.test(publicKey) || /^0x[0-9a-fA-F]+$/.test(publicKey)) {
-    if (publicKey.startsWith('0x')) {
-      normalizedPublicKey = publicKey.slice(2)
-    }
-    const buffer = Buffer.from(normalizedPublicKey, 'hex')
-    normalizedPublicKey = buffer.toString('base64')
-  }
+  // if (/^[0-9a-fA-F]+$/.test(publicKey) || /^0x[0-9a-fA-F]+$/.test(publicKey)) {
+  //   if (publicKey.startsWith('0x')) {
+  //     normalizedPublicKey = publicKey.slice(2)
+  //   }
+  //   const buffer = Buffer.from(normalizedPublicKey, 'hex')
+  //   normalizedPublicKey = buffer.toString('base64')
+  // }
 
   const key: Key = {
     id: 0,
     name: '',
     encrypted: undefined, // No encrypted data for view-only wallet
-    public_key: normalizedPublicKey,
+    public_key: normalizedPublicKey.toString('base64'),
   }
 
   const db = await getDatabase()
