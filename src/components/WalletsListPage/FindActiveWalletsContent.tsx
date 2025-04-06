@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useMemo, useCallback } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch, faSave } from '@fortawesome/free-solid-svg-icons'
 import {
@@ -19,12 +19,9 @@ import {
 } from '@/components/ui/dialog'
 import { IWallet, WalletType } from '@/types'
 import { CreateNewKeyWallet, useWalletListState } from '@/store/walletsListState'
-import { Address } from '@ton/core'
-import { LiteClient } from 'ton-lite-client'
-import { useLiteclient } from '@/store/liteClient'
-import { WalletFactories } from './WalletFactories'
 import { formatTon } from '@/utils/units'
 import { AddressRow } from '../AddressRow'
+import { useFindActiveWallets } from '@/hooks/useFindActiveWallets'
 
 interface FindActiveWalletsContentProps {
   keyName: string
@@ -33,78 +30,25 @@ interface FindActiveWalletsContentProps {
   onClose: () => void
 }
 
-interface ActiveWallet {
-  wallet: IWallet
-  balance: bigint
-}
-
 export function FindActiveWalletsContent({
   keyName,
   keyId,
   existingWallets,
   onClose,
 }: FindActiveWalletsContentProps) {
-  const [activeWallets, setActiveWallets] = useState<ActiveWallet[]>([])
-  const [totalWallets, setTotalWallets] = useState<number>(0)
-  const [isSearching, setIsSearching] = useState(false)
   const keys = useWalletListState()
-  const liteClient = useLiteclient() as LiteClient
 
   const key = useMemo(() => {
     return keys.get().find((item) => item.id === keyId)
   }, [keys, keyId])
 
-  const wallets = useMemo(() => {
-    if (!key) {
-      return []
-    }
-    const wallets: IWallet[] = []
-    const publicKey = Buffer.from(key.public_key, 'base64')
-
-    for (const factory of Object.values(WalletFactories)) {
-      wallets.push(...factory(publicKey))
-    }
-    return wallets
+  const publicKey = useMemo(() => {
+    if (!key?.public_key) return Buffer.from([])
+    return Buffer.from(key.public_key, 'base64')
   }, [key])
 
-  const getWalletBalance = useCallback(
-    async (address: Address) => {
-      const master = await liteClient.getMasterchainInfo()
-      const state = await liteClient.getAccountState(address, master.last)
-      return state?.balance?.coins || 0n
-    },
-    [liteClient]
-  )
-
-  // Handler to find active wallets
-  const handleFindActiveWallets = async () => {
-    setIsSearching(true)
-    setTotalWallets(wallets.length)
-    try {
-      setTimeout(async () => {
-        const balances = await Promise.all(
-          wallets.map(async (item) => {
-            const balance = await getWalletBalance(item.address)
-            return { address: item.address, balance }
-          })
-        )
-
-        const goodWallets: ActiveWallet[] = []
-        for (let i = 0; i < balances.length; i++) {
-          const balance = balances[i]
-          if (balance.balance > 0n) {
-            goodWallets.push({ wallet: wallets[i], balance: balance.balance })
-          }
-        }
-
-        setActiveWallets(goodWallets)
-        setIsSearching(false)
-      }, 2000)
-    } catch (error) {
-      console.error('Error finding active wallets:', error)
-      setIsSearching(false)
-    }
-  }
+  const { activeWallets, totalWallets, isSearching, findActiveWallets } =
+    useFindActiveWallets(publicKey)
 
   const handleSaveWallet = useCallback(
     async (wallet: IWallet) => {
@@ -135,12 +79,6 @@ export function FindActiveWalletsContent({
     },
     [existingWallets, keyId]
   )
-
-  // Automatically search when component mounts
-  useEffect(() => {
-    console.log('content component mounted')
-    handleFindActiveWallets()
-  }, [])
 
   return (
     <DialogContent className="sm:max-w-md">
@@ -221,7 +159,7 @@ export function FindActiveWalletsContent({
       </div>
 
       <DialogFooter className="sm:justify-between">
-        <Button variant="outline" disabled={isSearching} onClick={handleFindActiveWallets}>
+        <Button variant="outline" disabled={isSearching} onClick={findActiveWallets}>
           <FontAwesomeIcon icon={faSearch} className={'mr-2'} />
           Refresh
         </Button>
