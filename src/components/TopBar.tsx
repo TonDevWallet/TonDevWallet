@@ -26,7 +26,6 @@ import {
 import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
 import { cn } from '@/utils/cn'
 import { useTheme } from '@/hooks/useTheme'
-import { Theme } from '@tauri-apps/api/window'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
@@ -167,7 +166,7 @@ function ThemeSwitcher() {
   return (
     <TopBarIconWrapper
       onClick={() => {
-        setTheme((theme === 'light' ? 'dark' : 'light') as Theme)
+        setTheme(theme === 'light' ? 'dark' : 'light')
       }}
       icon={theme === 'dark' ? faMoon : faSun}
     />

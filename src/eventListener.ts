@@ -1,10 +1,12 @@
 import { listen } from '@tauri-apps/api/event'
-import { window as tWindow } from '@tauri-apps/api'
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTonConnectState } from './store/tonConnect'
 import { getPasswordInteractive } from './store/passwordManager'
-import { getMatches } from '@tauri-apps/api/cli'
+import { getMatches } from '@tauri-apps/plugin-cli'
+
+const appWindow = getCurrentWebviewWindow()
 
 export function useTauriEventListener() {
   const navigate = useNavigate()
@@ -31,13 +33,13 @@ export function useTauriEventListener() {
 
     if (startString === 'tondevwallet://connect/?ret=back') {
       navigate('/app')
-      tWindow.appWindow.unminimize()
-      tWindow.appWindow.setFocus()
+      appWindow.unminimize()
+      appWindow.setFocus()
       return
     }
 
-    tWindow.appWindow.unminimize()
-    tWindow.appWindow.setFocus()
+    appWindow.unminimize()
+    appWindow.setFocus()
 
     const password = await getPasswordInteractive()
 

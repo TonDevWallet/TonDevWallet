@@ -4,7 +4,7 @@ import { LiteClientBlockchainStorage } from '@/utils/liteClientBlockchainStorage
 // eslint-disable-next-line camelcase
 import { sha256_sync } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
-import { fetch as tFetch } from '@tauri-apps/api/http'
+import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { JettonContent } from '@/types/jetton'
 import { checkForLibraries, megaLibsCell } from '@/hooks/useEmulatedTxInfo'
 
@@ -143,11 +143,12 @@ export async function loadJettonMetadata(contentCell: Cell): Promise<JettonConte
     }
 
     try {
-      const { data: urlData } = await tFetch<{
+      const response = await tFetch(networkUrl)
+      const urlData = (await response.json()) as {
         iconUrl: string
         name: string
         url: string
-      }>(networkUrl)
+      }
       // const { data: urlData } = await axios(networkUrl)
       for (const key of jettonKeys) {
         if (urlData[key]) {

@@ -1,7 +1,7 @@
 import { addTonConnectSession, closeTonConnectPopup, useTonConnectState } from '@/store/tonConnect'
 import { ConnectRequest } from '@tonconnect/protocol'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetch as tFetch } from '@tauri-apps/api/http'
+import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { useWalletListState } from '@/store/walletsListState'
 import { KeyJazzicon } from '../KeyJazzicon'
 import { cn } from '@/utils/cn'
@@ -352,10 +352,10 @@ function useConnectLink(link: string) {
           }
         | undefined
       try {
-        const { data } = await tFetch<any>(r.manifestUrl, {
-          method: 'GET',
-          timeout: { secs: 3, nanos: 0 },
+        const response = await tFetch(r.manifestUrl, {
+          connectTimeout: 3000,
         })
+        const data = await response.json()
         metaInfo = data
       } catch (e) {
         //
