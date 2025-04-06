@@ -3,17 +3,16 @@ import { saveKeyFromData } from '@/store/walletsListState'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { mnemonicToSeed, mnemonicNew } from '@ton/crypto'
-import Copier from '../copier'
 import { cn } from '@/utils/cn'
 import { Textarea } from '../ui/textarea'
-import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faRefresh, faKey, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faRefresh, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { Separator } from '../ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import clipboard from 'clipboardy'
+import { WalletNameInput, ImportButton, KeyInfoDisplay } from './shared'
 
 export function FromRandom() {
   const navigate = useNavigate()
@@ -147,67 +146,28 @@ export function FromRandom() {
 
           <Separator />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <FontAwesomeIcon icon={faKey} className="text-primary" />
-                Seed:
-              </label>
-              <div className="flex items-center p-2 bg-muted rounded-md">
-                <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
-                  {seed.toString('hex')}
-                </code>
-                <Copier className="w-5 h-5 ml-2 shrink-0" text={seed.toString('hex') || ''} />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <FontAwesomeIcon icon={faKey} className="text-primary" />
-                Public Key:
-              </label>
-              <div className="flex items-center p-2 bg-muted rounded-md">
-                <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
-                  {Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
-                </code>
-                <Copier
-                  className="w-5 h-5 ml-2 shrink-0"
-                  text={Buffer.from(walletKeyPair?.publicKey || []).toString('hex')}
-                />
-              </div>
-            </div>
-          </div>
+          <KeyInfoDisplay
+            seed={seed.toString('hex')}
+            publicKey={walletKeyPair?.publicKey ? walletKeyPair.publicKey : new Uint8Array(0)}
+          />
 
           <Separator />
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="nameRef">
-                Wallet Name:
-              </label>
-              <Input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                id="nameRef"
-                className="max-w-md"
-                placeholder="My TON Wallet"
-                autoComplete="off"
-                autoFocus
-              />
-              <p className="text-xs text-muted-foreground">
-                Give your wallet a name to easily identify it later
-              </p>
-            </div>
+            <WalletNameInput
+              name={name}
+              onNameChange={setName}
+              placeholder="My TON Wallet"
+              autoComplete={false}
+            />
 
-            <Button
+            <ImportButton
               onClick={saveSeed}
-              className={cn('', !name && 'opacity-50')}
-              disabled={!name || isLoading}
-              size="lg"
-            >
-              {'Save Wallet'}
-            </Button>
+              isLoading={isLoading}
+              selectedWalletsCount={0}
+              defaultText="Save Wallet"
+              name={name}
+            />
           </div>
 
           <div className="h-10"></div>

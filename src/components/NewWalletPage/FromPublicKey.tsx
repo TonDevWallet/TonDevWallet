@@ -1,16 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Input } from '../ui/input'
-import { Button } from '../ui/button'
+import { Separator } from '../ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
-import { savePublicKeyOnly } from '@/store/walletsListState'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faKey } from '@fortawesome/free-solid-svg-icons'
-import { useFindActiveWallets } from '@/hooks/useFindActiveWallets'
+import { savePublicKeyOnly } from '@/store/walletsListState'
 import { ActiveWalletsSelector } from './ActiveWalletsSelector'
-import { Separator } from '../ui/separator'
-import { IWallet } from '@/types'
+import { WalletNameInput, ImportButton, useWalletSelection } from './shared'
 
 export function FromPublicKey() {
   const navigate = useNavigate()
@@ -19,7 +17,6 @@ export function FromPublicKey() {
   const [name, setName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedWallets, setSelectedWallets] = useState<string[]>([])
 
   // Function to decode public key (handles both hex and base64)
   const publicKeyBuffer = useMemo(() => {
@@ -51,31 +48,21 @@ export function FromPublicKey() {
     return publicKeyBuffer.length === 32
   }, [publicKeyBuffer])
 
-  // Use the hook if we have a valid public key
-  const { activeWallets, totalWallets, isSearching, findActiveWallets } = useFindActiveWallets(
-    isValidPublicKey ? publicKeyBuffer : Buffer.from([])
-  )
+  // Use the wallet selection hook
+  const {
+    selectedWallets,
+    activeWallets,
+    totalWallets,
+    isSearching,
+    findActiveWallets,
+    handleSelectWallet,
+    getSelectedWalletsArray,
+  } = useWalletSelection(isValidPublicKey ? publicKeyBuffer : Buffer.from([]))
 
   // Reset selected wallets when public key changes
   useEffect(() => {
-    setSelectedWallets([])
+    setError(null)
   }, [publicKey])
-
-  // Auto-select all wallets when active wallets are found
-  useEffect(() => {
-    if (activeWallets && Object.keys(activeWallets).length > 0) {
-      setSelectedWallets(Object.keys(activeWallets))
-    }
-  }, [activeWallets])
-
-  // Toggle wallet selection
-  const handleSelectWallet = (walletId: string, selected: boolean) => {
-    if (selected) {
-      setSelectedWallets((prev) => [...prev, walletId])
-    } else {
-      setSelectedWallets((prev) => prev.filter((id) => id !== walletId))
-    }
-  }
 
   const onPublicKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPublicKey(e.target.value)
@@ -100,14 +87,7 @@ export function FromPublicKey() {
 
     try {
       setIsLoading(true)
-      const selectedWalletsArray: IWallet[] = []
-      for (const walletId of selectedWallets) {
-        const wallet = activeWallets[parseInt(walletId)]
-        if (wallet) {
-          selectedWalletsArray.push(wallet.wallet)
-        }
-      }
-      await savePublicKeyOnly(name, navigate, publicKey, selectedWalletsArray)
+      await savePublicKeyOnly(name, navigate, publicKey, getSelectedWalletsArray())
     } catch (error: any) {
       console.error('Error saving wallet:', error)
       setError(error.message || 'Error saving wallet')
@@ -148,24 +128,7 @@ export function FromPublicKey() {
       </div>
 
       <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="nameRef" aria-autocomplete="none">
-            Wallet Name:
-          </label>
-          <Input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            id="nameRef"
-            className="max-w-md"
-            placeholder="My View-Only Wallet"
-            autoComplete="off"
-            aria-autocomplete="none"
-          />
-          <p className="text-xs text-muted-foreground">
-            Give your wallet a name to easily identify it later
-          </p>
-        </div>
+        <WalletNameInput name={name} onNameChange={setName} placeholder="My View-Only Wallet" />
 
         {isValidPublicKey && (
           <ActiveWalletsSelector
@@ -180,17 +143,14 @@ export function FromPublicKey() {
 
         <Separator className="my-6" />
 
-        <Button
+        <ImportButton
           onClick={savePublicKey}
-          disabled={!name || !publicKey || !isValidPublicKey || isLoading}
-          size="lg"
-        >
-          {isLoading
-            ? 'Saving...'
-            : selectedWallets.length > 0
-              ? `Import ${selectedWallets.length} Selected Wallet${selectedWallets.length > 1 ? 's' : ''}`
-              : 'Add View-Only Wallet'}
-        </Button>
+          isLoading={isLoading}
+          selectedWalletsCount={selectedWallets.length}
+          defaultText="Add View-Only Wallet"
+          name={name}
+          disabled={!name || !publicKey || !isValidPublicKey}
+        />
 
         <div className="my-6" />
       </div>

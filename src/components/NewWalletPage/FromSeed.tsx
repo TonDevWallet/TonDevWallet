@@ -1,20 +1,14 @@
 import { saveKeyFromData } from '@/store/walletsListState'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Copier from '../copier'
 import { KeyPair } from '@ton/crypto'
-import { cn } from '@/utils/cn'
 import { secretKeyToED25519 } from '@/utils/ed25519'
 import { Input } from '../ui/input'
-import { Button } from '../ui/button'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faKey } from '@fortawesome/free-solid-svg-icons'
 import { Separator } from '../ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
-import { useFindActiveWallets } from '@/hooks/useFindActiveWallets'
 import { ActiveWalletsSelector } from './ActiveWalletsSelector'
-import { IWallet } from '@/types'
+import { WalletNameInput, ImportButton, useWalletSelection, KeyInfoDisplay } from './shared'
 
 export function FromSeed() {
   const navigate = useNavigate()
@@ -24,7 +18,6 @@ export function FromSeed() {
   const [name, setName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedWallets, setSelectedWallets] = useState<string[]>([])
 
   const onWordsChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -52,26 +45,16 @@ export function FromSeed() {
     }
   }
 
-  // Use the hook if we have a valid key pair
-  const { activeWallets, totalWallets, isSearching, findActiveWallets } = useFindActiveWallets(
-    keyPair?.publicKey ? keyPair.publicKey : Buffer.from([])
-  )
-
-  // Auto-select all wallets when active wallets are found
-  useEffect(() => {
-    if (activeWallets && Object.keys(activeWallets).length > 0) {
-      setSelectedWallets(Object.keys(activeWallets))
-    }
-  }, [activeWallets])
-
-  // Toggle wallet selection
-  const handleSelectWallet = (walletId: string, selected: boolean) => {
-    if (selected) {
-      setSelectedWallets((prev) => [...prev, walletId])
-    } else {
-      setSelectedWallets((prev) => prev.filter((id) => id !== walletId))
-    }
-  }
+  // Use the wallet selection hook
+  const {
+    selectedWallets,
+    activeWallets,
+    totalWallets,
+    isSearching,
+    findActiveWallets,
+    handleSelectWallet,
+    getSelectedWalletsArray,
+  } = useWalletSelection(keyPair?.publicKey ? keyPair.publicKey : Buffer.from([]))
 
   const saveSeed = async () => {
     if (!name) {
@@ -85,19 +68,12 @@ export function FromSeed() {
 
     try {
       setIsLoading(true)
-      const selectedWalletsArray: IWallet[] = []
-      for (const walletId of selectedWallets) {
-        const wallet = activeWallets[parseInt(walletId)]
-        if (wallet) {
-          selectedWalletsArray.push(wallet.wallet)
-        }
-      }
       await saveKeyFromData(
         name || '',
         navigate,
         Buffer.from(seed, 'hex'),
         undefined,
-        selectedWalletsArray
+        getSelectedWalletsArray()
       )
     } catch (error: any) {
       console.error('Error saving wallet:', error)
@@ -141,57 +117,12 @@ export function FromSeed() {
         <div className="space-y-6">
           <Separator />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <FontAwesomeIcon icon={faKey} className="text-primary" />
-                Seed:
-              </label>
-              <div className="flex items-center p-2 bg-muted rounded-md">
-                <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
-                  {seed}
-                </code>
-                <Copier className="w-5 h-5 ml-2 shrink-0" text={seed || ''} />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <FontAwesomeIcon icon={faKey} className="text-primary" />
-                Public Key:
-              </label>
-              <div className="flex items-center p-2 bg-muted rounded-md">
-                <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
-                  {Buffer.from(keyPair?.publicKey || []).toString('hex')}
-                </code>
-                <Copier
-                  className="w-5 h-5 ml-2 shrink-0"
-                  text={Buffer.from(keyPair?.publicKey || []).toString('hex')}
-                />
-              </div>
-            </div>
-          </div>
+          <KeyInfoDisplay seed={seed} publicKey={keyPair.publicKey} />
 
           <Separator />
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="nameRef">
-                Wallet Name:
-              </label>
-              <Input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                id="nameRef"
-                className="max-w-md"
-                placeholder="My TON Wallet"
-                autoComplete="off"
-              />
-              <p className="text-xs text-muted-foreground">
-                Give your wallet a name to easily identify it later
-              </p>
-            </div>
+            <WalletNameInput name={name} onNameChange={setName} placeholder="My TON Wallet" />
 
             {keyPair?.publicKey && (
               <ActiveWalletsSelector
@@ -206,18 +137,13 @@ export function FromSeed() {
 
             <Separator className="my-6" />
 
-            <Button
+            <ImportButton
               onClick={saveSeed}
-              className={cn('', !name && 'opacity-50')}
-              disabled={!name || isLoading}
-              size="lg"
-            >
-              {isLoading
-                ? 'Saving...'
-                : selectedWallets.length > 0
-                  ? `Import ${selectedWallets.length} Selected Wallet${selectedWallets.length > 1 ? 's' : ''}`
-                  : 'Import Wallet'}
-            </Button>
+              isLoading={isLoading}
+              selectedWalletsCount={selectedWallets.length}
+              defaultText="Import Wallet"
+              name={name}
+            />
           </div>
 
           <div className="h-10"></div>
