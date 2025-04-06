@@ -9,6 +9,30 @@ import { ConnectMessageTransaction, LastSelectedWallets } from '@/types/connect'
 import { encryptWalletData, getPasswordInteractive } from './passwordManager'
 import { secretKeyToED25519 } from '@/utils/ed25519'
 
+function getDefaultWalletsToSave(
+  newWalletId: number,
+  walletsToSave?: IWallet[]
+): Omit<SavedWallet, 'id'>[] {
+  const defaultWallets: Omit<SavedWallet, 'id'>[] =
+    walletsToSave && walletsToSave.length > 0
+      ? walletsToSave.map((w) => ({
+          type: w.type,
+          key_id: newWalletId,
+          subwallet_id: ((w as any)?.subwalletId || 0).toString(),
+          name: w.type,
+        }))
+      : [
+          {
+            type: 'v5R1',
+            key_id: newWalletId,
+            subwallet_id: '2147483409',
+            name: 'v5R1',
+          },
+        ]
+
+  return defaultWallets
+}
+
 const state = hookstate<Key[]>(() => getWallets())
 
 async function getWallets() {
@@ -125,21 +149,7 @@ export async function saveKeyAndWallets(
 ) {
   const newWallet = await saveKey(db, key, walletName)
 
-  const defaultWallets: Omit<SavedWallet, 'id'>[] = walletsToSave
-    ? walletsToSave.map((w) => ({
-        type: w.type,
-        key_id: newWallet.id,
-        subwallet_id: ((w as any)?.subwalletId || 0).toString(),
-        name: w.type,
-      }))
-    : [
-        {
-          type: 'v5R1',
-          key_id: newWallet.id,
-          subwallet_id: '2147483409',
-          name: 'v5R1',
-        },
-      ]
+  const defaultWallets = getDefaultWalletsToSave(newWallet.id, walletsToSave)
 
   await setWalletKey(newWallet.id)
 
@@ -293,21 +303,7 @@ export async function savePublicKeyAndWallets(
   const newWallet = res[0]
   await updateWalletsList()
 
-  const defaultWallets: Omit<SavedWallet, 'id'>[] = walletsToSave
-    ? walletsToSave.map((w) => ({
-        type: w.type,
-        key_id: newWallet.id,
-        subwallet_id: ((w as any)?.subwalletId || 0).toString(),
-        name: w.type,
-      }))
-    : [
-        {
-          type: 'v5R1',
-          key_id: newWallet.id,
-          subwallet_id: '2147483409',
-          name: 'v5R1',
-        },
-      ]
+  const defaultWallets = getDefaultWalletsToSave(newWallet.id, walletsToSave)
 
   await setWalletKey(newWallet.id)
 

@@ -71,7 +71,11 @@ export function ActiveWalletsSelector({
                   //   const walletId = wallet.wallet.id.toString()
                   const isSelected = selectedWallets.includes(i.toString())
                   return (
-                    <TableRow key={i} className="cursor-pointer hover:bg-muted/50">
+                    <TableRow
+                      key={i}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => onSelectWallet(i.toString(), !isSelected)}
+                    >
                       <TableCell>
                         <Checkbox
                           checked={isSelected}
@@ -81,7 +85,7 @@ export function ActiveWalletsSelector({
                       <TableCell className="truncate">{wallet.wallet.type}</TableCell>
                       <TableCell className="font-mono text-xs truncate">
                         <div className="truncate">
-                          <AddressRow address={wallet.wallet.address} />
+                          <AddressRow address={wallet.wallet.address} disableCopy={true} />
                         </div>
                       </TableCell>
                       <TableCell className="truncate">{formatTon(wallet.balance)} TON</TableCell>

@@ -10,6 +10,7 @@ import { faKey } from '@fortawesome/free-solid-svg-icons'
 import { useFindActiveWallets } from '@/hooks/useFindActiveWallets'
 import { ActiveWalletsSelector } from './ActiveWalletsSelector'
 import { Separator } from '../ui/separator'
+import { IWallet } from '@/types'
 
 export function FromPublicKey() {
   const navigate = useNavigate()
@@ -60,6 +61,13 @@ export function FromPublicKey() {
     setSelectedWallets([])
   }, [publicKey])
 
+  // Auto-select all wallets when active wallets are found
+  useEffect(() => {
+    if (activeWallets && Object.keys(activeWallets).length > 0) {
+      setSelectedWallets(Object.keys(activeWallets))
+    }
+  }, [activeWallets])
+
   // Toggle wallet selection
   const handleSelectWallet = (walletId: string, selected: boolean) => {
     if (selected) {
@@ -92,7 +100,14 @@ export function FromPublicKey() {
 
     try {
       setIsLoading(true)
-      await savePublicKeyOnly(name, navigate, publicKey)
+      const selectedWalletsArray: IWallet[] = []
+      for (const walletId of selectedWallets) {
+        const wallet = activeWallets[parseInt(walletId)]
+        if (wallet) {
+          selectedWalletsArray.push(wallet.wallet)
+        }
+      }
+      await savePublicKeyOnly(name, navigate, publicKey, selectedWalletsArray)
     } catch (error: any) {
       console.error('Error saving wallet:', error)
       setError(error.message || 'Error saving wallet')
