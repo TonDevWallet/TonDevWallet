@@ -1,6 +1,6 @@
 import { useSeed } from '@/hooks/useKeyPair'
 import { saveKeyFromData } from '@/store/walletsListState'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { mnemonicValidate, mnemonicToSeed } from '@ton/crypto'
 import Copier from '../copier'
@@ -13,6 +13,9 @@ import { faKey } from '@fortawesome/free-solid-svg-icons'
 import { Separator } from '../ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
+import { useFindActiveWallets } from '@/hooks/useFindActiveWallets'
+import { ActiveWalletsSelector } from './ActiveWalletsSelector'
+import { IWallet } from '@/types'
 
 export function FromMnemonic() {
   const navigate = useNavigate()
@@ -22,6 +25,7 @@ export function FromMnemonic() {
   const [seed, setSeed] = useState<Buffer | undefined>()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedWallets, setSelectedWallets] = useState<string[]>([])
 
   const onWordsChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     try {
@@ -49,6 +53,28 @@ export function FromMnemonic() {
 
   const walletKeyPair = useSeed(seed)
 
+  console.log('walletKeyPair', walletKeyPair)
+  // Use the hook if we have a valid wallet key pair
+  const { activeWallets, totalWallets, isSearching, findActiveWallets } = useFindActiveWallets(
+    walletKeyPair?.publicKey ? walletKeyPair.publicKey : Buffer.from([])
+  )
+
+  // Auto-select all wallets when active wallets are found
+  useEffect(() => {
+    if (activeWallets && Object.keys(activeWallets).length > 0) {
+      setSelectedWallets(Object.keys(activeWallets))
+    }
+  }, [activeWallets])
+
+  // Toggle wallet selection
+  const handleSelectWallet = (walletId: string, selected: boolean) => {
+    if (selected) {
+      setSelectedWallets((prev) => [...prev, walletId])
+    } else {
+      setSelectedWallets((prev) => prev.filter((id) => id !== walletId))
+    }
+  }
+
   const saveSeed = async () => {
     if (!seed || seed.length !== 32) {
       setError('Seed must be 64 characters')
@@ -57,7 +83,14 @@ export function FromMnemonic() {
 
     try {
       setIsLoading(true)
-      await saveKeyFromData(name || '', navigate, seed, words)
+      const selectedWalletsArray: IWallet[] = []
+      for (const walletId of selectedWallets) {
+        const wallet = activeWallets[parseInt(walletId)]
+        if (wallet) {
+          selectedWalletsArray.push(wallet.wallet)
+        }
+      }
+      await saveKeyFromData(name || '', navigate, seed, words, selectedWalletsArray)
     } catch (error: any) {
       console.error('Error saving wallet:', error)
       setError(error.message || 'Error saving wallet')
@@ -151,13 +184,30 @@ export function FromMnemonic() {
               </p>
             </div>
 
+            {walletKeyPair?.publicKey && (
+              <ActiveWalletsSelector
+                activeWallets={activeWallets}
+                totalWallets={totalWallets}
+                isSearching={isSearching}
+                selectedWallets={selectedWallets}
+                onSelectWallet={handleSelectWallet}
+                onRefresh={findActiveWallets}
+              />
+            )}
+
+            <Separator className="my-6" />
+
             <Button
               onClick={saveSeed}
               className={cn('', !name && 'opacity-50')}
               disabled={!name || isLoading}
               size="lg"
             >
-              {isLoading ? 'Saving...' : 'Restore Wallet'}
+              {isLoading
+                ? 'Saving...'
+                : selectedWallets.length > 0
+                  ? `Import ${selectedWallets.length} Selected Wallet${selectedWallets.length > 1 ? 's' : ''}`
+                  : 'Restore Wallet'}
             </Button>
           </div>
 

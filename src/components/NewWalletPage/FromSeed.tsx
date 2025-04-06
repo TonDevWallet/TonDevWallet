@@ -1,5 +1,5 @@
 import { saveKeyFromData } from '@/store/walletsListState'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Copier from '../copier'
 import { KeyPair } from '@ton/crypto'
@@ -12,6 +12,9 @@ import { faKey } from '@fortawesome/free-solid-svg-icons'
 import { Separator } from '../ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
+import { useFindActiveWallets } from '@/hooks/useFindActiveWallets'
+import { ActiveWalletsSelector } from './ActiveWalletsSelector'
+import { IWallet } from '@/types'
 
 export function FromSeed() {
   const navigate = useNavigate()
@@ -21,6 +24,7 @@ export function FromSeed() {
   const [name, setName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedWallets, setSelectedWallets] = useState<string[]>([])
 
   const onWordsChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -48,6 +52,27 @@ export function FromSeed() {
     }
   }
 
+  // Use the hook if we have a valid key pair
+  const { activeWallets, totalWallets, isSearching, findActiveWallets } = useFindActiveWallets(
+    keyPair?.publicKey ? keyPair.publicKey : Buffer.from([])
+  )
+
+  // Auto-select all wallets when active wallets are found
+  useEffect(() => {
+    if (activeWallets && Object.keys(activeWallets).length > 0) {
+      setSelectedWallets(Object.keys(activeWallets))
+    }
+  }, [activeWallets])
+
+  // Toggle wallet selection
+  const handleSelectWallet = (walletId: string, selected: boolean) => {
+    if (selected) {
+      setSelectedWallets((prev) => [...prev, walletId])
+    } else {
+      setSelectedWallets((prev) => prev.filter((id) => id !== walletId))
+    }
+  }
+
   const saveSeed = async () => {
     if (!name) {
       setError('Please enter a wallet name')
@@ -60,7 +85,20 @@ export function FromSeed() {
 
     try {
       setIsLoading(true)
-      await saveKeyFromData(name || '', navigate, Buffer.from(seed, 'hex'))
+      const selectedWalletsArray: IWallet[] = []
+      for (const walletId of selectedWallets) {
+        const wallet = activeWallets[parseInt(walletId)]
+        if (wallet) {
+          selectedWalletsArray.push(wallet.wallet)
+        }
+      }
+      await saveKeyFromData(
+        name || '',
+        navigate,
+        Buffer.from(seed, 'hex'),
+        undefined,
+        selectedWalletsArray
+      )
     } catch (error: any) {
       console.error('Error saving wallet:', error)
       setError(error.message || 'Error saving wallet')
@@ -90,6 +128,7 @@ export function FromSeed() {
           value={seed}
           autoFocus
           placeholder="Enter your 64-character hexadecimal seed..."
+          autoComplete="off"
         />
         {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
         <p className="text-xs text-muted-foreground">
@@ -154,13 +193,30 @@ export function FromSeed() {
               </p>
             </div>
 
+            {keyPair?.publicKey && (
+              <ActiveWalletsSelector
+                activeWallets={activeWallets}
+                totalWallets={totalWallets}
+                isSearching={isSearching}
+                selectedWallets={selectedWallets}
+                onSelectWallet={handleSelectWallet}
+                onRefresh={findActiveWallets}
+              />
+            )}
+
+            <Separator className="my-6" />
+
             <Button
               onClick={saveSeed}
               className={cn('', !name && 'opacity-50')}
               disabled={!name || isLoading}
               size="lg"
             >
-              {isLoading ? 'Saving...' : 'Import Wallet'}
+              {isLoading
+                ? 'Saving...'
+                : selectedWallets.length > 0
+                  ? `Import ${selectedWallets.length} Selected Wallet${selectedWallets.length > 1 ? 's' : ''}`
+                  : 'Import Wallet'}
             </Button>
           </div>
 
