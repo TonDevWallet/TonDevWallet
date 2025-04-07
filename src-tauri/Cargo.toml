@@ -7,7 +7,7 @@ license = ""
 repository = ""
 default-run = "app"
 edition = "2021"
-rust-version = "1.57"
+rust-version = "1.86"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -21,11 +21,15 @@ serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "2", features = [ "devtools", "macos-private-api"] }
 libsqlite3-sys = { version = "0.28.0", features = [] }
 tokio = { version = "1.24.1", features = ["full"] }
+tokio-stream = { version = "0.1.14", features = ["net"] }
 futures-util = "0.3.25"
 log = "0.4.17"
 tokio-tungstenite = "0.18.0"
 url = "2.3.1"
 tungstenite = "0.18.0"
+http = "0.2.9"
+hyper = { version = "0.14", features = ["full"] }
+hyper-tungstenite = "0.17.0"
 env_logger = "0.10.0"
 sysinfo = "0.27.7"
 window-vibrancy = "0.3.2"
@@ -40,6 +44,15 @@ tauri-plugin-fs = "2"
 tauri-plugin-cli = "2"
 tauri-plugin-http = "2"
 tauri-plugin-dialog = "2"
+ton_api = { git = 'https://github.com/everx-labs/ever-tl.git', package = 'ton_api', tag = '0.4.32' }
+lockfree = { git = 'https://github.com/everx-labs/lockfree.git', rev="2a30df72944ed48255a97defcd387dd4962f3dd5" }
+ever_block = { features = [ 'export_key' ], git = 'https://github.com/everx-labs/ever-block.git', tag = '1.11.22' }
+stream-cancel = '0.8.0'
+anyhow = "1.0.97"
+futures = "0.3.31"
+aes-ctr = "0.6.0"
+tokio-io-timeout = "1.2.0"
+async-trait = "0.1.88"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.22.3"
@@ -55,10 +68,15 @@ windows = { version = "0.44.0", features = ["UI", "UI_ViewManagement"] }
 [features]
 # by default Tauri runs in production mode
 # when `tauri dev` runs it is executed with `cargo run --no-default-features` if `devPath` is an URL
-default = ["custom-protocol"]
+default = ["custom-protocol", "server", "client", "node"]
 # this feature is used used for production builds where `devPath` points to the filesystem
 # DO NOT remove this
 custom-protocol = ["tauri/custom-protocol"]
+telemetry = [  ]
+server = [  ]
+client = [  ]
+node = [  ]
+
 
 [dependencies.tauri-plugin-sql]
 features = ["sqlite"] # or "postgres", or "mysql"

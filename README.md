@@ -25,3 +25,119 @@ See the [CHANGELOG.md](CHANGELOG.md) file for details on recent updates, improve
 
 ## Disclaimer
 TonDevWallet is provided "as is" without any warranty. Use it at your own risk. We are not responsible for any loss or damage caused by the use of TonDevWallet. Be cautious and take appropriate measures to secure your private keys and protect your funds.
+
+# ADNL WebSocket Server
+
+This project implements a WebSocket-based variant of the ADNL (Abstract Datagram Network Layer) protocol, which is used in TON (The Open Network) blockchain.
+
+## Overview
+
+The ADNL protocol typically uses direct TCP connections for communication between nodes. This implementation adapts ADNL to work over WebSockets, allowing browsers and other WebSocket-capable clients to connect to ADNL servers.
+
+## Features
+
+- **WebSocket Compatibility**: Allows browsers and web applications to communicate using ADNL protocol
+- **Full ADNL Protocol Support**: Maintains all security and functionality of the original ADNL protocol
+- **CORS Support**: Configurable cross-origin resource sharing for web applications
+- **Path-Based Routing**: Configurable WebSocket path for the ADNL endpoint
+- **Encrypted Communication**: Uses the same encryption mechanisms as standard ADNL
+
+## Architecture
+
+The ADNL WebSocket server consists of several key components:
+
+1. **HTTP/WebSocket Server**: Accepts HTTP connections and upgrades them to WebSocket connections
+2. **ADNL Protocol Handler**: Processes ADNL handshakes and message exchanges
+3. **Cryptographic Layer**: Handles encryption/decryption of ADNL messages
+4. **Subscriber System**: Allows registering handlers for different types of ADNL messages
+
+## Usage
+
+### Server Configuration
+
+The server can be configured using JSON:
+
+```json
+{
+  "address": "127.0.0.1:8080",
+  "clients": "any",  // or a list of allowed client keys
+  "server_key": {
+    "type": "ed25519",
+    "pub": "base64_encoded_public_key",
+    "pvt": "base64_encoded_private_key"
+  },
+  "ws_path": "/adnl",
+  "cors_origins": ["*"]  // or specific origins
+}
+```
+
+### Starting the Server
+
+```rust
+use adnl_ws::{AdnlWsServer, AdnlWsServerConfig};
+
+async fn start_server() {
+    let config = AdnlWsServerConfig::from_json(config_json)?;
+    let subscribers = Vec::new(); // Add actual subscribers if needed
+    let server = AdnlWsServer::listen(config, subscribers).await?;
+    
+    // Keep server running until shutdown signal
+    tokio::signal::ctrl_c().await.unwrap();
+    server.shutdown().await;
+}
+```
+
+### Client-Side Usage
+
+The `src/client-example.js` file provides a JavaScript implementation that can be used in browsers or Node.js to connect to the ADNL WebSocket server:
+
+```javascript
+const client = new AdnlWebSocketClient(
+  'ws://localhost:8080/adnl',
+  { publicKey, privateKey },
+  serverPublicKey
+);
+
+await client.connect();
+const response = await client.sendQuery(query);
+client.disconnect();
+```
+
+## Edge Cases and Handling
+
+The implementation addresses several edge cases:
+
+1. **Connection drops**: The server gracefully handles dropped connections
+2. **WebSocket protocol violations**: Properly validates WebSocket frames
+3. **Invalid ADNL messages**: Performs thorough validation of ADNL protocol messages
+4. **CORS constraints**: Configurable CORS headers for browser compatibility
+5. **Concurrent connections**: Uses Tokio for efficient async handling of many connections
+
+## Security Considerations
+
+- The implementation maintains the same security properties as standard ADNL
+- Supports client authentication through public keys
+- Uses the same cryptographic primitives as the TCP version
+- WebSocket-specific security measures for browser contexts
+
+## Dependencies
+
+- `tokio`: For async runtime
+- `hyper`: For HTTP server capabilities
+- `tokio-tungstenite`: For WebSocket support
+- `ton_api`: For TON API definitions
+- `ever_block`: For cryptographic utilities
+- Additional support libraries for handling connections
+
+## Limitations
+
+- Performance overhead compared to direct TCP due to WebSocket framing
+- WebSocket protocol limitations on frame sizes and control messages
+- Browser security restrictions for web clients
+
+## Future Improvements
+
+- WebSocket extensions for compression
+- Performance optimizations
+- Support for additional ADNL features
+- Binary protocol optimizations

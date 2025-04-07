@@ -66,6 +66,7 @@
     "@truecarry/tlb-abi": "0.2.0-beta.8",
     "@types/bn.js": "^5.1.6",
     "@xyflow/react": "^12.5.4",
+    "adnl": "^1.0.3",
     "bn.js": "^5.2.1",
     "buffer": "^6.0.3",
     "camelcase-keys": "^9.1.3",

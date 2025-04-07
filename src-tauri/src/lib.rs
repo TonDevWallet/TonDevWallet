@@ -11,6 +11,10 @@ extern crate objc;
 
 mod proxy;
 mod ton_echo;
+mod adnl_ws;
+mod adnl_common;
+mod adnl_ws_stream;
+mod test_subscribers;
 
 use proxy::spawn_proxy;
 use ton_echo::{start_ton_echo_server, get_ton_echo_port};
@@ -18,8 +22,6 @@ use screenshots::Screen;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU16, Ordering};
 use sysinfo::{System, SystemExt};
-use tauri::Manager;
-// use tauri_plugin_sql::TauriSql;
 use tokio::net::TcpListener;
 use rxing;
 use image::{self};
@@ -27,11 +29,11 @@ use image::{self};
 
 static PORT: AtomicU16 = AtomicU16::new(0);
 
-#[derive(Clone, serde::Serialize)]
-struct Payload {
-    args: Vec<String>,
-    cwd: String,
-}
+// #[derive(Clone, serde::Serialize)]
+// struct Payload {
+//     args: Vec<String>,
+//     cwd: String,
+// }
 
 pub fn is_win_11() -> bool {
     let sys = System::new_all();
@@ -179,9 +181,12 @@ pub fn run() {
                 };
             });
 
+            tauri::async_runtime::spawn(async move {
+                start_adnl_ws_server().await;
+            });
+
             // let window = app.get_window("main").unwrap();
 
-            let handle = app.handle();
             // tauri_plugin_deep_link::register(
             //     "tondevwallet",
             //     move |request| {
@@ -204,4 +209,42 @@ pub fn run() {
         .run(|_app_handle, event| match event {
             _ => {}
         });
+}
+
+
+
+async fn start_adnl_ws_server() {
+    let config_json = r#"{
+    "address": "127.0.0.1:33001",
+    "server_key": {
+      "type_id": 1209251014,
+      "pvt_key": "5bMzwplUzokxTvfGr1xsZ8kXEAtMB7PaC1xMZ178OgM="
+    },
+    "ws_path": "/"
+    }"#;
+    
+    match adnl_ws::AdnlWsServerConfig::from_json(config_json) {
+        Ok(config) => {
+            // Start the ADNL WebSocket server
+
+            // Create test subscribers
+            let subscribers = test_subscribers::create_test_subscribers();
+            match adnl_ws::AdnlWsServer::listen(config, subscribers).await {
+                Ok(server) => {
+                    log::info!("ADNL WebSocket server started successfully");
+                    
+                    // Keep the server running
+                    tokio::signal::ctrl_c().await.unwrap();
+                    server.shutdown().await;
+                    log::info!("ADNL WebSocket server shut down");
+                },
+                Err(e) => {
+                    log::error!("Failed to start ADNL WebSocket server: {}", e);
+                }
+            }
+        },
+        Err(e) => {
+            log::error!("Failed to parse ADNL WebSocket server config: {}", e);
+        }
+    }
 }
