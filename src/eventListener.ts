@@ -5,6 +5,16 @@ import { useNavigate } from 'react-router-dom'
 import { useTonConnectState } from './store/tonConnect'
 import { getPasswordInteractive } from './store/passwordManager'
 import { getMatches } from '@tauri-apps/plugin-cli'
+import { getWallets } from './store/walletsListState'
+import { getWalletFromKey } from './utils/wallets'
+import { LiteClientState } from './store/liteClient'
+import {
+  sendNotification,
+  isPermissionGranted,
+  requestPermission,
+} from '@tauri-apps/plugin-notification'
+import { addConnectMessage } from './store/connectMessages'
+import { Address } from '@ton/core'
 
 const appWindow = getCurrentWebviewWindow()
 
@@ -90,6 +100,85 @@ export function useTauriEventListener() {
       }
 
       doConnect(startString)
+    })
+
+    return () => {
+      unlisten.then((f) => f())
+    }
+  }, [])
+
+  useEffect(() => {
+    const unlisten = listen('proxy_transaction', async ({ payload }) => {
+      const liteClient = LiteClientState.liteClient.get({ noproxy: true })
+      if (!payload) {
+        return
+      }
+
+      const data = payload as any
+      if (data.msg_type !== 'proxy_transaction') {
+        return
+      }
+
+      if (data?.data?.method !== 'sendTransaction') {
+        return
+      }
+
+      const info = JSON.parse(data.data.params[0]) as {
+        messages: {
+          address: string
+          amount: string
+          payload?: string // boc
+          stateInit?: string
+        }[]
+        valid_until: number // date now
+        from: string
+      }
+
+      const fromAddress = Address.parse(info.from).toRawString()
+      const keys = await getWallets()
+
+      let keyId: number | undefined
+      let walletId: number | undefined
+
+      for (const key of keys) {
+        for (const wallet of key.wallets || []) {
+          if (typeof walletId !== 'undefined') {
+            break
+          }
+          const tonWallet = getWalletFromKey(liteClient, key, wallet)
+          if (tonWallet?.address.toRawString() === fromAddress) {
+            keyId = key.id
+            walletId = wallet.id
+            break
+          }
+        }
+      }
+
+      if (typeof keyId === 'undefined' || typeof walletId === 'undefined') {
+        console.log('no key or wallet found')
+        return
+      }
+
+      await addConnectMessage({
+        connect_event_id: 0,
+        connect_session_id: 0,
+        payload: info,
+        key_id: keyId,
+        wallet_id: walletId,
+        status: 0,
+        wallet_address: fromAddress,
+      })
+      appWindow.unminimize()
+      appWindow.setFocus()
+
+      let permissionGranted = await isPermissionGranted()
+      if (!permissionGranted) {
+        const permission = await requestPermission()
+        permissionGranted = permission === 'granted'
+      }
+      if (permissionGranted) {
+        sendNotification({ title: 'New message', body: `From Extension` })
+      }
     })
 
     return () => {

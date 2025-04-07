@@ -7,8 +7,10 @@ use std::error::Error as stdError;
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicU16, Ordering};
 use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::mpsc;
 use tokio_tungstenite::WebSocketStream;
 use tungstenite::Message;
+use tauri::{AppHandle, Manager, Emitter};
 
 static TON_ECHO_PORT: AtomicU16 = AtomicU16::new(0);
 
@@ -27,8 +29,22 @@ struct HandshakeResponse {
     name: String,
 }
 
-pub async fn start_ton_echo_server() -> Result<u16, Box<dyn stdError + Send + Sync>> {
+pub async fn start_ton_echo_server(app_handle: AppHandle) -> Result<u16, Box<dyn stdError + Send + Sync>> {
     let _ = env_logger::try_init();
+    
+    // Create a channel for sending events to main thread
+    let (tx, mut rx) = mpsc::channel::<Value>(100);
+    
+    // Spawn a task to handle the events
+    let event_handle = app_handle.clone();
+    tokio::spawn(async move {
+        while let Some(value) = rx.recv().await {
+            match event_handle.emit("proxy_transaction", value.clone()) {
+                Ok(_) => info!("Emitted proxy_transaction event to app"),
+                Err(err) => info!("Error emitting proxy_transaction event: {:?}", err),
+            }
+        }
+    });
     
     // Try ports from 33000 to 34000
     for port in 33000..34000 {
@@ -39,8 +55,9 @@ pub async fn start_ton_echo_server() -> Result<u16, Box<dyn stdError + Send + Sy
                 TON_ECHO_PORT.store(actual_port, Ordering::Relaxed);
                 info!("TON echo server listening on port {}", actual_port);
                 
+                let tx_clone = tx.clone();
                 tokio::spawn(async move {
-                    if let Err(e) = run_echo_server(listener).await {
+                    if let Err(e) = run_echo_server(listener, tx_clone).await {
                         info!("TON echo server error: {:?}", e);
                     }
                 });
@@ -57,11 +74,15 @@ pub async fn start_ton_echo_server() -> Result<u16, Box<dyn stdError + Send + Sy
     Err("Could not find an available port between 33000 and 34000".into())
 }
 
-async fn run_echo_server(listener: TcpListener) -> Result<(), Box<dyn stdError + Send + Sync>> {
+async fn run_echo_server(
+    listener: TcpListener, 
+    tx: mpsc::Sender<Value>
+) -> Result<(), Box<dyn stdError + Send + Sync>> {
     while let Ok((stream, addr)) = listener.accept().await {
         info!("New TON echo connection from: {}", addr);
+        let tx_clone = tx.clone();
         tokio::spawn(async move {
-            if let Err(e) = handle_connection(stream).await {
+            if let Err(e) = handle_connection(stream, tx_clone).await {
                 info!("Error processing connection: {:?}", e);
             }
         });
@@ -70,12 +91,15 @@ async fn run_echo_server(listener: TcpListener) -> Result<(), Box<dyn stdError +
     Ok(())
 }
 
-async fn handle_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + Send + Sync>> {
+async fn handle_connection(
+    stream: TcpStream, 
+    tx: mpsc::Sender<Value>
+) -> Result<(), Box<dyn stdError + Send + Sync>> {
     let ws_stream = tokio_tungstenite::accept_async(stream).await?;
     info!("WebSocket connection established");
     
     let (write, read) = ws_stream.split();
-    process_messages(read, write).await?;
+    process_messages(read, write, tx).await?;
     
     Ok(())
 }
@@ -83,6 +107,7 @@ async fn handle_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
 async fn process_messages(
     mut read: SplitStream<WebSocketStream<TcpStream>>,
     mut write: SplitSink<WebSocketStream<TcpStream>, Message>,
+    tx: mpsc::Sender<Value>
 ) -> Result<(), Box<dyn stdError + Send + Sync>> {
     while let Some(message) = read.next().await {
         let message = message?;
@@ -91,18 +116,31 @@ async fn process_messages(
             let text = message.to_text()?;
             info!("Received message: {}", text);
             
-            match serde_json::from_str::<HandshakeRequest>(text) {
-                Ok(request) => {
-                    if request.msg_type == "handshake" {
-                        let response = HandshakeResponse {
-                            msg_type: "response".to_string(),
-                            id: request.id,
-                            name: "tondevwallet".to_string(),
-                        };
+            match serde_json::from_str::<Value>(text) {
+                Ok(value) => {
+                    // Check if it's a handshake request
+                    if let Some("handshake") = value.get("type").and_then(|t| t.as_str()) {
+                        if let Some(id) = value.get("id") {
+                            let response = HandshakeResponse {
+                                msg_type: "response".to_string(),
+                                id: id.clone(),
+                                name: "tondevwallet".to_string(),
+                            };
+                            
+                            let response_json = serde_json::to_string(&response)?;
+                            write.send(Message::Text(response_json)).await?;
+                            info!("Sent handshake response");
+                        }
+                    }
+                    
+                    // Handle proxy_transaction
+                    if let Some("proxy_transaction") = value.get("msg_type").and_then(|t| t.as_str()) {
+                        info!("Received proxy transaction");
                         
-                        let response_json = serde_json::to_string(&response)?;
-                        write.send(Message::Text(response_json)).await?;
-                        info!("Sent handshake response");
+                        // Send the event through the channel
+                        if let Err(err) = tx.send(value).await {
+                            info!("Error sending proxy_transaction event: {:?}", err);
+                        }
                     }
                 }
                 Err(e) => {

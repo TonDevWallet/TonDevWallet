@@ -45,7 +45,6 @@
     "notification:default",
     "core:webview:allow-create-webview-window",
     "dialog:allow-save",
-    "fs:allow-write-text-file",
-    "log:default"
+    "fs:allow-write-text-file"
   ]
 }

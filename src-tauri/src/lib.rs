@@ -166,9 +166,10 @@ pub fn run() {
                 };
             });
 
+            let app_handle = app.handle().clone();
             // Start TON echo server
             tauri::async_runtime::spawn(async move {
-                match start_ton_echo_server().await {
+                match start_ton_echo_server(app_handle).await {
                     Ok(port) => {
                         println!("TON echo server started on port {}", port);
                     },
