@@ -2,18 +2,13 @@ import { setTransactionState, useTransactionState } from '@/store/txInfo'
 import { listen } from '@tauri-apps/api/event'
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { Cell, loadTransaction, Transaction } from '@ton/core'
-import { VmLogsInfo } from './VmLogsInfo'
-import { VmStackInfo } from './VmStackInfo'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {
-  faSearch,
-  faCircleExclamation,
-  faArrowRight,
-  faKeyboard,
-} from '@fortawesome/free-solid-svg-icons'
+import { faSearch, faCircleExclamation } from '@fortawesome/free-solid-svg-icons'
 import { StackInfo } from '@/hooks/useVmLogsNavigation'
 import { KeyboardShortcutHint } from './KeyboardShortcutHint'
 import { RawTransactionInfo } from './RawTransactionInfo'
+import { TxStackInfo } from './TxStackInfo'
+import { BlockchainLogsInfo } from './BlockchainLogsInfo'
 
 export function TxInfoPage() {
   const transactionState = useTransactionState()
@@ -25,7 +20,7 @@ export function TxInfoPage() {
     new: '',
     i: -1,
   })
-  const [activeTab, setActiveTab] = useState<'logs' | 'raw'>('logs')
+  const [activeTab, setActiveTab] = useState<'stack' | 'logs' | 'raw'>('stack')
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Parse the logs to determine if data is available
@@ -131,6 +126,16 @@ export function TxInfoPage() {
         <div className="flex flex-shrink-0">
           <button
             className={`px-4 py-2 font-medium ${
+              activeTab === 'stack'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => setActiveTab('stack')}
+          >
+            Stack
+          </button>
+          <button
+            className={`px-4 py-2 font-medium ${
               activeTab === 'logs'
                 ? 'text-primary border-b-2 border-primary'
                 : 'text-muted-foreground hover:text-foreground'
@@ -183,84 +188,16 @@ export function TxInfoPage() {
       )}
 
       {/* Main Content */}
-      {activeTab === 'logs' ? (
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-          {/* VM Logs Panel */}
-          <div className="w-full md:w-[40%] md:max-w-[350px] flex flex-col h-full overflow-hidden border-r border-border">
-            <div className="flex-none bg-secondary/30">
-              <div className="p-3 border-b border-border">
-                <h2 className="font-medium text-foreground">VM Execution Log</h2>
-              </div>
-
-              <div className="bg-secondary border-b border-border px-4 py-2">
-                <div className="grid grid-cols-[60px_1fr_80px] text-sm font-medium text-muted-foreground">
-                  <div>Step</div>
-                  <div className="flex items-center">
-                    Command
-                    <div className="relative ml-2 group">
-                      <FontAwesomeIcon
-                        icon={faKeyboard}
-                        size="sm"
-                        className="text-muted-foreground/50 hover:text-muted-foreground cursor-help"
-                      />
-                      <div className="absolute left-0 top-6 z-50 hidden group-hover:block bg-popover border border-border rounded-md shadow-md p-2 text-xs text-foreground w-52">
-                        <p className="font-semibold mb-1">Keyboard Navigation:</p>
-                        <div className="grid grid-cols-[70px_1fr] gap-1">
-                          <span className="font-mono bg-accent px-1 rounded">↑ / k</span>
-                          <span>Previous instruction</span>
-                          <span className="font-mono bg-accent px-1 rounded">↓ / j</span>
-                          <span>Next instruction</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">Gas Used</div>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <VmLogsInfo
-                logs={transactionState.vmLogs.get()}
-                setStack={setStack}
-                filterText={filterText}
-                selectedStack={stack.i}
-              />
-            </div>
-          </div>
-
-          {/* Stack Comparison Panel */}
-          <div className="w-full md:w-full flex flex-col h-full overflow-hidden">
-            <div className="grid grid-cols-2 flex-none">
-              <div className="p-3 bg-secondary/30 border-r border-border">
-                <h2 className="font-medium text-foreground">Stack Before</h2>
-              </div>
-              <div className="p-3 bg-secondary/30">
-                <h2 className="font-medium text-foreground">Stack After</h2>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-hidden">
-              <VmStackInfo stack={stack} />
-            </div>
-
-            {stack.i === -1 && (
-              <div className="absolute inset-0 md:inset-auto md:right-0 md:w-[60%] md:top-[109px] md:bottom-0 flex flex-col items-center justify-center h-full text-muted-foreground p-6 z-10 pointer-events-none">
-                <div className="mb-3 flex justify-center">
-                  <FontAwesomeIcon icon={faArrowRight} size="2x" />
-                </div>
-                <p className="text-center">
-                  Select a command from the VM log to view stack changes
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+      {activeTab === 'stack' ? (
+        <TxStackInfo filterText={filterText} />
+      ) : activeTab === 'logs' ? (
+        <BlockchainLogsInfo logs={transactionState.blockchainLogs.get()} />
       ) : (
         <RawTransactionInfo tx={transactionState.tx.get() as Transaction} />
       )}
 
       {/* Keyboard Shortcut Hint */}
-      {hasLogData && activeTab === 'logs' && <KeyboardShortcutHint />}
+      {hasLogData && activeTab === 'stack' && <KeyboardShortcutHint />}
     </div>
   )
 }
