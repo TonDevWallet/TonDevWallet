@@ -1,6 +1,7 @@
 use crate::adnl_common::{
     AdnlPeers, Answer, QueryAnswer, QueryResult, Subscriber, TaggedByteVec, TaggedTlObject
 };
+use log::info;
 use ton_api::{
     ton::{TLObject, adnl::Message as AdnlMessage},
     serialize_boxed, IntoBoxed
@@ -13,6 +14,16 @@ pub struct EchoSubscriber;
 
 #[async_trait::async_trait]
 impl Subscriber for EchoSubscriber {
+    async fn try_consume_custom(&self, data: &[u8], _peers: &AdnlPeers) -> Result<bool> {
+        println!("LoggingSubscriber received custom data: {} bytes", data.len());
+        Ok(false) // We don't consume it
+    }
+    
+    async fn try_consume_object(&self, object: TLObject, _peers: &AdnlPeers) -> Result<bool> {
+        println!("LoggingSubscriber received object: {:?}", object);
+        Ok(false) // We don't consume it
+    }
+
     async fn try_consume_query(
         &self,
         object: TLObject,
@@ -21,14 +32,17 @@ impl Subscriber for EchoSubscriber {
         // Simply echo back the same object we received
         println!("EchoSubscriber received an object");
         
-        // Create a copy of the object to send back
-        // let tagged = TaggedTlObject {
-        //     object: object.clone(),
-        //     #[cfg(feature = "telemetry")]
-        //     tag: 0,
-        // };
+        let query_data = match object.downcast::<AdnlMessage>() {
+            Ok(m) => m.query().map(|q| q.to_vec()),
+            Err(object) => {
+                info!("EchoSubscriber received non-ADNL message: {:?}", object);
+                return Ok(QueryResult::Rejected(object));
+            }
+        };
+        
+        info!("EchoSubscriber received query data: {:?}", query_data);
         let tagged = TaggedByteVec {
-            object: Vec::new(),
+            object: query_data.unwrap_or_default(),
             #[cfg(feature = "telemetry")]
             tag: 0,
         };

@@ -1,4 +1,5 @@
 use aes_ctr::cipher::stream::{NewStreamCipher, SyncStreamCipher};
+use log::info;
 use core::ops::Range;
 use rand::Rng;
 use std::{
@@ -602,6 +603,7 @@ impl Query {
         query: &AdnlQueryMessage,
         peers: &AdnlPeers                                                                    
     ) -> Result<Option<QueryAdnlAnswer>> {
+        info!("Processing ADNL query: {:?}", subscribers.len());
         let ret = Self::process(subscribers, &query.query[..], peers).await?.map(
             |answer| {
                 QueryAdnlAnswer {
@@ -676,6 +678,7 @@ impl Query {
         let mut queries = deserialize_boxed_bundle(query)?;                   
         if queries.len() == 1 {
             let mut query = queries.remove(0);
+            info!("Processing ADNL query process: {:?}", subscribers.len());
             for subscriber in subscribers.iter() {
                 query = match subscriber.try_consume_query(query, peers).await? {
                     QueryResult::Consumed(answer) => return Ok(Some(answer)),

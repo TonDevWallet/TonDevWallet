@@ -301,6 +301,9 @@ importers:
       ton-lite-client:
         specifier: npm:@truecarry/ton-lite-client@^3.3.2
         version: '@truecarry/ton-lite-client@3.3.2(@ton/core@0.60.1(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0))'
+      ton-tl:
+        specifier: ^1.0.1
+        version: 1.0.1
       tonapi-sdk-js:
         specifier: ^2.0.9
         version: 2.0.9

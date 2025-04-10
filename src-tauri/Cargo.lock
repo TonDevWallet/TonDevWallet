@@ -196,6 +196,7 @@ dependencies = [
  "rxing",
  "screenshots",
  "serde",
+ "serde_derive",
  "serde_json",
  "stream-cancel",
  "sysinfo",

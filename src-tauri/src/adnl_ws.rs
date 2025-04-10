@@ -12,6 +12,11 @@ use std::{convert::TryInto, net::SocketAddr, sync::Arc, time::Duration};
 use stream_cancel::{Trigger, Tripwire};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::accept_async;
+
+use crate::devwallet::Ok::Devwallet_SendProxyTransaction;
+use crate::devwallet::OptionalSendProxyTransaction;
+use crate::devwallet::rpc::SendProxyTransaction;
+
 use ton_api::{deserialize_boxed, serialize_boxed_inplace, ton::adnl::Message as AdnlMessage};
 
 use crate::adnl_ws_stream::AdnlWsStream;
@@ -265,6 +270,8 @@ impl AdnlWsServerThread {
                 _ => None,
             };
 
+            log::info!("Got ADNL answer:");
+
             if let Some(answer) = answer {
                 let msg = match answer.try_finalize()? {
                     (Some(answer), _) => answer.wait().await?,
@@ -321,7 +328,7 @@ impl AdnlWsServer {
     ) -> Result<Self> {
         let (trigger, tripwire) = Tripwire::new();
 
-        subscribers.push(Arc::new(AdnlPingSubscriber));
+        // subscribers.push(Arc::new(AdnlPingSubscriber));
         let subscribers = Arc::new(subscribers);
 
         // Use tokio TcpListener directly since we have issues with hyper integration

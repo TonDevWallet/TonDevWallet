@@ -15,6 +15,7 @@ mod adnl_ws;
 mod adnl_common;
 mod adnl_ws_stream;
 mod test_subscribers;
+mod devwallet;
 
 use proxy::spawn_proxy;
 use ton_echo::{start_ton_echo_server, get_ton_echo_port};
