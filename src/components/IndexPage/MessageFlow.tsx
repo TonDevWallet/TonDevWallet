@@ -88,41 +88,49 @@ export function MessageFlow({ transactions: _txes }: MessageFlowProps) {
       children: [],
       edges: [],
     }
-    for (const tx of transactions.filter((tx) => !tx.parent)) {
+    if (transactions.length === 1) {
       graph.children.push({
-        id: tx.id.toString(),
+        id: transactions[0].id.toString(),
         width: 400,
-        height: getTxHeight(tx),
+        height: getTxHeight(transactions[0]),
       })
-      const children: GraphTx[][] = [tx.children as GraphTx[]]
-      const parent = [tx]
+    } else {
+      for (const tx of transactions.filter((tx) => !tx.parent)) {
+        graph.children.push({
+          id: tx.id.toString(),
+          width: 400,
+          height: getTxHeight(tx),
+        })
+        const children: GraphTx[][] = [tx.children as GraphTx[]]
+        const parent = [tx]
 
-      while (children.length > 0) {
-        const locChildren = children.pop()
-        const locParent = parent.pop()
+        while (children.length > 0) {
+          const locChildren = children.pop()
+          const locParent = parent.pop()
 
-        if (!locChildren?.length) {
-          return
-        }
-
-        for (const childTx of locChildren) {
-          if (!childTx.id) {
-            continue
+          if (!locChildren?.length) {
+            return
           }
-          graph.children.push({
-            id: childTx.id.toString(),
-            width: 400,
-            height: getTxHeight(childTx),
-          })
 
-          graph.edges.push({
-            id: `edge-${locParent?.id}-${childTx.id}`,
-            sources: [locParent?.id?.toString() || '0'],
-            targets: [childTx.id.toString()],
-          })
-          if (childTx.children.length > 0) {
-            children.push(childTx.children as GraphTx[])
-            parent.push(childTx)
+          for (const childTx of locChildren) {
+            if (!childTx.id) {
+              continue
+            }
+            graph.children.push({
+              id: childTx.id.toString(),
+              width: 400,
+              height: getTxHeight(childTx),
+            })
+
+            graph.edges.push({
+              id: `edge-${locParent?.id}-${childTx.id}`,
+              sources: [locParent?.id?.toString() || '0'],
+              targets: [childTx.id.toString()],
+            })
+            if (childTx.children.length > 0) {
+              children.push(childTx.children as GraphTx[])
+              parent.push(childTx)
+            }
           }
         }
       }

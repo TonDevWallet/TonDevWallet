@@ -12,6 +12,8 @@ export interface TonConnectMessageTransaction {
   wallet_id: number
   status: number
   payload: ConnectMessageTransactionPayload
+  message_mode?: number
+
   message_cell?: string
 
   wallet_address?: string

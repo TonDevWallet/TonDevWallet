@@ -454,7 +454,7 @@ function getExternalMessageCellFromTonWalletV1(
       seqno: await wallet.getSeqno(),
       secretKey: keyPair.secretKey,
       message: msg,
-      sendMode: SendMode.IGNORE_ERRORS | SendMode.PAY_GAS_SEPARATELY,
+      sendMode: m.mode ?? SendMode.IGNORE_ERRORS | SendMode.PAY_GAS_SEPARATELY,
     })
     const ext = external({
       to: wallet.address,
@@ -497,7 +497,7 @@ function getExternalMessageCellFromTonWallet(
         }
         return msg
       }),
-      sendMode: SendMode.IGNORE_ERRORS | SendMode.PAY_GAS_SEPARATELY,
+      sendMode: transfers[0]?.mode ?? SendMode.IGNORE_ERRORS | SendMode.PAY_GAS_SEPARATELY,
     })
     const ext = external({
       to: wallet.address,
