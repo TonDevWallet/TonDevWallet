@@ -2,21 +2,21 @@ use std::borrow::Cow;
 
 use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
+use log::trace;
 use std::error::Error as stdError;
 use std::net::SocketAddr;
+use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::WebSocketStream;
-use tungstenite::{http, Message};
-use url::form_urlencoded;
-use std::time::Duration;
 use tokio::time::timeout;
+use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::{
     accept_hdr_async,
     tungstenite::handshake::server::{Request, Response},
 };
-use log::trace;
+use tungstenite::{http, Message};
+use url::form_urlencoded;
 // use log::info;
 
 pub async fn spawn_proxy(listener: &mut TcpListener) -> Result<(), Box<dyn stdError + Send>> {
@@ -88,10 +88,9 @@ async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
         Ok(res)
     };
 
-
     // let mut rng = rand::thread_rng();
     // let random_value: f64 = rand::random();
-    
+
     // if random_value < 0.5 {
     //     if let Err(e) = stream.shutdown().await {
     //         info!("Error while closing WebSocket: {:?}", e);
@@ -106,9 +105,6 @@ async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + S
             panic!("Error");
         }
     };
-
-    
-
 
     trace!("New WebSocket connection: {}", addr);
 
