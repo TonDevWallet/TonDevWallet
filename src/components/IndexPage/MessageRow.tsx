@@ -84,7 +84,7 @@ export const MessageRow = memo(function MessageRow({
 
   const transfers = useMemo(() => {
     try {
-      return GetTransfersFromTCMessage(s.payload.messages.get())
+      return GetTransfersFromTCMessage(s.payload.messages.get(), s.message_mode?.get() ?? 3)
     } catch (e) {
       console.error(e)
       return []

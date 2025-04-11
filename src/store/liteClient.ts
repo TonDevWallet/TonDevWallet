@@ -5,7 +5,7 @@ import { getDatabase } from '@/db'
 import { delay } from '@/utils'
 import { Functions } from 'ton-lite-client/dist/schema'
 import { LSConfigData, Network } from '@/types/network'
-import { fetch as tFetch } from '@tauri-apps/api/http'
+import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { Api, HttpClient } from 'tonapi-sdk-js'
 
 const LiteClientState = hookstate<{
@@ -175,7 +175,8 @@ export function getLiteClient(configUrl: string): LiteClient {
 }
 
 async function addWorkingEngineToRoundRobin(configUrl: string, robin: LiteRoundRobinEngine) {
-  const { data } = await tFetch<LSConfigData>(configUrl)
+  const response = await tFetch(configUrl)
+  const data = (await response.json()) as LSConfigData
   if (!data || !data.liteservers) {
     return
   }

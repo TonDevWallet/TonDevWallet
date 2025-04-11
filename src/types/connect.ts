@@ -10,6 +10,7 @@ export interface ConnectMessageTransactionMessage {
   payload?: string // boc
   stateInit?: string
   extra_currency?: { [k: number]: string }
+  send_mode?: number // Message mode for smart contract execution
 }
 
 export interface ConnectMessageTransactionPayload {
@@ -28,6 +29,7 @@ export interface ConnectMessageTransaction {
   payload: string // ConnectMessageTransactionPayload
   wallet_address?: string
   message_cell?: string
+  message_mode?: number
 
   created_at: Date
   updated_at: Date

@@ -21,9 +21,9 @@ import {
   isPermissionGranted,
   requestPermission,
   sendNotification,
-} from '@tauri-apps/api/notification'
-import { appWindow } from '@tauri-apps/api/window'
-import { invoke } from '@tauri-apps/api'
+} from '@tauri-apps/plugin-notification'
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { invoke } from '@tauri-apps/api/core'
 import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/passwordManager'
 import { getWalletListState } from '@/store/walletsListState'
 import { ImmutableObject } from '@hookstate/core'
@@ -32,6 +32,7 @@ import { ApproveTonConnectMessage, GetTransfersFromTCMessage } from '@/utils/ton
 import { ConnectMessageTransactionMessage } from '@/types/connect'
 import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
 import { useNavigate } from 'react-router-dom'
+const appWindow = getCurrentWebviewWindow()
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()

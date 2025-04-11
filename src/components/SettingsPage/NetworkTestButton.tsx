@@ -4,7 +4,7 @@ import { faSpinner, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { cn } from '@/utils/cn'
 import { useState, useEffect } from 'react'
-import { fetch as tFetch } from '@tauri-apps/api/http'
+import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { LiteClient, LiteRoundRobinEngine, LiteSingleEngine } from 'ton-lite-client'
 import { tauriState } from '@/store/tauri'
 import { LSConfigData } from '@/types/network'
@@ -51,7 +51,8 @@ const NetworkTestButton = ({ url }: NetworkTestButtonProps) => {
 
     try {
       // Fetch the liteserver configuration
-      const { data } = await tFetch<LSConfigData>(url)
+      const response = await tFetch(url)
+      const data = (await response.json()) as LSConfigData
 
       if (!data || !data.liteservers || data.liteservers.length === 0) {
         setTestStatus({

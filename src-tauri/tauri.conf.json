@@ -3,14 +3,49 @@
   "build": {
     "beforeBuildCommand": "npx --no-install vite build",
     "beforeDevCommand": "npx --no-install vite dev",
-    "devPath": "http://localhost:3003",
-    "distDir": "../dist"
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:3003"
   },
-  "package": {
-    "productName": "TonDevWallet",
-    "version": "../package.json"
+  "bundle": {
+    "active": true,
+    "category": "DeveloperTool",
+    "copyright": "",
+    "targets": "all",
+    "externalBin": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "longDescription": "",
+    "macOS": {
+      "entitlements": null,
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": null,
+      "signingIdentity": null
+    },
+    "resources": [],
+    "shortDescription": "",
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    },
+    "createUpdaterArtifacts": "v1Compatible"
   },
-  "tauri": {
+  "productName": "TonDevWallet",
+  "mainBinaryName": "TonDevWallet",
+  "version": "../package.json",
+  "identifier": "com.tondevwallet.tondevwallet",
+  "plugins": {
     "cli": {
       "args": [
         {
@@ -20,119 +55,22 @@
         }
       ]
     },
-    "allowlist": {
-      "http": {
-        "all": true,
-        "request": true,
-        "scope": [
-          "https://**",
-          "http://**"
-        ]
-      },
-      "path": {
-        "all": true
-      },
-     "shell": {
-        "all": false,
-        "execute": false,
-        "open": true,
-        "sidecar": false
-      },
-      "notification": {
-        "all": true
-      },
-      "window": {
-        "all": false,
-        "center": false,
-        "close": false,
-        "create": true,
-        "hide": false,
-        "maximize": false,
-        "minimize": true,
-        "print": false,
-        "requestUserAttention": false,
-        "setAlwaysOnTop": false,
-        "setCursorGrab": false,
-        "setCursorIcon": false,
-        "setCursorPosition": false,
-        "setCursorVisible": false,
-        "setDecorations": true,
-        "setFocus": true,
-        "setFullscreen": false,
-        "setIcon": false,
-        "setIgnoreCursorEvents": false,
-        "setMaxSize": false,
-        "setMinSize": false,
-        "setPosition": false,
-        "setResizable": false,
-        "setSize": false,
-        "setSkipTaskbar": false,
-        "setTitle": false,
-        "show": false,
-        "startDragging": true,
-        "unmaximize": false,
-        "unminimize": true
-      },
-      "fs": {
-        "exists": true,
-        "removeFile": true,
-        "createDir": true,
-        "scope": [
-          "$APPDATA/test.db*",
-          "$APPDATA/databases/*",
-          "$APPDATA/databases/data.db",
-          "$APPDATA/databases"
-        ],
-        "writeFile": true
-      },
-      "dialog": {
-        "save": true
+    "deep-link": {
+      "desktop": {
+        "schemes": ["tondevwallet"]
       }
-    },
-    "bundle": {
-      "active": true,
-      "category": "DeveloperTool",
-      "copyright": "",
-      "deb": {
-        "depends": []
-      },
-      "externalBin": [],
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "identifier": "com.tondevwallet.tondevwallet",
-      "longDescription": "",
-      "macOS": {
-        "entitlements": null,
-        "exceptionDomain": "",
-        "frameworks": [],
-        "providerShortName": null,
-        "signingIdentity": null
-      },
-      "resources": [],
-      "shortDescription": "",
-      "targets": "all",
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": ""
-      }
-    },
-    "security": {
-      "csp": null
     },
     "updater": {
-      "active": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJEQzFCOTdCRDM0ODc3RjUKUldUMWQwalRlN25CdllLZW9vOU95T3hMOU41SFJFelVLUmhoN3NIRmYrRFpZQXMwN091V3I2NjIK",
       "endpoints": [
         "https://github.com/TonDevWallet/TonDevWallet/releases/latest/download/latest.json"
       ],
-      "dialog": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJEQzFCOTdCRDM0ODc3RjUKUldUMWQwalRlN25CdllLZW9vOU95T3hMOU41SFJFelVLUmhoN3NIRmYrRFpZQXMwN091V3I2NjIK"
-    },
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
+  "app": {
     "windows": [
       {
         "fullscreen": false,
@@ -143,9 +81,13 @@
         "focus": true,
         "transparent": false,
         "decorations": true,
-        "url": "/app"
+        "url": "/app",
+        "useHttpsScheme": true
       }
     ],
-    "macOSPrivateApi": true
+    "macOSPrivateApi": true,
+    "security": {
+      "csp": null
+    }
   }
 }

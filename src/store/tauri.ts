@@ -1,5 +1,5 @@
 import { hookstate, useHookstate } from '@hookstate/core'
-import { invoke } from '@tauri-apps/api'
+import { invoke } from '@tauri-apps/api/core'
 
 export const tauriState = hookstate(async () => {
   const port = await invoke<string>('get_ws_port')

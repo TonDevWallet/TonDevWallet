@@ -1,4 +1,4 @@
-import Database from 'tauri-plugin-sql-api'
+import Database from '@tauri-apps/plugin-sql'
 import { Knex } from 'knex'
 
 import sqliteDialect from 'knex/lib/dialects/sqlite3'

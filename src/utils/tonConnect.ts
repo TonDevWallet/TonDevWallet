@@ -94,7 +94,8 @@ export async function RejectTonConnectMessage({
 }
 
 export function GetTransfersFromTCMessage(
-  messages: ImmutableArray<ConnectMessageTransactionMessage> | ConnectMessageTransactionMessage[]
+  messages: ImmutableArray<ConnectMessageTransactionMessage> | ConnectMessageTransactionMessage[],
+  messageMode: number = 3
 ): WalletTransfer[] {
   return messages
     .map((m: ConnectMessageTransactionMessage) => {
@@ -138,7 +139,7 @@ export function GetTransfersFromTCMessage(
         body: payload,
         destination,
         amount: BigInt(m.amount),
-        mode: 3,
+        mode: messageMode,
         state,
         bounce: bounce ?? true,
         extraCurrency,

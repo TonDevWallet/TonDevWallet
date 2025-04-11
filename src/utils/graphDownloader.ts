@@ -1,6 +1,6 @@
 import { SerializeTransactionsList } from './txSerializer'
-import { save } from '@tauri-apps/api/dialog'
-import { writeTextFile } from '@tauri-apps/api/fs'
+import { save } from '@tauri-apps/plugin-dialog'
+import { writeTextFile } from '@tauri-apps/plugin-fs'
 
 export async function downloadGraph(transactions: any[]) {
   try {
@@ -26,7 +26,6 @@ export async function downloadGraph(transactions: any[]) {
 
       if (filePath) {
         console.log('saving filePath', filePath)
-        // Write the file to the selected path
         await writeTextFile(filePath, dump)
         console.log('File saved successfully to:', filePath)
       } else {

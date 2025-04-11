@@ -1,6 +1,8 @@
-import { appWindow, Theme } from '@tauri-apps/api/window'
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { Theme } from '@tauri-apps/api/window'
 import { useState, useEffect } from 'react'
 import useLocalStorageState from 'use-local-storage-state'
+const appWindow = getCurrentWebviewWindow()
 
 export const useTheme = (): [Theme, (v: Theme) => void] => {
   const [theme, setThemeValue] = useState<Theme>('light')

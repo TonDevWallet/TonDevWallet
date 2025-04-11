@@ -10,13 +10,13 @@ import { Cell, beginCell, storeStateInit, StateInit } from '@ton/core'
 import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { BlueButton } from '../ui/BlueButton'
-import { fetch as tFetch } from '@tauri-apps/api/http'
+import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { IWallet } from '@/types'
 import { Block } from '../ui/Block'
-import { invoke } from '@tauri-apps/api'
+import { invoke } from '@tauri-apps/api/core'
 import clsx from 'clsx'
-import { appWindow } from '@tauri-apps/api/window'
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import {
   DecryptedWalletData,
   getPasswordInteractive,
@@ -25,6 +25,7 @@ import {
 } from '@/store/passwordManager'
 import { delay } from '@/utils'
 import { randomX25519, secretKeyToED25519 } from '@/utils/ed25519'
+const appWindow = getCurrentWebviewWindow()
 
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
@@ -38,7 +39,7 @@ export function TonConnect() {
   const passwrodState = usePassword()
   const decryptedData = useDecryptWalletData(
     passwrodState.password.get(),
-    selectedKey?.encrypted.get()
+    selectedKey?.encrypted.get() || undefined
   )
 
   const detect = async () => {
@@ -88,11 +89,12 @@ export function TonConnect() {
       return
     }
 
-    const { data: metaInfo } = await tFetch<{
+    const response = await tFetch(r.manifestUrl)
+    const metaInfo = (await response.json()) as {
       iconUrl: string
       name: string
       url: string
-    }>(r.manifestUrl)
+    }
 
     if (!metaInfo.name) {
       console.log('No connect meta', metaInfo)

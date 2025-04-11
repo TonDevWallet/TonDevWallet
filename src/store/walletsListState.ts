@@ -35,7 +35,7 @@ function getDefaultWalletsToSave(
 
 const state = hookstate<Key[]>(() => getWallets())
 
-async function getWallets() {
+export async function getWallets() {
   const db = await getDatabase()
   const res = await db<Key>('keys')
   const wallets = await db<SavedWallet>('wallets').select('*')
@@ -255,7 +255,7 @@ export async function savePublicKeyOnly(
   walletsToSave?: IWallet[]
 ) {
   // Normalize the public key format if needed (assuming base64 is preferred storage format)
-  let normalizedPublicKey = publicKey
+  const normalizedPublicKey = publicKey
 
   // If it's a hex string, convert it to base64
   // if (/^[0-9a-fA-F]+$/.test(publicKey) || /^0x[0-9a-fA-F]+$/.test(publicKey)) {
