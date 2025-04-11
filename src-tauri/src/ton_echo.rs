@@ -2,15 +2,14 @@ use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::{SinkExt, StreamExt};
 use log::info;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::error::Error as stdError;
-use std::net::SocketAddr;
 use std::sync::atomic::{AtomicU16, Ordering};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::mpsc;
 use tokio_tungstenite::WebSocketStream;
 use tungstenite::Message;
-use tauri::{AppHandle, Manager, Emitter};
+use tauri::{AppHandle, Emitter};
 
 static TON_ECHO_PORT: AtomicU16 = AtomicU16::new(0);
 

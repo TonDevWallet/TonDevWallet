@@ -18,12 +18,10 @@ use screenshots::Screen;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU16, Ordering};
 use sysinfo::{System, SystemExt};
-use tauri::Manager;
-// use tauri_plugin_sql::TauriSql;
 use tokio::net::TcpListener;
 use rxing;
 use image::{self};
-
+use tauri::{Manager, Emitter};
 
 static PORT: AtomicU16 = AtomicU16::new(0);
 
@@ -136,72 +134,73 @@ fn get_ton_echo_ws_port() -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri_plugin_deep_link::prepare("de.fabianlars.deep-link-test");
+    // tauri_plugin_deep_link::prepare("de.fabianlars.deep-link-test");
     // register_urlhandler(None).unwrap();
     let _ = env_logger::try_init();
     let context = tauri::generate_context!();
 
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+    #[cfg(desktop)] {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+            println!("{}, {argv:?}, {cwd}", app.package_info().name);
+            app.emit("single-instance", Payload { args: argv, cwd }).unwrap();
+            let _ = app.get_webview_window("main")
+                .expect("no main window")
+                .set_focus();
+        }))
+    }
+    builder = builder
+        .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_notification::init());
+    
+    builder.setup(move |app| {
+        #[cfg(any(windows, target_os = "linux"))]
+        {
+            use tauri_plugin_deep_link::DeepLinkExt;
+            app.deep_link().register_all()?;
+        }
 
-        // .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
-        //     println!("{}, {argv:?}, {cwd}", app.package_info().name);
-        //     app.emit_all("single-instance", Payload { args: argv, cwd })
-        //         .unwrap();
-        // }))
-        .setup(move |app| {
-            tauri::async_runtime::spawn(async move {
-                let mut lst = TcpListener::bind("127.0.0.1:0").await.unwrap();
-                // port = lst.local_addr().unwrap().port();
-                PORT.store(lst.local_addr().unwrap().port(), Ordering::Relaxed);
+        tauri::async_runtime::spawn(async move {
+            let mut lst = TcpListener::bind("127.0.0.1:0").await.unwrap();
+            // port = lst.local_addr().unwrap().port();
+            PORT.store(lst.local_addr().unwrap().port(), Ordering::Relaxed);
 
-                match spawn_proxy(&mut lst).await {
-                    Ok(_) => (),
-                    Err(e) => panic!("Listener Error {}", e),
-                };
-            });
-
-            let app_handle = app.handle().clone();
-            // Start TON echo server
-            tauri::async_runtime::spawn(async move {
-                match start_ton_echo_server(app_handle).await {
-                    Ok(port) => {
-                        println!("TON echo server started on port {}", port);
-                    },
-                    Err(e) => {
-                        eprintln!("Failed to start TON echo server: {}", e);
-                    }
-                };
-            });
-
-            // let window = app.get_window("main").unwrap();
-
-            let handle = app.handle();
-            // tauri_plugin_deep_link::register(
-            //     "tondevwallet",
-            //     move |request| {
-            //     dbg!(&request);
-            //     handle.emit_all("single-instance", request).unwrap();
-            //     },
-            // )
-            // .unwrap(/* If listening to the scheme is optional for your app, you don't want to unwrap here. */);
-            Ok(())
-        })
-        .invoke_handler(tauri::generate_handler![
-            get_ws_port,
-            get_ton_echo_ws_port,
-            get_os_name,
-            detect_qr_code,
-            detect_qr_code_from_image,
-        ])
-        .build(context)
-        .expect("error while running tauri application")
-        .run(|_app_handle, event| match event {
-            _ => {}
+            match spawn_proxy(&mut lst).await {
+                Ok(_) => (),
+                Err(e) => panic!("Listener Error {}", e),
+            };
         });
+
+        let app_handle = app.handle().clone();
+        // Start TON echo server
+        tauri::async_runtime::spawn(async move {
+            match start_ton_echo_server(app_handle).await {
+                Ok(port) => {
+                    println!("TON echo server started on port {}", port);
+                },
+                Err(e) => {
+                    eprintln!("Failed to start TON echo server: {}", e);
+                }
+            };
+        });
+
+        Ok(())
+    })
+    .invoke_handler(tauri::generate_handler![
+        get_ws_port,
+        get_ton_echo_ws_port,
+        get_os_name,
+        detect_qr_code,
+        detect_qr_code_from_image,
+    ])
+    .build(context)
+    .expect("error while running tauri application")
+    .run(|_app_handle, event| match event {
+        _ => {}
+    });
 }

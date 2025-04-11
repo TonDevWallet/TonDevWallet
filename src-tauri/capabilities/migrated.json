@@ -41,10 +41,12 @@
     "cli:allow-cli-matches",
     "cli:default",
     "core:window:allow-unminimize",
+    "core:window:allow-minimize",
     "core:window:allow-set-focus",
     "notification:default",
     "core:webview:allow-create-webview-window",
     "dialog:allow-save",
-    "fs:allow-write-text-file"
+    "fs:allow-write-text-file",
+    "deep-link:default"
   ]
 }

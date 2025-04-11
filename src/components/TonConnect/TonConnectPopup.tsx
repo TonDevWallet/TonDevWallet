@@ -23,6 +23,7 @@ import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
 import { Address } from '@ton/core'
 import { GlobalSearch } from '../GlobalSearch/GlobalSearch'
 import { useSearchState } from '@/store/searchState'
+import { AlertDialogDescription, AlertDialogTitle } from '@radix-ui/react-alert-dialog'
 
 const optionsMatrix = {
   bounceable: [true, false],
@@ -214,6 +215,8 @@ function ConnectPopupContent() {
 
   return (
     <div className="relative overflow-hidden my-8 max-h-[768px] h-full">
+      <AlertDialogTitle></AlertDialogTitle>
+      <AlertDialogDescription></AlertDialogDescription>
       <div className="h-full relative bg-background border rounded-xl flex flex-col">
         <div className="flex-none w-full flex flex-col items-center border-b border-gray-500/50">
           <div className="p-4 w-full flex flex-col items-center">

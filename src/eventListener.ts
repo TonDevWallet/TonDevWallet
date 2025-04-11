@@ -15,6 +15,7 @@ import {
 } from '@tauri-apps/plugin-notification'
 import { addConnectMessage } from './store/connectMessages'
 import { Address } from '@ton/core'
+import { onOpenUrl } from '@tauri-apps/plugin-deep-link'
 
 const appWindow = getCurrentWebviewWindow()
 
@@ -69,12 +70,14 @@ export function useTauriEventListener() {
   }, [])
 
   useEffect(() => {
-    const unlisten = listen('single-instance', async ({ event, payload, ...eventObj }) => {
-      console.log('single listen', event, payload, eventObj)
+    const unlisten = onOpenUrl(async (urls: string[]) => {
+      console.log('deep link:', urls)
 
-      if (!payload) {
+      if (!urls || urls.length === 0) {
         return
       }
+
+      const payload = urls[0]
 
       let startString: string
 
