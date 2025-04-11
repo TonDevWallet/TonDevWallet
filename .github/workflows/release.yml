@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - release
+      - tauri-2.0
 
 env:
   TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
