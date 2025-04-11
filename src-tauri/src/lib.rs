@@ -9,12 +9,15 @@ use rxing::multi::MultipleBarcodeReader;
 #[macro_use]
 extern crate objc;
 
+#[cfg(any(target_os = "macos", windows, target_os = "linux"))]
+use screenshots::Screen;
+
 mod proxy;
 mod ton_echo;
 
 use proxy::spawn_proxy;
 use ton_echo::{start_ton_echo_server, get_ton_echo_port};
-use screenshots::Screen;
+
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU16, Ordering};
 use sysinfo::{System, SystemExt};
@@ -120,6 +123,12 @@ fn get_os_name() -> Result<String, String> {
 
     #[cfg(target_os = "linux")]
     return Ok("linux".to_string());
+
+    #[cfg(target_os = "ios")]
+    return Ok("ios".to_string());
+
+    #[cfg(target_os = "android")]
+    return Ok("android".to_string());
 }
 
 #[tauri::command]

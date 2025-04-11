@@ -30,7 +30,6 @@ env_logger = "0.10.0"
 sysinfo = "0.27.7"
 window-vibrancy = "0.3.2"
 base64 = "0.21.0"
-screenshots = "0.6.0"
 rxing = "0.4.7"
 image = "0.24.6"
 tauri-plugin-notification = "2"
@@ -54,6 +53,7 @@ windows = { version = "0.44.0", features = ["UI", "UI_ViewManagement"] }
 
 [target."cfg(any(target_os = \"macos\", windows, target_os = \"linux\"))".dependencies]
 tauri-plugin-single-instance = { version = "2.0.0", features = ["deep-link"] }
+screenshots = "0.6.0"
 
 [features]
 # by default Tauri runs in production mode
