@@ -48,23 +48,53 @@ export default function () {
       hosts.push(currentHost)
       await browser.storage.local.set({ enabledHosts: hosts })
 
-      // Inject the script for this tab
-      await browser.scripting.executeScript({
-        target: { tabId: currentTab.id },
-        files: ['src/inject.js'],
-        world: 'MAIN' as any,
-      })
+      await browser.action.setIcon({ path: '/icon/app-icon.png' })
 
-      // Set the badge to indicate enabled status
-      // await browser.action.setBadgeText({ text: 'ON' })
-      // await browser.action.setBadgeBackgroundColor({ color: '#4CAF50' })
+      try {
+        // Inject the script for this tab
+        await browser.scripting.executeScript({
+          target: { tabId: currentTab.id },
+          files: ['src/inject.js'],
+          world: 'MAIN' as any,
+        })
+      } catch (e) {
+        console.error(e)
+      }
 
-      // Reload the tab to ensure script runs properly
-      // browser.tabs.reload(currentTab.id)
-
-      // Close the popup
+      setIsEnabled(true)
       window.close()
+    } else {
+      setIsEnabled(true)
     }
+  }
+
+  const disableForThisSite = async () => {
+    if (!currentHost) return
+
+    // Get currently enabled hosts
+    const data = await browser.storage.local.get('enabledHosts')
+    const hosts = data.enabledHosts || []
+
+    // Remove the current host from the enabled list
+    const updatedHosts = hosts.filter((host: string) => host !== currentHost)
+    await browser.storage.local.set({ enabledHosts: updatedHosts })
+
+    // Update the state
+    setIsEnabled(false)
+
+    await browser.action.setIcon({ path: '/icon-disabled/app-icon.png' })
+
+    // Get current tab
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true })
+    const currentTab = tabs[0]
+
+    if (currentTab?.id) {
+      // Reload the tab to ensure script is no longer active
+      browser.tabs.reload(currentTab.id)
+    }
+
+    // Close the popup
+    window.close()
   }
 
   return (
@@ -87,6 +117,12 @@ export default function () {
           {!isEnabled && currentHost && (
             <button className="enable-button" onClick={enableForThisSite}>
               Enable for this website
+            </button>
+          )}
+
+          {isEnabled && currentHost && (
+            <button className="enable-button" onClick={disableForThisSite}>
+              Disable for this website
             </button>
           )}
 

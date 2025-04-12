@@ -186,7 +186,7 @@ pub fn run() {
             }
 
             #[cfg(desktop)]
-            app.handle()
+            let _ = app.handle()
                 .plugin(tauri_plugin_updater::Builder::new().build());
 
             tauri::async_runtime::spawn(async move {

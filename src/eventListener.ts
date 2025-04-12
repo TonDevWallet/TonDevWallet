@@ -118,7 +118,7 @@ export function useTauriEventListener() {
       }
 
       const data = payload as any
-      if (data.msg_type !== 'proxy_transaction') {
+      if (data.type !== 'proxy_transaction') {
         return
       }
 

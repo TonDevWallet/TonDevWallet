@@ -1,0 +1,29 @@
+{
+  "name": "@tondevwallet/traces",
+  "version": "0.1.4",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "module": "./dist/index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    "types": "./index.d.ts",
+    "import": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "typescript": "~5.7.3"
+  },
+  "peerDependencies": {
+    "@ton/core": "^0.60.1",
+    "@ton/crypto": "^3.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

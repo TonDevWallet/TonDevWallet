@@ -132,11 +132,12 @@ async fn process_messages(
                             write.send(Message::Text(response_json)).await?;
                             info!("Sent handshake response");
                         }
+                        continue;
                     }
 
                     // Handle proxy_transaction
                     if let Some("proxy_transaction") =
-                        value.get("msg_type").and_then(|t| t.as_str())
+                        value.get("type").and_then(|t| t.as_str())
                     {
                         info!("Received proxy transaction");
 
@@ -144,6 +145,19 @@ async fn process_messages(
                         if let Err(err) = tx.send(value).await {
                             info!("Error sending proxy_transaction event: {:?}", err);
                         }
+                        continue;
+                    }
+
+                    if let Some("transactions_dump") =
+                        value.get("type").and_then(|t| t.as_str())
+                    {
+                        info!("Received transactions dump");
+
+                        // Send the event through the channel
+                        if let Err(err) = tx.send(value).await {
+                            info!("Error sending proxy_transaction event: {:?}", err);
+                        }
+                        continue;
                     }
                 }
                 Err(e) => {

@@ -2,7 +2,7 @@
   "{{chrome}}.manifest_version": 3,
   "{{firefox}}.manifest_version": 2,
   "icons": {
-    "128": "icon/app-icon.png"
+    "128": "icon-disabled/app-icon.png"
   },
   "web_accessible_resources": [
     {
