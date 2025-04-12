@@ -1,5 +1,6 @@
-import { hookstate, useHookstate } from '@hookstate/core'
+import { hookstate, none, useHookstate } from '@hookstate/core'
 import { ParsedTransaction } from '@/utils/ManagedBlockchain'
+import { uuidv7 } from '@/utils/uuidv7'
 
 export interface GraphData {
   transactions: ParsedTransaction[]
@@ -55,7 +56,7 @@ export function useSelectedTx() {
 }
 
 export function addTracerItem(name: string, data: GraphData | null) {
-  const id = Date.now().toString()
+  const id = uuidv7()
   const newItem: TracerItem = {
     id,
     name,
@@ -95,11 +96,24 @@ export function setSelectedTx(tx: ParsedTransaction | null) {
 
 export function removeTracerItem(id: string) {
   const items = state.items.get()
-  const filteredItems = items.filter((item) => item.id !== id)
-  state.items.set(filteredItems)
+
+  const currentIndex = items.findIndex((item) => item.id === id)
+
+  const filteredItemsIndices = items.map((item, index) => (item.id === id ? index : undefined))
+  // .filter((i) => typeof i === 'number')
+  const filteredItemsIndicesNumbers = filteredItemsIndices.filter((i) => typeof i === 'number')
+
+  console.log('filteredItemsIndices', id, items, filteredItemsIndices, filteredItemsIndicesNumbers)
+  for (const i of filteredItemsIndicesNumbers) {
+    state.items[i].set(none)
+  }
 
   if (state.activeItemId.get() === id) {
-    state.activeItemId.set(filteredItems.length > 0 ? filteredItems[0].id : null)
+    if (state.items.length > 0) {
+      state.activeItemId.set(state.items[currentIndex - 1].id.get())
+    } else {
+      state.activeItemId.set(null)
+    }
   }
 }
 

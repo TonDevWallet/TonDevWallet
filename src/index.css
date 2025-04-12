@@ -311,3 +311,17 @@ html {
     opacity: 1;
   }
 }
+
+/* Utility class to hide scrollbars but keep scrolling functionality */
+.scrollbar-hide {
+  /* Firefox */
+  scrollbar-width: none;
+  
+  /* Chrome, Safari and Opera */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* IE and Edge */
+  -ms-overflow-style: none;
+}

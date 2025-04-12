@@ -18,7 +18,7 @@ import { Address } from '@ton/core'
 import { onOpenUrl } from '@tauri-apps/plugin-deep-link'
 import { DeserializeTraceDump } from '@tondevwallet/traces'
 import { addTracerItem } from './store/tracerState'
-import { ParsedTransaction } from './utils/ManagedBlockchain'
+import { AddParsedToDumpTransaction } from './utils/txSerializer'
 const appWindow = getCurrentWebviewWindow()
 
 export function useTauriEventListener() {
@@ -205,7 +205,9 @@ export function useTauriEventListener() {
       const traceName = `Trace ${formattedDate}`
 
       // Add new tracer item with the current date as name
-      addTracerItem(traceName, { transactions: dump.transactions as any as ParsedTransaction[] })
+      addTracerItem(traceName, {
+        transactions: dump.transactions.map(AddParsedToDumpTransaction),
+      })
 
       // Navigate to tracer page
       navigate('/app/tracer')
