@@ -327,6 +327,8 @@ async function emulateTransactions(
     if (!stateUpdateOk) {
       console.log('State update failed')
       console.log(emulationResult)
+      console.log('Old Hash:', currentTx.stateUpdate.newHash.toString('hex'))
+      console.log('New Hash:', emulatedTx.stateUpdate.newHash.toString('hex'))
       throw new Error(`State update failed for lt: ${currentTx.lt}`)
     }
 

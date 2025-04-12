@@ -17,7 +17,7 @@ import { addConnectMessage } from './store/connectMessages'
 import { Address } from '@ton/core'
 import { onOpenUrl } from '@tauri-apps/plugin-deep-link'
 import { DeserializeTraceDump } from '@tondevwallet/traces'
-import { setGraphData } from './store/tracerState'
+import { addTracerItem } from './store/tracerState'
 import { ParsedTransaction } from './utils/ManagedBlockchain'
 const appWindow = getCurrentWebviewWindow()
 
@@ -193,18 +193,22 @@ export function useTauriEventListener() {
 
   useEffect(() => {
     const unlisten = listen('transactions_dump', async ({ payload }) => {
-      console.log('transactions_dump', payload)
       const data = payload as any
       if (data.type !== 'transactions_dump') {
         return
       }
 
       const dump = DeserializeTraceDump(data.data)
-      console.log('transactions_dump', dump)
 
+      const now = new Date()
+      const formattedDate = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
+      const traceName = `Trace ${formattedDate}`
+
+      // Add new tracer item with the current date as name
+      addTracerItem(traceName, { transactions: dump.transactions as any as ParsedTransaction[] })
+
+      // Navigate to tracer page
       navigate('/app/tracer')
-      setGraphData({ transactions: dump.transactions as any as ParsedTransaction[] })
-      console.log('transactions_dump', dump.transactions)
     })
 
     return () => {
