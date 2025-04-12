@@ -76,7 +76,7 @@ const fieldsToSave: Array<
       }
 
       return {
-        balance: t?.balance.toString() ?? '0',
+        balance: t?.balance?.toString() ?? '0',
         owner: t?.owner?.toString() ?? '',
         jettonAddress: t?.jettonAddress?.toString() ?? '',
       }
@@ -118,8 +118,8 @@ export function SerializeTraceDump({ transactions }: TraceDump): string {
           }
           return acc
         }, {} as any),
-        parentId: t.parent?.lt.toString(),
-        childrenIds: t.children?.map((c) => c.lt.toString()),
+        parentId: t.parent?.lt?.toString(),
+        childrenIds: t.children?.map((c) => c?.lt?.toString()),
       }
     }),
   }

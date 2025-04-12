@@ -3,7 +3,7 @@ import { DeserializeTransactionsList } from '@/utils/txSerializer'
 import { FileUploadArea } from './FileUploadArea'
 import { GraphDisplay } from './GraphDisplay'
 import { Button } from '@/components/ui/button'
-import { setSelectedTx } from '@/store/tracerState'
+import { setSelectedTx, useGraphData, setGraphData } from '@/store/tracerState'
 import { useLocation } from 'react-router-dom'
 import { RemoteTracerViewer } from './RemoteTracerViewer'
 import {
@@ -18,18 +18,15 @@ import { cn } from '@/utils/cn'
 import { downloadGraph } from '@/utils/graphDownloader'
 import { faDownload } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-
-interface GraphData {
-  transactions: any[]
-}
+import { ParsedTransaction } from '@/utils/ManagedBlockchain'
 
 export function TracerPage() {
   const isLoading = false
-  const [graphData, setGraphData] = useState<GraphData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const location = useLocation()
 
-  // Get all remote tracer state
+  // Get global state
+  const graphData = useGraphData()
   const activeHash = useActiveHash()
   const tracerTransactions = useTracerTransactions()
   const traceLoading = useTraceLoading()
@@ -67,14 +64,20 @@ export function TracerPage() {
     setError(null)
   }
 
+  useEffect(() => {
+    console.log('graphData in tracer', graphData.get())
+  }, [graphData])
+
   // Use remote tracer transactions when available
   const displayData = activeHash.get()
     ? { transactions: [...tracerTransactions.get({ noproxy: true })] }
-    : graphData
+    : graphData.get({ noproxy: true })?.transactions
+      ? { transactions: graphData.get({ noproxy: true })?.transactions as ParsedTransaction[] }
+      : null
 
   const handleDownloadGraph = useCallback(async () => {
     if (displayData?.transactions) {
-      await downloadGraph(displayData.transactions)
+      await downloadGraph(displayData.transactions as any[])
     }
   }, [displayData])
 

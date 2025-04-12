@@ -16,7 +16,9 @@ import {
 import { addConnectMessage } from './store/connectMessages'
 import { Address } from '@ton/core'
 import { onOpenUrl } from '@tauri-apps/plugin-deep-link'
-
+import { DeserializeTraceDump } from '@tondevwallet/traces'
+import { setGraphData } from './store/tracerState'
+import { ParsedTransaction } from './utils/ManagedBlockchain'
 const appWindow = getCurrentWebviewWindow()
 
 export function useTauriEventListener() {
@@ -182,6 +184,27 @@ export function useTauriEventListener() {
       if (permissionGranted) {
         sendNotification({ title: 'New message', body: `From Extension` })
       }
+    })
+
+    return () => {
+      unlisten.then((f) => f())
+    }
+  }, [])
+
+  useEffect(() => {
+    const unlisten = listen('transactions_dump', async ({ payload }) => {
+      console.log('transactions_dump', payload)
+      const data = payload as any
+      if (data.type !== 'transactions_dump') {
+        return
+      }
+
+      const dump = DeserializeTraceDump(data.data)
+      console.log('transactions_dump', dump)
+
+      navigate('/app/tracer')
+      setGraphData({ transactions: dump.transactions as any as ParsedTransaction[] })
+      console.log('transactions_dump', dump.transactions)
     })
 
     return () => {

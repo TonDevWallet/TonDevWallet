@@ -28,21 +28,26 @@ struct HandshakeResponse {
     name: String,
 }
 
+struct EchoValue {
+    msg_type: String,
+    data: Value
+}
+
 pub async fn start_ton_echo_server(
     app_handle: AppHandle,
 ) -> Result<u16, Box<dyn stdError + Send + Sync>> {
     let _ = env_logger::try_init();
 
     // Create a channel for sending events to main thread
-    let (tx, mut rx) = mpsc::channel::<Value>(100);
+    let (tx, mut rx) = mpsc::channel::<EchoValue>(100);
 
     // Spawn a task to handle the events
     let event_handle = app_handle.clone();
     tokio::spawn(async move {
         while let Some(value) = rx.recv().await {
-            match event_handle.emit("proxy_transaction", value.clone()) {
-                Ok(_) => info!("Emitted proxy_transaction event to app"),
-                Err(err) => info!("Error emitting proxy_transaction event: {:?}", err),
+            match event_handle.emit(&value.msg_type, value.data.clone()) {
+                Ok(_) => info!("Emitted event to app"),
+                Err(err) => info!("Error emitting event: {:?}", err),
             }
         }
     });
@@ -77,7 +82,7 @@ pub async fn start_ton_echo_server(
 
 async fn run_echo_server(
     listener: TcpListener,
-    tx: mpsc::Sender<Value>,
+    tx: mpsc::Sender<EchoValue>,
 ) -> Result<(), Box<dyn stdError + Send + Sync>> {
     while let Ok((stream, addr)) = listener.accept().await {
         info!("New TON echo connection from: {}", addr);
@@ -94,7 +99,7 @@ async fn run_echo_server(
 
 async fn handle_connection(
     stream: TcpStream,
-    tx: mpsc::Sender<Value>,
+    tx: mpsc::Sender<EchoValue>,
 ) -> Result<(), Box<dyn stdError + Send + Sync>> {
     let ws_stream = tokio_tungstenite::accept_async(stream).await?;
     info!("WebSocket connection established");
@@ -108,7 +113,7 @@ async fn handle_connection(
 async fn process_messages(
     mut read: SplitStream<WebSocketStream<TcpStream>>,
     mut write: SplitSink<WebSocketStream<TcpStream>, Message>,
-    tx: mpsc::Sender<Value>,
+    tx: mpsc::Sender<EchoValue>,
 ) -> Result<(), Box<dyn stdError + Send + Sync>> {
     while let Some(message) = read.next().await {
         let message = message?;
@@ -142,7 +147,10 @@ async fn process_messages(
                         info!("Received proxy transaction");
 
                         // Send the event through the channel
-                        if let Err(err) = tx.send(value).await {
+                        if let Err(err) = tx.send(EchoValue {
+                            msg_type: "proxy_transaction".to_string(),
+                            data: value,
+                        }).await {
                             info!("Error sending proxy_transaction event: {:?}", err);
                         }
                         continue;
@@ -154,8 +162,11 @@ async fn process_messages(
                         info!("Received transactions dump");
 
                         // Send the event through the channel
-                        if let Err(err) = tx.send(value).await {
-                            info!("Error sending proxy_transaction event: {:?}", err);
+                        if let Err(err) = tx.send(EchoValue {
+                            msg_type: "transactions_dump".to_string(),
+                            data: value,
+                        }).await {
+                            info!("Error sending transactions_dump event: {:?}", err);
                         }
                         continue;
                     }
