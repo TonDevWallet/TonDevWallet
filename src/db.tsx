@@ -43,7 +43,7 @@ async function checkFs() {
   }
 
   if (!(await exists('databases', { baseDir: BaseDirectory.AppData }))) {
-    await mkdir('databases', { baseDir: BaseDirectory.AppData })
+    await mkdir('databases', { baseDir: BaseDirectory.AppData, recursive: true })
   }
 }
 
