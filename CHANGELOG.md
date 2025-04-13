@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-04-13
+
+### Added
+- Browser extension that intercepts TonConnect transactions in browsers and sends them to the app for emulation
+- `@tondevwallet/traces` library for developers to easily send traces to the TonDevWallet
+- Mode selection for sending transactions with customizable flags (pay fees separately, ignore errors, bounce on fail, etc.)
+- Enhanced tracer page with tab support for multiple trace analysis sessions
+
+### Fixed
+- Public key encoding issues when importing view-only wallets
+
+### Technical
+- Migrated codebase to Tauri 2.0 framework
+
 ## [0.6.2] - 2025-04-06
 
 ### Added
