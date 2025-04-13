@@ -50,12 +50,12 @@ export function TracerPage() {
   const showUploadArea = !hasActiveTrace
 
   return (
-    <div className="w-full mx-auto">
+    <div className="w-full mx-auto h-full flex flex-col">
       <TracerHeader />
 
       <TracerTabs />
 
-      <div className="mt-4">
+      <div className="flex-1 mt-4 overflow-hidden flex flex-col pb-8">
         {error && (
           <div className="text-destructive p-4 border border-destructive/20 bg-destructive/10 rounded-lg mb-4">
             {error}

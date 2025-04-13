@@ -29,7 +29,7 @@ export function TracerContent({ transactions }: TracerContentProps) {
   }, [transactions])
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 h-full flex-1 overflow-hidden">
       {activeHash.get() && (
         <div className="bg-muted p-4 rounded-lg border">
           <div className="flex justify-between items-center">

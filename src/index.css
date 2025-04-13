@@ -119,6 +119,8 @@
     --ring: 240 10% 3.9%;
  
     --radius: 0.5rem;
+
+    --xy-controls-button-background-color: #fefefe;
   }
  
   .dark {
@@ -149,6 +151,9 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+    --xy-controls-button-background-color: var(--color-background);
+    --xy-controls-button-background-color-hover-props: var(--color-muted);
+    --xy-controls-button-border-color-props: var(--color-border);
   }
 }
 
