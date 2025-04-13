@@ -47,6 +47,7 @@
     "core:webview:allow-create-webview-window",
     "dialog:allow-save",
     "fs:allow-write-text-file",
-    "deep-link:default"
+    "deep-link:default",
+    "dialog:allow-confirm"
   ]
 }
