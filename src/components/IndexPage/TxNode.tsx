@@ -63,6 +63,8 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       tx.description.actionPhase?.resultCode !== 0) ||
     (tx.description.type === 'generic' && tx.description.bouncePhase?.type)
 
+  const isHashMismatch = !!tx.hashMismatch
+
   const opCode = useMemo(() => {
     if (tx.inMessage?.body) {
       try {
@@ -88,7 +90,8 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
           ? 'bg-blue-900/95 text-white'
           : addressColor + ' text-secondary-foreground',
         isTxError && 'bg-red-900/95 text-white',
-        selectedTx?.value?.lt === tx.lt
+        isHashMismatch && 'bg-orange-900/95 text-white',
+        selectedTx?.lt === tx.lt
           ? 'border-primary ring-4 ring-primary/30'
           : 'border-transparent hover:border-primary/30'
       )}
@@ -111,6 +114,11 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
             {isTxError && (
               <span className="inline-flex items-center px-2 py-1 rounded-full bg-red-500/20 text-red-100 text-xs font-medium">
                 Error
+              </span>
+            )}
+            {isHashMismatch && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full bg-orange-500/20 text-orange-100 text-xs font-medium">
+                Hash Mismatch
               </span>
             )}
           </div>

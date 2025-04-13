@@ -87,7 +87,7 @@ export async function getEmulationWithStack(
   const executor = blockchain.executor
 
   // Emulate previous transactions
-  const { lastTxEmulated } = await emulateTransactions(
+  const { lastTxEmulated, hashMismatch } = await emulateTransactions(
     executor,
     blockConfig,
     randSeed,
@@ -105,6 +105,7 @@ export async function getEmulationWithStack(
     children: [],
     externals: [],
     ...lastTxEmulated,
+    hashMismatch,
   }
   // Build the EmulateWithStackResult object with proper properties
   return {
@@ -278,7 +279,9 @@ async function emulateTransactions(
 ): Promise<{
   shardAccountStr: string
   lastTxEmulated: SmartContractTransaction | null
+  hashMismatch: boolean
 }> {
+  let hashMismatch = false
   // Prepare transactions in correct order
   const prevTxsInBlock = txs.slice(0)
   prevTxsInBlock.reverse()
@@ -287,11 +290,8 @@ async function emulateTransactions(
   initialShardAccount.lastTransactionLt = 0n
   initialShardAccount.lastTransactionHash = 0n
 
-  let shardAccountStr = beginCell()
-    .store(storeShardAccount(initialShardAccount))
-    .endCell()
-    .toBoc()
-    .toString('base64')
+  const shardAccountCell = beginCell().store(storeShardAccount(initialShardAccount)).endCell()
+  let shardAccountStr = shardAccountCell.toBoc().toString('base64')
 
   // Emulate transactions
   sendStatus('Emulating')
@@ -301,6 +301,14 @@ async function emulateTransactions(
     let txCounter = 1
     const currentTx = prevTxsInBlock.pop()
     if (!currentTx) break
+
+    // const startHash = Cell.fromBase64(shardAccountStr).hash()
+    // const initialStateOk = currentTx.stateUpdate.oldHash.equals(startHash)
+    // if (!initialStateOk) {
+    //   console.log('Initial state mismatch')
+    //   console.log('startHash', startHash)
+    //   console.log('currentTx.stateUpdate.oldHash', currentTx.stateUpdate.oldHash)
+    // }
 
     // let txCounter = 1
     sendStatus(`Emulating ${txCounter}/${prevTxsInBlock.length}`)
@@ -314,8 +322,9 @@ async function emulateTransactions(
 
     // Verify emulation success
     if (!emulationResult.result.success) {
-      console.log(emulationResult.logs)
-      console.log(emulationResult.debugLogs)
+      console.log('logs', emulationResult.logs)
+      console.log('debugLogs', emulationResult.debugLogs)
+      console.log('result', emulationResult.result)
       throw new Error(`Transaction failed for lt: ${currentTx.lt}`)
     }
 
@@ -330,7 +339,8 @@ async function emulateTransactions(
       console.log('emulatedTx', emulatedTx)
       console.log('Old Hash:', currentTx.stateUpdate.newHash.toString('hex'))
       console.log('New Hash:', emulatedTx.stateUpdate.newHash.toString('hex'))
-      throw new Error(`State update failed for lt: ${currentTx.lt}`)
+      // throw new Error(`State update failed for lt: ${currentTx.lt}`)
+      hashMismatch = true
     }
 
     // Update shard account
@@ -351,5 +361,5 @@ async function emulateTransactions(
     }
   }
 
-  return { shardAccountStr, lastTxEmulated }
+  return { shardAccountStr, lastTxEmulated, hashMismatch }
 }

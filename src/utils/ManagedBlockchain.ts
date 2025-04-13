@@ -18,6 +18,7 @@ export type ParsedTransaction = BlockchainTransaction & {
     owner?: Address
     jettonAddress?: Address
   }
+  hashMismatch?: boolean
 }
 export type ManagedSendMessageResult = {
   transactions: ParsedTransaction[]
