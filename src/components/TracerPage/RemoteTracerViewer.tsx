@@ -1,73 +1,36 @@
-import { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useTraceData } from '@/hooks/useTraceData'
-import { setSelectedTx } from '@/store/tracerState'
 import {
-  useTxHash,
-  useActiveHash,
-  setTxHash,
-  setActiveHash,
-  setTracerTransactions,
-  setTraceLoading,
-  setTraceProgress,
-  setTraceError,
-  useTraceLoading,
-  useTraceProgress,
-  useTraceError,
-  clearRemoteTracerState,
-} from '@/store/remoteTracerState'
+  addRemoteTracerItem,
+  useActiveRemoteTraceData,
+  abortRemoteTrace,
+  useActiveItem,
+} from '@/store/tracerState'
+import { useTxHash, setTxHash, clearRemoteTracerState } from '@/store/remoteTracerState'
 
 export function RemoteTracerViewer() {
-  // Use global state instead of local state
   const txHash = useTxHash()
-  const activeHash = useActiveHash()
-  const traceLoading = useTraceLoading()
-  const traceProgress = useTraceProgress()
-  const traceError = useTraceError()
 
-  // Keep track of previous transaction length to avoid infinite updates
-  const prevTransactionsLength = useRef(0)
-
-  const {
-    transactions,
-    loading: loadingState,
-    progress: progressState,
-    error: errorState,
-    abort: abortTraceLoading,
-  } = useTraceData(activeHash.get())
-
-  // When tracing state changes, update the global store
-  useEffect(() => {
-    setTraceLoading(loadingState)
-    setTraceProgress(progressState)
-    setTraceError(errorState)
-  }, [loadingState, progressState, errorState])
-
-  // When transactions change, update the global store
-  useEffect(() => {
-    // Only update store if the transaction count has changed
-    if (transactions.length > 0 && transactions.length !== prevTransactionsLength.current) {
-      prevTransactionsLength.current = transactions.length
-      setTracerTransactions(transactions)
-    } else if (transactions.length === 0 && prevTransactionsLength.current > 0) {
-      // Reset if transactions are cleared
-      prevTransactionsLength.current = 0
-      setTracerTransactions([])
-    }
-  }, [transactions])
+  // Get the active remote trace data
+  const activeTraceData = useActiveRemoteTraceData()
+  const activeItem = useActiveItem()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (txHash.get().trim()) {
-      setActiveHash(txHash.get().trim())
-    }
+    const hash = txHash.get().trim()
+    if (!hash) return
+
+    // Create a new tab immediately and start remote trace emulation
+    const traceName = `Trace ${hash.substring(0, 10)}...`
+    addRemoteTracerItem(traceName, hash)
+
+    // Clear the input field
+    setTxHash('')
   }
 
   const handleClear = () => {
     clearRemoteTracerState()
-    setSelectedTx(null)
-    prevTransactionsLength.current = 0
+    setTxHash('')
   }
 
   return (
@@ -80,32 +43,38 @@ export function RemoteTracerViewer() {
           placeholder="Enter transaction hash"
           className="flex-1"
         />
-        <Button type="submit" disabled={!txHash.get().trim() || traceLoading.get()}>
+        <Button type="submit" disabled={!txHash.get().trim()}>
           Trace
         </Button>
-        {activeHash.get() && (
-          <Button variant="outline" onClick={handleClear} disabled={traceLoading.get()}>
-            Clear
-          </Button>
-        )}
+        <Button variant="outline" onClick={handleClear} type="button">
+          Clear
+        </Button>
       </form>
 
-      {traceError.get() && <div className="text-red-500 mb-4">{traceError.get()}</div>}
-
-      {activeHash.get() && (
+      {activeTraceData && (
         <div className="mb-4">
-          <h3 className="text-lg font-medium mb-2">Active Trace: {activeHash.get()}</h3>
+          <h3 className="text-lg font-medium mb-2">Active Trace: {activeTraceData.hash.get()}</h3>
           <div className="flex items-center mb-2">
             <div className="flex-1">
               <p>
-                Loaded {traceProgress.loaded.get()} of {traceProgress.total.get()} transactions
+                Loaded {activeTraceData.progress.loaded.get()} of{' '}
+                {activeTraceData.progress.total.get()} transactions
               </p>
+              {activeTraceData.error.get() && (
+                <div className="text-red-500 mt-2">{activeTraceData.error.get()}</div>
+              )}
             </div>
-            {traceLoading.get() && (
-              <Button variant="destructive" size="sm" onClick={abortTraceLoading}>
-                Cancel
-              </Button>
-            )}
+            {activeTraceData.loading.get() &&
+              activeTraceData.abortController.get() &&
+              activeItem?.remoteId && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => abortRemoteTrace(activeItem.remoteId!)}
+                >
+                  Cancel
+                </Button>
+              )}
           </div>
         </div>
       )}

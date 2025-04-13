@@ -3,7 +3,7 @@ import { createContext, useContext } from 'react'
 import { ImportMigrations } from './utils/getMigrations'
 import { ClientSqliteWasm } from './utils/knexSqliteDialect'
 import { appDataDir, BaseDirectory } from '@tauri-apps/api/path'
-import { removeFile, exists, createDir } from '@tauri-apps/api/fs'
+import { remove, exists, mkdir } from '@tauri-apps/plugin-fs'
 
 let db: Knex
 
@@ -36,14 +36,14 @@ export async function InitDB() {
 async function checkFs() {
   const cleanFiles = ['test.db', 'test.db-shm', 'test.db-wal']
   for (const file of cleanFiles) {
-    const testDbExists = await exists(file, { dir: BaseDirectory.AppData })
+    const testDbExists = await exists(file, { baseDir: BaseDirectory.AppData })
     if (testDbExists) {
-      await removeFile(file, { dir: BaseDirectory.AppData })
+      await remove(file)
     }
   }
 
-  if (!(await exists('databases', { dir: BaseDirectory.AppData }))) {
-    await createDir('databases', { dir: BaseDirectory.AppData })
+  if (!(await exists('databases', { baseDir: BaseDirectory.AppData }))) {
+    await mkdir('databases', { baseDir: BaseDirectory.AppData, recursive: true })
   }
 }
 

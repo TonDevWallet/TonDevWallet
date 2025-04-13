@@ -1,6 +1,7 @@
 import { Transaction, storeTransaction, beginCell, Cell, loadTransaction } from '@ton/core'
 import { ParsedTransaction } from './ManagedBlockchain'
 import { parseInternal } from '@truecarry/tlb-abi'
+import { TraceTransaction } from '@tondevwallet/traces'
 
 const fieldsToSave = [
   'blockchainLogs',
@@ -75,4 +76,17 @@ export function DeserializeTransactionsList(jsonDump: string): {
   return {
     transactions: parsedTxes,
   }
+}
+
+export function AddParsedToDumpTransaction(transaction: TraceTransaction): ParsedTransaction {
+  const result = transaction as any as ParsedTransaction
+  if (transaction.inMessage?.body) {
+    const parsed = parseInternal(transaction.inMessage.body.asSlice())
+    if (parsed) {
+      result.parsed = parsed
+    }
+  }
+
+  console.log('result', transaction, result)
+  return result
 }

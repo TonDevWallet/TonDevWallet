@@ -3,25 +3,31 @@ import { Button } from '@/components/ui/button'
 import { faUpload } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { cn } from '@/utils/cn'
+import { processTracerJsonFile } from '@/utils/fileUpload'
 
 interface FileUploadAreaProps {
-  onFileProcessed: (data: any) => void
+  onFileProcessed?: (data: any) => void
+  processDirectly?: boolean
 }
 
-export function FileUploadArea({ onFileProcessed }: FileUploadAreaProps) {
+export function FileUploadArea({ onFileProcessed, processDirectly = false }: FileUploadAreaProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    try {
-      const text = await file.text()
-      const data = JSON.parse(text)
-      onFileProcessed(data)
-    } catch (error) {
-      console.error('Error loading graph file:', error)
-      alert("Error loading file. Please make sure it's a valid graph JSON file.")
+    if (processDirectly) {
+      await processTracerJsonFile(file)
+    } else if (onFileProcessed) {
+      try {
+        const text = await file.text()
+        const data = JSON.parse(text)
+        onFileProcessed(data)
+      } catch (error) {
+        console.error('Error loading graph file:', error)
+        alert("Error loading file. Please make sure it's a valid graph JSON file.")
+      }
     }
   }
 

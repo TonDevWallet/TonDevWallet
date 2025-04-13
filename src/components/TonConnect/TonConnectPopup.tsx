@@ -1,7 +1,7 @@
 import { addTonConnectSession, closeTonConnectPopup, useTonConnectState } from '@/store/tonConnect'
 import { ConnectRequest } from '@tonconnect/protocol'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetch as tFetch } from '@tauri-apps/api/http'
+import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { useWalletListState } from '@/store/walletsListState'
 import { KeyJazzicon } from '../KeyJazzicon'
 import { cn } from '@/utils/cn'
@@ -23,6 +23,7 @@ import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
 import { Address } from '@ton/core'
 import { GlobalSearch } from '../GlobalSearch/GlobalSearch'
 import { useSearchState } from '@/store/searchState'
+import { AlertDialogDescription, AlertDialogTitle } from '@radix-ui/react-alert-dialog'
 
 const optionsMatrix = {
   bounceable: [true, false],
@@ -214,6 +215,8 @@ function ConnectPopupContent() {
 
   return (
     <div className="relative overflow-hidden my-8 max-h-[768px] h-full">
+      <AlertDialogTitle></AlertDialogTitle>
+      <AlertDialogDescription></AlertDialogDescription>
       <div className="h-full relative bg-background border rounded-xl flex flex-col">
         <div className="flex-none w-full flex flex-col items-center border-b border-gray-500/50">
           <div className="p-4 w-full flex flex-col items-center">
@@ -352,10 +355,10 @@ function useConnectLink(link: string) {
           }
         | undefined
       try {
-        const { data } = await tFetch<any>(r.manifestUrl, {
-          method: 'GET',
-          timeout: { secs: 3, nanos: 0 },
+        const response = await tFetch(r.manifestUrl, {
+          connectTimeout: 3000,
         })
+        const data = await response.json()
         metaInfo = data
       } catch (e) {
         //

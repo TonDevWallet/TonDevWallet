@@ -1,0 +1,39 @@
+{
+  "{{chrome}}.manifest_version": 3,
+  "{{firefox}}.manifest_version": 2,
+  "icons": {
+    "128": "icon-disabled/app-icon.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/inject.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "notifications"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "{{chrome}}.action": {
+    "default_popup": "src/popup.html"
+  },
+  "{{firefox}}.browser_action": {
+    "default_popup": "src/popup.html"
+  },
+  "background": {
+    "{{chrome}}.service_worker": "src/background.ts",
+    "{{firefox}}.scripts": [
+      "src/background.ts"
+    ]
+  }
+}

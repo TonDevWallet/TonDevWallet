@@ -6,7 +6,7 @@ import { AddressRow } from '../AddressRow'
 import { TxNodeData } from './MessageFlow'
 import { cn } from '@/utils/cn'
 import { useSelectedTx, setSelectedTx } from '@/store/tracerState'
-import { WebviewWindow } from '@tauri-apps/api/window'
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import Copier from '../copier'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
@@ -63,6 +63,8 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
       tx.description.actionPhase?.resultCode !== 0) ||
     (tx.description.type === 'generic' && tx.description.bouncePhase?.type)
 
+  const isHashMismatch = !!tx.hashMismatch
+
   const opCode = useMemo(() => {
     if (tx.inMessage?.body) {
       try {
@@ -88,7 +90,8 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
           ? 'bg-blue-900/95 text-white'
           : addressColor + ' text-secondary-foreground',
         isTxError && 'bg-red-900/95 text-white',
-        selectedTx?.value?.lt === tx.lt
+        isHashMismatch && 'bg-orange-900/95 text-white',
+        selectedTx?.lt === tx.lt
           ? 'border-primary ring-4 ring-primary/30'
           : 'border-transparent hover:border-primary/30'
       )}
@@ -113,17 +116,22 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
                 Error
               </span>
             )}
+            {isHashMismatch && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full bg-orange-500/20 text-orange-100 text-xs font-medium">
+                Hash Mismatch
+              </span>
+            )}
           </div>
           <button
             onClick={(e) => {
               e.stopPropagation()
               const webview = new WebviewWindow(`txinfo:${tx.lt}:${tx.address.toString()}`, {
-                focus: true,
                 url: '/txinfo',
-                center: true,
                 title: `Transaction ${tx.lt} ${tx.address.toString()}`,
                 height: 800,
                 width: 1200,
+                center: true,
+                focus: true,
               })
               webview.once('tauri://created', function () {
                 setTimeout(() => {
@@ -138,6 +146,9 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
                     blockchainLogs: (tx as any).blockchainLogs,
                   })
                 }, 1000)
+              })
+              webview.once('tauri://error', function (e) {
+                console.log('window error', e)
               })
             }}
             className="

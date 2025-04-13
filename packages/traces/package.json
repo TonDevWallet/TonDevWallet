@@ -1,0 +1,35 @@
+{
+  "name": "@tondevwallet/traces",
+  "version": "0.1.6",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "main": "./dist/traces.umd.cjs",
+  "module": "./dist/traces.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/traces.js",
+      "require": "./dist/traces.umd.cjs"
+    }
+  },
+  "scripts": {
+    "build": "rimraf dist && vite build"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "typescript": "~5.7.3",
+    "vite": "^6.2.6",
+    "vite-plugin-dts": "^4.5.3"
+  },
+  "peerDependencies": {
+    "@ton/core": "^0.60.1",
+    "@ton/crypto": "^3.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

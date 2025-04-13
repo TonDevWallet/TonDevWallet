@@ -1,10 +1,25 @@
 import { listen } from '@tauri-apps/api/event'
-import { window as tWindow } from '@tauri-apps/api'
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTonConnectState } from './store/tonConnect'
 import { getPasswordInteractive } from './store/passwordManager'
-import { getMatches } from '@tauri-apps/api/cli'
+import { getMatches } from '@tauri-apps/plugin-cli'
+import { getWallets } from './store/walletsListState'
+import { getWalletFromKey } from './utils/wallets'
+import { LiteClientState } from './store/liteClient'
+import {
+  sendNotification,
+  isPermissionGranted,
+  requestPermission,
+} from '@tauri-apps/plugin-notification'
+import { addConnectMessage } from './store/connectMessages'
+import { Address } from '@ton/core'
+import { onOpenUrl } from '@tauri-apps/plugin-deep-link'
+import { DeserializeTraceDump } from '@tondevwallet/traces'
+import { addTracerItem } from './store/tracerState'
+import { AddParsedToDumpTransaction } from './utils/txSerializer'
+const appWindow = getCurrentWebviewWindow()
 
 export function useTauriEventListener() {
   const navigate = useNavigate()
@@ -31,13 +46,13 @@ export function useTauriEventListener() {
 
     if (startString === 'tondevwallet://connect/?ret=back') {
       navigate('/app')
-      tWindow.appWindow.unminimize()
-      tWindow.appWindow.setFocus()
+      appWindow.unminimize()
+      appWindow.setFocus()
       return
     }
 
-    tWindow.appWindow.unminimize()
-    tWindow.appWindow.setFocus()
+    appWindow.unminimize()
+    appWindow.setFocus()
 
     const password = await getPasswordInteractive()
 
@@ -57,12 +72,14 @@ export function useTauriEventListener() {
   }, [])
 
   useEffect(() => {
-    const unlisten = listen('single-instance', async ({ event, payload, ...eventObj }) => {
-      console.log('single listen', event, payload, eventObj)
+    const unlisten = onOpenUrl(async (urls: string[]) => {
+      console.log('deep link:', urls)
 
-      if (!payload) {
+      if (!urls || urls.length === 0) {
         return
       }
+
+      const payload = urls[0]
 
       let startString: string
 
@@ -88,6 +105,112 @@ export function useTauriEventListener() {
       }
 
       doConnect(startString)
+    })
+
+    return () => {
+      unlisten.then((f) => f())
+    }
+  }, [])
+
+  useEffect(() => {
+    const unlisten = listen('proxy_transaction', async ({ payload }) => {
+      const liteClient = LiteClientState.liteClient.get({ noproxy: true })
+      if (!payload) {
+        return
+      }
+
+      const data = payload as any
+      if (data.type !== 'proxy_transaction') {
+        return
+      }
+
+      if (data?.data?.method !== 'sendTransaction') {
+        return
+      }
+
+      const info = JSON.parse(data.data.params[0]) as {
+        messages: {
+          address: string
+          amount: string
+          payload?: string // boc
+          stateInit?: string
+        }[]
+        valid_until: number // date now
+        from: string
+      }
+
+      const fromAddress = Address.parse(info.from).toRawString()
+      const keys = await getWallets()
+
+      let keyId: number | undefined
+      let walletId: number | undefined
+
+      for (const key of keys) {
+        for (const wallet of key.wallets || []) {
+          if (typeof walletId !== 'undefined') {
+            break
+          }
+          const tonWallet = getWalletFromKey(liteClient, key, wallet)
+          if (tonWallet?.address.toRawString() === fromAddress) {
+            keyId = key.id
+            walletId = wallet.id
+            break
+          }
+        }
+      }
+
+      if (typeof keyId === 'undefined' || typeof walletId === 'undefined') {
+        console.log('no key or wallet found')
+        return
+      }
+
+      await addConnectMessage({
+        connect_event_id: 0,
+        connect_session_id: 0,
+        payload: info,
+        key_id: keyId,
+        wallet_id: walletId,
+        status: 0,
+        wallet_address: fromAddress,
+      })
+      appWindow.unminimize()
+      appWindow.setFocus()
+
+      let permissionGranted = await isPermissionGranted()
+      if (!permissionGranted) {
+        const permission = await requestPermission()
+        permissionGranted = permission === 'granted'
+      }
+      if (permissionGranted) {
+        sendNotification({ title: 'New message', body: `From Extension` })
+      }
+    })
+
+    return () => {
+      unlisten.then((f) => f())
+    }
+  }, [])
+
+  useEffect(() => {
+    const unlisten = listen('transactions_dump', async ({ payload }) => {
+      const data = payload as any
+      if (data.type !== 'transactions_dump') {
+        return
+      }
+
+      const dump = DeserializeTraceDump(data.data)
+
+      const now = new Date()
+      const formattedDate = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
+      const traceName = `Trace ${formattedDate}`
+
+      // Add new tracer item with the current date as name
+      addTracerItem(traceName, {
+        transactions: dump.transactions.map(AddParsedToDumpTransaction),
+      })
+
+      // Navigate to tracer page
+      navigate('/app/tracer')
     })
 
     return () => {
