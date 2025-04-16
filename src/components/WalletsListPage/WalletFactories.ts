@@ -40,6 +40,7 @@ export const defaultSubwalletIds = [
   0, // just zero
   698983191, // default subwallet id for v3, v4
   2147483409, // default subwallet id for w5
+  2147483645, // w5 testnet
 ]
 
 function getDefaultSubwalletIds() {
