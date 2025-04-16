@@ -25,3 +25,4 @@ See the [CHANGELOG.md](CHANGELOG.md) file for details on recent updates, improve
 
 ## Disclaimer
 TonDevWallet is provided "as is" without any warranty. Use it at your own risk. We are not responsible for any loss or damage caused by the use of TonDevWallet. Be cautious and take appropriate measures to secure your private keys and protect your funds.
+
