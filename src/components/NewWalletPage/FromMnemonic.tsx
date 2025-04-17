@@ -2,13 +2,28 @@ import { useSeed } from '@/hooks/useKeyPair'
 import { saveKeyFromData } from '@/store/walletsListState'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { mnemonicValidate, mnemonicToSeed } from '@ton/crypto'
+import { mnemonicValidate, mnemonicToSeed, keyPairFromSeed, deriveEd25519Path } from '@ton/crypto'
 import { Textarea } from '../ui/textarea'
 import { Separator } from '../ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { ActiveWalletsSelector } from './ActiveWalletsSelector'
 import { WalletNameInput, ImportButton, useWalletSelection, KeyInfoDisplay } from './shared'
+import Copier from '../copier'
+import { cn } from '@/utils/cn'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
+import {
+  mnemonicToSeed as bip39MnemonicToSeed,
+  validateMnemonic as validBip39Mnemonic,
+} from 'bip39'
+
+async function bip39ToPrivateKey(mnemonic: string[]) {
+  const seed = await bip39MnemonicToSeed(mnemonic.join(' '))
+  const TON_DERIVATION_PATH = [44, 607, 0]
+  const seedContainer = await deriveEd25519Path(seed, TON_DERIVATION_PATH)
+  return keyPairFromSeed(seedContainer.subarray(0, 32))
+}
 
 export function FromMnemonic() {
   const navigate = useNavigate()
@@ -18,6 +33,7 @@ export function FromMnemonic() {
   const [seed, setSeed] = useState<Buffer | undefined>()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mnemonicType, setMnemonicType] = useState<'bip39' | 'ton'>('ton')
 
   const onWordsChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     try {
@@ -26,16 +42,31 @@ export function FromMnemonic() {
       setSeed(undefined)
 
       const mnemonic = e.target.value.split(' ')
+      console.log('checking mnemonic', mnemonicType, mnemonic)
 
-      if (mnemonic.length !== 24) {
+      if (mnemonic.length !== 24 && mnemonic.length !== 12) {
+        console.log('not enough words', mnemonic.length)
         return // Not enough words yet
+      }
+
+      if (mnemonicType === 'bip39') {
+        try {
+          const ls = await bip39ToPrivateKey(mnemonic)
+          setSeed(ls.secretKey.subarray(0, 32))
+          return
+        } catch (e) {
+          console.log('invalid bip39 mnemonic', e)
+          setError('Invalid bip39 mnemonic phrase. Please check for typos.')
+          return
+        }
       }
 
       if (await mnemonicValidate(mnemonic)) {
         const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
         setSeed(ls)
       } else {
-        setError('Invalid mnemonic phrase. Please check for typos.')
+        console.log('invalid ton mnemonic')
+        setError('Invalid ton mnemonic phrase. Please check for typos.')
       }
     } catch (e) {
       console.log('onWordsChange error', e)
@@ -83,10 +114,33 @@ export function FromMnemonic() {
         </AlertDescription>
       </Alert>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="mnemonicInput">
-          Mnemonic Phrase (24 words):
-        </label>
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-4 items-center">
+          <label className="text-sm font-medium">Mnemonic Type:</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="mnemonicType"
+                value="ton"
+                checked={mnemonicType === 'ton'}
+                onChange={(e) => setMnemonicType(e.target.value as 'ton' | 'bip39')}
+              />
+              TON
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="mnemonicType"
+                value="bip39"
+                checked={mnemonicType === 'bip39'}
+                onChange={(e) => setMnemonicType(e.target.value as 'ton' | 'bip39')}
+              />
+              BIP39
+            </label>
+          </div>
+        </div>
+
         <Textarea
           className="font-mono text-sm min-h-[100px]"
           id="mnemonicInput"
