@@ -9,14 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { ActiveWalletsSelector } from './ActiveWalletsSelector'
 import { WalletNameInput, ImportButton, useWalletSelection, KeyInfoDisplay } from './shared'
-import Copier from '../copier'
-import { cn } from '@/utils/cn'
-import { Input } from '../ui/input'
-import { Button } from '../ui/button'
-import {
-  mnemonicToSeed as bip39MnemonicToSeed,
-  validateMnemonic as validBip39Mnemonic,
-} from 'bip39'
+import { mnemonicToSeed as bip39MnemonicToSeed } from 'bip39'
 
 async function bip39ToPrivateKey(mnemonic: string[]) {
   const seed = await bip39MnemonicToSeed(mnemonic.join(' '))
@@ -42,11 +35,10 @@ export function FromMnemonic() {
       setSeed(undefined)
 
       const mnemonic = e.target.value.split(' ')
-      console.log('checking mnemonic', mnemonicType, mnemonic)
 
       if (mnemonic.length !== 24 && mnemonic.length !== 12) {
         console.log('not enough words', mnemonic.length)
-        return // Not enough words yet
+        return
       }
 
       if (mnemonicType === 'bip39') {
