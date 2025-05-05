@@ -32,6 +32,7 @@ import { ApproveTonConnectMessage, GetTransfersFromTCMessage } from '@/utils/ton
 import { ConnectMessageTransactionMessage } from '@/types/connect'
 import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
 import { useNavigate } from 'react-router-dom'
+import { listen } from '@tauri-apps/api/event'
 const appWindow = getCurrentWebviewWindow()
 
 export function TonConnectListener() {
@@ -52,6 +53,7 @@ export function TonConnectListener() {
             if (!event.target?.result) {
               return
             }
+            // debugger
             const result = event?.target?.result as string
             const res = (await invoke('detect_qr_code_from_image', {
               data: result.split(',')[1],
@@ -111,6 +113,29 @@ export function TonConnectListener() {
       window.removeEventListener('paste', listener)
     }
   }, [navigate])
+
+  useEffect(() => {
+    const unlisten = listen('tonconnect_svg', async ({ payload }) => {
+      const imageBase64 = (payload as any).data.image as string
+      const res = (await invoke('detect_qr_code_from_image', {
+        data: imageBase64,
+      })) as string[]
+
+      if (res.length > 0) {
+        console.log('Found QR code', res)
+
+        const password = await getPasswordInteractive()
+        if (password) {
+          tonConnectState.connectArg.set(res[0])
+          tonConnectState.popupOpen.set(true)
+        }
+      }
+    })
+
+    return () => {
+      unlisten.then((f) => f())
+    }
+  }, [])
 
   useEffect(() => {
     const bridgeUrl = 'https://bridge.tonapi.io/bridge'

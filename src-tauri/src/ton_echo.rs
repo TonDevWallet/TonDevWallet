@@ -170,6 +170,22 @@ async fn process_messages(
                         }
                         continue;
                     }
+
+                    if let Some("tonconnect_svg") =
+                        value.get("type").and_then(|t| t.as_str())
+                    {
+                        info!("Received tonconnect_svg");
+                        
+                        // Send the event through the channel
+                        if let Err(err) = tx.send(EchoValue {
+                            msg_type: "tonconnect_svg".to_string(),
+                            data: value,
+                        }).await {
+                            info!("Error sending tonconnect_svg event: {:?}", err);
+                        }
+                        continue;
+                    }
+                    continue;
                 }
                 Err(e) => {
                     info!("Error parsing request: {:?}", e);
