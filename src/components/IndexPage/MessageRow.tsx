@@ -47,7 +47,7 @@ export const MessageRow = memo(function MessageRow({
 }: {
   _s: State<ImmutableObject<TonConnectMessageRecord>>
 }) {
-  if (_s.message_type.get() !== 'tx') {
+  if (_s?.message_type?.get() !== 'tx') {
     return
   }
 

@@ -16,6 +16,7 @@ import {
   SessionCrypto,
   SignDataPayload,
   SignDataRpcRequest,
+  SignDataRpcResponseSuccess,
 } from '@tonconnect/protocol'
 import { useEffect } from 'react'
 import { LiteClient } from 'ton-lite-client'
@@ -30,11 +31,16 @@ import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/
 import { getWalletListState } from '@/store/walletsListState'
 import { ImmutableObject } from '@hookstate/core'
 import { getWalletFromKey } from '@/utils/wallets'
-import { ApproveTonConnectMessageTransaction, GetTransfersFromTCMessage } from '@/utils/tonConnect'
+import {
+  ApproveTonConnectMessageTransaction,
+  GetTransfersFromTCMessage,
+  sendTonConnectMessage,
+} from '@/utils/tonConnect'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
 import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
 import { useNavigate } from 'react-router-dom'
 import { listen } from '@tauri-apps/api/event'
+import { SignTonConnectData } from '@/utils/signData/sign'
 const appWindow = getCurrentWebviewWindow()
 
 export function TonConnectListener() {
@@ -193,7 +199,41 @@ export function TonConnectListener() {
             console.log('Sign Data Request', walletMessage)
             const payload: SignDataPayload = JSON.parse(walletMessage.params[0])
             console.log('payload', payload)
+
+            const keys = getWalletListState()
+
+            let walletAddress: string | undefined
+            const key = keys.find((k) => k.id.get() === s.keyId.get())
+            if (key) {
+              const wallet = key.wallets.get()?.find((w) => w.id === s.walletId.get())
+              if (wallet) {
+                const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
+                walletAddress = tonWallet?.address.toRawString()
+              }
+            }
+
+            const signedData = SignTonConnectData({
+              address: walletAddress ?? '',
+              domain: 'ton.com',
+              payload,
+              privateKey: Buffer.from(keyPair.secretKey),
+            })
+            if (session) {
+              const msg: SignDataRpcResponseSuccess = {
+                result: {
+                  ...signedData,
+                },
+                id: walletMessage.id,
+              }
+
+              await sendTonConnectMessage(
+                msg,
+                s?.secretKey.get() || Buffer.from(''),
+                s?.userId.get() || ''
+              )
+            }
           } catch (e) {
+            console.log('Error during handling of sign data request', e)
             //
           }
         }
