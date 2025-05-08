@@ -20,10 +20,10 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
   const liteClient = useLiteclient() as unknown as LiteClient
   const sessions = useTonConnectSessions()
 
-  const totalAmountOut = connectMessage?.payload?.messages?.reduce(
-    (acc, c) => acc + BigInt(c.amount),
+  const totalAmountOut =
+    (connectMessage.message_type === 'tx' &&
+      connectMessage?.payload?.messages?.reduce((acc, c) => acc + BigInt(c.amount), 0n)) ||
     0n
-  )
   const amountOut = formatUnits(totalAmountOut, 9)
 
   const key = useMemo(() => {
@@ -95,42 +95,47 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
           />
         }
       </div>
-      <div className="flex mt-4">
-        <div>Messages count:&nbsp;</div>
-        <div className="break-words break-all">
-          {connectMessage?.payload?.messages?.length} ({amountOut.toString()} TON)
+
+      {connectMessage?.message_type === 'tx' && (
+        <div className="flex mt-4">
+          <div>Messages count:&nbsp;</div>
+          <div className="break-words break-all">
+            {connectMessage?.payload?.messages?.length} ({amountOut.toString()} TON)
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="flex flex-col gap-4">
-        <p className="mt-4">Messages:</p>
+      {connectMessage?.message_type === 'tx' && (
+        <div className="flex flex-col gap-4">
+          <p className="mt-4">Messages:</p>
 
-        {connectMessage?.payload?.messages?.map((m, i) => {
-          return (
-            <Block key={i}>
-              <div className="flex items-center gap-2 w-full overflow-hidden">
-                {/* <div>To:</div> */}
-                <AddressRow
-                  text={<div className="w-8 shrink-0">To:</div>}
-                  address={m.address}
-                  containerClassName="w-full items-center"
-                />
-              </div>
-              <div>Amount: {m.amount}</div>
-              {m.payload && (
-                <div className="flex gap-2 my-2">
-                  <BocContainer boc={m.payload} label="Payload" />
+          {connectMessage?.payload?.messages?.map((m, i) => {
+            return (
+              <Block key={i}>
+                <div className="flex items-center gap-2 w-full overflow-hidden">
+                  {/* <div>To:</div> */}
+                  <AddressRow
+                    text={<div className="w-8 shrink-0">To:</div>}
+                    address={m.address}
+                    containerClassName="w-full items-center"
+                  />
                 </div>
-              )}
-              {m.stateInit && (
-                <div className="flex gap-2">
-                  <BocContainer boc={m.stateInit} label="StateInit" />
-                </div>
-              )}
-            </Block>
-          )
-        })}
-      </div>
+                <div>Amount: {m.amount}</div>
+                {m.payload && (
+                  <div className="flex gap-2 my-2">
+                    <BocContainer boc={m.payload} label="Payload" />
+                  </div>
+                )}
+                {m.stateInit && (
+                  <div className="flex gap-2">
+                    <BocContainer boc={m.stateInit} label="StateInit" />
+                  </div>
+                )}
+              </Block>
+            )
+          })}
+        </div>
+      )}
 
       {/* <div>
         <button

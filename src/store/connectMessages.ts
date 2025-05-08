@@ -1,11 +1,8 @@
 import { getDatabase } from '@/db'
-import {
-  ConnectMessageSignPayload,
-  ConnectMessageTransaction,
-  ConnectMessageTransactionPayload,
-} from '@/types/connect'
+import { ConnectMessageTransaction, ConnectMessageTransactionPayload } from '@/types/connect'
 import { hookstate, none, useHookstate } from '@hookstate/core'
 import { Cell } from '@ton/core'
+import { SignDataPayload } from '@tonconnect/protocol'
 
 export interface TonConnectMessage {
   id: number
@@ -15,9 +12,7 @@ export interface TonConnectMessage {
   key_id: number
   wallet_id: number
   status: number
-  payload: ConnectMessageTransactionPayload
   message_mode?: number
-  sign_payload?: ConnectMessageSignPayload
   message_type: 'tx' | 'sign'
 
   message_cell?: string
@@ -34,14 +29,19 @@ export type TonConnectMessageTransaction = TonConnectMessage & {
 
 export type TonConnectMessageSign = TonConnectMessage & {
   message_type: 'sign'
-  sign_payload: ConnectMessageSignPayload
+  sign_payload: SignDataPayload
 }
 
 export type TonConnectMessageRecord = TonConnectMessageSign | TonConnectMessageTransaction
+export type FullTonConnectMessage = TonConnectMessage & {
+  message_type: 'tx' | 'sign'
+  payload?: ConnectMessageTransactionPayload
+  sign_payload?: SignDataPayload
+}
 
 export const messagesState = hookstate<TonConnectMessageRecord[]>(getConnectMessages)
 
-export async function getConnectMessages() {
+export async function getConnectMessages(): Promise<TonConnectMessageRecord[]> {
   const db = await getDatabase()
   const dbMessages = await db<ConnectMessageTransaction>('connect_message_transactions')
     .where({
@@ -75,7 +75,7 @@ export function useMessagesState() {
   return useHookstate(messagesState)
 }
 
-export async function addConnectMessage(input: Omit<TonConnectMessageRecord, 'id'>) {
+export async function addConnectMessage(input: Omit<FullTonConnectMessage, 'id'>) {
   const db = await getDatabase()
   const res = await db<ConnectMessageTransaction>('connect_message_transactions')
     .insert({
