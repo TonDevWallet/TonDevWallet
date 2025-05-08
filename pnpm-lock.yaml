@@ -182,8 +182,8 @@ importers:
         specifier: ^15.2.1
         version: 15.2.1(@ton/core@0.60.1(patch_hash=zmprjv7klguok3uupt2lm22sqi)(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(debug@4.4.0)
       '@tonconnect/protocol':
-        specifier: 2.2.7
-        version: 2.2.7
+        specifier: 2.3.0-beta.0
+        version: 2.3.0-beta.0
       '@tonconnect/sdk':
         specifier: ^3.1.0
         version: 3.1.0
@@ -1788,6 +1788,9 @@ packages:
 
   '@tonconnect/protocol@2.2.7':
     resolution: {integrity: sha512-mmuS5ekaRVQtXOug30znXXSnuQfuLa6kDOv17X2ttk8Al9PlTFG/AtPRkWxCp8X5BdhPzGFELTog7kypukjWnQ==}
+
+  '@tonconnect/protocol@2.3.0-beta.0':
+    resolution: {integrity: sha512-YrEDSSvWaXEtEBxa1czFm5W0xRYaZfypzBzqqXQ6JZAfe+QZQWzcy+M2FYoeZWCSdCcfp+rpLIFkJ/4GFfQpqg==}
 
   '@tonconnect/sdk@3.1.0':
     resolution: {integrity: sha512-bsuuw5+NwoA8MrWMwDWEgfH/LepSKiPbugsojFoJmoJE4/hOsu6H47HEHtlD2NDLIHRhkTsEjiAyc+npfmocjw==}
@@ -5300,6 +5303,11 @@ snapshots:
       - encoding
 
   '@tonconnect/protocol@2.2.7':
+    dependencies:
+      tweetnacl: 1.0.3
+      tweetnacl-util: 0.15.1
+
+  '@tonconnect/protocol@2.3.0-beta.0':
     dependencies:
       tweetnacl: 1.0.3
       tweetnacl-util: 0.15.1

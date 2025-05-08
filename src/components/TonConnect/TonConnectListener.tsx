@@ -14,6 +14,7 @@ import {
   hexToByteArray,
   SendTransactionRpcRequest,
   SessionCrypto,
+  SignDataRpcRequest,
 } from '@tonconnect/protocol'
 import { useEffect } from 'react'
 import { LiteClient } from 'ton-lite-client'
@@ -160,12 +161,13 @@ export function TonConnectListener() {
 
       sse.addEventListener('message', async (e) => {
         const bridgeIncomingMessage = JSON.parse(e.data)
-        const walletMessage: SendTransactionRpcRequest | DisconnectRpcRequest = JSON.parse(
-          session.decrypt(
-            Base64.decode(bridgeIncomingMessage.message).toUint8Array(),
-            hexToByteArray(bridgeIncomingMessage.from)
+        const walletMessage: SendTransactionRpcRequest | DisconnectRpcRequest | SignDataRpcRequest =
+          JSON.parse(
+            session.decrypt(
+              Base64.decode(bridgeIncomingMessage.message).toUint8Array(),
+              hexToByteArray(bridgeIncomingMessage.from)
+            )
           )
-        )
         console.log('wallet message', walletMessage)
 
         if (walletMessage.method === 'disconnect') {
@@ -175,65 +177,19 @@ export function TonConnectListener() {
           return
         }
 
-        if (walletMessage.method !== 'sendTransaction') {
+        if (walletMessage.method === 'sendTransaction') {
+          await handleRequestTransactionRequest({
+            walletMessage,
+            session: s.get({ noproxy: true }),
+            eventData: e,
+            liteClient,
+          })
           return
         }
 
-        const info = JSON.parse(walletMessage.params[0]) as {
-          messages: {
-            address: string
-            amount: string
-            payload?: string // boc
-            stateInit?: string
-          }[]
-          valid_until: number // date now
+        if (walletMessage.method === 'signData') {
+          console.log('Sign Data Request')
         }
-
-        const isAutoSend = await autoSendMessage({
-          session: s.get(),
-          messages: info.messages,
-          eventId: walletMessage.id,
-          bridgeEventId: e.lastEventId,
-        })
-
-        if (isAutoSend) {
-          return
-        }
-
-        let walletAddress: string | undefined
-        const keys = getWalletListState()
-
-        const key = keys.find((k) => k.id.get() === s.keyId.get())
-        if (key) {
-          const wallet = key.wallets.get()?.find((w) => w.id === s.walletId.get())
-          if (wallet) {
-            const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
-            walletAddress = tonWallet?.address.toRawString()
-          }
-        }
-
-        await addConnectMessage({
-          connect_event_id: parseInt(walletMessage.id),
-          connect_session_id: s.id.get(),
-          payload: info,
-          key_id: s.keyId.get(),
-          wallet_id: s.walletId.get(),
-          status: 0,
-          wallet_address: walletAddress,
-        })
-        appWindow.unminimize()
-        appWindow.setFocus()
-
-        let permissionGranted = await isPermissionGranted()
-        if (!permissionGranted) {
-          const permission = await requestPermission()
-          permissionGranted = permission === 'granted'
-        }
-        if (permissionGranted) {
-          sendNotification({ title: 'New message', body: `From ${s.name.get()}` })
-        }
-
-        updateSessionEventId(s.id.get(), parseInt(e.lastEventId))
       })
 
       listeners.push(sse)
@@ -248,6 +204,74 @@ export function TonConnectListener() {
     }
   }, [liteClient, sessions])
   return <></>
+}
+
+async function handleRequestTransactionRequest({
+  walletMessage,
+  session,
+  eventData,
+  liteClient,
+}: {
+  walletMessage: SendTransactionRpcRequest
+  session: TonConnectSession // Using any for now to accommodate the State wrapper
+  eventData: { lastEventId: string }
+  liteClient: LiteClient
+}) {
+  const info = JSON.parse(walletMessage.params[0]) as {
+    messages: {
+      address: string
+      amount: string
+      payload?: string // boc
+      stateInit?: string
+    }[]
+    valid_until: number // date now
+  }
+
+  const isAutoSend = await autoSendMessage({
+    session,
+    messages: info.messages,
+    eventId: walletMessage.id,
+    bridgeEventId: eventData.lastEventId,
+  })
+
+  if (isAutoSend) {
+    return
+  }
+
+  let walletAddress: string | undefined
+  const keys = getWalletListState()
+
+  const key = keys.find((k) => k.id.get() === session.keyId)
+  if (key) {
+    const wallet = key.wallets.get()?.find((w) => w.id === session.walletId)
+    if (wallet) {
+      const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
+      walletAddress = tonWallet?.address.toRawString()
+    }
+  }
+
+  await addConnectMessage({
+    connect_event_id: parseInt(walletMessage.id),
+    connect_session_id: session.id,
+    payload: info,
+    key_id: session.keyId,
+    wallet_id: session.walletId,
+    status: 0,
+    wallet_address: walletAddress,
+  })
+  appWindow.unminimize()
+  appWindow.setFocus()
+
+  let permissionGranted = await isPermissionGranted()
+  if (!permissionGranted) {
+    const permission = await requestPermission()
+    permissionGranted = permission === 'granted'
+  }
+  if (permissionGranted) {
+    sendNotification({ title: 'New message', body: `From ${session.name}` })
+  }
+
+  updateSessionEventId(session.id, parseInt(eventData.lastEventId))
 }
 
 async function autoSendMessage({
