@@ -21,17 +21,21 @@ import { useEmulatedTxInfo } from '@/hooks/useEmulatedTxInfo'
 import { MessageFlow } from './MessageFlow'
 import { secretKeyToED25519 } from '@/utils/ed25519'
 import { Button } from '@/components/ui/button'
-import { faDownload, faExpand } from '@fortawesome/free-solid-svg-icons'
+import { faDownload, faExpand, faCopy } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { ManagedSendMessageResult } from '@/utils/ManagedBlockchain'
 // import { DeserializeTransactionsList, SerializeTransactionsList } from '@/utils/txSerializer'
-import { Address } from '@ton/ton'
+import { Address, Cell } from '@ton/ton'
 import { bigIntToBuffer } from '@/utils/ton'
 import { JettonAmountDisplay, JettonNameDisplay } from '../Jettons/Jettons'
 import { formatUnits } from '@/utils/units'
 // For Tauri filesystem access
 import { downloadGraph } from '@/utils/graphDownloader'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import SendTon from '../wallets/tonweb/SendTon'
+import { IWallet } from '@/types'
+import { Key } from '@/types/Key'
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -356,6 +360,65 @@ export function MessageEmulationResult({
 }) {
   const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
   const [max, setMax] = useState(false)
+  const [sendDialogOpen, setSendDialogOpen] = useState(false)
+
+  // Get the first transfer to populate the SendTon component
+  const firstTransfer = useMemo(() => {
+    if (txInfo?.transactions?.[0]?.outMessages) {
+      const outMessages = txInfo.transactions[0].outMessages.values()
+      for (const msg of outMessages) {
+        if (msg.info.type === 'internal') {
+          // Extract body as base64
+          let bodyBase64 = ''
+          if (msg.body) {
+            try {
+              // Get the raw body cell as base64
+              bodyBase64 = msg.body.toBoc().toString('base64')
+            } catch (e) {
+              console.error('Failed to convert body to base64:', e)
+            }
+          }
+
+          // Extract init (stateInit) as base64 if present
+          let initBase64 = ''
+          try {
+            if (msg.init) {
+              // The TL-B structure for init is a Maybe of Either, so we need to check types
+              const initCell = (msg.init as any).value?.value
+              if (initCell instanceof Cell) {
+                initBase64 = initCell.toBoc().toString('base64')
+              }
+            }
+          } catch (e) {
+            console.error('Failed to convert state init to base64:', e)
+          }
+
+          return {
+            address: msg.info.dest?.toRawString(),
+            amount: formatUnits(msg.info.value.coins, 9),
+            message: bodyBase64,
+            isBase64: true, // Mark as base64
+            stateInit: initBase64,
+          }
+        }
+      }
+    }
+    return null
+  }, [txInfo])
+
+  // Get the current wallet and key from context
+  const walletListState = useWalletListState()
+  const currentKey = useMemo(() => {
+    if (!walletListState.length) return null
+    // Get the full key object (not the immutable version)
+    return walletListState[0].get()
+  }, [walletListState])
+
+  // Find a usable wallet for the transaction
+  const walletForTransaction = useMemo(() => {
+    if (!currentKey?.wallets?.length) return null
+    return currentKey.wallets[0]
+  }, [currentKey])
 
   const handleDownloadGraph = useCallback(async () => {
     if (txInfo?.transactions) {
@@ -385,6 +448,42 @@ export function MessageEmulationResult({
               <FontAwesomeIcon icon={faDownload} className={'mr-2'} />
               Download graph
             </Button>
+
+            <Dialog open={sendDialogOpen} onOpenChange={setSendDialogOpen}>
+              <Button
+                variant={'outline'}
+                className={'mt-4'}
+                onClick={() => setSendDialogOpen(true)}
+                disabled={!firstTransfer}
+              >
+                <FontAwesomeIcon icon={faCopy} className={'mr-2'} />
+                Copy transaction
+              </Button>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Transfer TON</DialogTitle>
+                </DialogHeader>
+                {firstTransfer && (
+                  <div>
+                    {walletForTransaction && currentKey ? (
+                      <SendTon
+                        wallet={walletForTransaction as unknown as IWallet}
+                        selectedKey={currentKey as unknown as Key}
+                        initialRecipient={firstTransfer.address}
+                        initialAmount={firstTransfer.amount}
+                        initialMessage={firstTransfer.message}
+                        initialStateInit={firstTransfer.stateInit}
+                        initialMessageBase64={firstTransfer.isBase64}
+                      />
+                    ) : (
+                      <div className="text-center p-3">
+                        <p>You can use these transaction details to create a new transaction.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
 
           <Block
