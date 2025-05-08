@@ -1,9 +1,13 @@
 import { getDatabase } from '@/db'
-import { ConnectMessageTransaction, ConnectMessageTransactionPayload } from '@/types/connect'
+import {
+  ConnectMessageSignPayload,
+  ConnectMessageTransaction,
+  ConnectMessageTransactionPayload,
+} from '@/types/connect'
 import { hookstate, none, useHookstate } from '@hookstate/core'
 import { Cell } from '@ton/core'
 
-export interface TonConnectMessageTransaction {
+export interface TonConnectMessage {
   id: number
   // saved_wallet_id: number
   connect_session_id: number
@@ -13,6 +17,8 @@ export interface TonConnectMessageTransaction {
   status: number
   payload: ConnectMessageTransactionPayload
   message_mode?: number
+  sign_payload?: ConnectMessageSignPayload
+  message_type: 'tx' | 'sign'
 
   message_cell?: string
 
@@ -21,7 +27,19 @@ export interface TonConnectMessageTransaction {
   updated_at?: Date
 }
 
-export const messagesState = hookstate<TonConnectMessageTransaction[]>(getConnectMessages)
+export type TonConnectMessageTransaction = TonConnectMessage & {
+  message_type: 'tx'
+  payload: ConnectMessageTransactionPayload
+}
+
+export type TonConnectMessageSign = TonConnectMessage & {
+  message_type: 'sign'
+  sign_payload: ConnectMessageSignPayload
+}
+
+export type TonConnectMessageRecord = TonConnectMessageSign | TonConnectMessageTransaction
+
+export const messagesState = hookstate<TonConnectMessageRecord[]>(getConnectMessages)
 
 export async function getConnectMessages() {
   const db = await getDatabase()
@@ -31,7 +49,7 @@ export async function getConnectMessages() {
     })
     .select('*')
 
-  const messages: TonConnectMessageTransaction[] = dbMessages.map((m) => {
+  const messages: TonConnectMessageRecord[] = dbMessages.map((m) => {
     return {
       id: m.id,
       // saved_wallet_id: m.saved_wallet_id,
@@ -40,7 +58,9 @@ export async function getConnectMessages() {
       status: m.status,
       key_id: m.key_id,
       wallet_id: m.wallet_id,
-      payload: JSON.parse(m.payload),
+      payload: m.payload ? JSON.parse(m.payload) : undefined,
+      message_type: m.message_type,
+      sign_payload: m.sign_payload ? JSON.parse(m.sign_payload) : undefined,
 
       wallet_address: m.wallet_address,
       created_at: m.created_at,
@@ -55,12 +75,13 @@ export function useMessagesState() {
   return useHookstate(messagesState)
 }
 
-export async function addConnectMessage(input: Omit<TonConnectMessageTransaction, 'id'>) {
+export async function addConnectMessage(input: Omit<TonConnectMessageRecord, 'id'>) {
   const db = await getDatabase()
   const res = await db<ConnectMessageTransaction>('connect_message_transactions')
     .insert({
       ...input,
-      payload: JSON.stringify(input.payload),
+      payload: input.payload ? JSON.stringify(input.payload) : undefined,
+      sign_payload: input.sign_payload ? JSON.stringify(input.sign_payload) : undefined,
       created_at: input.created_at ?? new Date(),
       updated_at: input.created_at ?? new Date(),
     })
@@ -70,9 +91,10 @@ export async function addConnectMessage(input: Omit<TonConnectMessageTransaction
     throw new Error("can't add session")
   }
 
-  const message: TonConnectMessageTransaction = {
+  const message: TonConnectMessageRecord = {
     ...res[0],
-    payload: JSON.parse(res[0].payload),
+    payload: res[0].payload ? JSON.parse(res[0].payload) : undefined,
+    sign_payload: res[0].sign_payload ? JSON.parse(res[0].sign_payload) : undefined,
   }
 
   messagesState.merge([message])

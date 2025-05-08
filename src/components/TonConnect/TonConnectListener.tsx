@@ -14,6 +14,7 @@ import {
   hexToByteArray,
   SendTransactionRpcRequest,
   SessionCrypto,
+  SignDataPayload,
   SignDataRpcRequest,
 } from '@tonconnect/protocol'
 import { useEffect } from 'react'
@@ -29,7 +30,7 @@ import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/
 import { getWalletListState } from '@/store/walletsListState'
 import { ImmutableObject } from '@hookstate/core'
 import { getWalletFromKey } from '@/utils/wallets'
-import { ApproveTonConnectMessage, GetTransfersFromTCMessage } from '@/utils/tonConnect'
+import { ApproveTonConnectMessageTransaction, GetTransfersFromTCMessage } from '@/utils/tonConnect'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
 import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
 import { useNavigate } from 'react-router-dom'
@@ -188,7 +189,13 @@ export function TonConnectListener() {
         }
 
         if (walletMessage.method === 'signData') {
-          console.log('Sign Data Request')
+          try {
+            console.log('Sign Data Request', walletMessage)
+            const payload: SignDataPayload = JSON.parse(walletMessage.params[0])
+            console.log('payload', payload)
+          } catch (e) {
+            //
+          }
         }
       })
 
@@ -258,6 +265,7 @@ async function handleRequestTransactionRequest({
     wallet_id: session.walletId,
     status: 0,
     wallet_address: walletAddress,
+    message_type: 'tx',
   })
   appWindow.unminimize()
   appWindow.setFocus()
@@ -312,6 +320,6 @@ async function autoSendMessage({
   const messageCell = await sendWallet.getExternalMessageCell(keyPair, transfers)
   updateSessionEventId(session.id, parseInt(bridgeEventId))
 
-  await ApproveTonConnectMessage({ liteClient, messageCell, session, eventId })
+  await ApproveTonConnectMessageTransaction({ liteClient, messageCell, session, eventId })
   return true
 }

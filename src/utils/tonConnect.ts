@@ -42,7 +42,7 @@ export async function sendTonConnectMessage(
   })
 }
 
-export async function ApproveTonConnectMessage({
+export async function ApproveTonConnectMessageTransaction({
   messageCell,
   connectMessage,
   session,
@@ -71,7 +71,7 @@ export async function ApproveTonConnectMessage({
   }
 }
 
-export async function RejectTonConnectMessage({
+export async function RejectTonConnectMessageTransaction({
   message,
   session,
 }: {

@@ -1,4 +1,4 @@
-import { TonConnectMessageTransaction } from '@/store/connectMessages'
+import { TonConnectMessageRecord } from '@/store/connectMessages'
 import { MessageHistoryRow } from './MessageHistoryRow'
 import { useDatabase } from '@/db'
 import { useEffect, useState } from 'react'
@@ -6,7 +6,7 @@ import { ConnectMessageTransaction } from '@/types/connect'
 
 export function MessagesHistoryList() {
   const db = useDatabase()
-  const [messages, setMessages] = useState<TonConnectMessageTransaction[]>([])
+  const [messages, setMessages] = useState<TonConnectMessageRecord[]>([])
   useEffect(() => {
     const f = async () => {
       const dbMessages = await db<ConnectMessageTransaction>('connect_message_transactions')
@@ -17,7 +17,7 @@ export function MessagesHistoryList() {
         .limit(100)
         .select('*')
 
-      const messages: TonConnectMessageTransaction[] = dbMessages.map((m) => {
+      const messages: TonConnectMessageRecord[] = dbMessages.map((m) => {
         return {
           id: m.id,
           // saved_wallet_id: m.saved_wallet_id,
@@ -28,7 +28,9 @@ export function MessagesHistoryList() {
           wallet_id: m.wallet_id,
           message_cell: m.message_cell,
           wallet_address: m.wallet_address,
-          payload: JSON.parse(m.payload),
+          payload: m.payload ? JSON.parse(m.payload) : undefined,
+          message_type: m.message_type,
+          sign_payload: m.sign_payload ? JSON.parse(m.sign_payload) : undefined,
         }
       })
 

@@ -1,4 +1,4 @@
-import { TonConnectMessageTransaction } from '@/store/connectMessages'
+import { TonConnectMessageRecord } from '@/store/connectMessages'
 import { useLiteclient } from '@/store/liteClient'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
@@ -14,7 +14,7 @@ import { formatUnits } from '@/utils/units'
 export const MessageHistoryRow = memo(function MessageHistoryRow({
   connectMessage,
 }: {
-  connectMessage: TonConnectMessageTransaction
+  connectMessage: TonConnectMessageRecord
 }) {
   const keys = useWalletListState()
   const liteClient = useLiteclient() as unknown as LiteClient

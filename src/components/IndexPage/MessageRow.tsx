@@ -1,12 +1,12 @@
-import { TonConnectMessageTransaction } from '@/store/connectMessages'
+import { TonConnectMessageRecord, TonConnectMessageTransaction } from '@/store/connectMessages'
 import { useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { openPasswordPopup, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
 import {
-  ApproveTonConnectMessage,
+  ApproveTonConnectMessageTransaction,
   GetTransfersFromTCMessage,
-  RejectTonConnectMessage,
+  RejectTonConnectMessageTransaction,
 } from '@/utils/tonConnect'
 import { getWalletFromKey, useWalletExternalMessageCell } from '@/utils/wallets'
 import { ImmutableObject, State } from '@hookstate/core'
@@ -43,10 +43,15 @@ const emptyKeyPair: KeyPair = {
 }
 
 export const MessageRow = memo(function MessageRow({
-  s,
+  _s,
 }: {
-  s: State<ImmutableObject<TonConnectMessageTransaction>>
+  _s: State<ImmutableObject<TonConnectMessageRecord>>
 }) {
+  if (_s.message_type.get() !== 'tx') {
+    return
+  }
+
+  const s = _s as unknown as State<ImmutableObject<TonConnectMessageTransaction>>
   const keys = useWalletListState()
   const liteClient = useLiteclient() as unknown as LiteClient
   const sessions = useTonConnectSessions()
@@ -98,7 +103,7 @@ export const MessageRow = memo(function MessageRow({
   )
 
   const rejectConnectMessage = () => {
-    RejectTonConnectMessage({
+    RejectTonConnectMessageTransaction({
       message: s.get(),
       session: session?.get(),
     })
@@ -108,7 +113,7 @@ export const MessageRow = memo(function MessageRow({
     if (!messageCell) {
       return
     }
-    ApproveTonConnectMessage({
+    ApproveTonConnectMessageTransaction({
       liteClient,
       messageCell,
       connectMessage: s.get(),
