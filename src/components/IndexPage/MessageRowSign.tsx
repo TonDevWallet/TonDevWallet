@@ -1,22 +1,22 @@
-import { TonConnectMessageTransaction } from '@/store/connectMessages'
+import { TonConnectMessageSign } from '@/store/connectMessages'
 import { useLiteclient } from '@/store/liteClient'
-import { useDecryptWalletData, usePassword } from '@/store/passwordManager'
+import { openPasswordPopup, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
-import {
-  ApproveTonConnectMessageTransaction,
-  RejectTonConnectMessageTransaction,
-} from '@/utils/tonConnect'
+import { ApproveTonConnectMessageSign, RejectTonConnectMessageSign } from '@/utils/tonConnect'
 import { ImmutableObject, State } from '@hookstate/core'
 import { memo, useMemo } from 'react'
 import { LiteClient } from 'ton-lite-client'
-import { Block } from '../ui/Block'
+import { Block } from '@/components/ui/Block'
 import { secretKeyToED25519 } from '@/utils/ed25519'
+import { TextPayloadView, BinaryPayloadView, CellPayloadView } from './SignPayloads'
+import { BlueButton } from '../ui/BlueButton'
+import { cn } from '@/utils/cn'
 
 export const MessageRowSign = memo(function MessageRowSign({
   s,
 }: {
-  s: State<ImmutableObject<TonConnectMessageTransaction>>
+  s: State<ImmutableObject<TonConnectMessageSign>>
 }) {
   const keys = useWalletListState()
   const liteClient = useLiteclient() as unknown as LiteClient
@@ -49,25 +49,73 @@ export const MessageRowSign = memo(function MessageRowSign({
     return secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
   }, [key.encrypted, decryptedData])
 
+  const signPayload = s.sign_payload.get()
+
   const rejectConnectMessage = () => {
-    RejectTonConnectMessageTransaction({
+    RejectTonConnectMessageSign({
       message: s.get(),
       session: session?.get(),
     })
   }
 
-  const approveConnectMessage = () => {
-    if (!messageCell) {
-      return
-    }
-    ApproveTonConnectMessageTransaction({
-      liteClient,
-      messageCell,
-      connectMessage: s.get(),
+  const approveConnectMessage = async () => {
+    await ApproveTonConnectMessageSign({
+      message: s.get(),
       session: session?.get(),
-      eventId: s.connect_event_id?.get()?.toString(),
-    }).then()
+      key: key?.get(),
+      liteClient,
+      walletKeyPair: walletKeyPair || { secretKey: Buffer.from([]) },
+    })
   }
 
-  return <Block className="">Sign Block</Block>
+  const renderPayload = () => {
+    if (!signPayload) return null
+
+    switch (signPayload.type) {
+      case 'text':
+        return <TextPayloadView payload={signPayload} />
+      case 'binary':
+        return <BinaryPayloadView payload={signPayload} />
+      case 'cell':
+        return <CellPayloadView payload={signPayload} />
+      default:
+        return <div>Unknown payload type</div>
+    }
+  }
+
+  return (
+    <Block className="p-4">
+      <div className="mb-4">
+        <h3 className="text-lg font-medium mb-2">Signature Request</h3>
+        <div className="text-sm text-gray-500 mb-1">From: {session?.url.get()}</div>
+        <div className="text-sm text-gray-500">Wallet: {wallet.name}</div>
+      </div>
+
+      {renderPayload()}
+
+      {password ? (
+        <>
+          <div className="flex items-center gap-2 my-2">
+            <BlueButton variant={'outline'} onClick={rejectConnectMessage}>
+              Reject
+            </BlueButton>
+            <BlueButton
+              onClick={approveConnectMessage}
+              className={cn('bg-green-500', 'disabled:bg-gray-400')}
+              disabled={!walletKeyPair}
+            >
+              Approve
+            </BlueButton>
+          </div>
+        </>
+      ) : (
+        <>
+          <BlueButton onClick={rejectConnectMessage}>Reject</BlueButton>
+          <BlueButton onClick={openPasswordPopup} className="ml-2 mt-2 bg-green-500">
+            Unlock wallet
+          </BlueButton>
+        </>
+      )}
+    </Block>
+  )
 })

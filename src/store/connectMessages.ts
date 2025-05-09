@@ -80,8 +80,8 @@ export async function addConnectMessage(input: Omit<FullTonConnectMessage, 'id'>
   const res = await db<ConnectMessageTransaction>('connect_message_transactions')
     .insert({
       ...input,
-      payload: input.payload ? JSON.stringify(input.payload) : undefined,
-      sign_payload: input.sign_payload ? JSON.stringify(input.sign_payload) : undefined,
+      payload: input.payload ? JSON.stringify(input.payload) : null,
+      sign_payload: input.sign_payload ? JSON.stringify(input.sign_payload) : null,
       created_at: input.created_at ?? new Date(),
       updated_at: input.created_at ?? new Date(),
     })

@@ -139,6 +139,7 @@ export default function SendTon({ wallet, selectedKey }: { wallet: IWallet; sele
         : {}
 
     await addConnectMessage({
+      message_type: 'tx',
       connect_event_id: 0,
       connect_session_id: 0,
       key_id: keyId,

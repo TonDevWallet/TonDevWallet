@@ -189,71 +189,12 @@ export function TonConnectListener() {
         }
 
         if (walletMessage.method === 'signData') {
-          try {
-            console.log('Sign Data Request', walletMessage)
-            const payload: SignDataPayload = JSON.parse(walletMessage.params[0])
-            console.log('payload', payload)
-
-            const keys = getWalletListState()
-
-            let walletAddress: string | undefined
-            const key = keys.find((k) => k.id.get() === s.keyId.get())
-            if (key) {
-              const wallet = key.wallets.get()?.find((w) => w.id === s.walletId.get())
-              if (wallet) {
-                const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
-                walletAddress = tonWallet?.address.toRawString()
-              }
-            }
-
-            await addConnectMessage({
-              message_type: 'sign',
-              connect_event_id: parseInt(walletMessage.id),
-              connect_session_id: s.id.get(),
-              sign_payload: payload,
-              key_id: s.keyId.get(),
-              wallet_id: s.walletId.get(),
-              status: 0,
-              wallet_address: walletAddress,
-            })
-            appWindow.unminimize()
-            appWindow.setFocus()
-
-            let permissionGranted = await isPermissionGranted()
-            if (!permissionGranted) {
-              const permission = await requestPermission()
-              permissionGranted = permission === 'granted'
-            }
-            if (permissionGranted) {
-              sendNotification({ title: 'New message', body: `From ${s.name.get()}` })
-            }
-
-            updateSessionEventId(s.id.get(), parseInt(e.lastEventId))
-
-            // const signedData = SignTonConnectData({
-            //   address: walletAddress ?? '',
-            //   domain: 'ton.com',
-            //   payload,
-            //   privateKey: Buffer.from(keyPair.secretKey),
-            // })
-            // if (session) {
-            //   const msg: SignDataRpcResponseSuccess = {
-            //     result: {
-            //       ...signedData,
-            //     },
-            //     id: walletMessage.id,
-            //   }
-
-            //   await sendTonConnectMessage(
-            //     msg,
-            //     s?.secretKey.get() || Buffer.from(''),
-            //     s?.userId.get() || ''
-            //   )
-            // }
-          } catch (e) {
-            console.log('Error during handling of sign data request', e)
-            //
-          }
+          await handleSignDataRequest({
+            walletMessage,
+            session: s.get({ noproxy: true }),
+            eventData: e,
+            liteClient,
+          })
         }
       })
 
@@ -269,6 +210,60 @@ export function TonConnectListener() {
     }
   }, [liteClient, sessions])
   return <></>
+}
+
+async function handleSignDataRequest({
+  walletMessage,
+  session,
+  eventData,
+  liteClient,
+}: {
+  walletMessage: SignDataRpcRequest
+  session: TonConnectSession
+  eventData: { lastEventId: string }
+  liteClient: LiteClient
+}) {
+  try {
+    const payload: SignDataPayload = JSON.parse(walletMessage.params[0])
+
+    const keys = getWalletListState()
+
+    let walletAddress: string | undefined
+    const key = keys.find((k) => k.id.get() === session.keyId)
+    if (key) {
+      const wallet = key.wallets.get()?.find((w) => w.id === session.walletId)
+      if (wallet) {
+        const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
+        walletAddress = tonWallet?.address.toRawString()
+      }
+    }
+
+    await addConnectMessage({
+      message_type: 'sign',
+      connect_event_id: parseInt(walletMessage.id),
+      connect_session_id: session.id,
+      sign_payload: payload,
+      key_id: session.keyId,
+      wallet_id: session.walletId,
+      status: 0,
+      wallet_address: walletAddress,
+    })
+    appWindow.unminimize()
+    appWindow.setFocus()
+
+    let permissionGranted = await isPermissionGranted()
+    if (!permissionGranted) {
+      const permission = await requestPermission()
+      permissionGranted = permission === 'granted'
+    }
+    if (permissionGranted) {
+      sendNotification({ title: 'New message', body: `From ${session.name}` })
+    }
+
+    updateSessionEventId(session.id, parseInt(eventData.lastEventId))
+  } catch (e) {
+    console.log('Error during handling of sign data request', e)
+  }
 }
 
 async function handleRequestTransactionRequest({
