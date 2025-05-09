@@ -8,11 +8,6 @@ import { getMatches } from '@tauri-apps/plugin-cli'
 import { getWallets } from './store/walletsListState'
 import { getWalletFromKey } from './utils/wallets'
 import { LiteClientState } from './store/liteClient'
-import {
-  sendNotification,
-  isPermissionGranted,
-  requestPermission,
-} from '@tauri-apps/plugin-notification'
 import { addConnectMessage } from './store/connectMessages'
 import { Address } from '@ton/core'
 import { onOpenUrl } from '@tauri-apps/plugin-deep-link'
@@ -176,15 +171,6 @@ export function useTauriEventListener() {
       })
       appWindow.unminimize()
       appWindow.setFocus()
-
-      let permissionGranted = await isPermissionGranted()
-      if (!permissionGranted) {
-        const permission = await requestPermission()
-        permissionGranted = permission === 'granted'
-      }
-      if (permissionGranted) {
-        sendNotification({ title: 'New message', body: `From Extension` })
-      }
     })
 
     return () => {

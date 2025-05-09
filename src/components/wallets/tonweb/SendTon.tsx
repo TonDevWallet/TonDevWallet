@@ -21,15 +21,33 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Label } from '@/components/ui/label'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 
-export default function SendTon({ wallet, selectedKey }: { wallet: IWallet; selectedKey: Key }) {
+export default function SendTon({
+  wallet,
+  selectedKey,
+  initialRecipient = '',
+  initialAmount = '0',
+  initialMessage = '',
+  initialStateInit = '',
+  initialMessageBase64 = false,
+  onSend,
+}: {
+  wallet: IWallet
+  selectedKey: Key
+  initialRecipient?: string
+  initialAmount?: string
+  initialMessage?: string
+  initialStateInit?: string
+  initialMessageBase64?: boolean
+  onSend?: () => void
+}) {
   const navigate = useNavigate()
   const { currentNetworkCurrencies: currencies } = useExtraCurrencies()
 
-  const [amount, setAmount] = useState('0')
-  const [recepient, setRecepient] = useState('')
-  const [message, setMessage] = useState('')
-  const [stateInit, setStateInit] = useState('')
-  const [message64, setMessage64] = useState(false)
+  const [amount, setAmount] = useState(initialAmount)
+  const [recepient, setRecepient] = useState(initialRecipient)
+  const [message, setMessage] = useState(initialMessage)
+  const [stateInit, setStateInit] = useState(initialStateInit)
+  const [message64, setMessage64] = useState(initialMessageBase64)
   const [extraCurrencyAmount, setExtraCurrencyAmount] = useState('0')
   const [extraCurrencyCode, setExtraCurrencyCode] = useState('')
   // const [availableCurrencies, setAvailableCurrencies] = useState<Record<string, any>>({})
@@ -109,18 +127,21 @@ export default function SendTon({ wallet, selectedKey }: { wallet: IWallet; sele
       setExtraCurrencyCode('')
     }
 
-    setAmount('0')
-    setRecepient('')
-    setMessage('')
-    setStateInit('')
-    setMessage64(false)
-    setExtraCurrencyAmount('0')
-    setMessageMode('3') // Reset to default
-    updateFlagsFromMode('3')
+    // Only reset values when wallet changes but not during initial render with initialValues
+    if (!initialRecipient && !initialAmount && !initialMessage) {
+      setAmount('0')
+      setRecepient('')
+      setMessage('')
+      setStateInit('')
+      setMessage64(false)
+      setExtraCurrencyAmount('0')
+      setMessageMode('3') // Reset to default
+      updateFlagsFromMode('3')
+    }
   }, [wallet])
 
   const addMessageToEmulation = async () => {
-    Address.parseFriendly(recepient)
+    Address.parse(recepient)
 
     const keyId = selectedKey?.id
     if (typeof keyId === 'undefined') {
@@ -159,7 +180,13 @@ export default function SendTon({ wallet, selectedKey }: { wallet: IWallet; sele
       wallet_address: wallet.address.toRawString(),
       message_mode: parseInt(messageMode),
     })
-    navigate('/app')
+
+    // Call the onSend callback if provided
+    if (onSend) {
+      onSend()
+    } else {
+      navigate('/app')
+    }
   }
 
   // First let's define a custom component for mode labels

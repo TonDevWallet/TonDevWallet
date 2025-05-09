@@ -19,11 +19,6 @@ import {
 } from '@tonconnect/protocol'
 import { useEffect } from 'react'
 import { LiteClient } from 'ton-lite-client'
-import {
-  isPermissionGranted,
-  requestPermission,
-  sendNotification,
-} from '@tauri-apps/plugin-notification'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { invoke } from '@tauri-apps/api/core'
 import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/passwordManager'
@@ -251,15 +246,6 @@ async function handleSignDataRequest({
     appWindow.unminimize()
     appWindow.setFocus()
 
-    let permissionGranted = await isPermissionGranted()
-    if (!permissionGranted) {
-      const permission = await requestPermission()
-      permissionGranted = permission === 'granted'
-    }
-    if (permissionGranted) {
-      sendNotification({ title: 'New message', body: `From ${session.name}` })
-    }
-
     updateSessionEventId(session.id, parseInt(eventData.lastEventId))
   } catch (e) {
     console.log('Error during handling of sign data request', e)
@@ -322,15 +308,6 @@ async function handleRequestTransactionRequest({
   })
   appWindow.unminimize()
   appWindow.setFocus()
-
-  let permissionGranted = await isPermissionGranted()
-  if (!permissionGranted) {
-    const permission = await requestPermission()
-    permissionGranted = permission === 'granted'
-  }
-  if (permissionGranted) {
-    sendNotification({ title: 'New message', body: `From ${session.name}` })
-  }
 
   updateSessionEventId(session.id, parseInt(eventData.lastEventId))
 }
