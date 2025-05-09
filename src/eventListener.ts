@@ -172,6 +172,7 @@ export function useTauriEventListener() {
         wallet_id: walletId,
         status: 0,
         wallet_address: fromAddress,
+        message_type: 'tx',
       })
       appWindow.unminimize()
       appWindow.setFocus()

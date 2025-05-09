@@ -18,6 +18,11 @@ export interface ConnectMessageTransactionPayload {
   valid_until: number // date now
 }
 
+export interface ConnectMessageSignPayload {
+  messages: ConnectMessageTransactionMessage[]
+  valid_until: number // date now
+}
+
 export interface ConnectMessageTransaction {
   id: number
   // saved_wallet_id: number
@@ -26,10 +31,12 @@ export interface ConnectMessageTransaction {
   key_id: number
   wallet_id: number
   status: number // 0 - new, 1 - approved, 2 - rejected
-  payload: string // ConnectMessageTransactionPayload
+  payload?: string | null // ConnectMessageTransactionPayload
   wallet_address?: string
   message_cell?: string
   message_mode?: number
+  sign_payload?: string | null
+  message_type: 'tx' | 'sign'
 
   created_at: Date
   updated_at: Date

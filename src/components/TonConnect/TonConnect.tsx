@@ -238,6 +238,10 @@ export async function sendTonConnectStartMessage(
                   : 4,
             extraCurrencySupported: true,
           },
+          {
+            name: 'SignData',
+            types: ['text', 'binary', 'cell'],
+          },
         ],
       },
       items: [

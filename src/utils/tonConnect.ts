@@ -1,5 +1,9 @@
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
-import { TonConnectMessageTransaction, changeConnectMessageStatus } from '@/store/connectMessages'
+import {
+  TonConnectMessageSign,
+  TonConnectMessageTransaction,
+  changeConnectMessageStatus,
+} from '@/store/connectMessages'
 import { TonConnectSession } from '@/store/tonConnect'
 import { ConnectMessageStatus, ConnectMessageTransactionMessage } from '@/types/connect'
 import { ImmutableArray, ImmutableObject } from '@hookstate/core'
@@ -11,10 +15,13 @@ import {
   SendTransactionRpcResponseSuccess,
   SessionCrypto,
   WalletMessage,
+  SignDataRpcResponseSuccess,
 } from '@tonconnect/protocol'
 import { Address, Cell } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 import { secretKeyToX25519 } from './ed25519'
+import { getWalletFromKey } from '@/utils/wallets'
+import { SignTonConnectData } from '@/utils/signData/sign'
 
 const bridgeUrl = 'https://bridge.tonapi.io/bridge'
 
@@ -42,7 +49,7 @@ export async function sendTonConnectMessage(
   })
 }
 
-export async function ApproveTonConnectMessage({
+export async function ApproveTonConnectMessageTransaction({
   messageCell,
   connectMessage,
   session,
@@ -71,7 +78,7 @@ export async function ApproveTonConnectMessage({
   }
 }
 
-export async function RejectTonConnectMessage({
+export async function RejectTonConnectMessageTransaction({
   message,
   session,
 }: {
@@ -91,6 +98,77 @@ export async function RejectTonConnectMessage({
   }
 
   await changeConnectMessageStatus(message.id, ConnectMessageStatus.REJECTED)
+}
+
+export async function RejectTonConnectMessageSign({
+  message,
+  session,
+}: {
+  message: TonConnectMessageSign | ImmutableObject<TonConnectMessageSign>
+  session?: TonConnectSession | ImmutableObject<TonConnectSession>
+}) {
+  if (session) {
+    const msg: SendTransactionRpcResponseError = {
+      id: message.connect_event_id.toString(),
+      error: {
+        code: SEND_TRANSACTION_ERROR_CODES.USER_REJECTS_ERROR,
+        message: 'User rejected',
+      },
+    }
+
+    await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
+  }
+
+  await changeConnectMessageStatus(message.id, ConnectMessageStatus.REJECTED)
+}
+
+export async function ApproveTonConnectMessageSign({
+  message,
+  session,
+  key,
+  liteClient,
+  walletKeyPair,
+}: {
+  message: TonConnectMessageSign | ImmutableObject<TonConnectMessageSign>
+  session?: TonConnectSession | ImmutableObject<TonConnectSession>
+  key: any
+  liteClient: LiteClient | ImmutableObject<LiteClient>
+  walletKeyPair: { secretKey: Uint8Array | Buffer }
+}) {
+  let walletAddress: string | undefined
+  if (key) {
+    const wallet = key.wallets?.find((w: any) => w.id === session?.walletId)
+    if (wallet) {
+      const tonWallet = getWalletFromKey(liteClient, key, wallet)
+      walletAddress = tonWallet?.address.toRawString()
+    }
+  }
+
+  const signPayload = message.sign_payload
+
+  const sessionUrl = session?.url ?? ''
+  const sessionDomain = new URL(sessionUrl).hostname
+
+  const signedData = SignTonConnectData({
+    address: walletAddress ?? '',
+    domain: sessionDomain,
+    payload: signPayload,
+    privateKey: Buffer.from(walletKeyPair?.secretKey || Buffer.from([])),
+  })
+
+  if (session) {
+    const msg: SignDataRpcResponseSuccess = {
+      result: {
+        ...signedData,
+      },
+      id: message.connect_event_id.toString(),
+    }
+    await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
+  }
+
+  if (message) {
+    await changeConnectMessageStatus(message.id, ConnectMessageStatus.APPROVED)
+  }
 }
 
 export function GetTransfersFromTCMessage(
