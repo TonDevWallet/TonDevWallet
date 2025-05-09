@@ -41,7 +41,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeName === 'svg') {
             logger?.log('SVG node detected:', node)
-            if (node.childNodes.length !== 1) {
+            if (node.childNodes.length > 10) {
               return
             }
 
