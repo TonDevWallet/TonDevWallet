@@ -37,7 +37,7 @@ const state = hookstate<TonConnectState>(async () => {
   }
 })
 
-async function getSessions() {
+export async function getSessions() {
   const db = await getDatabase()
   const dbSessions = await db<ConnectSession>('connect_sessions').select('*')
 

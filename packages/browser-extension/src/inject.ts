@@ -154,7 +154,10 @@ async function interceptFetch(resource, options) {
             const jsonData = JSON.parse(decryptedData)
             await sendDataToDevWallet(JSON.stringify({
               type: 'proxy_transaction',
-              data: jsonData
+              data: {
+                payload: jsonData,
+                publicKey: walletPublicKey.toString('hex'),
+              }
             }))
         } catch (error) {
             logger?.error('Error decrypting data:', error)

@@ -2,7 +2,7 @@ import { listen } from '@tauri-apps/api/event'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTonConnectState } from './store/tonConnect'
+import { getSessions, useTonConnectState } from './store/tonConnect'
 import { getPasswordInteractive } from './store/passwordManager'
 import { getMatches } from '@tauri-apps/plugin-cli'
 import { getWallets } from './store/walletsListState'
@@ -14,6 +14,7 @@ import { onOpenUrl } from '@tauri-apps/plugin-deep-link'
 import { DeserializeTraceDump } from '@tondevwallet/traces'
 import { addTracerItem } from './store/tracerState'
 import { AddParsedToDumpTransaction } from './utils/txSerializer'
+import { secretKeyToX25519 } from './utils/ed25519'
 const appWindow = getCurrentWebviewWindow()
 
 export function useTauriEventListener() {
@@ -119,11 +120,13 @@ export function useTauriEventListener() {
         return
       }
 
-      if (data?.data?.method !== 'sendTransaction') {
+      if (data?.data?.payload?.method !== 'sendTransaction') {
         return
       }
 
-      const info = JSON.parse(data.data.params[0]) as {
+      const dataPublicKey = data.data.publicKey
+
+      const info = JSON.parse(data.data.payload.params[0]) as {
         messages: {
           address: string
           amount: string
@@ -157,6 +160,16 @@ export function useTauriEventListener() {
       if (typeof keyId === 'undefined' || typeof walletId === 'undefined') {
         console.log('no key or wallet found')
         return
+      }
+
+      // If we already have this session, don't duplicate message
+      const activeSessions = await getSessions()
+      for (const session of activeSessions) {
+        const keyPair = secretKeyToX25519(session.secretKey)
+        const localPublicKey = keyPair.publicKey.toString('hex')
+        if (localPublicKey === dataPublicKey) {
+          return
+        }
       }
 
       await addConnectMessage({
