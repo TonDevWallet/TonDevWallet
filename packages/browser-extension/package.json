@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@noble/curves": "^1.8.1",
+    "@tailwindcss/postcss": "^4.1.6",
     "@tonconnect/protocol": "^2.2.7",
     "@tondevwallet/traces": "^0.1.6",
     "react": "^19.1.0",
