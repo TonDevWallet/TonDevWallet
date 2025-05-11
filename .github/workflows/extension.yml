@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'dev/extension-build'
 
 jobs:
   build-extension:
@@ -25,6 +26,9 @@ jobs:
       - name: install app dependencies and build it
         working-directory: ./packages/browser-extension
         run: pnpm install
+      - name: cleanup
+        run: |
+          rm postcss.config.js
       - name: build
         working-directory: ./packages/browser-extension
         run: |
