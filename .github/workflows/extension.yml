@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - 'dev/extension-build'
 
 jobs:
   build-extension:
@@ -37,13 +36,13 @@ jobs:
       - name: upload chrome extension
         uses: actions/upload-artifact@v4
         with:
-          name: chrome-extension.zip
+          name: chrome-extension
           path: |
             ./packages/browser-extension/extension.chrome.zip
       - name: upload firefox extension
         uses: actions/upload-artifact@v4
         with:
-          name: firefox-extension.zip
+          name: firefox-extension
           path: |
             ./packages/browser-extension/extension.firefox.zip
 
