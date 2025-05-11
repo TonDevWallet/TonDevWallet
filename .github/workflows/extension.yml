@@ -23,10 +23,11 @@ jobs:
           node-version: 22
       - run: npm install --global --force corepack@latest && corepack enable && corepack prepare pnpm@9.5.0 --activate
       - name: install app dependencies and build it
-        run: cd packages/browser-extension && pnpm install
+        working-directory: ./packages/browser-extension
+        run: pnpm install
       - name: build
+        working-directory: ./packages/browser-extension
         run: |
-          cd packages/browser-extension
           TARGET=chrome pnpm build && zip -r extension.chrome.zip dist
           TARGET=firefox pnpm build && zip -r extension.firefox.zip dist
       - name: upload artifacts
