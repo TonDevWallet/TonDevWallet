@@ -32,13 +32,18 @@ jobs:
       - name: build
         working-directory: ./packages/browser-extension
         run: |
-          TARGET=chrome pnpm build && zip -r extension.chrome.zip dist
-          TARGET=firefox pnpm build && zip -r extension.firefox.zip dist
-      - name: upload artifacts
+          TARGET=chrome pnpm build && cd dist && zip -r extension.chrome.zip .
+          TARGET=firefox pnpm build && cd dist && zip -r extension.firefox.zip .
+      - name: upload chrome extension
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}-${{ matrix.args }}-extension
+          name: chrome-extension.zip
           path: |
             ./packages/browser-extension/extension.chrome.zip
+      - name: upload firefox extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-extension.zip
+          path: |
             ./packages/browser-extension/extension.firefox.zip
 
