@@ -4,7 +4,7 @@
   "icons": {
     "128": "icon-disabled/app-icon.png"
   },
-  "web_accessible_resources": [
+  "{{chrome}}.web_accessible_resources": [
     {
       "resources": [
         "src/inject.js"
@@ -13,6 +13,9 @@
         "<all_urls>"
       ]
     }
+  ],
+  "{{firefox}}.web_accessible_resources": [
+    "src/inject.js"
   ],
   "permissions": [
     "storage",
