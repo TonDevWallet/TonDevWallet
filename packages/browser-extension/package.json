@@ -10,7 +10,7 @@
   "dependencies": {
     "@noble/curves": "^1.8.1",
     "@tonconnect/protocol": "^2.2.7",
-    "@tondevwallet/traces": "^0.1.3",
+    "@tondevwallet/traces": "^0.1.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

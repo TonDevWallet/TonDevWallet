@@ -1,0 +1,39 @@
+name: 'Build Browser Extension'
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-extension:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'ubuntu-22.04'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --global --force corepack@latest && corepack enable && corepack prepare pnpm@9.5.0 --activate
+      - name: install app dependencies and build it
+        run: cd packages/browser-extension && pnpm install
+      - name: build
+        run: |
+          cd packages/browser-extension
+          TARGET=chrome pnpm build && zip -r extension.chrome.zip dist
+          TARGET=firefox pnpm build && zip -r extension.firefox.zip dist
+      - name: upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-${{ matrix.args }}-extension
+          path: |
+            ./packages/browser-extension/extension.chrome.zip
+            ./packages/browser-extension/extension.firefox.zip
+

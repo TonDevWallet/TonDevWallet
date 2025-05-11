@@ -25,3 +25,5 @@ dist-ssr
 wsproxy/target
 
 ton-dev-wallet.key*
+extension.key.pem
+packages/browser-extension/dist.crx

@@ -15,8 +15,8 @@ importers:
         specifier: ^2.2.7
         version: 2.2.7
       '@tondevwallet/traces':
-        specifier: ^0.1.3
-        version: 0.1.3(@ton/core@0.60.1(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)
+        specifier: ^0.1.6
+        version: 0.1.6(@ton/core@0.60.1(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)
       react:
         specifier: ^19.1.0
         version: 19.1.0
@@ -449,8 +449,8 @@ packages:
   '@tonconnect/protocol@2.2.7':
     resolution: {integrity: sha512-mmuS5ekaRVQtXOug30znXXSnuQfuLa6kDOv17X2ttk8Al9PlTFG/AtPRkWxCp8X5BdhPzGFELTog7kypukjWnQ==}
 
-  '@tondevwallet/traces@0.1.3':
-    resolution: {integrity: sha512-fJPD7gDHoraAkeu1V1UtjJzKoMLc+ols5pbYv/CLjylzdpktqfLl9u9J6knzN6d2hsc5fyn4ELyBkzPSXcBYqg==}
+  '@tondevwallet/traces@0.1.6':
+    resolution: {integrity: sha512-/aOwNLBUCtgweNzHzRQ1cm1kweXn3Kv5/pUYKYDiyOyV9GPKCBdWp1lwc4t9hgr6WrzUOrbovJkqxH1hG2Mhcw==}
     peerDependencies:
       '@ton/core': ^0.60.1
       '@ton/crypto': ^3.3.0
@@ -1812,7 +1812,7 @@ snapshots:
       tweetnacl: 1.0.3
       tweetnacl-util: 0.15.1
 
-  '@tondevwallet/traces@0.1.3(@ton/core@0.60.1(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)':
+  '@tondevwallet/traces@0.1.6(@ton/core@0.60.1(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)':
     dependencies:
       '@ton/core': 0.60.1(@ton/crypto@3.3.0)
       '@ton/crypto': 3.3.0
