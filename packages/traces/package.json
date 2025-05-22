@@ -1,23 +1,14 @@
 {
   "name": "@tondevwallet/traces",
-  "version": "0.1.6",
-  "type": "module",
+  "version": "0.1.8",
   "files": [
     "dist",
     "README.md"
   ],
-  "main": "./dist/traces.umd.cjs",
-  "module": "./dist/traces.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/traces.js",
-      "require": "./dist/traces.umd.cjs"
-    }
-  },
   "scripts": {
-    "build": "rimraf dist && vite build"
+    "build": "rimraf dist && tsc"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",

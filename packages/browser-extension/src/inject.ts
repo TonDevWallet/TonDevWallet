@@ -15,9 +15,59 @@ if (typeof window !== 'undefined') {
   }
 }
 
+/**
+ * Converts a hex string to a Uint8Array
+ * @param hexString - The hex string to convert (with or without '0x' prefix)
+ * @returns The resulting Uint8Array
+ */
+function hexToUint8Array(hexString: string): Uint8Array {
+  // Remove 0x prefix if present
+  const hex = hexString.startsWith('0x') ? hexString.slice(2) : hexString;
+  
+  // Ensure even length
+  const normalizedHex = hex.length % 2 ? '0' + hex : hex;
+  
+  const result = new Uint8Array(normalizedHex.length / 2);
+  
+  for (let i = 0; i < normalizedHex.length; i += 2) {
+    result[i / 2] = parseInt(normalizedHex.substring(i, i + 2), 16);
+  }
+  
+  return result;
+}
+
+/**
+ * Converts a base64 string to a Uint8Array
+ * @param base64String - The base64 string to convert
+ * @returns The resulting Uint8Array
+ */
+function base64ToUint8Array(base64String: string): Uint8Array {
+  // In browser environments
+  if (typeof atob === 'function') {
+    const binaryString = atob(base64String);
+    const result = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      result[i] = binaryString.charCodeAt(i);
+    }
+    return result;
+  } 
+  // In Node.js environment
+  else if (typeof Buffer !== 'undefined') {
+    return new Uint8Array(Buffer.from(base64String, 'base64'));
+  }
+  
+  throw new Error('Unable to decode base64 string - neither atob nor Buffer is available');
+}
+
+function uint8ArrayToHex(uint8Array: Uint8Array) {
+  return Array.from(uint8Array)
+    .map((i) => i.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// Send the decrypted data to WebSocket server
 async function sendDataToDevWallet(data: string) {
-  // Send the decrypted data to WebSocket server
-  const {GetDevWalletSocket} = await import('@tondevwallet/traces')
+  const { GetDevWalletSocket } = await import('@tondevwallet/traces/dist/socket')
 
   try {
     const websocket = await GetDevWalletSocket()
@@ -103,18 +153,17 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   window.fetch.__TONDEV_INTERCEPTED__ = true
 })(window.fetch)
 
-
 async function interceptFetch(resource, options) {
   try {
     const {SessionCrypto} = await import('@tonconnect/protocol')
     const {ed25519, x25519} = await import('@noble/curves/ed25519')
 
-    function secretKeyToX25519(secretKey: Buffer | Uint8Array): KeyPair {
+    function secretKeyToX25519(secretKey: Uint8Array): KeyPair {
       const publicKey = x25519.getPublicKey(secretKey)
     
       return {
-        secretKey: Buffer.from(secretKey),
-        publicKey: Buffer.from(publicKey),
+        secretKey: secretKey,
+        publicKey: publicKey,
       }
     }
     
@@ -126,7 +175,7 @@ async function interceptFetch(resource, options) {
       if (url.pathname.includes('/message')) {
         try {
             const base64Data = options.body
-            const decodedData = Buffer.from(base64Data, 'base64')
+            const decodedData = base64ToUint8Array(base64Data)
 
             const localData = JSON.parse(localStorage.getItem('ton-connect-storage_bridge-connection')) as {
                 session: {
@@ -138,15 +187,15 @@ async function interceptFetch(resource, options) {
                 }
             }
 
-            const sessionPublicKey = Buffer.from(localData.session.sessionKeyPair.publicKey, 'hex')
-            const sessionSecretKey = Buffer.from(localData.session.sessionKeyPair.secretKey, 'hex')
-            const walletPublicKey = Buffer.from(localData.session.walletPublicKey, 'hex')
+            const sessionPublicKey = hexToUint8Array(localData.session.sessionKeyPair.publicKey)
+            const sessionSecretKey = hexToUint8Array(localData.session.sessionKeyPair.secretKey)
+            const walletPublicKey = hexToUint8Array(localData.session.walletPublicKey)
 
 
             const keyPair = secretKeyToX25519(sessionSecretKey)
             const session = new SessionCrypto({
-                publicKey: Buffer.from(keyPair.publicKey).toString('hex'),
-                secretKey: Buffer.from(keyPair.secretKey).toString('hex'),
+                publicKey: uint8ArrayToHex(keyPair.publicKey),
+                secretKey: uint8ArrayToHex(keyPair.secretKey),
             })
 
             const decryptedData = session.decrypt(decodedData, walletPublicKey)
@@ -156,7 +205,7 @@ async function interceptFetch(resource, options) {
               type: 'proxy_transaction',
               data: {
                 payload: jsonData,
-                publicKey: walletPublicKey.toString('hex'),
+                publicKey: localData.session.walletPublicKey,
               }
             }))
         } catch (error) {
