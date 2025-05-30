@@ -21,7 +21,7 @@ import { useEmulatedTxInfo } from '@/hooks/useEmulatedTxInfo'
 import { MessageFlow } from './MessageFlow'
 import { secretKeyToED25519 } from '@/utils/ed25519'
 import { Button } from '@/components/ui/button'
-import { faDownload, faExpand, faCopy } from '@fortawesome/free-solid-svg-icons'
+import { faDownload, faExpand, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { ManagedSendMessageResult } from '@/utils/ManagedBlockchain'
@@ -94,6 +94,8 @@ export const MessageRowTx = memo(function MessageRowTx({
       return []
     }
   }, [s.payload.messages])
+
+  const unsignedMessageCell = useWalletExternalMessageCell(tonWallet, emptyKeyPair, transfers)
 
   const messageCell = useWalletExternalMessageCell(
     tonWallet,
@@ -287,6 +289,7 @@ export const MessageRowTx = memo(function MessageRowTx({
         isLoading={isLoading}
         wallet={tonWallet}
         selectedKey={key.get({ noproxy: true }) as Key}
+        unsignedExternal={unsignedMessageCell}
       />
     </Block>
   )
@@ -465,16 +468,44 @@ const CopyTransactionButton = memo(function CopyTransactionButton({
   )
 })
 
+const CopyExternalButton = memo(function CopyExternalButton({ copyData }: { copyData: string }) {
+  const [isCopied, setIsCopied] = useState(false)
+
+  const handleCopyOk = useCallback(async () => {
+    await navigator.clipboard.writeText(copyData)
+    setIsCopied(true)
+    setTimeout(() => setIsCopied(false), 1500)
+  }, [copyData])
+
+  return (
+    <Button variant={'outline'} className={'mt-4 w-36'} onClick={handleCopyOk}>
+      {isCopied ? (
+        <>
+          <FontAwesomeIcon icon={faCheck} className={'mr-2'} />
+          Copied
+        </>
+      ) : (
+        <>
+          <FontAwesomeIcon icon={faCopy} className={'mr-2'} />
+          Copy External
+        </>
+      )}
+    </Button>
+  )
+})
+
 export function MessageEmulationResult({
   txInfo,
   isLoading,
   wallet,
   selectedKey,
+  unsignedExternal,
 }: {
   txInfo: ManagedSendMessageResult | undefined
   isLoading: boolean
   wallet: IWallet | undefined
   selectedKey: Key
+  unsignedExternal: Cell | undefined
 }) {
   const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
   const [max, setMax] = useState(false)
@@ -493,6 +524,13 @@ export function MessageEmulationResult({
     transactions: txInfo?.transactions,
   }
 
+  const externalBoc = useMemo(() => {
+    if (!unsignedExternal) {
+      return undefined
+    }
+    return unsignedExternal.toBoc().toString('base64')
+  }, [unsignedExternal])
+
   return (
     <>
       <div className="flex flex-col">
@@ -509,6 +547,7 @@ export function MessageEmulationResult({
             </Button>
 
             <CopyTransactionButton txInfo={txInfo} wallet={wallet} selectedKey={selectedKey} />
+            {externalBoc && <CopyExternalButton copyData={externalBoc} />}
           </div>
 
           <Block
