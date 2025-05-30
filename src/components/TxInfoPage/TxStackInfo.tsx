@@ -1,4 +1,4 @@
-import { faKeyboard } from '@fortawesome/free-solid-svg-icons'
+import { faKeyboard, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { VmLogsInfo } from './VmLogsInfo'
@@ -6,6 +6,7 @@ import { useTransactionState } from '@/store/txInfo'
 import { useState } from 'react'
 import { StackInfo } from '@/hooks/useVmLogsNavigation'
 import { VmStackInfo } from './VmStackInfo'
+import { cn } from '@/utils/cn'
 
 export function TxStackInfo({ filterText }: { filterText: string }) {
   const transactionState = useTransactionState()
@@ -14,14 +15,45 @@ export function TxStackInfo({ filterText }: { filterText: string }) {
     new: '',
     i: -1,
   })
+  const [copied, setCopied] = useState(false)
+
+  const copyExecutionLog = () => {
+    const lines = transactionState.vmLogs.get().split('\n')
+    const executeLines = lines.filter((line) => line.startsWith('execute'))
+    const cleanLines = executeLines.map((line) => line.replace('execute ', ''))
+    const executedCommands = cleanLines.join('\n')
+    navigator.clipboard.writeText(executedCommands)
+    setCopied(true)
+    setTimeout(() => {
+      setCopied(false)
+    }, 1500)
+  }
 
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
       {/* VM Logs Panel */}
       <div className="w-full md:w-[40%] md:max-w-[350px] flex flex-col h-full overflow-hidden border-r border-border">
         <div className="flex-none bg-secondary/30">
-          <div className="p-3 border-b border-border">
+          <div className="p-3 border-b border-border flex justify-between">
             <h2 className="font-medium text-foreground">VM Execution Log</h2>
+            <button
+              className={cn(
+                'cursor-pointer text-xs flex items-center gap-1 transition-colors duration-300 px-2 py-1 rounded'
+              )}
+              onClick={copyExecutionLog}
+            >
+              {copied ? (
+                <>
+                  <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
+                  Copy
+                </>
+              )}
+            </button>
           </div>
 
           <div className="bg-secondary border-b border-border px-4 py-2">
