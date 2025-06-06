@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Address } from '@ton/core'
+import { Address, Cell } from '@ton/core'
 import { IWallet } from '@/types'
-import { textToWalletBody } from '@/utils/textToWalletBody'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -20,6 +19,7 @@ import { Key } from '@/types/Key'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Label } from '@/components/ui/label'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
+import { textToWalletBody } from '@/utils/textToWalletBody'
 
 export default function SendTon({
   wallet,
@@ -47,7 +47,7 @@ export default function SendTon({
   const [recepient, setRecepient] = useState(initialRecipient)
   const [message, setMessage] = useState(initialMessage)
   const [stateInit, setStateInit] = useState(initialStateInit)
-  const [message64, setMessage64] = useState(initialMessageBase64)
+  const [isMessageRaw, setIsMessageRaw] = useState(initialMessageBase64)
   const [extraCurrencyAmount, setExtraCurrencyAmount] = useState('0')
   const [extraCurrencyCode, setExtraCurrencyCode] = useState('')
   // const [availableCurrencies, setAvailableCurrencies] = useState<Record<string, any>>({})
@@ -133,7 +133,7 @@ export default function SendTon({
       setRecepient('')
       setMessage('')
       setStateInit('')
-      setMessage64(false)
+      setIsMessageRaw(false)
       setExtraCurrencyAmount('0')
       setMessageMode('3') // Reset to default
       updateFlagsFromMode('3')
@@ -146,6 +146,24 @@ export default function SendTon({
     const keyId = selectedKey?.id
     if (typeof keyId === 'undefined') {
       return
+    }
+
+    let payloadCell: Cell | undefined
+    if (message) {
+      try {
+        payloadCell = textToWalletBody(message, isMessageRaw)
+      } catch (e: any) {
+        return
+      }
+    }
+
+    let stateInitCell: Cell | undefined
+    if (stateInit) {
+      try {
+        stateInitCell = textToWalletBody(stateInit, true)
+      } catch (e: any) {
+        return
+      }
     }
 
     // Only include extra currency if one is selected and not 'none'
@@ -171,7 +189,8 @@ export default function SendTon({
           {
             address: recepient,
             amount: parseTon(amount).toString(),
-            payload: textToWalletBody(message, message64)?.toBoc()?.toString('base64'),
+            payload: payloadCell?.toBoc().toString('base64'),
+            stateInit: stateInitCell?.toBoc().toString('base64'),
             extra_currency: extraCurrency,
           },
         ],
@@ -406,16 +425,16 @@ export default function SendTon({
       <div className="mt-2 flex flex-col">
         <label htmlFor="messageInput">Message:</label>
         <div className="flex items-center">
-          <label htmlFor="base64Check" className="text-sm text-foreground/75 my-1 cursor-pointer">
-            Base64 cell?
+          <label
+            htmlFor="rawMessageCheck"
+            className="text-sm text-foreground/75 my-1 cursor-pointer"
+          >
+            Raw cell (hex/base64)?
           </label>
           <Checkbox
-            id="base64Check"
-            checked={message64}
-            onCheckedChange={(e: any) => {
-              console.log('change', e)
-              setMessage64((c) => !c)
-            }}
+            id="rawMessageCheck"
+            checked={isMessageRaw}
+            onCheckedChange={(checked) => setIsMessageRaw(!!checked)}
             className="ml-2"
           />
         </div>
@@ -431,7 +450,7 @@ export default function SendTon({
 
       <div className="mt-2 flex flex-col">
         <label htmlFor="stateInitInput">StateInit:</label>
-        <p className="text-foreground/75 text-sm my-1">Base64 encoded state init cell</p>
+        <p className="text-foreground/75 text-sm my-1">Hex or Base64 encoded state init cell</p>
         <Input
           className="border rounded p-2"
           id="stateInitInput"
