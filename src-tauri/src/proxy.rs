@@ -1,10 +1,10 @@
 use std::borrow::Cow;
+use std::net::{Ipv4Addr, SocketAddr};
 
 use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
 use log::trace;
 use std::error::Error as stdError;
-use std::net::SocketAddr;
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -24,10 +24,8 @@ pub async fn spawn_proxy(listener: &mut TcpListener) -> Result<(), Box<dyn stdEr
 
     while let Ok((stream, _)) = listener.accept().await {
         tokio::spawn(async move {
-            // Process each socket concurrently.
-            let res = accept_connection(stream).await;
-            if res.is_err() {
-                trace!("Res error {:?}", res.err())
+            if let Err(e) = accept_connection(stream).await {
+                trace!("Connection error: {:?}", e);
             }
         });
     }
@@ -36,84 +34,62 @@ pub async fn spawn_proxy(listener: &mut TcpListener) -> Result<(), Box<dyn stdEr
 }
 
 fn int_to_ip(int: i32) -> String {
-    let part1 = int & 255;
-    let part2 = (int >> 8) & 255;
-    let part3 = (int >> 16) & 255;
-    let part4 = (int >> 24) & 255;
-
-    return format!("{}.{}.{}.{}", part4, part3, part2, part1);
+    Ipv4Addr::from(int as u32).to_string()
 }
 
 async fn accept_connection(stream: TcpStream) -> Result<(), Box<dyn stdError + Send + Sync>> {
-    let addr = stream
-        .peer_addr()
-        .expect("connected streams should have a peer address");
-    trace!("Peer address: {}", addr);
+    let peer_addr = stream.peer_addr()?;
+    trace!("Peer address: {}", peer_addr);
 
-    let mut ip: String = String::from("");
-    let mut port: i32 = 0;
+    let mut target_addr: Option<SocketAddr> = None;
 
     let auth_callback = |req: &Request, res: Response| {
-        trace!("req uri {} {:?}", req.uri(), req.uri().host(),);
-        let mut pairs = form_urlencoded::parse(req.uri().query().unwrap_or("").as_bytes());
-        trace!("Got pairs");
+        trace!("Request URI: {}", req.uri());
+        let mut ip = None;
+        let mut port = None;
 
-        loop {
-            trace!("Got pairs loop");
-            let (k, v) = match pairs.next() {
-                None => break,
-                Some(v) => v,
-            };
-
-            trace!("Got k, v {} {}", k, v);
-
-            match k {
-                Cow::Borrowed("ip") => {
-                    trace!("ip {}", v);
-                    let ip_num = v.parse::<i32>().unwrap();
-                    ip = int_to_ip(ip_num);
+        if let Some(query) = req.uri().query() {
+            for (k, v) in form_urlencoded::parse(query.as_bytes()) {
+                match k.as_ref() {
+                    "ip" => {
+                        if let Ok(ip_num) = v.parse::<i32>() {
+                            ip = Some(int_to_ip(ip_num));
+                        }
+                    }
+                    "port" => {
+                        if let Ok(port_num) = v.parse::<u16>() {
+                            port = Some(port_num);
+                        }
+                    }
+                    _ => {}
                 }
-                Cow::Borrowed("port") => {
-                    trace!("port {}", v);
-                    let port_num = v.parse::<i32>().unwrap();
-                    port = port_num;
-                }
-                _ => {}
             }
         }
 
-        if port == 0 {
-            return Err(http::Response::<Option<String>>::new(None));
+        if let (Some(ip_str), Some(port_val)) = (ip, port) {
+            if let Ok(addr) = format!("{}:{}", ip_str, port_val).parse() {
+                target_addr = Some(addr);
+                return Ok(res);
+            }
         }
-        Ok(res)
+
+        Err(http::Response::builder()
+            .status(http::StatusCode::BAD_REQUEST)
+            .body(Some(
+                "Missing or invalid 'ip' or 'port' query parameters.".to_string(),
+            ))
+            .unwrap())
     };
 
-    // let mut rng = rand::thread_rng();
-    // let random_value: f64 = rand::random();
+    let ws_stream = accept_hdr_async(stream, auth_callback).await?;
 
-    // if random_value < 0.5 {
-    //     if let Err(e) = stream.shutdown().await {
-    //         info!("Error while closing WebSocket: {:?}", e);
-    //     }
-    //     return Ok(());
-    // }
+    trace!("New WebSocket connection: {}", peer_addr);
 
-    let ws_stream = match accept_hdr_async(stream, auth_callback).await {
-        Ok(v) => v,
-        Err(e) => {
-            trace!("got error {:?}", e);
-            panic!("Error");
-        }
-    };
+    let addr = target_addr.unwrap();
+    trace!("Target address {}", addr);
+    let target_stream = TcpStream::connect(&addr).await?;
 
-    trace!("New WebSocket connection: {}", addr);
-
-    let addr_str = format!("{}:{}", ip, port);
-    trace!("addr_str {}", addr_str);
-    let addr = addr_str.parse::<SocketAddr>()?;
-    let stream = TcpStream::connect(&addr).await?;
-
-    let (ri, wi) = stream.into_split();
+    let (ri, wi) = target_stream.into_split();
     let (wo, ro) = ws_stream.split();
 
     tokio::spawn(ws_to_tcp(ro, wi));
@@ -126,82 +102,69 @@ async fn ws_to_tcp(
     mut ro: SplitStream<WebSocketStream<TcpStream>>,
     mut wi: OwnedWriteHalf,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    trace!("got ws to tcp start");
+    trace!("ws_to_tcp start");
 
     loop {
-        let msg_or_timeout = timeout(Duration::from_secs(60), ro.try_next()).await;
-
-        let msg = match msg_or_timeout {
-            Ok(Ok(msg)) => msg,
-            Ok(Err(_)) => {
-                // Error occurred while receiving message
-                break;
-            }
+        let msg = match timeout(Duration::from_secs(60), ro.try_next()).await {
             Err(_) => {
-                // Timeout occurred, break the loop
-                trace!("No activity for 60 seconds, breaking the loop");
+                trace!("ws_to_tcp: Timeout after 60s of inactivity");
                 break;
             }
+            Ok(Err(e)) => {
+                trace!("ws_to_tcp: WebSocket read error: {}", e);
+                break;
+            }
+            Ok(Ok(None)) => {
+                trace!("ws_to_tcp: WebSocket stream closed");
+                break;
+            }
+            Ok(Ok(Some(msg))) => msg,
         };
 
-        match msg {
-            Some(msg) => {
-                if msg.is_binary() {
-                    trace!("got ws to tcp");
-                    let mut data = msg.into_data();
-                    wi.write(&mut data).await?;
-                    trace!("written to tcp {}", data.len());
-                } else {
-                    // Handle other message types if needed
-                }
-            }
-            None => {
-                trace!("No more messages, breaking the loop");
+        if let Message::Binary(data) = msg {
+            trace!("ws_to_tcp: received {} bytes", data.len());
+            if wi.write_all(&data).await.is_err() {
+                trace!("ws_to_tcp: TCP write error, connection likely closed.");
                 break;
             }
+            trace!("ws_to_tcp: written to tcp {}", data.len());
         }
-        // if msg.is_binary() {
-        //     info!("got ws to tcp");
-        //     let mut data = msg.into_data();
-        //     wi.write(&mut data).await?;
-        //     info!("written to tcp {}", data.len());
-        // } else {
-        //     // Handle other message types if needed
-        // }
     }
 
-    wi.shutdown().await?;
+    let _ = wi.shutdown().await;
     Ok(())
 }
 
 async fn tcp_to_ws(
     ri: OwnedReadHalf,
     mut wo: SplitSink<WebSocketStream<TcpStream>, Message>,
-) -> Result<Option<SplitSink<WebSocketStream<TcpStream>, Message>>, Box<dyn stdError + Send + Sync>>
-{
+) -> Result<(), Box<dyn stdError + Send + Sync>> {
     trace!("tcp_to_ws start");
 
-    // ri.readable().await?;
     let mut stream = BufReader::new(ri);
-    trace!("tcp_to_ws readeable");
-    let mut byte = vec![0_u8; 1024 * 3];
+    let mut buffer = vec![0_u8; 1024 * 3];
+
     loop {
-        trace!("tcp_to_ws loop");
-        // let mut line = String::new();
-        let n = stream.read(&mut byte).await?;
-        trace!("tcp_to_ws got info {}", n);
-        match n {
-            0 => break,
-            // 1 => info!("A byte read: {}", byte[0]),
-            _ => {
-                let capped = &mut byte[0..n];
-                let msg = tungstenite::Message::Binary(Vec::from(capped));
-                wo.send(msg).await?;
+        let n = match stream.read(&mut buffer).await {
+            Ok(0) => {
+                trace!("tcp_to_ws: TCP stream ended");
+                break;
             }
+            Ok(n) => n,
+            Err(e) => {
+                trace!("tcp_to_ws: TCP read error: {}", e);
+                break;
+            }
+        };
+
+        trace!("tcp_to_ws: read {} bytes from tcp", n);
+        let msg = Message::Binary(buffer[..n].to_vec());
+        if wo.send(msg).await.is_err() {
+            trace!("tcp_to_ws: WebSocket send error, connection likely closed.");
+            break;
         }
     }
 
-    wo.send(Message::Close(None)).await?;
-    wo.close().await?;
-    Ok(Some(wo))
+    let _ = wo.close().await;
+    Ok(())
 }
