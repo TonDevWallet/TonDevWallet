@@ -4,18 +4,22 @@ import { Cell } from '@ton/ton'
 import { memo, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { NormalizeMessage } from '@/utils/ton'
+import { useLiteclientState } from '@/store/liteClient'
 
 export const OpenInExplorerButton = memo(function OpenInExplorerButton({ cell }: { cell: Cell }) {
+  const scannerUrlState = useLiteclientState().selectedNetwork.scanner_url
+
   const handleOpenInExplorer = useCallback(() => {
     try {
       const normaliedMessage = NormalizeMessage(cell)
+      const scannerUrl = scannerUrlState.get() || 'https://tonviewer.com/'
 
       const hash = normaliedMessage.hash().toString('hex')
-      window.open(`https://tonviewer.com/transaction/${hash}`, '_blank', 'noopener,noreferrer')
+      window.open(`${scannerUrl}transaction/${hash}`, '_blank', 'noopener,noreferrer')
     } catch (e) {
       console.error('Failed to open in explorer', e)
     }
-  }, [cell])
+  }, [cell, scannerUrlState])
 
   return (
     <Button
