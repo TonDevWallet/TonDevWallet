@@ -13,6 +13,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { MessageFlow } from '../MessageFlow'
 import { CopyExternalButton } from './CopyExternalButton'
 import { CopyTransactionButton } from './CopyTransactionButton'
+import { OpenInExplorerButton } from './OpenInExplorerButton'
 
 export function MessageEmulationResult({
   txInfo,
@@ -20,12 +21,14 @@ export function MessageEmulationResult({
   wallet,
   selectedKey,
   unsignedExternal,
+  signedExternal,
 }: {
   txInfo: ManagedSendMessageResult | undefined
   isLoading: boolean
   wallet: IWallet | undefined
   selectedKey: Key
   unsignedExternal: Cell | undefined
+  signedExternal: Cell | undefined
 }) {
   const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
   const [max, setMax] = useState(false)
@@ -55,19 +58,20 @@ export function MessageEmulationResult({
     <>
       <div className="flex flex-col">
         <div className="break-words break-all flex flex-col gap-2">
-          <div className="flex gap-2">
-            <Button variant={'outline'} className={'mt-4'} onClick={() => setMax((v) => !v)}>
+          <div className="flex flex-wrap gap-2">
+            <Button variant={'outline'} className={''} onClick={() => setMax((v) => !v)}>
               <FontAwesomeIcon icon={faExpand} className={'mr-2'} />
               Toggle Preview Size
             </Button>
 
-            <Button variant={'outline'} className={'mt-4'} onClick={handleDownloadGraph}>
+            <Button variant={'outline'} className={''} onClick={handleDownloadGraph}>
               <FontAwesomeIcon icon={faDownload} className={'mr-2'} />
               Download graph
             </Button>
 
             <CopyTransactionButton txInfo={txInfo} wallet={wallet} selectedKey={selectedKey} />
             {externalBoc && <CopyExternalButton copyData={externalBoc} />}
+            {signedExternal && <OpenInExplorerButton cell={signedExternal} />}
           </div>
 
           <Block

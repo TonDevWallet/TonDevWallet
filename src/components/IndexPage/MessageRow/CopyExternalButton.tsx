@@ -17,7 +17,7 @@ export const CopyExternalButton = memo(function CopyExternalButton({
   }, [copyData])
 
   return (
-    <Button variant={'outline'} className={'mt-4 w-36'} onClick={handleCopyOk}>
+    <Button variant={'outline'} className={'w-36'} onClick={handleCopyOk}>
       {isCopied ? (
         <>
           <FontAwesomeIcon icon={faCheck} className={'mr-2'} />

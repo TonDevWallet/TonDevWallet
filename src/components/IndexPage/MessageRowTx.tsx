@@ -281,6 +281,7 @@ export const MessageRowTx = memo(function MessageRowTx({
         wallet={tonWallet}
         selectedKey={key.get({ noproxy: true }) as Key}
         unsignedExternal={unsignedMessageCell}
+        signedExternal={password && walletKeyPair ? messageCell : undefined}
       />
     </Block>
   )

@@ -83,7 +83,7 @@ export const CopyTransactionButton = memo(function CopyTransactionButton({
     <Dialog open={sendDialogOpen} onOpenChange={setSendDialogOpen}>
       <Button
         variant={'outline'}
-        className={'mt-4'}
+        className={''}
         onClick={() => setSendDialogOpen(true)}
         disabled={!firstTransfer}
       >
