@@ -1,5 +1,5 @@
 import { TonConnectMessageTransaction } from '@/store/connectMessages'
-import { useLiteclient, useLiteclientState } from '@/store/liteClient'
+import { useLiteclient } from '@/store/liteClient'
 import { openPasswordPopup, useDecryptWalletData, usePassword } from '@/store/passwordManager'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
@@ -10,7 +10,7 @@ import {
 } from '@/utils/tonConnect'
 import { getWalletFromKey, useWalletExternalMessageCell } from '@/utils/wallets'
 import { ImmutableObject, State } from '@hookstate/core'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
@@ -18,24 +18,15 @@ import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
 import { cn } from '@/utils/cn'
 import { useEmulatedTxInfo } from '@/hooks/useEmulatedTxInfo'
-import { MessageFlow } from './MessageFlow'
 import { secretKeyToED25519 } from '@/utils/ed25519'
-import { Button } from '@/components/ui/button'
-import { faDownload, faExpand, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { ManagedSendMessageResult } from '@/utils/ManagedBlockchain'
-// import { DeserializeTransactionsList, SerializeTransactionsList } from '@/utils/txSerializer'
-import { Address, Cell } from '@ton/ton'
+import { Address } from '@ton/ton'
 import { bigIntToBuffer } from '@/utils/ton'
-import { JettonAmountDisplay, JettonNameDisplay } from '../Jettons/Jettons'
 import { formatUnits } from '@/utils/units'
-// For Tauri filesystem access
-import { downloadGraph } from '@/utils/graphDownloader'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import SendTon from '../wallets/tonweb/SendTon'
+import { MessageEmulationResult } from './MessageRow/MessageEmulationResult'
+import { JettonFlow } from './MessageRow/JettonFlow'
 import { Key } from '@/types/Key'
-import { IWallet } from '@/types'
+
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -294,270 +285,3 @@ export const MessageRowTx = memo(function MessageRowTx({
     </Block>
   )
 })
-
-const JettonFlow = memo(function JettonFlow({
-  jettonTransfers,
-  tonDifference,
-  ourAddress,
-}: {
-  jettonTransfers: { from: Address; to: Address; jetton: Address | null; amount: bigint }[]
-  ourAddress: Address | null
-  tonDifference: bigint
-}) {
-  // Group transfers by jetton and calculate net flow
-  const jettonFlows = useMemo(() => {
-    return jettonTransfers.reduce<Record<string, bigint>>((acc, transfer) => {
-      const jettonKey = transfer.jetton?.toString() || 'unknown'
-      if (!acc[jettonKey]) {
-        acc[jettonKey] = 0n
-      }
-
-      // Add to balance if receiving tokens (to our address)
-      // Subtract from balance if sending tokens (from our address)
-      if (ourAddress && transfer.to.equals(ourAddress)) {
-        acc[jettonKey] += transfer.amount
-      } else if (ourAddress && transfer.from.equals(ourAddress)) {
-        acc[jettonKey] -= transfer.amount
-      }
-
-      return acc
-    }, {})
-  }, [jettonTransfers, ourAddress?.toRawString()])
-
-  return (
-    <div className="mt-2">
-      <div className="font-semibold mb-1">Money Flow:</div>
-      {Object.entries(jettonFlows).length > 0 ? (
-        Object.entries(jettonFlows).map(([jettonAddr, amount]) => (
-          <JettonFlowItem key={jettonAddr} jettonAddress={jettonAddr} amount={amount} />
-        ))
-      ) : (
-        <></>
-      )}
-      <JettonFlowItem jettonAddress={'TON'} amount={tonDifference} />
-    </div>
-  )
-})
-
-const JettonFlowItem = memo(function JettonFlowItem({
-  jettonAddress,
-  amount,
-}: {
-  jettonAddress: Address | string | undefined
-  amount: bigint
-}) {
-  return (
-    <div className="flex items-center">
-      <span className="truncate max-w-[200px]">
-        <JettonNameDisplay jettonAddress={jettonAddress} />
-      </span>
-      <div className={`flex ml-2 font-medium ${amount >= 0n ? 'text-green-600' : 'text-red-600'}`}>
-        {amount >= 0n ? '+' : ''}
-        <JettonAmountDisplay amount={amount} jettonAddress={jettonAddress} />
-      </div>
-    </div>
-  )
-})
-
-const CopyTransactionButton = memo(function CopyTransactionButton({
-  txInfo,
-  wallet,
-  selectedKey,
-}: {
-  txInfo: ManagedSendMessageResult | undefined
-  wallet: IWallet | undefined
-  selectedKey: Key
-}) {
-  const [sendDialogOpen, setSendDialogOpen] = useState(false)
-
-  // Get the first transfer to populate the SendTon component
-  const firstTransfer = useMemo(() => {
-    const firstTransaction = txInfo?.transactions?.[0]
-    if (!firstTransaction) {
-      return null
-    }
-    if (firstTransaction.outMessages) {
-      const outMessages = firstTransaction.outMessages.values()
-      for (const msg of outMessages) {
-        if (msg.info.type === 'internal') {
-          // Extract body as base64
-          let bodyBase64 = ''
-          if (msg.body) {
-            try {
-              // Get the raw body cell as base64
-              bodyBase64 = msg.body.toBoc().toString('base64')
-            } catch (e) {
-              console.error('Failed to convert body to base64:', e)
-            }
-          }
-
-          // Extract init (stateInit) as base64 if present
-          let initBase64 = ''
-          try {
-            if (msg.init) {
-              // The TL-B structure for init is a Maybe of Either, so we need to check types
-              const initCell = (msg.init as any).value?.value
-              if (initCell instanceof Cell) {
-                initBase64 = initCell.toBoc().toString('base64')
-              }
-            }
-          } catch (e) {
-            console.error('Failed to convert state init to base64:', e)
-          }
-          const bounceable = msg.info.bounce
-
-          return {
-            address: msg.info.dest?.toString({
-              urlSafe: true,
-              bounceable,
-            }),
-            fromAddress: firstTransaction.inMessage?.info.dest as Address,
-            amount: formatUnits(msg.info.value.coins, 9),
-            message: bodyBase64,
-            isBase64: true, // Mark as base64
-            stateInit: initBase64,
-          }
-        }
-      }
-    }
-    return null
-  }, [txInfo])
-
-  const handleTransactionSent = useCallback(() => {
-    // Close the dialog when transaction is sent
-    setSendDialogOpen(false)
-  }, [])
-
-  return (
-    <Dialog open={sendDialogOpen} onOpenChange={setSendDialogOpen}>
-      <Button
-        variant={'outline'}
-        className={'mt-4'}
-        onClick={() => setSendDialogOpen(true)}
-        disabled={!firstTransfer}
-      >
-        <FontAwesomeIcon icon={faCopy} className={'mr-2'} />
-        Copy transaction
-      </Button>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Transfer TON</DialogTitle>
-        </DialogHeader>
-        {firstTransfer && (
-          <div>
-            {wallet && selectedKey ? (
-              <SendTon
-                wallet={wallet}
-                selectedKey={selectedKey}
-                initialRecipient={firstTransfer.address}
-                initialAmount={firstTransfer.amount}
-                initialMessage={firstTransfer.message}
-                initialStateInit={firstTransfer.stateInit}
-                initialMessageBase64={firstTransfer.isBase64}
-                onSend={handleTransactionSent}
-              />
-            ) : (
-              <div className="text-center p-3">
-                <p>You can use these transaction details to create a new transaction.</p>
-              </div>
-            )}
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
-})
-
-const CopyExternalButton = memo(function CopyExternalButton({ copyData }: { copyData: string }) {
-  const [isCopied, setIsCopied] = useState(false)
-
-  const handleCopyOk = useCallback(async () => {
-    await navigator.clipboard.writeText(copyData)
-    setIsCopied(true)
-    setTimeout(() => setIsCopied(false), 1500)
-  }, [copyData])
-
-  return (
-    <Button variant={'outline'} className={'mt-4 w-36'} onClick={handleCopyOk}>
-      {isCopied ? (
-        <>
-          <FontAwesomeIcon icon={faCheck} className={'mr-2'} />
-          Copied
-        </>
-      ) : (
-        <>
-          <FontAwesomeIcon icon={faCopy} className={'mr-2'} />
-          Copy External
-        </>
-      )}
-    </Button>
-  )
-})
-
-export function MessageEmulationResult({
-  txInfo,
-  isLoading,
-  wallet,
-  selectedKey,
-  unsignedExternal,
-}: {
-  txInfo: ManagedSendMessageResult | undefined
-  isLoading: boolean
-  wallet: IWallet | undefined
-  selectedKey: Key
-  unsignedExternal: Cell | undefined
-}) {
-  const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
-  const [max, setMax] = useState(false)
-
-  const handleDownloadGraph = useCallback(async () => {
-    if (txInfo?.transactions) {
-      await downloadGraph(txInfo.transactions)
-    }
-  }, [txInfo])
-
-  // for test purposes, use serdes graph to display it
-  // const serdesGraph = DeserializeTransactionsList(
-  //   SerializeTransactionsList(txInfo?.transactions || [])
-  // )
-  const serdesGraph = {
-    transactions: txInfo?.transactions,
-  }
-
-  const externalBoc = useMemo(() => {
-    if (!unsignedExternal) {
-      return undefined
-    }
-    return unsignedExternal.toBoc().toString('base64')
-  }, [unsignedExternal])
-
-  return (
-    <>
-      <div className="flex flex-col">
-        <div className="break-words break-all flex flex-col gap-2">
-          <div className="flex gap-2">
-            <Button variant={'outline'} className={'mt-4'} onClick={() => setMax((v) => !v)}>
-              <FontAwesomeIcon icon={faExpand} className={'mr-2'} />
-              Toggle Preview Size
-            </Button>
-
-            <Button variant={'outline'} className={'mt-4'} onClick={handleDownloadGraph}>
-              <FontAwesomeIcon icon={faDownload} className={'mr-2'} />
-              Download graph
-            </Button>
-
-            <CopyTransactionButton txInfo={txInfo} wallet={wallet} selectedKey={selectedKey} />
-            {externalBoc && <CopyExternalButton copyData={externalBoc} />}
-          </div>
-
-          <Block
-            className={cn('h-[50vh]', max && 'h-[90vh]', 'p-0')}
-            bg={isTestnet ? 'bg-[#22351f]' : 'bg-transparent'}
-          >
-            {!isLoading && <MessageFlow transactions={serdesGraph.transactions} />}
-          </Block>
-        </div>
-      </div>
-    </>
-  )
-}
