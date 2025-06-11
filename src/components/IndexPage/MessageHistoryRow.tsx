@@ -1,20 +1,26 @@
 import { TonConnectMessageRecord } from '@/store/connectMessages'
-import { useLiteclient } from '@/store/liteClient'
+import { useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
 import { getWalletFromKey } from '@/utils/wallets'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useEffect, useState } from 'react'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { BocContainer } from '../BocContainer'
 import { formatUnits } from '@/utils/units'
+import { fetchToncenterTrace, NormalizeMessage } from '@/utils/ton'
+import { Cell } from '@ton/core'
+import { ToncenterV3Traces } from '@/utils/retracer/traces'
+import { Progress } from '@/components/ui/progress'
 
 export const MessageHistoryRow = memo(function MessageHistoryRow({
   connectMessage,
+  shouldFetch,
 }: {
   connectMessage: TonConnectMessageRecord
+  shouldFetch: boolean
 }) {
   const keys = useWalletListState()
   const liteClient = useLiteclient() as unknown as LiteClient
@@ -51,26 +57,84 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
     [liteClient, wallet, key]
   )
 
-  // const messageHash = useMemo(() => {
-  //   return connectMessage.message_cell
-  //     ? Cell.fromBase64(connectMessage.message_cell).hash()
-  //     : undefined
-  // }, [connectMessage.message_cell])
+  // ---------------------------------------------------------------------------
+  // Pending trace progress (only for messages newer than 1 hour)
+  // ---------------------------------------------------------------------------
+  const selectedNetworkState = useLiteclientState()
+  const [pendingProgress, setPendingProgress] = useState<{ loaded: number; total: number } | null>(
+    null
+  )
 
-  // const [tonapiTx, setTonapiTx] = useState<any>(null)
-  // const tonapiClient = useTonapiClient()
+  useEffect(() => {
+    if (!shouldFetch) return
 
-  // useEffect(() => {
-  //   if (messageHash) {
-  //     const f = async () => {
-  //       const trace = await tonapiClient?.traces.getTrace(messageHash.toString('hex'))
-  //       console.log('trace', trace)
-  //     }
-  //     f()
-  //   }
-  // }, [messageHash])
+    // Only for tx messages with a message cell
+    if (connectMessage.message_type !== 'tx' || !connectMessage.message_cell) {
+      return
+    }
 
-  // console.log('messageHash', messageHash)
+    const messageCell = Cell.fromBase64(connectMessage.message_cell)
+    const normalizedMessageCell = NormalizeMessage(messageCell)
+    const hashHex = normalizedMessageCell.hash().toString('hex')
+
+    const abortController = new AbortController()
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
+    const load = async () => {
+      try {
+        let traceData: ToncenterV3Traces | null = null
+        try {
+          traceData = await fetchToncenterTrace({
+            hash: hashHex,
+            isTestnet: selectedNetworkState.selectedNetwork.get().is_testnet,
+            pending: true,
+            signal: abortController.signal,
+          })
+        } catch (e) {
+          console.log('error', e)
+        }
+        if (!traceData?.traces) {
+          try {
+            traceData = await fetchToncenterTrace({
+              hash: hashHex,
+              isTestnet: selectedNetworkState.selectedNetwork.get().is_testnet,
+              pending: false,
+              signal: abortController.signal,
+            })
+          } catch (e) {
+            console.log('error', e)
+          }
+        }
+
+        console.log('readyTraceData', traceData)
+        if (!traceData?.traces || traceData.traces.length === 0) return
+
+        const trace = traceData.traces[0]
+        const txs = Object.values(trace.transactions)
+        const onChain = txs.filter((t: any) => !t.emulated).length
+
+        setPendingProgress({ loaded: onChain, total: txs.length })
+
+        if (onChain === txs.length && intervalId) {
+          clearInterval(intervalId)
+          intervalId = null
+        }
+      } catch (_) {
+        // ignore errors
+      }
+    }
+
+    load()
+
+    intervalId = setInterval(() => {
+      load()
+    }, 1000)
+
+    return () => {
+      abortController.abort()
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [shouldFetch, connectMessage.created_at, connectMessage.message_cell])
 
   return (
     <Block className="">
@@ -134,6 +198,21 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
               </Block>
             )
           })}
+        </div>
+      )}
+
+      {pendingProgress && (
+        <div className="mt-2 text-sm text-gray-500 w-full">
+          <div>
+            Transaction progress: {pendingProgress.loaded}/{pendingProgress.total}
+            {pendingProgress.loaded === pendingProgress.total ? ' Done' : ''}
+          </div>
+          {pendingProgress.total > 0 && pendingProgress.loaded < pendingProgress.total && (
+            <Progress
+              value={(pendingProgress.loaded / pendingProgress.total) * 100}
+              className="h-1 mt-1"
+            />
+          )}
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import { beginCell, Cell, loadMessage, storeMessage } from '@ton/core'
+import { ToncenterV3Traces } from '@/utils/retracer/traces'
 
 export function bigIntToBuffer(data: bigint | undefined): Buffer {
   if (!data) {
@@ -38,4 +39,35 @@ export function NormalizeMessage(cell: Cell): Cell {
   return beginCell()
     .store(storeMessage(msg, { forceRef: true }))
     .endCell()
+}
+
+/**
+ * Fetches trace information from toncenter.
+ *
+ * @param hash   Transaction hash to query (hex string without 0x prefix).
+ * @param isTestnet Whether to use testnet endpoint.
+ * @param pending   When true, fetches data from the `pendingTraces` endpoint instead of `traces`.
+ * @param signal    Optional AbortSignal for cancellation.
+ */
+export async function fetchToncenterTrace({
+  hash,
+  isTestnet = false,
+  pending = false,
+  signal,
+}: {
+  hash: string
+  isTestnet?: boolean
+  pending?: boolean
+  signal?: AbortSignal
+}): Promise<ToncenterV3Traces> {
+  const endpoint = pending ? 'pendingTraces' : 'traces'
+  const hashParam = pending ? 'ext_msg_hash' : 'msg_hash'
+  const apiUrl = `https://${isTestnet ? 'testnet.' : ''}toncenter.com/api/v3/${endpoint}?${hashParam}=${hash}`
+
+  const res = await fetch(apiUrl, { signal })
+  if (res.status !== 200) {
+    throw new Error(`Failed to fetch trace data: HTTP ${res.status}`)
+  }
+
+  return (await res.json()) as ToncenterV3Traces
 }

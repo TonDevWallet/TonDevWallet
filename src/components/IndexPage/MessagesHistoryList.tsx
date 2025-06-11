@@ -41,8 +41,8 @@ export function MessagesHistoryList() {
 
   return (
     <div className="overflow-x-hidden mb-8 flex flex-col gap-4 max-w-lg mx-auto">
-      {messages.map((s) => {
-        return <MessageHistoryRow connectMessage={s} key={s.id} />
+      {messages.map((s, i) => {
+        return <MessageHistoryRow connectMessage={s} key={s.id} shouldFetch={i === 0} />
       })}
     </div>
   )
