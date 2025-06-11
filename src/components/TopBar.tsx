@@ -20,7 +20,6 @@ import {
   faPlus,
   faSun,
   faProjectDiagram,
-  faHome,
   faList,
 } from '@fortawesome/free-solid-svg-icons'
 import { PasswordPopup } from '@/components/SavedWalletsList/PasswordPopup'
@@ -29,28 +28,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-
-export function TopBar() {
-  return (
-    <div className={cn('flex flex-wrap py-2 px-4 gap-4 w-full')}>
-      <NetworkSelector />
-
-      <ThemeSwitcher />
-      <PasswordUnlock />
-
-      <TopBarLinkWrapper to="/app" icon={faHome} text="Home" />
-
-      <PasswordPopup />
-
-      <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
-      <TopBarLinkWrapper to="/app/wallets_list" icon={faList} text="All Wallets" />
-      <TopBarLinkWrapper to="/app/tracer" icon={faProjectDiagram} text="Tracer" />
-      <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
-
-      <DetectTonConnect />
-    </div>
-  )
-}
+import { HomeLink } from './HomeLink'
 
 function NetworkSelector() {
   const liteClientState = useLiteclientState()
@@ -235,5 +213,27 @@ function TopBarLinkWrapper({
     </NavLink>
   ) : (
     <div className="cursor-pointer rounded flex flex-col items-center my-2">{children}</div>
+  )
+}
+
+export function TopBar() {
+  return (
+    <div className={cn('flex flex-wrap py-2 px-4 gap-4 w-full')}>
+      <NetworkSelector />
+
+      <ThemeSwitcher />
+      <PasswordUnlock />
+
+      <HomeLink />
+
+      <PasswordPopup />
+
+      <TopBarLinkWrapper to="/app/new_wallet" icon={faPlus} text="New Wallet" />
+      <TopBarLinkWrapper to="/app/wallets_list" icon={faList} text="All Wallets" />
+      <TopBarLinkWrapper to="/app/tracer" icon={faProjectDiagram} text="Tracer" />
+      <TopBarLinkWrapper to="/app/settings" icon={faGear} text="Settings" />
+
+      <DetectTonConnect />
+    </div>
   )
 }
