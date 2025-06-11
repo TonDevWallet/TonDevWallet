@@ -1,49 +1,79 @@
-import { TonConnectMessageRecord } from '@/store/connectMessages'
 import { MessageHistoryRow } from './MessageHistoryRow'
-import { useDatabase } from '@/db'
-import { useEffect, useState } from 'react'
-import { ConnectMessageTransaction } from '@/types/connect'
+import { Pagination } from './Pagination'
+import { useMessagesHistory } from '@/hooks/useMessagesHistory'
+import { Block } from '@/components/ui/Block'
 
 export function MessagesHistoryList() {
-  const db = useDatabase()
-  const [messages, setMessages] = useState<TonConnectMessageRecord[]>([])
-  useEffect(() => {
-    const f = async () => {
-      const dbMessages = await db<ConnectMessageTransaction>('connect_message_transactions')
-        .where({
-          status: 1,
-        })
-        .orderBy('id', 'desc')
-        .limit(100)
-        .select('*')
+  const { messages, currentPage, totalPages, isLoading, error, goToPage, nextPage, prevPage } =
+    useMessagesHistory({ pageSize: 10 })
 
-      const messages: TonConnectMessageRecord[] = dbMessages.map((m) => {
-        return {
-          id: m.id,
-          // saved_wallet_id: m.saved_wallet_id,
-          connect_session_id: m.connect_session_id,
-          connect_event_id: m.connect_event_id,
-          status: m.status,
-          key_id: m.key_id,
-          wallet_id: m.wallet_id,
-          message_cell: m.message_cell,
-          wallet_address: m.wallet_address,
-          payload: m.payload ? JSON.parse(m.payload) : undefined,
-          message_type: m.message_type,
-          sign_payload: m.sign_payload ? JSON.parse(m.sign_payload) : undefined,
-        }
-      })
+  if (error) {
+    return (
+      <div className="max-w-lg mx-auto p-4">
+        <Block className="text-center">
+          <div className="text-red-600">
+            <p className="font-medium">Error loading messages</p>
+            <p className="text-sm mt-1 text-red-500">{error}</p>
+          </div>
+        </Block>
+      </div>
+    )
+  }
 
-      setMessages(messages)
-    }
-    f()
-  }, [])
+  if (isLoading && messages.length === 0) {
+    return (
+      <div className="max-w-lg mx-auto p-4">
+        <Block className="text-center">
+          <div className="text-muted-foreground">Loading messages...</div>
+        </Block>
+      </div>
+    )
+  }
+
+  if (!isLoading && messages.length === 0) {
+    return (
+      <div className="max-w-lg mx-auto p-4">
+        <Block className="text-center">
+          <div className="text-muted-foreground">No messages found</div>
+        </Block>
+      </div>
+    )
+  }
 
   return (
-    <div className="overflow-x-hidden mb-8 flex flex-col gap-4 max-w-lg mx-auto">
-      {messages.map((s, i) => {
-        return <MessageHistoryRow connectMessage={s} key={s.id} shouldFetch={i === 0} />
-      })}
+    <div className="max-w-lg mx-auto mb-8">
+      {/* Top pagination */}
+      <Pagination
+        rootClassName="mb-4"
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+        onPrevious={prevPage}
+        onNext={nextPage}
+      />
+
+      {/* Messages list */}
+      <div className="flex flex-col gap-4 overflow-x-hidden">
+        {messages.map((s, i) => {
+          return (
+            <MessageHistoryRow
+              connectMessage={s}
+              key={s.id}
+              shouldFetch={i === 0 && currentPage === 1}
+            />
+          )
+        })}
+      </div>
+
+      {/* Bottom pagination */}
+      <Pagination
+        rootClassName="mt-4"
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+        onPrevious={prevPage}
+        onNext={nextPage}
+      />
     </div>
   )
 }
