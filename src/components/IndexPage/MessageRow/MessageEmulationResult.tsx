@@ -56,7 +56,7 @@ export function MessageEmulationResult({
 
   return (
     <>
-      <div className="flex flex-col">
+      <div className="flex flex-col mt-2">
         <div className="break-words break-all flex flex-col gap-2">
           <div className="flex flex-wrap gap-2">
             <Button variant={'outline'} className={''} onClick={() => setMax((v) => !v)}>
