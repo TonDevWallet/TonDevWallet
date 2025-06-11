@@ -14,6 +14,7 @@ import { fetchToncenterTrace, NormalizeMessage } from '@/utils/ton'
 import { Cell } from '@ton/core'
 import { ToncenterV3Traces } from '@/utils/retracer/traces'
 import { Progress } from '@/components/ui/progress'
+import { OpenInExplorerButton } from './MessageRow/OpenInExplorerButton'
 
 export const MessageHistoryRow = memo(function MessageHistoryRow({
   connectMessage,
@@ -56,6 +57,17 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
     () => getWalletFromKey(liteClient, key.get(), wallet),
     [liteClient, wallet, key]
   )
+
+  // Normalized message cell for explorer link (if available)
+  const explorerCell = useMemo(() => {
+    if (connectMessage.message_type !== 'tx' || !connectMessage.message_cell) return undefined
+    try {
+      const cell = Cell.fromBase64(connectMessage.message_cell)
+      return NormalizeMessage(cell)
+    } catch {
+      return undefined
+    }
+  }, [connectMessage.message_cell, connectMessage.message_type])
 
   // ---------------------------------------------------------------------------
   // Pending trace progress (only for messages newer than 1 hour)
@@ -213,6 +225,12 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
               className="h-1 mt-1"
             />
           )}
+        </div>
+      )}
+
+      {explorerCell && (
+        <div className="mt-2">
+          <OpenInExplorerButton cell={explorerCell} />
         </div>
       )}
 
