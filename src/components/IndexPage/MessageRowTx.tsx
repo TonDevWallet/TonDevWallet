@@ -26,6 +26,9 @@ import { formatUnits } from '@/utils/units'
 import { MessageEmulationResult } from './MessageRow/MessageEmulationResult'
 import { JettonFlow } from './MessageRow/JettonFlow'
 import { Key } from '@/types/Key'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
@@ -85,6 +88,21 @@ export const MessageRowTx = memo(function MessageRowTx({
       return []
     }
   }, [s.payload.messages])
+
+  const validUntill = useMemo(() => {
+    if (!s.payload?.valid_until?.get()) {
+      return undefined
+    }
+    return new Date(s.payload?.valid_until?.get() * 1000)
+  }, [s.payload])
+
+  const validUntilCorrect = useMemo(() => {
+    if (!validUntill) {
+      return false
+    }
+    // correct if now < validUntill < now + 5 minutes
+    return validUntill > new Date() && validUntill < new Date(Date.now() + 5 * 60 * 1000)
+  }, [validUntill])
 
   const unsignedMessageCell = useWalletExternalMessageCell(tonWallet, emptyKeyPair, transfers)
 
@@ -234,6 +252,29 @@ export const MessageRowTx = memo(function MessageRowTx({
         <div className="flex items-center gap-2">
           <div>Messages count:</div>
           <div className="break-words break-all">{s?.payload?.get()?.messages?.length}</div>
+        </div>
+      </div>
+
+      {/* Valid untill */}
+      <div className={cn('flex gap-4', validUntilCorrect ? 'text-green-500' : 'text-red-500')}>
+        <div className="flex items-center gap-2">
+          <div>Valid until:</div>
+          <div className="break-words break-all">{validUntill?.toLocaleString()}</div>
+
+          {/* Tooltip with info about valid until */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger className="cursor-pointer">
+                <FontAwesomeIcon icon={faInfoCircle} />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  Valid until should be in the future and less than 5 minutes from now. If it is
+                  not, the message can be rejected.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
