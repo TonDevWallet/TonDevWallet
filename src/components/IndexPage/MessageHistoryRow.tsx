@@ -99,6 +99,7 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
           traceData = await fetchToncenterTrace({
             hash: hashHex,
             isTestnet: selectedNetworkState.selectedNetwork.get().is_testnet,
+            toncenter3Url: selectedNetworkState.selectedNetwork.get().toncenter3_url,
             pending: true,
             signal: abortController.signal,
           })
@@ -110,6 +111,7 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
             traceData = await fetchToncenterTrace({
               hash: hashHex,
               isTestnet: selectedNetworkState.selectedNetwork.get().is_testnet,
+              toncenter3Url: selectedNetworkState.selectedNetwork.get().toncenter3_url,
               pending: false,
               signal: abortController.signal,
             })

@@ -9,6 +9,7 @@ export interface Network {
   is_default: boolean
   is_testnet: boolean
   scanner_url?: string
+  toncenter3_url?: string
 
   created_at: Date
   updated_at: Date

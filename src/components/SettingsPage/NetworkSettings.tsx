@@ -25,6 +25,8 @@ function NetworkSettings() {
           is_default: network.is_default,
           network_id: network.network_id,
           is_testnet: network.is_testnet,
+          scanner_url: network.scanner_url,
+          toncenter3_url: network.toncenter3_url,
         }
       }),
     },
@@ -49,6 +51,8 @@ function NetworkSettings() {
         is_default: network.is_default,
         network_id: network.network_id,
         is_testnet: network.is_testnet,
+        scanner_url: network.scanner_url,
+        toncenter3_url: network.toncenter3_url,
       })
     }
   }, [liteClientState.networks])
@@ -68,6 +72,8 @@ function NetworkSettings() {
           name: network.name,
           url: network.url,
           is_testnet: network.is_testnet,
+          scanner_url: network.scanner_url,
+          toncenter3_url: network.toncenter3_url,
         })
       }
       await updateNetworksList()
@@ -86,6 +92,7 @@ function NetworkSettings() {
         is_default: false,
         is_testnet: false,
         scanner_url: 'https://tonviewer.com/',
+        toncenter3_url: undefined,
         created_at: new Date(),
         updated_at: new Date(),
       })

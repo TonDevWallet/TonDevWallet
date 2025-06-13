@@ -53,16 +53,18 @@ export async function fetchToncenterTrace({
   hash,
   isTestnet = false,
   pending = false,
+  toncenter3Url,
   signal,
 }: {
   hash: string
   isTestnet?: boolean
+  toncenter3Url?: string
   pending?: boolean
   signal?: AbortSignal
 }): Promise<ToncenterV3Traces> {
   const endpoint = pending ? 'pendingTraces' : 'traces'
   const hashParam = pending ? 'ext_msg_hash' : 'msg_hash'
-  const apiUrl = `https://${isTestnet ? 'testnet.' : ''}toncenter.com/api/v3/${endpoint}?${hashParam}=${hash}`
+  const apiUrl = `${getToncenter3Url(isTestnet, toncenter3Url)}${endpoint}?${hashParam}=${hash}`
 
   const res = await fetch(apiUrl, { signal })
   if (res.status !== 200) {
@@ -70,4 +72,11 @@ export async function fetchToncenterTrace({
   }
 
   return (await res.json()) as ToncenterV3Traces
+}
+
+export function getToncenter3Url(isTestnet?: boolean, toncenter3Url?: string) {
+  if (toncenter3Url) {
+    return toncenter3Url
+  }
+  return `https://${isTestnet ? 'testnet.' : ''}toncenter.com/api/v3/`
 }

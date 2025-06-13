@@ -16,6 +16,7 @@ import { LiteClient } from 'ton-lite-client'
 import { CallForSuccess } from '../callForSuccess'
 import DataLoader from 'dataloader'
 import { LRUMap } from 'lru_map'
+import { getToncenter3Url } from '../ton'
 
 export type StateFromAPI =
   | {
@@ -226,10 +227,11 @@ export type BaseTxInfo = { lt: bigint; hash: Buffer; addr: Address }
 
 export async function fetchTransactions(
   params: GetTransactionsParams,
-  testnet: boolean
+  testnet: boolean,
+  toncenter3Url?: string
 ): Promise<TransactionList> {
   try {
-    const url = new URL(`https://${testnet ? 'testnet.' : ''}toncenter.com/api/v3/transactions`)
+    const url = new URL(`${getToncenter3Url(testnet, toncenter3Url)}transactions`)
 
     // Add all parameters to URL search params
     if (params.workchain !== null && params.workchain !== undefined)
@@ -424,7 +426,8 @@ export async function getLib(
 
 export async function linkToTx(
   txLink: string,
-  forcedTestnet?: boolean
+  forcedTestnet?: boolean,
+  toncenter3Url?: string
 ): Promise<{ tx: BaseTxInfo; testnet: boolean }> {
   // break given tx link to lt, hash, addr
 
@@ -448,7 +451,7 @@ export async function linkToTx(
     // https://tonviewer.com/transaction/3e5f49798de239da5d8f80b4dc300204d37613e4203a3f7b877c04a88c81856b
     testnet = forcedTestnet || txLink.includes('testnet.')
     const infoPart = testnet ? txLink.slice(42) : txLink.slice(34)
-    const res = await fetchTransactions({ hash: infoPart, limit: 1 }, testnet)
+    const res = await fetchTransactions({ hash: infoPart, limit: 1 }, testnet, toncenter3Url)
     hash = Buffer.from(infoPart, 'hex')
     addr = Address.parseRaw(res.transactions[0].account)
     lt = BigInt(res.transactions[0].lt)
@@ -460,7 +463,7 @@ export async function linkToTx(
     // https://tonscan.org/tx/Pl9JeY3iOdpdj4C03DACBNN2E+QgOj97h3wEqIyBhWs=
     testnet = forcedTestnet || txLink.includes('testnet.')
     const infoPart = testnet ? txLink.slice(31) : txLink.slice(23)
-    const res = await fetchTransactions({ hash: infoPart, limit: 1 }, testnet)
+    const res = await fetchTransactions({ hash: infoPart, limit: 1 }, testnet, toncenter3Url)
     hash = Buffer.from(infoPart, 'base64')
     addr = Address.parseRaw(res.transactions[0].account)
     lt = BigInt(res.transactions[0].lt)
@@ -483,7 +486,7 @@ export async function linkToTx(
     // https://dton.io/tx/F64C6A3CDF3FAD1D786AACF9A6130F18F3F76EEB71294F53BBD812AD3703E70A
     testnet = forcedTestnet || txLink.includes('testnet.')
     const infoPart = testnet ? txLink.slice(27) : txLink.slice(19)
-    const res = await fetchTransactions({ hash: infoPart, limit: 1 }, testnet)
+    const res = await fetchTransactions({ hash: infoPart, limit: 1 }, testnet, toncenter3Url)
     hash = Buffer.from(infoPart, 'hex')
     addr = Address.parseRaw(res.transactions[0].account)
     lt = BigInt(res.transactions[0].lt)
@@ -501,16 +504,17 @@ export async function linkToTx(
       let res: TransactionList
       testnet = forcedTestnet || false
 
-      if (forcedTestnet) res = await fetchTransactions({ hash: hashStr, limit: 1 }, forcedTestnet)
+      if (forcedTestnet)
+        res = await fetchTransactions({ hash: hashStr, limit: 1 }, forcedTestnet, toncenter3Url)
       else
         try {
-          res = await fetchTransactions({ hash: hashStr, limit: 1 }, testnet)
+          res = await fetchTransactions({ hash: hashStr, limit: 1 }, testnet, toncenter3Url)
           if (res.transactions.length === 0) throw new Error('No transactions found')
         } catch {
           console.log(`Trying testnet for ${hashStr}...`)
           testnet = true
           await waitForRateLimit()
-          res = await fetchTransactions({ hash: hashStr, limit: 1 }, testnet)
+          res = await fetchTransactions({ hash: hashStr, limit: 1 }, testnet, toncenter3Url)
           if (res.transactions.length === 0) throw new Error('No transactions found')
         }
       addr = Address.parseRaw(res.transactions[0].account)
@@ -532,17 +536,18 @@ export async function linkToTx(
         testnet = forcedTestnet || false
 
         await waitForRateLimit()
-        if (forcedTestnet) res = await fetchTransactions({ hash: txLink, limit: 1 }, forcedTestnet)
+        if (forcedTestnet)
+          res = await fetchTransactions({ hash: txLink, limit: 1 }, forcedTestnet, toncenter3Url)
         else
           try {
             console.log(`Trying mainnet for ${txLink}...`)
-            res = await fetchTransactions({ hash: txLink, limit: 1 }, testnet)
+            res = await fetchTransactions({ hash: txLink, limit: 1 }, testnet, toncenter3Url)
             if (res.transactions.length === 0) throw new Error('No transactions found')
           } catch {
             console.log(`Trying testnet for ${txLink}...`)
             testnet = true
             await waitForRateLimit()
-            res = await fetchTransactions({ hash: txLink, limit: 1 }, testnet)
+            res = await fetchTransactions({ hash: txLink, limit: 1 }, testnet, toncenter3Url)
             if (res.transactions.length === 0) throw new Error(`No transactions found`)
           }
         hash = Buffer.from(res.transactions[0].hash, 'base64')

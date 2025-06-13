@@ -8,6 +8,7 @@ import { parseWithPayloads } from '@truecarry/tlb-abi'
 import { RecursivelyParseCellWithBlock } from '@/utils/tlb/cellParser'
 import { LiteClient } from 'ton-lite-client'
 import { LiteClientState } from './liteClient'
+import { getToncenter3Url } from '@/utils/ton'
 
 export interface GraphData {
   transactions: ParsedTransaction[]
@@ -264,6 +265,7 @@ async function startRemoteTraceEmulation(remoteId: string, hash: string) {
     // We'll need to get it from the context in a real implementation
     const liteClient = LiteClientState.liteClient.get({ noproxy: true }) as LiteClient
     const isTestnet = LiteClientState.selectedNetwork.get()?.is_testnet
+    const toncenter3Url = LiteClientState.selectedNetwork.get()?.toncenter3_url
 
     // In a real-world implementation, you would get the liteClient like this:
     // const liteClientModule = await import('@/store/liteClient');
@@ -279,7 +281,7 @@ async function startRemoteTraceEmulation(remoteId: string, hash: string) {
     updateRemoteTraceStatus(remoteId, true, { loaded: 0, total: 0 }, null)
 
     // Fetch the trace data
-    const apiUrl = `https://${isTestnet ? 'testnet.' : ''}toncenter.com/api/v3/traces?tx_hash=${hash}`
+    const apiUrl = `${getToncenter3Url(isTestnet, toncenter3Url)}traces?tx_hash=${hash}`
     const response = await CallForSuccess(async () => {
       const res = await fetch(apiUrl, {
         signal: abortController.signal,
@@ -364,6 +366,7 @@ async function startRemoteTraceEmulation(remoteId: string, hash: string) {
             lt: BigInt(tx.lt),
           },
           isTestnet,
+          toncenter3Url,
           () => {
             // Check if aborted during emulation
             if (abortController.signal.aborted) {

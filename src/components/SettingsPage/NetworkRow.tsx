@@ -16,6 +16,8 @@ export interface NetworkSettingsProps {
   is_default: boolean
   network_id: number
   is_testnet: boolean
+  scanner_url?: string
+  toncenter3_url?: string
 }
 
 // NetworkRow component
@@ -147,6 +149,60 @@ const NetworkRow = ({ field, index, control, watch, onRemove }: NetworkRowProps)
           />
           <NetworkTestButton url={watch(`networks.${index}.url`)} />
         </div>
+      </div>
+
+      <div className="mt-4">
+        <Label
+          htmlFor={`networks.${index}.scanner_url`}
+          className="text-sm font-medium mb-1.5 block"
+        >
+          Scanner URL (Optional)
+        </Label>
+        <FormField
+          control={control}
+          name={`networks.${index}.scanner_url`}
+          render={({ field: scannerField }) => (
+            <FormItem>
+              <FormControl>
+                <Input
+                  placeholder="Enter blockchain scanner URL (optional)"
+                  {...scannerField}
+                  spellCheck={false}
+                  className="w-full h-10"
+                  id={`networks.${index}.scanner_url`}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="mt-4">
+        <Label
+          htmlFor={`networks.${index}.toncenter3_url`}
+          className="text-sm font-medium mb-1.5 block"
+        >
+          TonCenter V3 URL (Optional)
+        </Label>
+        <FormField
+          control={control}
+          name={`networks.${index}.toncenter3_url`}
+          render={({ field: toncenter3Field }) => (
+            <FormItem>
+              <FormControl>
+                <Input
+                  placeholder="Enter TonCenter V3 URL (optional)"
+                  {...toncenter3Field}
+                  spellCheck={false}
+                  className="w-full h-10"
+                  id={`networks.${index}.toncenter3_url`}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   )

@@ -7,6 +7,7 @@ import { CallForSuccess } from '@/utils/callForSuccess'
 import { parseWithPayloads } from '@truecarry/tlb-abi'
 import { RecursivelyParseCellWithBlock } from '@/utils/tlb/cellParser'
 import { Address } from '@ton/ton'
+import { getToncenter3Url } from '@/utils/ton'
 
 interface UseTraceDataResult {
   transactions: ParsedTransaction[]
@@ -49,6 +50,8 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
       if (!txHash || !liteClient) return
 
       const isTestnet = selectedNetwork.selectedNetwork.get().is_testnet
+      const toncenter3Url = selectedNetwork.selectedNetwork.get().toncenter3_url
+
       // Create a new AbortController for this execution
       const abortController = new AbortController()
       abortControllerRef.current = abortController
@@ -63,7 +66,7 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
         setProgress({ loaded: 0, total: 0 })
 
         // Fetch trace info from toncenter with abort signal
-        const apiUrl = `https://${isTestnet ? 'testnet.' : ''}toncenter.com/api/v3/traces?tx_hash=${txHash}`
+        const apiUrl = `${getToncenter3Url(isTestnet, toncenter3Url)}traces?tx_hash=${txHash}`
         const response = await CallForSuccess(async () => {
           const res = await fetch(apiUrl, {
             signal: abortController.signal,
@@ -130,6 +133,7 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
                 lt: BigInt(tx.lt),
               },
               isTestnet,
+              toncenter3Url,
               () => {
                 // Check if this execution is still valid during the emulation
                 if (

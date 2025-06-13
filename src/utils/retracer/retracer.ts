@@ -34,12 +34,13 @@ export async function getEmulationWithStack(
   liteClient: LiteClient,
   txLink: string | BaseTxInfo,
   forcedTestnet: boolean = false,
+  toncenter3Url?: string,
   sendStatus: (status: string) => void = () => {}
 ): Promise<{
   tx: ParsedTransaction
 }> {
   // Parse transaction info from link or use provided info
-  const { txInfo, testnet } = await parseTxInfo(txLink, forcedTestnet)
+  const { txInfo, testnet } = await parseTxInfo(txLink, forcedTestnet, toncenter3Url)
 
   // Initialize TON clients
   const { clientV4, clientV2 } = initializeClients(testnet)
@@ -118,13 +119,14 @@ export async function getEmulationWithStack(
  */
 async function parseTxInfo(
   txLink: string | BaseTxInfo,
-  forcedTestnet: boolean
+  forcedTestnet: boolean,
+  toncenter3Url?: string
 ): Promise<{ txInfo: BaseTxInfo; testnet: boolean }> {
   let txInfo: BaseTxInfo
   let testnet = forcedTestnet || false
 
   if (typeof txLink === 'string') {
-    const txGot = await linkToTx(txLink, forcedTestnet)
+    const txGot = await linkToTx(txLink, forcedTestnet, toncenter3Url)
     txInfo = txGot.tx
     testnet = txGot.testnet
   } else {

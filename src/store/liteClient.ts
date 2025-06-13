@@ -25,6 +25,7 @@ const LiteClientState = hookstate<{
       is_default: true,
       is_testnet: false,
       scanner_url: 'https://tonviewer.com/',
+      toncenter3_url: 'https://toncenter.com/api/v3/',
       created_at: new Date(),
       updated_at: new Date(),
     })
@@ -35,7 +36,7 @@ const LiteClientState = hookstate<{
       is_default: true,
       is_testnet: true,
       scanner_url: 'https://testnet.tonviewer.com/',
-
+      toncenter3_url: 'https://testnet.toncenter.com/api/v3/',
       created_at: new Date(),
       updated_at: new Date(),
     })
