@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2025-06-14
+
+### Added
+- Custom Toncenter API URL setting
+- Option to use BIP-39 mnemonics (Tonkeeper-style)
+- Automatic interception of TonConnect QR-codes from clipboard and images
+- Interface and UI for `signData` TonConnect requests, including MessageRowSign component
+- Pagination and progress indicator for transaction history
+- "valid until" check for pending messages on the home screen
+- Allow sending transactions with hex-encoded body
+- Explorer URL now derived from the currently selected network
+
+### Fixed
+- Unhandled exception when `jettonOwnerAddr` is not resolved in transaction tracer
+- Error thrown for transactions without a compute phase
+- Duplicate messages when the browser extension is connected to the same wallet as the dApp
+- Incorrect SVG child node limit inside the browser extension
+
+### Technical
+- Updated `@tondevwallet/traces` package to drop `@ton/core` & `Buffer` peer requirement
+
 ## [0.7.0] - 2025-04-13
 
 ### Added
