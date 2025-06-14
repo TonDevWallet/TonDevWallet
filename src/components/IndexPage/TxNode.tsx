@@ -55,13 +55,13 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
   }, [tx, data.rootTx])
 
   const isTxError =
-    (tx.description.type === 'generic' &&
-      tx.description.computePhase.type === 'vm' &&
-      tx.description.computePhase.exitCode !== 0) ||
-    (tx.description.type === 'generic' &&
-      tx.description.actionPhase &&
-      tx.description.actionPhase?.resultCode !== 0) ||
-    (tx.description.type === 'generic' && tx.description.bouncePhase?.type)
+    (tx.description?.type === 'generic' &&
+      tx.description?.computePhase?.type === 'vm' &&
+      tx.description?.computePhase?.exitCode !== 0) ||
+    (tx.description?.type === 'generic' &&
+      tx.description?.actionPhase &&
+      tx.description?.actionPhase?.resultCode !== 0) ||
+    (tx.description?.type === 'generic' && tx.description.bouncePhase?.type)
 
   const isHashMismatch = !!tx.hashMismatch
 
@@ -187,7 +187,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
             {formatUnits(tx.totalFees.coins, 9)}
           </span>
         </div>
-        {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
+        {tx.description?.type === 'generic' && tx.description?.computePhase?.type === 'vm' && (
           <div className="flex flex-col gap-1 p-2 rounded bg-secondary/30">
             <span className="text-xs text-secondary-foreground/70">OpCode</span>
             <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
             </div>
           </div>
         )}
-        {tx.description.type === 'generic' && tx.description.computePhase.type === 'vm' && (
+        {tx.description?.type === 'generic' && tx.description?.computePhase?.type === 'vm' && (
           <div className="flex flex-col gap-1 p-2 rounded bg-secondary/30">
             <span className="text-xs text-secondary-foreground/70">Compute Code</span>
             <span className="font-medium text-sm truncate">
@@ -212,8 +212,8 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
             </span>
           </div>
         )}
-        {tx.description.type === 'generic' &&
-          tx.description.actionPhase?.resultCode !== undefined && (
+        {tx.description?.type === 'generic' &&
+          tx.description?.actionPhase?.resultCode !== undefined && (
             <div className="flex flex-col gap-1 p-2 rounded bg-secondary/30">
               <span className="text-xs text-secondary-foreground/70">Action Code</span>
               <span className="font-medium text-sm truncate">

@@ -232,13 +232,13 @@ function getTxHeight(tx: ParsedTransaction) {
 
 function isTxError(tx: ParsedTransaction) {
   const isError =
+    (tx.description?.type === 'generic' &&
+      tx.description?.computePhase?.type === 'vm' &&
+      tx.description?.computePhase?.exitCode !== 0) ||
     (tx.description.type === 'generic' &&
-      tx.description.computePhase.type === 'vm' &&
-      tx.description.computePhase.exitCode !== 0) ||
-    (tx.description.type === 'generic' &&
-      tx.description.actionPhase &&
-      tx.description.actionPhase?.resultCode !== 0) ||
-    (tx.description.type === 'generic' && tx.description.bouncePhase?.type)
+      tx.description?.actionPhase &&
+      tx.description?.actionPhase?.resultCode !== 0) ||
+    (tx.description?.type === 'generic' && tx.description.bouncePhase?.type)
 
   return isError
 }
