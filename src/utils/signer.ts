@@ -7,6 +7,9 @@ export async function SignMessage(privateKey: Buffer, message: Buffer, key: Key)
     const signature = sign(message, privateKey)
     return new Uint8Array(signature)
   } else if (key.sign_type === 'fireblocks') {
+    if (privateKey.length === 64) {
+      privateKey = privateKey.subarray(0, 32)
+    }
     const signature = await FireblocksSign('0x' + privateKey.toString('hex'), message)
     return signature
   }

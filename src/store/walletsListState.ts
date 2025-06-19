@@ -121,6 +121,7 @@ export async function saveKeyFromData(
   name: string,
   navigate: NavigateFunction,
   seed: Buffer,
+  publicKey?: Buffer,
   words?: string,
   wallets?: IWallet[],
   signType: 'ton' | 'fireblocks' = 'ton'
@@ -136,7 +137,7 @@ export async function saveKeyFromData(
     id: 0,
     name: '',
     encrypted,
-    public_key: keyPair.publicKey.toString('base64'),
+    public_key: publicKey ? publicKey.toString('base64') : keyPair.publicKey.toString('base64'),
     sign_type: signType,
   }
 

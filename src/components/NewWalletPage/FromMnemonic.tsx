@@ -103,7 +103,7 @@ export function FromMnemonic() {
 
     try {
       setIsLoading(true)
-      await saveKeyFromData(name || '', navigate, seed, words, getSelectedWalletsArray())
+      await saveKeyFromData(name || '', navigate, seed, undefined, words, getSelectedWalletsArray())
     } catch (error: any) {
       console.error('Error saving wallet:', error)
       setError(error.message || 'Error saving wallet')

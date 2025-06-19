@@ -1,5 +1,5 @@
 import { saveKeyFromData } from '@/store/walletsListState'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { KeyPair } from '@ton/crypto'
 import { secretKeyToED25519 } from '@/utils/ed25519'
@@ -102,6 +102,13 @@ export function FromSeed() {
     }
   }
 
+  const publicKey = useMemo(() => {
+    if (usePublicKeyOverride) {
+      return Buffer.from(publicKeyOverride, 'hex')
+    }
+    return keyPair?.publicKey
+  }, [usePublicKeyOverride, publicKeyOverride, keyPair])
+
   // Use the wallet selection hook
   const {
     selectedWallets,
@@ -111,7 +118,7 @@ export function FromSeed() {
     findActiveWallets,
     handleSelectWallet,
     getSelectedWalletsArray,
-  } = useWalletSelection(keyPair?.publicKey ? keyPair.publicKey : Buffer.from([]))
+  } = useWalletSelection(publicKey ?? Buffer.from([]))
 
   const saveSeed = async () => {
     if (!name) {
@@ -133,6 +140,7 @@ export function FromSeed() {
         name || '',
         navigate,
         Buffer.from(seed, 'hex'),
+        usePublicKeyOverride ? Buffer.from(publicKeyOverride, 'hex') : undefined,
         undefined,
         getSelectedWalletsArray(),
         signType
@@ -246,7 +254,7 @@ export function FromSeed() {
         <div className="space-y-6">
           <Separator />
 
-          <KeyInfoDisplay seed={seed} publicKey={keyPair.publicKey} />
+          <KeyInfoDisplay seed={seed} publicKey={publicKey} />
 
           {usePublicKeyOverride && derivedKeyPair && (
             <Alert>
@@ -264,7 +272,7 @@ export function FromSeed() {
           <div className="space-y-4">
             <WalletNameInput name={name} onNameChange={setName} placeholder="My TON Wallet" />
 
-            {keyPair?.publicKey && (
+            {publicKey && (
               <ActiveWalletsSelector
                 activeWallets={activeWallets}
                 totalWallets={totalWallets}

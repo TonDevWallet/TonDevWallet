@@ -55,7 +55,7 @@ export function FromRandom() {
 
     try {
       setIsLoading(true)
-      await saveKeyFromData(name || '', navigate, seed, words)
+      await saveKeyFromData(name || '', navigate, seed, undefined, words)
     } catch (error) {
       console.error('Error saving wallet:', error)
     } finally {
