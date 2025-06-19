@@ -41,6 +41,7 @@ import {
   SendMode,
   StateInit,
   storeMessage,
+  storeMessageRelaxed,
   toNano,
 } from '@ton/core'
 
@@ -64,6 +65,7 @@ import { Multisig } from '@/contracts/multisig-v2/Multisig'
 import { Opcodes, WalletId, WalletV5, bufferToBigInt } from '@/contracts/w5/WalletV5R1'
 import { WalletV5R1CodeCell } from '@/contracts/w5/WalletV5R1.source'
 import { ActionSendMsg, packActionsList } from '@/contracts/w5/actions'
+import { SignMessage } from './signer'
 
 export function getWalletFromKey(
   liteClient: LiteClient | ImmutableObject<LiteClient>,
@@ -316,7 +318,11 @@ export function getWalletFromKey(
       type: 'v4R2',
       address: tonWallet.address,
       wallet: tonWallet,
-      getExternalMessageCell: getExternalMessageCellFromTonWallet(tonWallet),
+      getExternalMessageCell: getExternalMessageCellFromTonWalletV4R2(
+        tonWallet,
+        BigInt(wallet.subwallet_id),
+        key as Key
+      ), // getExternalMessageCellFromTonWallet(tonWallet),
       key: encryptedData,
       id: wallet.id,
       subwalletId: parseInt(wallet.subwallet_id),
@@ -382,6 +388,10 @@ function getExternalMessageCellFromHighload(wallet: HighloadWalletV2): GetExtern
     message.body = SignCell(secretWithPublic, message.body)
     return beginCell().store(storeMessage(message)).endCell()
   }
+}
+
+function getRandomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 function getExternalMessageCellFromHighloadV3(wallet: HighloadWalletV3): GetExternalMessageCell {
@@ -569,6 +579,59 @@ function getExternalMessageCellFromTonWalletV5(
   }
 }
 
+function getExternalMessageCellFromTonWalletV4R2(
+  wallet: OpenedContract<WalletContractV4>,
+  subwalletId: bigint,
+  key: Key
+) {
+  return async (keyPair: KeyPair, transfers: WalletTransfer[]) => {
+    if (keyPair.secretKey.length === 32) {
+      keyPair.secretKey = Buffer.concat([
+        Uint8Array.from(keyPair.secretKey),
+        Uint8Array.from(keyPair.publicKey),
+      ])
+    }
+    // Check number of messages
+    // if (args.messages.length > 4) {
+    //   throw Error('Maximum number of messages in a single transfer is 4')
+    // }
+    const signingMessage = beginCell().storeUint(subwalletId, 32)
+    const seqno = await wallet.getSeqno()
+    if (seqno === 0) {
+      for (let i = 0; i < 32; i++) {
+        signingMessage.storeBit(1)
+      }
+    } else {
+      signingMessage.storeUint(Math.floor(Date.now() / 1e3) + 60, 32) // Default timeout: 60 seconds
+    }
+    signingMessage.storeUint(seqno, 32)
+    signingMessage.storeUint(0, 8) // Simple order
+    for (const m of transfers) {
+      signingMessage.storeUint(3, 8) // mode
+      const msg = internal({
+        body: m.body,
+        to: m.destination,
+        value: m.amount,
+        bounce: m.bounce,
+        extracurrency: m.extraCurrency,
+      })
+      signingMessage.storeRef(beginCell().store(storeMessageRelaxed(msg)))
+    }
+    const signature = await SignMessage(keyPair.secretKey, signingMessage.endCell().hash(), key)
+    const signedBody = beginCell()
+      .storeBuffer(Buffer.from(signature))
+      .storeBuilder(signingMessage)
+      .endCell()
+
+    const ext = external({
+      to: wallet.address,
+      init: wallet.init,
+      body: signedBody,
+    })
+    return beginCell().store(storeMessage(ext)).endCell()
+  }
+}
+
 function getExternalMessageCellFromTonMultisigWallet(
   wallet: OpenedContract<WalletContractV3R2 | WalletContractV4>,
   multisigAddress: string
@@ -669,14 +732,6 @@ export function useWalletExternalMessageCell(
   }, [wallet?.id, transfers, liteClient, keyPair])
 
   return cell
-}
-
-const getRandom = (min: number, max: number) => {
-  return Math.random() * (max - min) + min
-}
-
-export const getRandomInt = (min: number, max: number) => {
-  return Math.round(getRandom(min, max))
 }
 
 function createBodyV5(keyPair: KeyPair, seqno: number, walletId: bigint, actionsList: Cell) {
