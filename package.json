@@ -18,6 +18,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@noble/ciphers": "^1.2.1",
     "@noble/curves": "^1.8.1",
+    "@noble/ed25519": "^2.3.0",
     "@noble/hashes": "^1.7.1",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -134,6 +135,7 @@
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-react": "^7.33.2",
     "prettier": "^3.5.3",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
   },

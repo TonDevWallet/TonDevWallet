@@ -64,6 +64,7 @@ export function WalletsListPage() {
             name: keyState.name,
             public_key: keyState.public_key,
             encrypted: keyState.encrypted,
+            sign_type: keyState.sign_type || 'ton',
             wallets: keyState.wallets as SavedWallet[],
           }
 
