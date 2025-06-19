@@ -10,7 +10,7 @@ import {
   WalletContractV3R2,
   WalletContractV4,
 } from '@ton/ton'
-import { Cell, Dictionary } from '@ton/core'
+import { Address, Cell, Dictionary } from '@ton/core'
 import { WalletV5 } from '@/contracts/w5/WalletV5R1'
 import { WalletV5R1CodeCell } from '@/contracts/w5/WalletV5R1.source'
 import {
@@ -19,6 +19,9 @@ import {
 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
 import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV3'
 import { HighloadWalletV3CodeCell } from '@/contracts/highload-wallet-v3/HighloadWalletV3.source'
+import { Account } from 'tonapi-sdk-js'
+import { LiteClient } from 'ton-lite-client'
+import { getLastLiteBlock } from '@/utils/liteClientBlockchainStorage'
 
 const TempClinet = new TonClient4({
   endpoint: 'empty',
@@ -296,4 +299,128 @@ export const WalletFactories = {
 
     return wallets
   },
+}
+
+// Helper function to create IWallet from tonapi wallet data
+export async function createWalletFromTonapiData(
+  publicKey: Buffer,
+  tonapiWallet: Account,
+  liteClient: LiteClient
+): Promise<IWallet | null> {
+  try {
+    const address = Address.parse(tonapiWallet.address)
+
+    // Map interface types based on tonapi wallet type
+    const walletTypeMapping: Record<string, any> = {
+      // wallet_v3r1: 'v3R1',
+      wallet_v3r2: 'v3R2',
+      wallet_v4r2: 'v4R2',
+      wallet_v5r1: 'v5R1',
+    }
+
+    // Get wallet type from tonapi interface type
+    const walletType =
+      walletTypeMapping[tonapiWallet.interfaces?.join(' ')?.toLowerCase() ?? ''] || 'v4R2'
+
+    // Create appropriate wallet object based on type
+    if (walletType === 'v4R2') {
+      const master = await getLastLiteBlock(liteClient)
+      const accountState = await liteClient.getAccountState(address, master.last)
+      const data =
+        accountState?.state?.storage?.state?.type === 'active' &&
+        accountState?.state?.storage?.state?.state?.data
+
+      if (!data) {
+        return null
+      }
+
+      const dataSlice = data.beginParse()
+      const subwalletId = dataSlice.skip(32).loadUint(32)
+
+      const wallet = liteClient.open(
+        WalletContractV4.create({
+          publicKey,
+          workchain: 0,
+          walletId: subwalletId,
+        })
+      )
+
+      return {
+        ...emptyWalletBase,
+        type: 'v4R2',
+        address,
+        wallet,
+        subwalletId,
+      }
+    } else if (walletType === 'v3R2') {
+      const master = await getLastLiteBlock(liteClient)
+      const accountState = await liteClient.getAccountState(address, master.last)
+      const data =
+        accountState?.state?.storage?.state?.type === 'active' &&
+        accountState?.state?.storage?.state?.state?.data
+
+      if (!data) {
+        return null
+      }
+
+      const dataSlice = data.beginParse()
+      const subwalletId = dataSlice.skip(32).loadUint(32)
+
+      const walletv3r2 = liteClient.open(
+        WalletContractV3R2.create({
+          publicKey,
+          workchain: 0,
+          walletId: subwalletId,
+        })
+      )
+
+      return {
+        ...emptyWalletBase,
+        type: 'v3R2',
+        address,
+        wallet: walletv3r2,
+        subwalletId,
+      }
+    } else if (walletType === 'v5R1') {
+      const master = await getLastLiteBlock(liteClient)
+      const accountState = await liteClient.getAccountState(address, master.last)
+      const data =
+        accountState?.state?.storage?.state?.type === 'active' &&
+        accountState?.state?.storage?.state?.state?.data
+
+      if (!data) {
+        return null
+      }
+
+      const dataSlice = data.beginParse()
+      const subwalletId = dataSlice.skip(1 + 32).loadUint(32)
+
+      const walletv5r1 = liteClient.open(
+        WalletV5.createFromConfig(
+          {
+            publicKey,
+            walletId: BigInt(subwalletId),
+            seqno: 0,
+            extensions: Dictionary.empty(),
+            signatureAllowed: true,
+          },
+          WalletV5R1CodeCell,
+          0
+        )
+      )
+
+      return {
+        ...emptyWalletBase,
+        type: 'v5R1',
+        address,
+        wallet: walletv5r1,
+        subwalletId: BigInt(subwalletId),
+      }
+    } else {
+      return null
+    }
+  } catch (error) {
+    console.error('Error creating wallet from tonapi data:', error, tonapiWallet)
+    return null
+  }
 }

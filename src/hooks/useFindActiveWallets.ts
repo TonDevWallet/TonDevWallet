@@ -2,8 +2,11 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { IWallet } from '@/types'
 import { Address } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
-import { useLiteclient } from '@/store/liteClient'
-import { WalletFactories } from '@/components/WalletsListPage/WalletFactories'
+import { useLiteclient, useTonapiClient } from '@/store/liteClient'
+import {
+  createWalletFromTonapiData,
+  WalletFactories,
+} from '@/components/WalletsListPage/WalletFactories'
 
 export interface ActiveWallet {
   wallet: IWallet
@@ -22,6 +25,7 @@ export function useFindActiveWallets(publicKey: Buffer): UseFindActiveWalletsRes
   const [totalWallets, setTotalWallets] = useState<number>(0)
   const [isSearching, setIsSearching] = useState(false)
   const liteClient = useLiteclient() as LiteClient
+  const tonapiClient = useTonapiClient()
 
   // Generate wallet addresses from the public key
   const wallets = useMemo(() => {
@@ -55,6 +59,8 @@ export function useFindActiveWallets(publicKey: Buffer): UseFindActiveWalletsRes
     }
     setTotalWallets(walletsList.length)
 
+    const goodWallets: ActiveWallet[] = []
+
     try {
       const balances = await Promise.all(
         walletsList.map(async (item) => {
@@ -63,12 +69,47 @@ export function useFindActiveWallets(publicKey: Buffer): UseFindActiveWalletsRes
         })
       )
 
-      const goodWallets: ActiveWallet[] = []
       for (let i = 0; i < balances.length; i++) {
         const balance = balances[i]
         if (balance.balance > 0n) {
           goodWallets.push({ wallet: walletsList[i], balance: balance.balance })
         }
+      }
+
+      // tonapi wallets
+      try {
+        const tonapiWallets = await tonapiClient?.wallet?.getWalletsByPublicKey(
+          publicKey.toString('hex').replace(/\+/g, '-').replace(/\//g, '_')
+        )
+
+        if (tonapiWallets?.accounts) {
+          for (const tonapiWallet of tonapiWallets.accounts) {
+            // Check if wallet has positive balance
+            const balance = BigInt(tonapiWallet.balance || '0')
+            if (balance > 0n) {
+              // Create IWallet from tonapi data
+              const wallet = await createWalletFromTonapiData(publicKey, tonapiWallet, liteClient)
+              if (wallet) {
+                // Check if wallet is already in goodWallets by address
+                const existingWallet = goodWallets.find((gw) =>
+                  gw.wallet.address.equals(wallet.address)
+                )
+
+                if (!existingWallet) {
+                  const balance = await getWalletBalance(wallet.address)
+                  if (balance > 0n) {
+                    goodWallets.push({
+                      wallet,
+                      balance,
+                    })
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error finding active wallets:', e)
       }
 
       setActiveWallets(goodWallets)
@@ -77,7 +118,7 @@ export function useFindActiveWallets(publicKey: Buffer): UseFindActiveWalletsRes
       console.error('Error finding active wallets:', error)
       setIsSearching(false)
     }
-  }, [wallets, getWalletBalance])
+  }, [wallets, getWalletBalance, publicKey, tonapiClient])
 
   // Automatically search when hook is first used
   useEffect(() => {
