@@ -29,6 +29,7 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { HomeLink } from './HomeLink'
+import { Key } from '@/types/Key'
 
 function NetworkSelector() {
   const liteClientState = useLiteclientState()
@@ -69,7 +70,14 @@ function NetworkSelector() {
       const serviceUrl = new URL(s.url)
       const host = serviceUrl.host
 
-      sendTonConnectStartMessage(tonWallet, undefined, host, sessionKeyPair, s.userId)
+      sendTonConnectStartMessage(
+        tonWallet,
+        undefined,
+        host,
+        sessionKeyPair,
+        s.userId,
+        key.get() as Key
+      )
     }
   }
 
