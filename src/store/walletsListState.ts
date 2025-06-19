@@ -122,7 +122,8 @@ export async function saveKeyFromData(
   navigate: NavigateFunction,
   seed: Buffer,
   words?: string,
-  wallets?: IWallet[]
+  wallets?: IWallet[],
+  signType: 'ton' | 'fireblocks' = 'ton'
 ) {
   const password = await getPasswordInteractive()
 
@@ -136,7 +137,7 @@ export async function saveKeyFromData(
     name: '',
     encrypted,
     public_key: keyPair.publicKey.toString('base64'),
-    sign_type: 'ton',
+    sign_type: signType,
   }
 
   const db = await getDatabase()
