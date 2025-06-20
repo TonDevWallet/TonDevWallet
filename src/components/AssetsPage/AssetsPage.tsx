@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { formatUnits } from '@/utils/units'
+import { JettonTransferModal } from './JettonTransferModal'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 
 interface JettonBalance {
   balance: string
@@ -20,6 +23,11 @@ interface JettonBalance {
     decimals: number
     image?: string
   }
+  price?: {
+    usd: number
+  }
+  verification?: 'whitelist' | 'blacklist' | 'none'
+  usdValue?: number
 }
 
 interface NFTItem {
@@ -68,6 +76,8 @@ export function AssetsPage() {
   const [jettons, setJettons] = useState<JettonBalance[]>([])
   const [nfts, setNfts] = useState<NFTItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedJetton, setSelectedJetton] = useState<JettonBalance | null>(null)
+  const [transferModalOpen, setTransferModalOpen] = useState(false)
 
   useEffect(() => {
     if (selectedWallet && tonapiClient) {
@@ -83,19 +93,36 @@ export function AssetsPage() {
       const walletAddress = selectedWallet.address.toString()
 
       // Load jetton balances
-      const jettonsResponse = await tonapiClient.accounts.getAccountJettonsBalances(walletAddress)
-      const jettonBalances: JettonBalance[] = jettonsResponse.balances.map((balance: any) => ({
-        balance: balance.balance,
-        jetton: {
-          address: balance.jetton.address,
-          name: balance.jetton.name || 'Unknown',
-          symbol: balance.jetton.symbol || 'UNKNOWN',
-          decimals: balance.jetton.decimals || 9,
-          image: balance.jetton.image,
-        },
-      }))
+      const jettonsResponse = await tonapiClient.accounts.getAccountJettonsBalances(walletAddress, {
+        currencies: ['usd'],
+      })
+      const jettonBalances: JettonBalance[] = jettonsResponse.balances.map((balance) => {
+        const tokenBalance = parseFloat(
+          formatUnits(BigInt(balance.balance), balance.jetton.decimals || 9)
+        )
+        const usdPrice = balance.price?.prices?.USD || 0
+        // const usdPrice = balance.price?.prices || 0
+        const usdValue = tokenBalance * usdPrice
 
-      setJettons(jettonBalances)
+        return {
+          balance: balance.balance,
+          jetton: {
+            address: balance.jetton.address,
+            name: balance.jetton.name || 'Unknown',
+            symbol: balance.jetton.symbol || 'UNKNOWN',
+            decimals: balance.jetton.decimals || 9,
+            image: balance.jetton.image,
+          },
+          price: balance.price ? { usd: balance.price?.prices?.USD ?? 0 } : { usd: 0 },
+          verification: balance.jetton.verification || 'none',
+          usdValue,
+        }
+      })
+
+      // Sort jettons by USD value (highest first)
+      const sortedJettons = jettonBalances.sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))
+
+      setJettons(sortedJettons)
 
       // Load NFTs
       const nftsResponse = await tonapiClient.accounts.getAccountNftItems(walletAddress)
@@ -126,8 +153,18 @@ export function AssetsPage() {
   }
 
   const handleJettonTransfer = (jetton: JettonBalance) => {
-    // TODO: Implement jetton transfer modal
-    console.log('Transfer jetton:', jetton)
+    setSelectedJetton(jetton)
+    setTransferModalOpen(true)
+  }
+
+  // Convert immutable key to plain object for JettonTransferModal
+  const getPlainKey = () => {
+    if (!selectedKey) return undefined
+    const key = selectedKey.get({ noproxy: true })
+    return {
+      ...key,
+      wallets: key.wallets ? [...key.wallets] : undefined,
+    }
   }
 
   if (loading) {
@@ -177,7 +214,23 @@ export function AssetsPage() {
                         <AvatarFallback>{jettonBalance.jetton.symbol.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold text-lg">{jettonBalance.jetton.name}</h3>
+                        <div className="flex items-center space-x-2">
+                          <h3 className="font-semibold text-lg">{jettonBalance.jetton.name}</h3>
+                          {jettonBalance.verification === 'whitelist' && (
+                            <FontAwesomeIcon
+                              icon={faCheckCircle}
+                              className="text-green-500 text-sm"
+                              title="Verified jetton"
+                            />
+                          )}
+                          {jettonBalance.verification === 'blacklist' && (
+                            <FontAwesomeIcon
+                              icon={faExclamationTriangle}
+                              className="text-red-500 text-sm"
+                              title="Potentially scam jetton"
+                            />
+                          )}
+                        </div>
                         <div className="flex items-center space-x-2">
                           <Badge variant="secondary">{jettonBalance.jetton.symbol}</Badge>
                           <span className="text-sm text-muted-foreground">
@@ -188,6 +241,11 @@ export function AssetsPage() {
                             {jettonBalance.jetton.symbol}
                           </span>
                         </div>
+                        {jettonBalance.usdValue && jettonBalance.usdValue > 0 && (
+                          <div className="text-sm text-muted-foreground">
+                            ≈ ${jettonBalance.usdValue.toFixed(2)} USD
+                          </div>
+                        )}
                       </div>
                     </div>
                     <Button onClick={() => handleJettonTransfer(jettonBalance)} variant="outline">
@@ -218,6 +276,20 @@ export function AssetsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {selectedJetton && (
+        <JettonTransferModal
+          jetton={selectedJetton}
+          wallet={selectedWallet}
+          selectedKey={getPlainKey()}
+          open={transferModalOpen}
+          onOpenChange={setTransferModalOpen}
+          onTransferComplete={() => {
+            setTransferModalOpen(false)
+            loadAssets() // Reload assets after transfer
+          }}
+        />
+      )}
     </div>
   )
 }
