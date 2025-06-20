@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'dev/fireblocks-build'
 
 env:
   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
