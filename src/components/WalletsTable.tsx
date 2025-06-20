@@ -172,15 +172,19 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
       </CardContent>
 
       {/* <div className="mt-1"> */}
-      <CardFooter className="flex gap-2">
-        <TransferButton wallet={wallet} selectedKey={selectedKey?.get() as Key} />
-        <Link to={`/app/wallets/${selectedKey?.id.get()}/${wallet.id}/assets`}>
-          <Button variant="outline">
-            <FontAwesomeIcon icon={faCoins} className="mr-1" />
-            Assets
-          </Button>
-        </Link>
-        <DeleteButton wallet={wallet} />
+      <CardFooter className="flex gap-2 flex-col">
+        <div className="w-full flex gap-2">
+          <TransferButton wallet={wallet} selectedKey={selectedKey?.get() as Key} />
+          <Link to={`/app/wallets/${selectedKey?.id.get()}/${wallet.id}/assets`}>
+            <Button variant="outline">
+              <FontAwesomeIcon icon={faCoins} className="mr-1" />
+              Assets
+            </Button>
+          </Link>
+        </div>
+        <div className="w-full flex gap-2">
+          <DeleteButton wallet={wallet} />
+        </div>
       </CardFooter>
     </Card>
   )

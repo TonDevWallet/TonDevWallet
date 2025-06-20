@@ -27,6 +27,7 @@ interface JettonBalance {
     usd: number
   }
   verification?: 'whitelist' | 'blacklist' | 'none'
+  walletAddress: string
   usdValue?: number
 }
 
@@ -116,6 +117,7 @@ export function AssetsPage() {
           price: balance.price ? { usd: balance.price?.prices?.USD ?? 0 } : { usd: 0 },
           verification: balance.jetton.verification || 'none',
           usdValue,
+          walletAddress: balance.wallet_address.address,
         }
       })
 
@@ -169,8 +171,10 @@ export function AssetsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading assets...</div>
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading assets...</div>
+        </div>
       </div>
     )
   }
@@ -178,7 +182,7 @@ export function AssetsPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Assets</h1>
+        <h1 className="text-2xl font-bold mb-2">Assets</h1>
         <p className="text-muted-foreground">
           Manage your jettons and NFTs for wallet {selectedKey?.name.get()}
         </p>
@@ -203,55 +207,59 @@ export function AssetsPage() {
           ) : (
             <div className="grid gap-4">
               {jettons.map((jettonBalance, index) => (
-                <Card key={`${jettonBalance.jetton.address}-${index}`} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage
-                          src={jettonBalance.jetton.image}
-                          alt={jettonBalance.jetton.name}
-                        />
-                        <AvatarFallback>{jettonBalance.jetton.symbol.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <h3 className="font-semibold text-lg">{jettonBalance.jetton.name}</h3>
+                <Card key={`${jettonBalance.jetton.address}-${index}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="relative">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage
+                              src={jettonBalance.jetton.image}
+                              alt={jettonBalance.jetton.name}
+                            />
+                            <AvatarFallback>{jettonBalance.jetton.symbol.charAt(0)}</AvatarFallback>
+                          </Avatar>
                           {jettonBalance.verification === 'whitelist' && (
                             <FontAwesomeIcon
                               icon={faCheckCircle}
-                              className="text-green-500 text-sm"
+                              className="absolute -bottom-1 -right-1 text-green-500 text-sm bg-white rounded-full"
                               title="Verified jetton"
                             />
                           )}
                           {jettonBalance.verification === 'blacklist' && (
                             <FontAwesomeIcon
                               icon={faExclamationTriangle}
-                              className="text-red-500 text-sm"
+                              className="absolute -bottom-1 -right-1 text-red-500 text-sm bg-white rounded-full"
                               title="Potentially scam jetton"
                             />
                           )}
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="secondary">{jettonBalance.jetton.symbol}</Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {formatUnits(
-                              BigInt(jettonBalance.balance),
-                              jettonBalance.jetton.decimals
-                            )}{' '}
-                            {jettonBalance.jetton.symbol}
-                          </span>
-                        </div>
-                        {jettonBalance.usdValue && jettonBalance.usdValue > 0 && (
-                          <div className="text-sm text-muted-foreground">
-                            ≈ ${jettonBalance.usdValue.toFixed(2)} USD
+                        <div>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="font-semibold text-lg">{jettonBalance.jetton.name}</h3>
+                            <Badge variant="secondary">{jettonBalance.jetton.symbol}</Badge>
                           </div>
-                        )}
+                          <div className="flex items-center space-x-2">
+                            <div className="text-sm mb-1">
+                              {formatUnits(
+                                BigInt(jettonBalance.balance),
+                                jettonBalance.jetton.decimals
+                              )}{' '}
+                              {jettonBalance.jetton.symbol}
+                            </div>
+                            {jettonBalance.usdValue && jettonBalance.usdValue > 0 && (
+                              <div className="text-sm font-medium text-muted-foreground">
+                                ≈ ${jettonBalance.usdValue.toFixed(2)} USD
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
+                      <Button onClick={() => handleJettonTransfer(jettonBalance)} variant="outline">
+                        Transfer
+                      </Button>
                     </div>
-                    <Button onClick={() => handleJettonTransfer(jettonBalance)} variant="outline">
-                      Transfer
-                    </Button>
-                  </div>
+                  </CardContent>
                 </Card>
               ))}
             </div>
@@ -264,14 +272,24 @@ export function AssetsPage() {
               <CardTitle>NFTs</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
-                NFT management functionality will be implemented soon.
+              <p className="text-muted-foreground mb-2">
+                You can use Getgems to view and transfer your NFTs.
               </p>
-              {nfts.length > 0 && (
+
+              {/* getgems link */}
+              <a
+                href={`https://getgems.io/user/${selectedWallet.address.toString()}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className=""
+              >
+                <Button variant="outline">View on Getgems</Button>
+              </a>
+              {/* {nfts.length > 0 && (
                 <div className="mt-4">
                   <p className="text-sm">Found {nfts.length} NFT(s) in this wallet.</p>
                 </div>
-              )}
+              )} */}
             </CardContent>
           </Card>
         </TabsContent>

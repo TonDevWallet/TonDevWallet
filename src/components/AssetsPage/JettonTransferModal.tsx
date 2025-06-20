@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Address } from '@ton/core'
+import { Address, beginCell, toNano } from '@ton/core'
 import { IWallet } from '@/types'
 import { Key } from '@/types/Key'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { formatUnits, parseUnits } from '@/utils/units'
 import { addConnectMessage } from '@/store/connectMessages'
 import { useNavigate } from 'react-router-dom'
-import { textToWalletBody } from '@/utils/textToWalletBody'
+import { storeJettonTransferMessage } from '@ton-community/assets-sdk'
 
 interface JettonBalance {
   balance: string
@@ -22,6 +22,7 @@ interface JettonBalance {
     decimals: number
     image?: string
   }
+  walletAddress: string
 }
 
 interface JettonTransferModalProps {
@@ -74,19 +75,24 @@ export function JettonTransferModal({
 
       // Create jetton transfer payload
       // This follows the standard jetton transfer format
-      const jettonTransferPayload = {
-        queryId: 0n,
-        amount: transferAmount,
-        destination: Address.parse(recipient),
-        responseDestination: wallet.address,
-        customPayload: null,
-        forwardTonAmount: parseUnits('0.05', 9), // Standard forward amount for jetton transfers
-        forwardPayload: null,
-      }
+      // const jettonTransferPayload = {}
 
+      const transferPayload = beginCell()
+        .store(
+          storeJettonTransferMessage({
+            queryId: 0n,
+            amount: transferAmount,
+            destination: Address.parse(recipient),
+            responseDestination: wallet.address,
+            customPayload: null,
+            forwardAmount: 1n,
+            forwardPayload: null,
+          })
+        )
+        .endCell()
       // For now, we'll create a simple transfer message
       // In production, this should use proper jetton transfer encoding
-      const payloadCell = textToWalletBody(JSON.stringify(jettonTransferPayload), false)
+      // const payloadCell = textToWalletBody(JSON.stringify(jettonTransferPayload), false)
 
       // Add to connect messages for processing
       await addConnectMessage({
@@ -99,13 +105,13 @@ export function JettonTransferModal({
         payload: {
           messages: [
             {
-              address: jetton.jetton.address, // Send to jetton contract
-              amount: parseUnits('0.1', 9).toString(), // TON amount for gas
-              payload: payloadCell?.toBoc().toString('base64'),
+              address: jetton.walletAddress, // Send to jetton contract
+              amount: toNano('0.05').toString(), // TON amount for gas
+              payload: transferPayload.toBoc().toString('base64'),
               stateInit: undefined,
             },
           ],
-          valid_until: Date.now() + 5 * 60 * 1000, // 5 minutes from now
+          valid_until: Math.floor(Date.now() / 1000) + 5 * 60, // 5 minutes from now
         },
         wallet_address: wallet.address.toRawString(),
         message_mode: 3, // Pay fees separately + ignore errors
