@@ -60,10 +60,11 @@
     "@tauri-apps/plugin-process": "^2.2.1",
     "@tauri-apps/plugin-sql": "^2.2.0",
     "@tauri-apps/plugin-updater": "~2",
-    "@ton/core": "0.60.1",
+    "@ton/core": "0.61.0",
     "@ton/crypto": "^3.3.0",
-    "@ton/sandbox": "^0.28.0",
-    "@ton/ton": "^15.2.1",
+    "@ton/sandbox": "^0.35.0",
+    "@ton/test-utils": "^0.9.0",
+    "@ton/ton": "^15.3.1",
     "@tonconnect/protocol": "2.3.0-beta.0",
     "@tonconnect/sdk": "^3.1.0",
     "@tondevwallet/traces": "^0.1.6",
@@ -136,10 +137,5 @@
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
   },
-  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39",
-  "pnpm": {
-    "patchedDependencies": {
-      "@ton/core@0.60.1": "patches/@ton__core@0.60.0.patch"
-    }
-  }
+  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
 }

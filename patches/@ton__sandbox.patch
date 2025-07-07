@@ -1,0 +1,18 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+deleted file mode 100644
+index 6ccb6a9c55f71cd5f627de368e40692df06d81cd..0000000000000000000000000000000000000000
+diff --git a/dist/blockchain/SmartContract.js b/dist/blockchain/SmartContract.js
+index da5762bcf812a5a7efdcbcb8d292fff12d6f5ac5..7b4dbc42967a048a7c9ffe35f6623203a7427f56 100644
+--- a/dist/blockchain/SmartContract.js
++++ b/dist/blockchain/SmartContract.js
+@@ -17,8 +17,8 @@ const core_1 = require("@ton/core");
+ const ec_1 = require("../utils/ec");
+ const selector_1 = require("../utils/selector");
+ const deepcopy_1 = require("../utils/deepcopy");
+-const DebugInfoCache_1 = require("../debugger/DebugInfoCache");
+-const debug_1 = require("../debugger/debug");
++// const DebugInfoCache_1 = require("../debugger/DebugInfoCache");
++// const debug_1 = require("../debugger/debug");
+ function createShardAccount(args) {
+     let wc = args.workchain ?? 0;
+     let address = args.address ?? (0, core_1.contractAddress)(wc, { code: args.code, data: args.data });

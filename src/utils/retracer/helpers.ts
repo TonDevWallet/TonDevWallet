@@ -655,8 +655,8 @@ export function createShardAccountFromAPI(
         used: {
           cells: toMaybeBN(apiAccount.storageStat?.used.cells),
           bits: toMaybeBN(apiAccount.storageStat?.used.bits),
-          publicCells: toMaybeBN(apiAccount.storageStat?.used.publicCells),
         },
+        storageExtra: null,
         lastPaid: apiAccount.storageStat?.lastPaid || 0,
         duePayment:
           typeof apiAccount.storageStat?.duePayment === 'string'
