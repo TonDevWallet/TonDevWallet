@@ -31,8 +31,8 @@ jobs:
       - name: build
         working-directory: ./packages/browser-extension
         run: |
-          TARGET=chrome pnpm build && ls && cd ./dist && zip -r ../extension.chrome.zip . && cd .. && rm -rf dist
-          TARGET=firefox pnpm build && ls && cd ./dist && zip -r ../extension.firefox.zip . && cd .. && rm -rf dist
+          TARGET=chrome pnpm build && cd ./dist && zip -r ../extension.chrome.zip . && cd .. && rm -rf dist
+          TARGET=firefox pnpm build && cd ./dist && zip -r ../extension.firefox.zip . && cd .. && rm -rf dist
       - name: upload chrome extension
         uses: actions/upload-artifact@v4
         with:
