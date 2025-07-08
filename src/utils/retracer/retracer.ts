@@ -286,7 +286,6 @@ async function emulateTransactions(
   let hashMismatch = false
   // Prepare transactions in correct order
   const prevTxsInBlock = txs.slice(0)
-  prevTxsInBlock.reverse()
 
   // Initialize shard account
   initialShardAccount.lastTransactionLt = 0n

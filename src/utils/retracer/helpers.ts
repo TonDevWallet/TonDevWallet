@@ -47,7 +47,7 @@ export type AccountFromAPI = {
     used: {
       bits: number
       cells: number
-      publicCells: number
+      publicCells?: number | undefined
     }
   } | null
 }
