@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { IndexPage } from './components/IndexPage/IndexPage'
 import { NewWalletPage } from './components/NewWalletPage/NewWalletPage'
 import { WalletPage } from './components/IndexPage/WalletPage'
+import { AssetsPage } from './components/AssetsPage/AssetsPage'
 import { Layout } from './components/Layout'
 import { TxInfoPage } from './components/TxInfoPage/TxInfoPage'
 import { SettingsPage } from './components/SettingsPage/SettingsPage'
@@ -33,6 +34,10 @@ export const router = createBrowserRouter([
       {
         path: '/app/wallets/:walletId',
         element: <WalletPage />,
+      },
+      {
+        path: '/app/wallets/:keyId/:walletId/assets',
+        element: <AssetsPage />,
       },
       {
         path: '/app/wallets_list',

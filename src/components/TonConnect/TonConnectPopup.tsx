@@ -24,6 +24,7 @@ import { Address } from '@ton/core'
 import { GlobalSearch } from '../GlobalSearch/GlobalSearch'
 import { useSearchState } from '@/store/searchState'
 import { AlertDialogDescription, AlertDialogTitle } from '@radix-ui/react-alert-dialog'
+import { Key } from '@/types/Key'
 
 const optionsMatrix = {
   bounceable: [true, false],
@@ -204,6 +205,7 @@ function ConnectPopupContent() {
         connectLinkInfo.host,
         sessionKeypair,
         connectLinkInfo.clientId,
+        chosenKey.get() as Key,
         connectLinkInfo.r
       )
 

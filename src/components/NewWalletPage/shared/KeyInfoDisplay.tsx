@@ -4,7 +4,7 @@ import { faKey } from '@fortawesome/free-solid-svg-icons'
 
 interface KeyInfoDisplayProps {
   seed: string
-  publicKey: Buffer | Uint8Array
+  publicKey?: Buffer | Uint8Array
   seedLabel?: string
 }
 
@@ -22,18 +22,23 @@ export function KeyInfoDisplay({ seed, publicKey, seedLabel = 'Seed' }: KeyInfoD
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium flex items-center gap-2">
-          <FontAwesomeIcon icon={faKey} className="text-primary" />
-          Public Key:
-        </label>
-        <div className="flex items-center p-2 bg-muted rounded-md">
-          <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
-            {Buffer.from(publicKey).toString('hex')}
-          </code>
-          <Copier className="w-5 h-5 ml-2 shrink-0" text={Buffer.from(publicKey).toString('hex')} />
+      {publicKey && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <FontAwesomeIcon icon={faKey} className="text-primary" />
+            Public Key:
+          </label>
+          <div className="flex items-center p-2 bg-muted rounded-md">
+            <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
+              {Buffer.from(publicKey).toString('hex')}
+            </code>
+            <Copier
+              className="w-5 h-5 ml-2 shrink-0"
+              text={Buffer.from(publicKey).toString('hex')}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

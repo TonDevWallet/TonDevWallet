@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { IWallet } from '@/types'
 import { AddressRow } from './AddressRow'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faShareFromSquare, faFileEdit } from '@fortawesome/free-solid-svg-icons'
+import { faShareFromSquare, faFileEdit, faCoins } from '@fortawesome/free-solid-svg-icons'
 import { WalletJazzicon } from './WalletJazzicon'
 import { Address, ExtraCurrency } from '@ton/core'
 import { Button } from '@/components/ui/button'
@@ -26,6 +26,7 @@ import { formatUnits } from '@/utils/units'
 import TransferButton from './wallets/tonweb/TransferButton'
 import { Key } from '@/types/Key'
 import DeleteButton from './wallets/tonweb/DeleteButton'
+import { Link } from 'react-router-dom'
 
 function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolean }) {
   const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
@@ -171,9 +172,19 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
       </CardContent>
 
       {/* <div className="mt-1"> */}
-      <CardFooter className="flex gap-2">
-        <TransferButton wallet={wallet} selectedKey={selectedKey?.get() as Key} />
-        <DeleteButton wallet={wallet} />
+      <CardFooter className="flex gap-2 flex-col">
+        <div className="w-full flex gap-2">
+          <TransferButton wallet={wallet} selectedKey={selectedKey?.get() as Key} />
+          <Link to={`/app/wallets/${selectedKey?.id.get()}/${wallet.id}/assets`}>
+            <Button variant="outline">
+              <FontAwesomeIcon icon={faCoins} className="mr-1" />
+              Assets
+            </Button>
+          </Link>
+        </div>
+        <div className="w-full flex gap-2">
+          <DeleteButton wallet={wallet} />
+        </div>
       </CardFooter>
     </Card>
   )

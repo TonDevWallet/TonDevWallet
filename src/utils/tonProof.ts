@@ -28,12 +28,6 @@ export function SignatureVerify(pubkey: Buffer, message: Buffer, signature: Buff
   // return ed25519.Verify(pubkey, message, signature)
 }
 
-export function SignatureCreate(privKey: Buffer, message: Buffer): Buffer {
-  return Buffer.from(ed25519.sign(message, privKey))
-
-  // return ed25519.Verify(pubkey, message, signature)
-}
-
 const tonProofPrefix = 'ton-proof-item-v2/'
 const tonConnectPrefix = 'ton-connect'
 

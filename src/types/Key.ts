@@ -8,6 +8,7 @@ export interface Key {
   encrypted: string | null | undefined
   public_key: string
   name: string
+  sign_type: string // 'ton' | 'fireblocks'
 
   // not in db
   // keyPair?: KeyPair

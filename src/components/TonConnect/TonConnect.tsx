@@ -1,7 +1,7 @@
 import { LiteClientState, useLiteclient } from '@/store/liteClient'
 import { addTonConnectSession } from '@/store/tonConnect'
 import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
-import { CreateMessage, createTonProofMessage, SignatureCreate } from '@/utils/tonProof'
+import { CreateMessage, createTonProofMessage } from '@/utils/tonProof'
 import { getWalletFromKey } from '@/utils/wallets'
 // import { useWallet } from '@/store/walletState'
 import { ConnectEventSuccess, CHAIN, ConnectRequest, TonProofItem } from '@tonconnect/protocol'
@@ -25,6 +25,8 @@ import {
 } from '@/store/passwordManager'
 import { delay } from '@/utils'
 import { randomX25519, secretKeyToED25519 } from '@/utils/ed25519'
+import { SignMessage } from '@/utils/signer'
+import { Key } from '@/types/Key'
 const appWindow = getCurrentWebviewWindow()
 
 export function TonConnect() {
@@ -115,6 +117,7 @@ export function TonConnect() {
       host,
       sessionKeypair,
       clientId,
+      selectedKey.get() as Key,
       r
     )
 
@@ -160,6 +163,7 @@ export async function sendTonConnectStartMessage(
   host: string,
   sessionKeyPair: KeyPair,
   sessionClientId: string,
+  key: Key,
   connectRequest?: ConnectRequest
 ) {
   let stateInit: Cell
@@ -270,7 +274,11 @@ export async function sendTonConnectStartMessage(
       stateInit: stateInit.toBoc().toString('base64'),
       timestamp,
     })
-    const signature = SignatureCreate(walletKeyPair.secretKey, await CreateMessage(signMessage))
+    const signature = await SignMessage(
+      walletKeyPair.secretKey,
+      await CreateMessage(signMessage),
+      key
+    )
     data.payload.items.push({
       name: 'ton_proof',
       proof: {
@@ -280,7 +288,7 @@ export async function sendTonConnectStartMessage(
           value: domain.Value,
         },
         payload: proof.payload,
-        signature: signature.toString('base64'),
+        signature: Buffer.from(signature).toString('base64'),
       },
     })
   }

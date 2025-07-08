@@ -84,6 +84,7 @@ export async function saveKey(db: Knex, key: Key, walletName: string): Promise<K
       encrypted: key.encrypted,
       public_key: key.public_key,
       name: walletName,
+      sign_type: key.sign_type || 'ton',
     })
     .returning('*')
 
@@ -120,8 +121,10 @@ export async function saveKeyFromData(
   name: string,
   navigate: NavigateFunction,
   seed: Buffer,
+  publicKey?: Buffer,
   words?: string,
-  wallets?: IWallet[]
+  wallets?: IWallet[],
+  signType: 'ton' | 'fireblocks' = 'ton'
 ) {
   const password = await getPasswordInteractive()
 
@@ -134,7 +137,8 @@ export async function saveKeyFromData(
     id: 0,
     name: '',
     encrypted,
-    public_key: keyPair.publicKey.toString('base64'),
+    public_key: publicKey ? publicKey.toString('base64') : keyPair.publicKey.toString('base64'),
+    sign_type: signType,
   }
 
   const db = await getDatabase()
@@ -271,6 +275,7 @@ export async function savePublicKeyOnly(
     name: '',
     encrypted: undefined, // No encrypted data for view-only wallet
     public_key: normalizedPublicKey.toString('base64'),
+    sign_type: 'ton',
   }
 
   const db = await getDatabase()
@@ -293,11 +298,11 @@ export async function savePublicKeyAndWallets(
   // Insert the key without requiring encrypted data
   const res = await db.raw<Key>(
     `
-    INSERT INTO keys (public_key, name)
-    VALUES (?, ?)
+    INSERT INTO keys (public_key, name, sign_type)
+    VALUES (?, ?, ?)
     RETURNING *
   `,
-    [key.public_key, walletName]
+    [key.public_key, walletName, key.sign_type || 'ton']
   )
 
   const newWallet = res[0]
