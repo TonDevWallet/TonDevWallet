@@ -1,4 +1,4 @@
-name: 'Tauri Publish Release'
+name: 'Build and Publish Release'
 
 on:
   push:
