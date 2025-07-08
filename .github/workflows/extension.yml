@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --global --force corepack@latest && corepack enable && corepack prepare pnpm@9.5.0 --activate
+      - run: npm install --global --force corepack@latest && corepack enable && corepack prepare pnpm@10.10.0 --activate
       - name: install app dependencies and build it
         working-directory: ./packages/browser-extension
         run: pnpm install
