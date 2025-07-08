@@ -1,2 +1,0 @@
-patchedDependencies:
-  '@ton/sandbox': patches/@ton__sandbox.patch
