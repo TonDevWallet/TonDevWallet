@@ -25,15 +25,15 @@ jobs:
       - run: npm install --global --force corepack@latest && corepack enable && corepack prepare pnpm@10.10.0 --activate
       - name: install app dependencies and build it
         working-directory: ./packages/browser-extension
-        run: ls && pnpm install && ls
+        run: pnpm install
       - name: cleanup
         run: |
           rm postcss.config.js
       - name: build
         working-directory: ./packages/browser-extension
         run: |
-          TARGET=chrome ls && pnpm build && ls && cd ./dist && zip -r ../extension.chrome.zip . && cd .. && rm -rf dist
-          TARGET=firefox ls && pnpm build && ls && cd ./dist && zip -r ../extension.firefox.zip . && cd .. && rm -rf dist
+          TARGET=chrome pnpm build && cd ./dist && zip -r ../extension.chrome.zip . && cd .. && rm -rf dist
+          TARGET=firefox pnpm build && cd ./dist && zip -r ../extension.firefox.zip . && cd .. && rm -rf dist
       - name: upload chrome extension
         uses: actions/upload-artifact@v4
         with:
