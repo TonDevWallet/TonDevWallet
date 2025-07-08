@@ -7,6 +7,7 @@ import {
   Transaction,
   loadTransaction,
   Address,
+  storeTransaction,
 } from '@ton/core'
 import { loadConfigParamsAsSlice, parseFullConfig, TonClient, TonClient4 } from '@ton/ton'
 import { LiteClient } from 'ton-lite-client'
@@ -286,11 +287,6 @@ async function emulateTransactions(
   let hashMismatch = false
   // Prepare transactions in correct order
   const prevTxsInBlock = txs.slice(0)
-
-  // Initialize shard account
-  initialShardAccount.lastTransactionLt = 0n
-  initialShardAccount.lastTransactionHash = 0n
-
   const shardAccountCell = beginCell().store(storeShardAccount(initialShardAccount)).endCell()
   let shardAccountStr = shardAccountCell.toBoc().toString('base64')
 
@@ -340,7 +336,12 @@ async function emulateTransactions(
       console.log('emulatedTx', emulatedTx)
       console.log('Old Hash:', currentTx.stateUpdate.newHash.toString('hex'))
       console.log('New Hash:', emulatedTx.stateUpdate.newHash.toString('hex'))
-      // throw new Error(`State update failed for lt: ${currentTx.lt}`)
+      console.log('Emulated tx boc')
+      console.log(emulationResult.result.transaction)
+      console.log('Original tx boc')
+      console.log(
+        beginCell().store(storeTransaction(currentTx)).endCell().toBoc().toString('base64')
+      )
       hashMismatch = true
     }
 

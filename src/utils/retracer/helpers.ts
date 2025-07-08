@@ -647,7 +647,7 @@ export function createShardAccountFromAPI(
     account: {
       addr: address,
       storage: {
-        lastTransLt: BigInt(apiAccount.last?.lt || 0),
+        lastTransLt: BigInt(apiAccount.last?.lt || 0) + 1n,
         balance: { coins: BigInt(apiAccount.balance.coins || 0) },
         state: normalizeStateFromAPI(apiAccount.state),
       },
