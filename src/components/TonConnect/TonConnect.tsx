@@ -183,6 +183,36 @@ export async function sendTonConnectStartMessage(
         .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
         .endCell()
       break
+    case 'v1R1':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'v2R1':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'v2R2':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'v1R2':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'v1R3':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
+    case 'v3R1':
+      stateInit = beginCell()
+        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
+        .endCell()
+      break
     case 'v3R2':
       stateInit = beginCell()
         .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
