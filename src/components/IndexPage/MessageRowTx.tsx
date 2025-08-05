@@ -18,6 +18,7 @@ import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
 import { cn } from '@/utils/cn'
 import { useEmulatedTxInfo } from '@/hooks/useEmulatedTxInfo'
+import { useToncenterEmulation } from '@/hooks/useToncenterEmulation'
 import { secretKeyToED25519 } from '@/utils/ed25519'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Address } from '@ton/ton'
@@ -29,6 +30,7 @@ import { Key } from '@/types/Key'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import type { MoneyFlow } from '@/utils/toncenterEmulation'
 
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
@@ -133,12 +135,8 @@ export const MessageRowTx = memo(function MessageRowTx({
   }
 
   const { response: txInfo, isLoading, snapshot } = useEmulatedTxInfo(messageCell, !walletKeyPair)
-  const [moneyFlow, setMoneyFlow] = useState<{
-    outputs: bigint
-    inputs: bigint
-    jettonTransfers: { from: Address; to: Address; jetton: Address | null; amount: bigint }[]
-    ourAddress: Address | null
-  }>({
+
+  const [moneyFlow, setMoneyFlow] = useState<MoneyFlow>({
     outputs: 0n,
     inputs: 0n,
     jettonTransfers: [],
@@ -224,6 +222,12 @@ export const MessageRowTx = memo(function MessageRowTx({
     getMoneyFlow()
   }, [txInfo])
 
+  const toncenterEmulation = useToncenterEmulation({
+    walletAddress: tonWallet?.address?.toString(),
+    messages: s.payload.messages,
+    localMoneyFlow: moneyFlow,
+  })
+
   return (
     <Block className="">
       {session?.url.get() && (
@@ -292,6 +296,12 @@ export const MessageRowTx = memo(function MessageRowTx({
         ourAddress={moneyFlow.ourAddress}
         tonDifference={moneyFlow.inputs - moneyFlow.outputs}
       />
+
+      {toncenterEmulation.isCorrect && (
+        <div className="text-green-500">Toncenter emulation money flow is the same as local</div>
+      )}
+      {toncenterEmulation.error && <div className="text-red-500">{toncenterEmulation.error}</div>}
+
       {password ? (
         <>
           <div className="flex items-center gap-2 my-2">
