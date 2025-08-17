@@ -74,12 +74,14 @@ export function createCellHash(
   const cell = Cell.fromBase64(payload.cell)
   const schemaHash = crc32Buf(Buffer.from(payload.schema, 'utf8'), undefined) >>> 0 // unsigned crc32 hash
 
+  const tep81Domain = domain.split('.').reverse().join('\0') + '\0'
+
   const message = beginCell()
     .storeUint(0x75569022, 32) // prefix
     .storeUint(schemaHash, 32) // schema hash
     .storeUint(timestamp, 64) // timestamp
     .storeAddress(parsedAddr) // user wallet address
-    .storeStringRefTail(domain) // app domain
+    .storeStringRefTail(tep81Domain) // app domain
     .storeRef(cell) // payload cell
     .endCell()
 
