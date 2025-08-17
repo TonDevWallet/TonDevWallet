@@ -55,7 +55,8 @@ import {
   WalletContractV3R2,
   WalletContractV4,
 } from '@ton/ton'
-import { KeyPair, sign } from '@ton/crypto'
+import { KeyPair } from '@ton/crypto'
+import { SignMessage } from './signer'
 import { LiteClient } from 'ton-lite-client'
 import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV3'
 import { HighloadWalletV3CodeCell } from '@/contracts/highload-wallet-v3/HighloadWalletV3.source'
@@ -65,7 +66,6 @@ import { Multisig } from '@/contracts/multisig-v2/Multisig'
 import { Opcodes, WalletId, WalletV5, bufferToBigInt } from '@/contracts/w5/WalletV5R1'
 import { WalletV5R1CodeCell } from '@/contracts/w5/WalletV5R1.source'
 import { ActionSendMsg, packActionsList } from '@/contracts/w5/actions'
-import { SignMessage } from './signer'
 
 export function getWalletFromKey(
   liteClient: LiteClient | ImmutableObject<LiteClient>,
@@ -351,7 +351,8 @@ export function getWalletFromKey(
       wallet: tonWallet,
       getExternalMessageCell: getExternalMessageCellFromTonWalletV5(
         tonWallet,
-        BigInt(wallet.subwallet_id)
+        BigInt(wallet.subwallet_id),
+        key as Key
       ),
       key: encryptedData,
       id: wallet.id,
@@ -520,7 +521,8 @@ function getExternalMessageCellFromTonWallet(
 
 function getExternalMessageCellFromTonWalletV5(
   wallet: OpenedContract<WalletV5>,
-  subwalletId: bigint
+  subwalletId: bigint,
+  key: Key
 ): GetExternalMessageCell {
   return async (keyPair: KeyPair, transfers: WalletTransfer[]) => {
     if (keyPair.secretKey.length === 32) {
@@ -555,7 +557,7 @@ function getExternalMessageCellFromTonWalletV5(
     try {
       walletId = await wallet.getWalletId()
     } catch (e) {}
-    const transfer = createBodyV5(keyPair, seqno, subwalletId, actions)
+    const transfer = await createBodyV5(keyPair, key, seqno, subwalletId, actions)
 
     console.log(
       'init',
@@ -734,7 +736,13 @@ export function useWalletExternalMessageCell(
   return cell
 }
 
-function createBodyV5(keyPair: KeyPair, seqno: number, walletId: bigint, actionsList: Cell) {
+async function createBodyV5(
+  keyPair: KeyPair,
+  key: Key,
+  seqno: number,
+  walletId: bigint,
+  actionsList: Cell
+) {
   const expireAt = Math.floor(Date.now() / 1000) + 60
   const payload = beginCell()
     .storeUint(Opcodes.auth_signed, 32)
@@ -744,10 +752,10 @@ function createBodyV5(keyPair: KeyPair, seqno: number, walletId: bigint, actions
     .storeSlice(actionsList.beginParse())
     .endCell()
 
-  const signature = sign(payload.hash(), keyPair.secretKey)
+  const signature = await SignMessage(keyPair.secretKey, payload.hash(), key)
   // seqno++
   return beginCell()
     .storeSlice(payload.beginParse())
-    .storeUint(bufferToBigInt(signature), 512)
+    .storeUint(bufferToBigInt(Buffer.from(signature)), 512)
     .endCell()
 }
