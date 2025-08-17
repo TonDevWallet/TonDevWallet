@@ -6,9 +6,15 @@ interface KeyInfoDisplayProps {
   seed: string
   publicKey?: Buffer | Uint8Array
   seedLabel?: string
+  fireblocksPrivateKey?: string
 }
 
-export function KeyInfoDisplay({ seed, publicKey, seedLabel = 'Seed' }: KeyInfoDisplayProps) {
+export function KeyInfoDisplay({
+  seed,
+  publicKey,
+  fireblocksPrivateKey,
+  seedLabel = 'Seed',
+}: KeyInfoDisplayProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
@@ -36,6 +42,21 @@ export function KeyInfoDisplay({ seed, publicKey, seedLabel = 'Seed' }: KeyInfoD
               className="w-5 h-5 ml-2 shrink-0"
               text={Buffer.from(publicKey).toString('hex')}
             />
+          </div>
+        </div>
+      )}
+
+      {fireblocksPrivateKey && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <FontAwesomeIcon icon={faKey} className="text-primary" />
+            Fireblocks Private Key:
+          </label>
+          <div className="flex items-center p-2 bg-muted rounded-md">
+            <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
+              {fireblocksPrivateKey}
+            </code>
+            <Copier className="w-5 h-5 ml-2 shrink-0" text={fireblocksPrivateKey} />
           </div>
         </div>
       )}

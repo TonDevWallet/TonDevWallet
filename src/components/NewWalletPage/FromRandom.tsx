@@ -13,12 +13,17 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import clipboard from 'clipboardy'
 import { WalletNameInput, ImportButton, KeyInfoDisplay } from './shared'
+import { generateFireblocksPrivateKey } from '@/utils/fireblocks'
+import * as ed from '@noble/ed25519'
+import { sha512 } from '@noble/hashes/sha512'
+ed.etc.sha512Sync = sha512
 
 export function FromRandom() {
   const navigate = useNavigate()
 
   const [words, setWords] = useState('')
   const [seed, setSeed] = useState<Buffer | undefined>()
+  const [fireblocksPrivateKey, setFireblocksPrivateKey] = useState<string | undefined>()
   const [name, setName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
@@ -26,13 +31,23 @@ export function FromRandom() {
   const generateNewMnemonic = async () => {
     try {
       setIsLoading(true)
-      const mnemonic = await mnemonicNew()
-      // Directly set words without calling onWordsChange to avoid clearing seed temporarily
-      setWords(mnemonic.join(' '))
+      try {
+        const mnemonic = await mnemonicNew()
+        // Directly set words without calling onWordsChange to avoid clearing seed temporarily
+        setWords(mnemonic.join(' '))
 
-      // Process seed from mnemonic
-      const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
-      setSeed(ls)
+        // Process seed from mnemonic
+        const ls = (await mnemonicToSeed(mnemonic, 'TON default seed')).subarray(0, 32)
+
+        const fireblocksPrivateKey = generateFireblocksPrivateKey(ls)
+
+        setFireblocksPrivateKey(fireblocksPrivateKey.toString('hex'))
+        setSeed(ls)
+        return
+      } catch (error) {
+        console.error('Error generating mnemonic:', error)
+      }
+      throw new Error('Failed to generate mnemonic')
     } catch (error) {
       console.error('Error generating mnemonic:', error)
     } finally {
@@ -149,6 +164,7 @@ export function FromRandom() {
           <KeyInfoDisplay
             seed={seed.toString('hex')}
             publicKey={walletKeyPair?.publicKey ? walletKeyPair.publicKey : new Uint8Array(0)}
+            fireblocksPrivateKey={fireblocksPrivateKey}
           />
 
           <Separator />
