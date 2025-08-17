@@ -1,5 +1,5 @@
 import { saveKeyFromData } from '@/store/walletsListState'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { KeyPair } from '@ton/crypto'
 import { secretKeyToED25519 } from '@/utils/ed25519'
@@ -12,6 +12,8 @@ import { WalletNameInput, ImportButton, useWalletSelection, KeyInfoDisplay } fro
 import { Checkbox } from '../ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Label } from '../ui/label'
+import { hexToNumber } from '@noble/curves/abstract/utils'
+import { ExtendedPoint } from '@noble/ed25519'
 
 export function FromSeed() {
   const navigate = useNavigate()
@@ -26,78 +28,91 @@ export function FromSeed() {
   const [derivedKeyPair, setDerivedKeyPair] = useState<KeyPair | undefined>(undefined)
   const [signType, setSignType] = useState<'ton' | 'fireblocks'>('ton')
 
-  const onWordsChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const data = e.target.value
-      setSeed(data)
-      setParsedSeed(undefined)
-      setDerivedKeyPair(undefined)
-      setError(null)
+  // Parse seed when words, sign type, or public key settings change
+  useEffect(() => {
+    const parseSeed = async () => {
+      try {
+        setParsedSeed(undefined)
+        setDerivedKeyPair(undefined)
+        setError(null)
 
-      // Only attempt to parse if we have a 64-character hex string
-      if (data.length === 64 && /^[0-9a-fA-F]+$/.test(data)) {
-        try {
-          const parsed = secretKeyToED25519(Buffer.from(data, 'hex'))
-          if (parsed) {
-            setDerivedKeyPair(parsed)
-            // If not using override, use the derived keypair
+        // Only attempt to parse if we have a 64-character hex string
+        if (seed.length === 64 && /^[0-9a-fA-F]+$/.test(seed)) {
+          if (signType === 'ton') {
+            try {
+              const parsed = secretKeyToED25519(Buffer.from(seed, 'hex'))
+              if (parsed) {
+                setDerivedKeyPair(parsed)
+                // If not using override, use the derived keypair
+                if (!usePublicKeyOverride) {
+                  setParsedSeed(parsed)
+                }
+              }
+            } catch (e) {
+              setError('Invalid seed format')
+            }
+          } else if (signType === 'fireblocks') {
+            const normalizedPrivateKey = seed.replace(/^0x/, '')
+            // Derive public key from private key and compare
+            const privateKeyInt = hexToNumber(normalizedPrivateKey)
+            const derivedPublicKeyPoint = ExtendedPoint.BASE.multiply(privateKeyInt)
+            const derivedPublicKeyBytes = derivedPublicKeyPoint.toRawBytes()
+
+            const keyPair: KeyPair = {
+              publicKey: Buffer.from(derivedPublicKeyBytes),
+              secretKey: Buffer.from(normalizedPrivateKey, 'hex'),
+            }
+            setDerivedKeyPair(keyPair)
             if (!usePublicKeyOverride) {
-              setParsedSeed(parsed)
+              setParsedSeed(keyPair)
             }
           }
-        } catch (e) {
-          setError('Invalid seed format')
+        } else if (seed.length > 0 && (seed.length !== 64 || !/^[0-9a-fA-F]+$/.test(seed))) {
+          setError('Seed must be a 64-character hex string')
         }
-      } else if (data.length > 0 && (data.length !== 64 || !/^[0-9a-fA-F]+$/.test(data))) {
-        setError('Seed must be a 64-character hex string')
+
+        // Handle public key override
+        if (usePublicKeyOverride && seed.length === 64 && /^[0-9a-fA-F]+$/.test(seed)) {
+          if (publicKeyOverride.length === 64 && /^[0-9a-fA-F]+$/.test(publicKeyOverride)) {
+            try {
+              const privateKey = Buffer.from(seed, 'hex')
+              const publicKey = Buffer.from(publicKeyOverride, 'hex')
+              const customKeyPair: KeyPair = {
+                publicKey,
+                secretKey: privateKey,
+              }
+              setParsedSeed(customKeyPair)
+            } catch (e) {
+              setError('Invalid public key format')
+              setParsedSeed(undefined)
+            }
+          } else if (publicKeyOverride.length > 0) {
+            setError('Public key must be a 64-character hex string')
+            setParsedSeed(undefined)
+          } else {
+            setParsedSeed(undefined)
+          }
+        }
+      } catch (e) {
+        console.log('parseSeed error', e)
+        setError('Error processing seed')
       }
-    } catch (e) {
-      console.log('onWordsChange error', e)
-      setError('Error processing seed')
     }
+
+    parseSeed()
+  }, [seed, signType, usePublicKeyOverride, publicKeyOverride])
+
+  const onWordsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSeed(e.target.value)
   }
 
   const onPublicKeyOverrideChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setPublicKeyOverride(value)
-    setError(null)
-
-    if (usePublicKeyOverride && seed.length === 64) {
-      // Validate and create keypair with override
-      if (value.length === 64 && /^[0-9a-fA-F]+$/.test(value)) {
-        try {
-          const privateKey = Buffer.from(seed, 'hex')
-          const publicKey = Buffer.from(value, 'hex')
-          const customKeyPair: KeyPair = {
-            publicKey,
-            secretKey: privateKey,
-          }
-          setParsedSeed(customKeyPair)
-        } catch (e) {
-          setError('Invalid public key format')
-          setParsedSeed(undefined)
-        }
-      } else if (value.length > 0) {
-        setError('Public key must be a 64-character hex string')
-        setParsedSeed(undefined)
-      } else {
-        setParsedSeed(undefined)
-      }
-    }
+    setPublicKeyOverride(e.target.value)
   }
 
   const onUseOverrideChange = (checked: boolean) => {
     setUsePublicKeyOverride(checked)
-    setError(null)
-
-    if (checked) {
-      // Clear the current keypair when enabling override
-      setParsedSeed(undefined)
-    } else {
-      // Restore derived keypair when disabling override
-      if (derivedKeyPair) {
-        setParsedSeed(derivedKeyPair)
-      }
+    if (!checked) {
       setPublicKeyOverride('')
     }
   }

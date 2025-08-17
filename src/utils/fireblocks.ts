@@ -21,6 +21,29 @@ const sha512 = async (...messages: Uint8Array[]) => {
 }
 
 /**
+ * Generate a Fireblocks-compatible private key from an ed25519 seed.
+ *
+ * @param seed 32-byte seed for ed25519 key generation
+ * @returns Fireblocks-compatible private key as hex string with 0x prefix
+ */
+export function generateFireblocksPrivateKey(seed: Uint8Array): Buffer {
+  // Hash the 32-byte seed with SHA-512 (same as ed25519 key derivation)
+  const hashed = sha512_sync(Buffer.from(seed))
+
+  // Take first 32 bytes and apply ed25519 clamping
+  const head = hashed.slice(0, 32)
+  head[0] &= 248 // Clear bottom 3 bits: 0b1111_1000
+  head[31] &= 127 // Clear top bit: 0b0111_1111
+  head[31] |= 64 // Set second-highest bit: 0b0100_0000
+
+  // Convert clamped bytes to scalar (little-endian) and reduce modulo curve order
+  const scalar = etc.mod(bytesToNumberLE(head), edCURVE.n)
+
+  // Convert to hex string with 0x prefix (pad to 64 hex chars = 32 bytes)
+  return Buffer.from(scalar.toString(16).padStart(64, '0'), 'hex')
+}
+
+/**
  * Generate a Fireblocks EdDSA signature for a given message and private key.
  *
  * @param privateKey hex-encoded private key(0x...)
