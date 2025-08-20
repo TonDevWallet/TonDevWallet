@@ -1,4 +1,9 @@
-import { TLBMathExpr, TLBNumberExpr, TLBVarExpr, TLBBinaryOp } from '@ton-community/tlb-codegen'
+import {
+  TLBMathExpr,
+  TLBNumberExpr,
+  TLBVarExpr,
+  TLBBinaryOp,
+} from '@ton-community/tlb-codegen/src/ast'
 
 // Interpreter to evaluate TLBMathExpr at runtime
 export class MathExprEvaluator {

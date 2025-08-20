@@ -63,7 +63,7 @@
     "@tauri-apps/plugin-sql": "^2.2.0",
     "@tauri-apps/plugin-updater": "~2",
     "@ton-community/assets-sdk": "^0.0.5",
-    "@ton-community/tlb-codegen": "2.0.0-beta.0",
+    "@ton-community/tlb-codegen": "npm:@truecarry/tlb-codegen@1.2.0",
     "@ton-community/tlb-parser": "^0.1.4",
     "@ton/core": "0.61.0",
     "@ton/crypto": "^3.3.0",
