@@ -18,8 +18,8 @@ import {
   TLBField,
   TLBFieldType,
   TLBParameter,
-  getTLBCodeByAST,
-} from '@ton-community/tlb-codegen'
+} from '@ton-community/tlb-codegen/src/ast'
+import { getTLBCodeByAST } from '@ton-community/tlb-codegen/src/main'
 import { ast } from '@ton-community/tlb-parser'
 
 import { bitsToString, normalizeBitString, stringToBits } from './common'
