@@ -617,6 +617,13 @@ function getExternalMessageCellFromTonWalletV4R2(
         bounce: m.bounce,
         extracurrency: m.extraCurrency,
       })
+      if (m.state) {
+        try {
+          msg.init = loadStateInit(m.state.asSlice())
+        } catch (e) {
+          console.log('error loading state init', e)
+        }
+      }
       signingMessage.storeRef(beginCell().store(storeMessageRelaxed(msg)))
     }
     const signature = await SignMessage(keyPair.secretKey, signingMessage.endCell().hash(), key)
