@@ -31,6 +31,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import type { MoneyFlow } from '@/utils/toncenterEmulation'
+import { RequestInfoMap } from '../TonConnect/TonConnectListener'
 
 const emptyKeyPair: KeyPair = {
   publicKey: Buffer.from([
@@ -228,12 +229,92 @@ export const MessageRowTx = memo(function MessageRowTx({
     localMoneyFlow: moneyFlow,
   })
 
+  // const walletMessageInfo: {
+  //   b_from_referrer?: string
+  //   b_from_ip?: string
+  // } = useMemo(() => {
+  //   const infoRaw = RequestInfoMap.get(s.connect_event_id.get()?.toString() || '')
+  //   if (!infoRaw) {
+  //     return {
+  //       b_from_referrer: undefined,
+  //       b_from_ip: undefined,
+  //     }
+  //   }
+  //   const info = JSON.parse(infoRaw)
+  //   return info as {
+  //     b_from_referrer?: string
+  //     b_from_ip?: string
+  //   }
+  // }, [s.connect_event_id])
+
+  const [walletMessageInfo, setVerifyMessage] = useState({
+    b_from_referrer: undefined,
+    b_from_ip: undefined,
+  })
+
+  const connectedUrl = useMemo(() => {
+    try {
+      const url = new URL(session?.url.get() || '')
+      return `${url.protocol}//${url.hostname}`
+    } catch (e) {
+      console.error(e)
+      return undefined
+    }
+  }, [session?.url])
+
+  useEffect(() => {
+    async function loadVerifyIp() {
+      try {
+        // console.log('loadVerifyIp', connectLinkInfo?.url)
+        // const url = new URL(session?.url.get() || '')
+        // const checkUrl = `${url.protocol}//${url.hostname}`
+
+        const requestFull = RequestInfoMap.get('1')
+        const decryptedSource = requestFull.decryptedSource
+        setVerifyMessage({
+          b_from_referrer: decryptedSource.origin,
+          b_from_ip: decryptedSource.ip,
+        })
+      } catch (e) {
+        console.error(e)
+        setVerifyMessage({
+          b_from_referrer: undefined,
+          b_from_ip: undefined,
+        })
+      }
+
+      // const data = await fetch(`${TonConnectBridgeUrl}/verify`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     client_id: session?.userId.get().toString(),
+      //     url: checkUrl,
+      //     message,
+      //     type: 'message',
+      //   }),
+      // })
+      // // const json = await data.json()
+      // if (data.status === 200) {
+      //   const result = await data.json()
+      //   const status = result.status
+      //   setVerifyMessage(status)
+      // } else {
+      //   // console.log('verifyIp', json)
+      //   setVerifyMessage(false)
+      // }
+      // setVerifyIp(json.ip)
+    }
+    loadVerifyIp()
+  }, [s, session?.url])
+
   return (
     <Block className="">
       {session?.url.get() && (
         <div className="flex items-center">
           <Avatar className="w-8 h-8">
-            <AvatarImage src={session?.iconUrl.get()} />
+            <AvatarImage src={session?.iconUrl.get() ?? ''} />
             <AvatarFallback>C</AvatarFallback>
           </Avatar>
 
@@ -243,6 +324,48 @@ export const MessageRowTx = memo(function MessageRowTx({
           </a>
         </div>
       )}
+
+      <div>SetVerifyStatus: {JSON.stringify(walletMessageInfo)}</div>
+
+      {!walletMessageInfo.b_from_referrer && (
+        <div className="text-red-500">
+          <div>
+            <div>Wallet message info: Referrer is unknown</div>
+          </div>
+        </div>
+      )}
+
+      {walletMessageInfo.b_from_referrer !== connectedUrl && (
+        <div className="text-red-500">
+          <div>
+            <div>Wallet message info: Referrer is not the same as session URL</div>
+            <div>
+              <div>Connected Session URL: {connectedUrl}</div>
+              <div>Actual website: {walletMessageInfo.b_from_referrer}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* {!walletMessageInfo.b_from_ip && (
+        <div className="text-red-500">
+          <div>
+            <div>Wallet message info: IP address is unknown</div>
+          </div>
+        </div>
+      )} */}
+
+      {/* {walletMessageInfo.b_from_ip !== myIpAddress && (
+        <div className="text-red-500">
+          <div>
+            <div>Wallet message info: IP address is not the same as your IP address</div>
+            <div>
+              <div>My IP address: {myIpAddress}</div>
+              <div>Message sent from: {walletMessageInfo.b_from_ip}</div>
+            </div>
+          </div>
+        </div>
+      )} */}
 
       <div className="break-keep">
         {

@@ -23,7 +23,8 @@ import { secretKeyToX25519 } from './ed25519'
 import { getWalletFromKey } from '@/utils/wallets'
 import { SignTonConnectData } from '@/utils/signData/sign'
 
-const bridgeUrl = 'https://bridge.tonapi.io/bridge'
+export const TonConnectBridgeUrl = 'https://bridge.tonapi.io/bridge'
+// export const TonConnectBridgeUrl = 'https://local.dev/bridge'
 
 export async function sendTonConnectMessage(
   msg: WalletMessage,
@@ -32,7 +33,7 @@ export async function sendTonConnectMessage(
 ) {
   const sessionKeypair = secretKeyToX25519(secretKey)
 
-  const url = new URL(`${bridgeUrl}/message`)
+  const url = new URL(`${TonConnectBridgeUrl}/message`)
   url.searchParams.append('client_id', Buffer.from(sessionKeypair.publicKey).toString('hex'))
   url.searchParams.append('to', clientPublicKey)
   url.searchParams.append('ttl', '300')
@@ -45,6 +46,9 @@ export async function sendTonConnectMessage(
   const message = sessionCrypto.encrypt(JSON.stringify(msg), hexToByteArray(clientPublicKey))
   await fetch(url, {
     method: 'post',
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: Base64.encode(message),
   })
 }

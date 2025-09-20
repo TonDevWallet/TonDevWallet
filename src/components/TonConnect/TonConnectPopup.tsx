@@ -215,6 +215,42 @@ function ConnectPopupContent() {
     }
   }, [chosenKey, chosenWallet, connectLinkInfo])
 
+  // const [myIpAddress, setMyIpAddress] = useState<string | null>(null)
+  // useEffect(() => {
+  //   fetch('https://api.ipify.org?format=json')
+  //     .then((res) => res.json())
+  //     .then((data) => setMyIpAddress(data.ip))
+  // }, [])
+
+  // const [verifyIp, setVerifyIp] = useState(false)
+  // useEffect(() => {
+  //   async function loadVerifyIp() {
+  //     console.log('loadVerifyIp', connectLinkInfo?.url)
+  //     const url = new URL(connectLinkInfo?.url || '')
+  //     const checkUrl = `${url.protocol}//${url.hostname}/`
+  //     const data = await fetch(`${TonConnectBridgeUrl}/verify`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         client_id: connectLinkInfo?.clientId,
+  //         url: checkUrl,
+  //       }),
+  //     })
+  //     console.log('VERIFY IP', data)
+  //     // const json = await data.json()
+  //     if (data.status === 200) {
+  //       setVerifyIp(true)
+  //     } else {
+  //       // console.log('verifyIp', json)
+  //       setVerifyIp(false)
+  //     }
+  //     // setVerifyIp(json.ip)
+  //   }
+  //   loadVerifyIp()
+  // }, [connectLinkInfo?.url])
+
   return (
     <div className="relative overflow-hidden my-8 max-h-[768px] h-full">
       <AlertDialogTitle></AlertDialogTitle>
@@ -245,6 +281,15 @@ function ConnectPopupContent() {
                 <div className="text-accent blur-xs">https://wallet.link</div>
               </>
             )}
+
+            {/* {!verifyIp && (
+              <div className="text-red-500">
+                <div>
+                  IP of the request is not the same as your IP address, be carefull someone might me
+                  impersonating dApp you're visiting now
+                </div>
+              </div>
+            )} */}
           </div>
 
           <div className="w-full px-4 pb-4">

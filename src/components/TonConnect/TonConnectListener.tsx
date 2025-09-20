@@ -25,12 +25,18 @@ import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/
 import { getWalletListState } from '@/store/walletsListState'
 import { ImmutableObject } from '@hookstate/core'
 import { getWalletFromKey } from '@/utils/wallets'
-import { ApproveTonConnectMessageTransaction, GetTransfersFromTCMessage } from '@/utils/tonConnect'
+import {
+  ApproveTonConnectMessageTransaction,
+  GetTransfersFromTCMessage,
+  TonConnectBridgeUrl,
+} from '@/utils/tonConnect'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
-import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
+import { secretKeyToED25519, secretKeyToX25519, decodeRequestSource } from '@/utils/ed25519'
 import { useNavigate } from 'react-router-dom'
 import { listen } from '@tauri-apps/api/event'
 const appWindow = getCurrentWebviewWindow()
+
+export const RequestInfoMap = new Map<string, any>()
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
@@ -135,7 +141,6 @@ export function TonConnectListener() {
   }, [])
 
   useEffect(() => {
-    const bridgeUrl = 'https://bridge.tonapi.io/bridge'
     const listeners: EventSource[] = []
 
     sessions.map((s) => {
@@ -145,7 +150,7 @@ export function TonConnectListener() {
         secretKey: Buffer.from(keyPair.secretKey).toString('hex'),
       })
 
-      const sseUrl = new URL(`${bridgeUrl}/events`)
+      const sseUrl = new URL(`${TonConnectBridgeUrl}/events`)
       sseUrl.searchParams.append('client_id', Buffer.from(keyPair.publicKey).toString('hex'))
       const lastEventId = s.lastEventId.get().toString()
       if (lastEventId && lastEventId !== '0') {
@@ -156,7 +161,13 @@ export function TonConnectListener() {
       const sse = new EventSource(sseUrl)
 
       sse.addEventListener('message', async (e) => {
-        const bridgeIncomingMessage = JSON.parse(e.data)
+        let bridgeIncomingMessage
+        try {
+          bridgeIncomingMessage = JSON.parse(e.data)
+        } catch (e) {
+          console.log('Error parsing bridge incoming message', e)
+          return
+        }
         const walletMessage: SendTransactionRpcRequest | DisconnectRpcRequest | SignDataRpcRequest =
           JSON.parse(
             session.decrypt(
@@ -165,6 +176,19 @@ export function TonConnectListener() {
             )
           )
         console.log('wallet message', walletMessage)
+
+        // base64 of sealed box
+        const source = bridgeIncomingMessage.request_source as string
+
+        // Example usage of decoding the request source
+        // You'll need the appropriate private key for decryption
+        const decryptedSource = decodeRequestSource(
+          source,
+          Buffer.from(keyPair.publicKey),
+          Buffer.from(keyPair.secretKey)
+        )
+        ;(e as any).decryptedSource = decryptedSource
+        RequestInfoMap.set('1', e)
 
         if (walletMessage.method === 'disconnect') {
           console.log('delete session', s)
