@@ -92,7 +92,7 @@ function NetworkSettings() {
         is_default: false,
         is_testnet: false,
         scanner_url: 'https://tonviewer.com/',
-        toncenter3_url: undefined,
+        toncenter3_url: '',
         created_at: new Date(),
         updated_at: new Date(),
       })
