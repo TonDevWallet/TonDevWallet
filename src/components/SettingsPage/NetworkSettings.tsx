@@ -27,6 +27,8 @@ function NetworkSettings() {
           is_testnet: network.is_testnet,
           scanner_url: network.scanner_url,
           toncenter3_url: network.toncenter3_url,
+          lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
+          lite_engine_host_custom: network.lite_engine_host_custom || '',
         }
       }),
     },
@@ -53,6 +55,8 @@ function NetworkSettings() {
         is_testnet: network.is_testnet,
         scanner_url: network.scanner_url,
         toncenter3_url: network.toncenter3_url,
+        lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
+        lite_engine_host_custom: network.lite_engine_host_custom || '',
       })
     }
   }, [liteClientState.networks])
@@ -68,13 +72,17 @@ function NetworkSettings() {
         if (!network) {
           continue
         }
-        await db<Network>('networks').where('network_id', network.network_id).update({
-          name: network.name,
-          url: network.url,
-          is_testnet: network.is_testnet,
-          scanner_url: network.scanner_url,
-          toncenter3_url: network.toncenter3_url,
-        })
+        await db<Network>('networks')
+          .where('network_id', network.network_id)
+          .update({
+            name: network.name,
+            url: network.url,
+            is_testnet: network.is_testnet,
+            scanner_url: network.scanner_url,
+            toncenter3_url: network.toncenter3_url,
+            lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
+            lite_engine_host_custom: network.lite_engine_host_custom || '',
+          })
       }
       await updateNetworksList()
     })
@@ -93,6 +101,8 @@ function NetworkSettings() {
         is_testnet: false,
         scanner_url: 'https://tonviewer.com/',
         toncenter3_url: '',
+        lite_engine_host_mode: 'auto',
+        lite_engine_host_custom: '',
         created_at: new Date(),
         updated_at: new Date(),
       })

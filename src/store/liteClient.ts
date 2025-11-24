@@ -26,6 +26,8 @@ const LiteClientState = hookstate<{
       is_testnet: false,
       scanner_url: 'https://tonviewer.com/',
       toncenter3_url: 'https://toncenter.com/api/v3/',
+      lite_engine_host_mode: 'auto',
+      lite_engine_host_custom: '',
       created_at: new Date(),
       updated_at: new Date(),
     })
@@ -37,6 +39,8 @@ const LiteClientState = hookstate<{
       is_testnet: true,
       scanner_url: 'https://testnet.tonviewer.com/',
       toncenter3_url: 'https://testnet.toncenter.com/api/v3/',
+      lite_engine_host_mode: 'auto',
+      lite_engine_host_custom: '',
       created_at: new Date(),
       updated_at: new Date(),
     })
@@ -95,7 +99,7 @@ const LiteClientState = hookstate<{
   return {
     networks,
     selectedNetwork,
-    liteClient: getLiteClient(selectedNetwork.url),
+    liteClient: getLiteClient(selectedNetwork.url, selectedNetwork),
     tonapiClient,
   }
 })
@@ -143,7 +147,7 @@ export async function changeLiteClient(networkId: number) {
   //   .where('name', 'selected_network')
   //   .first()
 
-  const newLiteClient = getLiteClient(selectedNetwork.url)
+  const newLiteClient = getLiteClient(selectedNetwork.url, selectedNetwork)
 
   await db<{ name: string; value: string }>('settings')
     .where('name', 'selected_network')
@@ -165,17 +169,21 @@ export async function changeLiteClient(networkId: number) {
   return newLiteClient
 }
 
-export function getLiteClient(configUrl: string): LiteClient {
+export function getLiteClient(configUrl: string, network?: Network): LiteClient {
   const engine = new LiteRoundRobinEngine([])
   const client = new LiteClient({ engine })
 
-  addWorkingEngineToRoundRobin(configUrl, engine)
+  addWorkingEngineToRoundRobin(configUrl, engine, network)
   ;(client as any).configUrl = configUrl
 
   return client
 }
 
-async function addWorkingEngineToRoundRobin(configUrl: string, robin: LiteRoundRobinEngine) {
+async function addWorkingEngineToRoundRobin(
+  configUrl: string,
+  robin: LiteRoundRobinEngine,
+  network?: Network
+) {
   const response = await tFetch(configUrl)
   const data = (await response.json()) as LSConfigData
   if (!data || !data.liteservers) {
@@ -183,9 +191,16 @@ async function addWorkingEngineToRoundRobin(configUrl: string, robin: LiteRoundR
   }
   const shuffledEngines = shuffle(data.liteservers)
 
-  const tauri = (await tauriState.promise) || tauriState
-  if (!tauri) {
-    throw new Error('no tauri')
+  const useCustomHost =
+    network?.lite_engine_host_mode === 'custom' && network?.lite_engine_host_custom
+  const customHost = network?.lite_engine_host_custom
+
+  let tauri: typeof tauriState | null = null
+  if (!useCustomHost) {
+    tauri = (await tauriState.promise) || tauriState
+    if (!tauri) {
+      throw new Error('no tauri')
+    }
   }
 
   let goodEngineFound = false
@@ -216,8 +231,12 @@ async function addWorkingEngineToRoundRobin(configUrl: string, robin: LiteRoundR
     }
 
     const pubkey = encodeURIComponent(ls.id.key)
+    const host = useCustomHost
+      ? customHost! + `/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`
+      : `ws://localhost:${tauri!.port.get()}/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`
+
     const singleEngine = new LiteSingleEngine({
-      host: `ws://localhost:${tauri.port.get()}/?ip=${ls.ip}&port=${ls.port}&pubkey=${pubkey}`,
+      host,
       publicKey: Buffer.from(ls.id.key, 'base64'),
       client: 'ws',
     })

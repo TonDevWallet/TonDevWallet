@@ -8,6 +8,7 @@ import { Label } from '../ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { cn } from '@/utils/cn'
 import { Switch } from '../ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import NetworkTestButton from './NetworkTestButton'
 
 export interface NetworkSettingsProps {
@@ -18,6 +19,8 @@ export interface NetworkSettingsProps {
   is_testnet: boolean
   scanner_url?: string
   toncenter3_url?: string
+  lite_engine_host_mode?: 'auto' | 'custom'
+  lite_engine_host_custom?: string
 }
 
 // NetworkRow component
@@ -147,7 +150,11 @@ const NetworkRow = ({ field, index, control, watch, onRemove }: NetworkRowProps)
               </FormItem>
             )}
           />
-          <NetworkTestButton url={watch(`networks.${index}.url`)} />
+          <NetworkTestButton
+            url={watch(`networks.${index}.url`)}
+            liteEngineHostMode={watch(`networks.${index}.lite_engine_host_mode`) || 'auto'}
+            liteEngineHostCustom={watch(`networks.${index}.lite_engine_host_custom`)}
+          />
         </div>
       </div>
 
@@ -204,6 +211,67 @@ const NetworkRow = ({ field, index, control, watch, onRemove }: NetworkRowProps)
           )}
         />
       </div>
+
+      <div className="mt-4">
+        <Label
+          htmlFor={`networks.${index}.lite_engine_host_mode`}
+          className="text-sm font-medium mb-1.5 block"
+        >
+          Lite Engine Host
+        </Label>
+        <FormField
+          control={control}
+          name={`networks.${index}.lite_engine_host_mode`}
+          render={({ field: hostModeField }) => (
+            <FormItem>
+              <Select value={hostModeField.value || 'auto'} onValueChange={hostModeField.onChange}>
+                <FormControl>
+                  <SelectTrigger
+                    className="w-full h-10"
+                    id={`networks.${index}.lite_engine_host_mode`}
+                  >
+                    <SelectValue placeholder="Select host mode" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="auto">Auto</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      {watch(`networks.${index}.lite_engine_host_mode`) === 'custom' && (
+        <div className="mt-4">
+          <Label
+            htmlFor={`networks.${index}.lite_engine_host_custom`}
+            className="text-sm font-medium mb-1.5 block"
+          >
+            Custom Lite Engine Host URL
+          </Label>
+          <FormField
+            control={control}
+            name={`networks.${index}.lite_engine_host_custom`}
+            render={({ field: customHostField }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    placeholder="Enter custom lite engine host URL (e.g., ws://localhost:8080/?ip=...&port=...&pubkey=...)"
+                    {...customHostField}
+                    spellCheck={false}
+                    className="w-full h-10"
+                    id={`networks.${index}.lite_engine_host_custom`}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      )}
     </div>
   )
 }

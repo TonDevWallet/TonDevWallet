@@ -19,6 +19,8 @@ export interface TestStatusState {
 // NetworkTestButton component
 interface NetworkTestButtonProps {
   url: string
+  liteEngineHostMode?: 'auto' | 'custom'
+  liteEngineHostCustom?: string
 }
 
 // Helper function to create a timeout promise
@@ -28,7 +30,11 @@ const timeout = (ms: number) => {
   })
 }
 
-const NetworkTestButton = ({ url }: NetworkTestButtonProps) => {
+const NetworkTestButton = ({
+  url,
+  liteEngineHostMode,
+  liteEngineHostCustom,
+}: NetworkTestButtonProps) => {
   const [testStatus, setTestStatus] = useState<TestStatusState>({ status: 'idle' })
 
   // Reset test status after 5 seconds when test completes
@@ -66,17 +72,24 @@ const NetworkTestButton = ({ url }: NetworkTestButtonProps) => {
       const engine = new LiteRoundRobinEngine([])
       const client = new LiteClient({ engine })
 
-      // Get tauri state for WebSocket connection
-      const tauri = (await tauriState.promise) || tauriState
-      if (!tauri) {
+      const useCustomHost = liteEngineHostMode === 'custom' && liteEngineHostCustom
+      const customHost = liteEngineHostCustom
+
+      // Get tauri state for WebSocket connection (only needed for auto mode)
+      const tauri = useCustomHost ? null : (await tauriState.promise) || tauriState
+      if (!useCustomHost && !tauri) {
         throw new Error('Tauri state not available')
       }
 
       // Try to connect to at least one liteserver
       for (const liteserver of data.liteservers) {
         const pubkey = encodeURIComponent(liteserver.id.key)
+        const host = useCustomHost
+          ? customHost! + `/?ip=${liteserver.ip}&port=${liteserver.port}&pubkey=${pubkey}`
+          : `ws://localhost:${tauri!.port.get()}/?ip=${liteserver.ip}&port=${liteserver.port}&pubkey=${pubkey}`
+
         const singleEngine = new LiteSingleEngine({
-          host: `ws://localhost:${tauri.port.get()}/?ip=${liteserver.ip}&port=${liteserver.port}&pubkey=${pubkey}`,
+          host,
           publicKey: Buffer.from(liteserver.id.key, 'base64'),
           client: 'ws',
         })

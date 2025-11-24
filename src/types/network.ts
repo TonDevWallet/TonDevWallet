@@ -10,6 +10,8 @@ export interface Network {
   is_testnet: boolean
   scanner_url?: string
   toncenter3_url?: string
+  lite_engine_host_mode?: 'auto' | 'custom'
+  lite_engine_host_custom?: string
 
   created_at: Date
   updated_at: Date
