@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::net::{Ipv4Addr, SocketAddr};
 
 use futures_util::stream::{SplitSink, SplitStream};
@@ -17,7 +16,6 @@ use tokio_tungstenite::{
 };
 use tungstenite::{http, Message};
 use url::form_urlencoded;
-// use log::info;
 
 pub async fn spawn_proxy(listener: &mut TcpListener) -> Result<(), Box<dyn stdError + Send>> {
     let _ = env_logger::try_init();

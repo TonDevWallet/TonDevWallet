@@ -14,13 +14,6 @@ use tungstenite::Message;
 static TON_ECHO_PORT: AtomicU16 = AtomicU16::new(0);
 
 #[derive(Serialize, Deserialize)]
-struct HandshakeRequest {
-    #[serde(rename = "type")]
-    msg_type: String,
-    id: Value,
-}
-
-#[derive(Serialize, Deserialize)]
 struct HandshakeResponse {
     #[serde(rename = "type")]
     msg_type: String,
