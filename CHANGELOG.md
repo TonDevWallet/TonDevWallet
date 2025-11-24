@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2025-11-24
+
+### Added
+- Custom Lite Engine Proxy URL setting
+- Added experimental support for toncenter3 emulation. It displays, if toncenter emulation and local one resolved to the same result.
+
+### Fixed
+- Missing StateInit in the WalletV4R2 messages now being correctly.
+- Added default value for the toncenter3_url. (@jackkru69)
+- Changed http allowed urls to `http://*:*` to allow requests to http://localhost:8080. (@jackkru69)
+- SignData Cell format updated to the new TON Connect specification.
+
 ## [0.7.2] - 2025-07-08
 
 ### Fixed
