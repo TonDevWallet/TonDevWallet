@@ -22,6 +22,7 @@ import { LiteClient } from 'ton-lite-client'
 import { secretKeyToX25519 } from './ed25519'
 import { getWalletFromKey } from '@/utils/wallets'
 import { SignTonConnectData } from '@/utils/signData/sign'
+import { getWalletKit } from '@/services/walletKit'
 
 const bridgeUrl = 'https://bridge.tonapi.io/bridge'
 
@@ -64,9 +65,15 @@ export async function ApproveTonConnectMessageTransaction({
 }) {
   await liteClient.sendMessage(messageCell?.toBoc() || Buffer.from(''))
 
-  if (session) {
+  // Check if we have a stored WalletKit request (persisted in database)
+  const walletkitRequestStr = (connectMessage as any)?.walletkit_request
+  if (walletkitRequestStr) {
+    const txRequest = JSON.parse(walletkitRequestStr)
+    const kit = await getWalletKit()
+    await kit.approveTransactionRequest(txRequest)
+  } else if (session) {
     const msg: SendTransactionRpcResponseSuccess = {
-      id: eventId, // s.connect_event_id.toString(),
+      id: eventId,
       result: messageCell?.toBoc().toString('base64') || '',
     }
 
@@ -85,7 +92,13 @@ export async function RejectTonConnectMessageTransaction({
   message: TonConnectMessageTransaction | ImmutableObject<TonConnectMessageTransaction>
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
 }) {
-  if (session) {
+  // Check if we have a stored WalletKit request (persisted in database)
+  const walletkitRequestStr = (message as any).walletkit_request
+  if (walletkitRequestStr) {
+    const txRequest = JSON.parse(walletkitRequestStr)
+    const kit = await getWalletKit()
+    await kit.rejectTransactionRequest(txRequest, 'User rejected')
+  } else if (session) {
     const msg: SendTransactionRpcResponseError = {
       id: message.connect_event_id.toString(),
       error: {
@@ -107,7 +120,15 @@ export async function RejectTonConnectMessageSign({
   message: TonConnectMessageSign | ImmutableObject<TonConnectMessageSign>
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
 }) {
-  if (session) {
+  // Check if we have a stored WalletKit request (persisted in database)
+  const walletkitRequestStr = (message as any).walletkit_request
+  if (walletkitRequestStr) {
+    const signRequest = JSON.parse(walletkitRequestStr)
+    const kit = await getWalletKit()
+    console.log('rejectSignDataRequest', signRequest)
+    await kit.rejectSignDataRequest(signRequest)
+  } else if (session) {
+    console.log('sendTonConnectMessage', session)
     const msg: SendTransactionRpcResponseError = {
       id: message.connect_event_id.toString(),
       error: {
@@ -133,42 +154,54 @@ export async function ApproveTonConnectMessageSign({
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
   key: any
   liteClient: LiteClient | ImmutableObject<LiteClient>
-  walletKeyPair: { secretKey: Uint8Array | Buffer }
+  walletKeyPair: { secretKey: Uint8Array | Buffer; publicKey: Uint8Array | Buffer }
 }) {
-  let walletAddress: string | undefined
-  if (key) {
-    const wallet = key.wallets?.find((w: any) => w.id === session?.walletId)
-    if (wallet) {
-      const tonWallet = getWalletFromKey(liteClient, key, wallet)
-      walletAddress = tonWallet?.address.toRawString()
-    }
+  // Check if we have a stored WalletKit request (persisted in database)
+  const walletkitRequestStr = (message as any).walletkit_request
+  if (walletkitRequestStr) {
+    const signRequest = JSON.parse(walletkitRequestStr)
+    const kit = await getWalletKit()
+    await kit.approveSignDataRequest(signRequest)
+    await changeConnectMessageStatus(message.id, ConnectMessageStatus.APPROVED)
+    return
   }
-
-  const signPayload = message.sign_payload
-
-  const sessionUrl = session?.url ?? ''
-  const sessionDomain = new URL(sessionUrl).hostname
-
-  const signedData = SignTonConnectData({
-    address: walletAddress ?? '',
-    domain: sessionDomain,
-    payload: signPayload,
-    privateKey: Buffer.from(walletKeyPair?.secretKey || Buffer.from([])),
-  })
-
+  // Legacy bridge path - we need to sign manually and send via bridge
   if (session) {
+    let walletAddress: string | undefined
+    if (key) {
+      const wallet = key.wallets?.find((w: any) => w.id === session?.walletId)
+      if (wallet) {
+        const tonWallet = getWalletFromKey(liteClient, key, wallet)
+        walletAddress = tonWallet?.address.toRawString()
+      }
+    }
+
+    const signPayload = message.sign_payload
+    const sessionUrl = session.url || ''
+    let sessionDomain = ''
+    try {
+      sessionDomain = new URL(sessionUrl).hostname
+    } catch {
+      // Invalid URL, use empty domain
+    }
+
+    const signedData = SignTonConnectData({
+      address: walletAddress ?? '',
+      domain: sessionDomain,
+      payload: signPayload,
+      privateKey: Buffer.from(walletKeyPair?.secretKey || Buffer.from([])),
+    })
+
     const msg: SignDataRpcResponseSuccess = {
       result: {
         ...signedData,
       },
       id: message.connect_event_id.toString(),
     }
-    await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
+    await sendTonConnectMessage(msg, session.secretKey || Buffer.from(''), session.userId || '')
   }
 
-  if (message) {
-    await changeConnectMessageStatus(message.id, ConnectMessageStatus.APPROVED)
-  }
+  await changeConnectMessageStatus(message.id, ConnectMessageStatus.APPROVED)
 }
 
 export function GetTransfersFromTCMessage(

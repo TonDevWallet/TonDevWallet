@@ -70,6 +70,7 @@
     "@ton/sandbox": "^0.35.1",
     "@ton/test-utils": "^0.9.0",
     "@ton/ton": "^15.3.1",
+    "@ton/walletkit": "file:../kit/packages/walletkit/ton-walletkit-0.0.3.tgz",
     "@tonconnect/protocol": "2.3.0-beta.0",
     "@tonconnect/sdk": "^3.1.0",
     "@tondevwallet/traces": "^0.1.6",

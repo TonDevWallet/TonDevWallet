@@ -1,13 +1,6 @@
 import { changeLiteClient, useLiteclient, useLiteclientState } from '@/store/liteClient'
-import { useTonConnectSessions } from '@/store/tonConnect'
 import { LiteClient } from 'ton-lite-client'
-import { useWalletListState } from '@/store/walletsListState'
 import { cleanPassword, openPasswordPopup, usePassword } from '@/store/passwordManager'
-import { secretKeyToX25519 } from '@/utils/ed25519'
-import { KeyPair } from '@ton/crypto'
-import { getWalletFromKey } from '@/utils/wallets'
-import { IWallet } from '@/types'
-import { sendTonConnectStartMessage } from '@/components/TonConnect/TonConnect'
 import { DetectTonConnect } from '@/components/SavedWalletsList/DetectTonConnect'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -29,13 +22,10 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { HomeLink } from './HomeLink'
-import { Key } from '@/types/Key'
 
 function NetworkSelector() {
   const liteClientState = useLiteclientState()
-  const sessions = useTonConnectSessions()
   const liteClient = useLiteclient() as LiteClient
-  const keys = useWalletListState()
 
   const [readyEngines, setReadyEngines] = useState(0)
 
@@ -51,34 +41,6 @@ function NetworkSelector() {
         setReadyEngines((newLiteClient.engine as any).readyEngines.length)
       }, 500)
     })
-
-    for (const s of sessions.get()) {
-      const key = keys.find((k) => k.id.get() === s.keyId)
-      if (!key) {
-        return
-      }
-
-      const wallet = key.wallets.get()?.find((w) => w.id === s.walletId)
-      if (!wallet) {
-        return
-      }
-
-      const sessionKeyPair = secretKeyToX25519(s.secretKey) as KeyPair
-
-      const tonWallet = getWalletFromKey(liteClient, key.get(), wallet) as IWallet
-
-      const serviceUrl = new URL(s.url)
-      const host = serviceUrl.host
-
-      sendTonConnectStartMessage(
-        tonWallet,
-        undefined,
-        host,
-        sessionKeyPair,
-        s.userId,
-        key.get() as Key
-      )
-    }
   }
 
   useEffect(() => {

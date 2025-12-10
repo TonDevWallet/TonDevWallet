@@ -194,6 +194,9 @@ importers:
       '@ton/ton':
         specifier: ^15.3.1
         version: 15.3.1(@ton/core@0.61.0(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(debug@4.4.0)
+      '@ton/walletkit':
+        specifier: file:../kit/packages/walletkit/ton-walletkit-0.0.3.tgz
+        version: file:../kit/packages/walletkit/ton-walletkit-0.0.3.tgz(@ton/ton@15.3.1(@ton/core@0.61.0(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(debug@4.4.0))(debug@4.4.0)
       '@tonconnect/protocol':
         specifier: 2.3.0-beta.0
         version: 2.3.0-beta.0
@@ -1303,6 +1306,10 @@ packages:
 
   '@noble/curves@1.9.6':
     resolution: {integrity: sha512-GIKz/j99FRthB8icyJQA51E8Uk5hXmdyThjgQXRKiv9h0zeRlzSCLIzFw6K1LotZ3XuB7yzlf76qk7uBmTdFqA==}
+    engines: {node: ^14.21.3 || >=16}
+
+  '@noble/curves@1.9.7':
+    resolution: {integrity: sha512-gbKGcRUYIjA3/zCCNaWDciTMFI0dCkvou3TL8Zmy5Nc7sJ47a0jtOeZoTaMxkuqRo9cRhjOdZJXegxYE5FN/xw==}
     engines: {node: ^14.21.3 || >=16}
 
   '@noble/ed25519@1.7.3':
@@ -2671,9 +2678,21 @@ packages:
       '@ton/crypto': '>=3.2.0'
       '@ton/ton': '>=13.11.0'
 
+  '@ton-community/tlb-codegen@2.0.0-beta.3':
+    resolution: {integrity: sha512-DG79NL09e9xiIMPh0Fgbsw/+rr36KNilDk3lhYdMsZb0to0/sibzLHyFbjJPfqdlhu6ujRBaOh+1FQ5l5BmnKw==}
+    hasBin: true
+
   '@ton-community/tlb-parser@0.1.4':
     resolution: {integrity: sha512-WlLAbCVzs0C+8R0fJelmXXhKNsEPS4a71IMiVE+Fa31NcElAp3cCwZ4OjiHCGDQuTjglucO0HcmR7wVycmWYXg==}
     hasBin: true
+
+  '@ton-community/tlb-parser@0.1.5':
+    resolution: {integrity: sha512-gHCy+5h8UwVQ2gCEd0LfS6cAisZtsbX4BXlq71JYUxHstPT6yTlB0Nv5UTOx0b5ua+pSpwsRqY6TE3II/VH6Sw==}
+    hasBin: true
+
+  '@ton-community/tlb-runtime@1.0.0-alpha.3':
+    resolution: {integrity: sha512-raqtvG5j/vTSQySMitmVXN3jIdmUtjxTlIZjsj9Rp4EXDw8W81Kn8CelUq11gKyPTrSnGWTIehMr73jMA/je/g==}
+    engines: {node: '>=18.0.0'}
 
   '@ton/core@0.54.0':
     resolution: {integrity: sha512-ry3sCDq3jdjZuo7+egZ827/Y0/ajPbtrozvJryNMefUGfZQ/zYLVCmw9zBtxVsY2EX2zW7QhHQUs76/3y6HCwQ==}
@@ -2682,6 +2701,11 @@ packages:
 
   '@ton/core@0.61.0':
     resolution: {integrity: sha512-0qyVfP2dDue2bq80ydXggo2MlufcmzuFk6G94qRrZxvyQ3NSe4UeBTeRf1gQmN7tywgTsX2gS61e4yvJrlUu4Q==}
+    peerDependencies:
+      '@ton/crypto': '>=3.2.0'
+
+  '@ton/core@0.62.0':
+    resolution: {integrity: sha512-GCYlzzx11rSESKkiHvNy9tL8zWth+ZtUbvV29WH478FvBp8xTw24AyoigwXWNV+OLCAcnwlGhZpTpxjD3wzCwA==}
     peerDependencies:
       '@ton/crypto': '>=3.2.0'
 
@@ -2722,6 +2746,14 @@ packages:
       '@ton/core': '>=0.60.0'
       '@ton/crypto': '>=3.2.0'
 
+  '@ton/walletkit@file:../kit/packages/walletkit/ton-walletkit-0.0.3.tgz':
+    resolution: {integrity: sha512-Tb0Bve5s4j6LMtBzvj6uh6LlqgjgJ2OImmJBN6GnyJIrD3EKkbhuF963dwTfqxniXSLpXhohRLBLkzFxD0VF4g==, tarball: file:../kit/packages/walletkit/ton-walletkit-0.0.3.tgz}
+    version: 0.0.3
+
+  '@tonconnect/bridge-sdk@https://release-assets.githubusercontent.com/github-production-release-asset/1004994143/a070df00-2e31-4792-9f58-b453ac399861?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-12-10T10%3A43%3A00Z&rscd=attachment%3B+filename%3Dtonconnect-bridge-sdk-0.2.6.tgz&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-12-10T09%3A42%3A30Z&ske=2025-12-10T10%3A43%3A00Z&sks=b&skv=2018-11-09&sig=zfZbvIioM4XF850VMyqeeQSrbdkLPZPGYdetdNd59Uw%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc2NTM2MTI5OCwibmJmIjoxNzY1MzYwOTk4LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.SYltfjBjX6vJ9GjqT9xzABc4yEoDjM-ZFOyzm82QH6A&response-content-disposition=attachment%3B%20filename%3Dtonconnect-bridge-sdk-0.2.6.tgz&response-content-type=application%2Foctet-stream':
+    resolution: {tarball: https://release-assets.githubusercontent.com/github-production-release-asset/1004994143/a070df00-2e31-4792-9f58-b453ac399861?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-12-10T10%3A43%3A00Z&rscd=attachment%3B+filename%3Dtonconnect-bridge-sdk-0.2.6.tgz&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-12-10T09%3A42%3A30Z&ske=2025-12-10T10%3A43%3A00Z&sks=b&skv=2018-11-09&sig=zfZbvIioM4XF850VMyqeeQSrbdkLPZPGYdetdNd59Uw%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc2NTM2MTI5OCwibmJmIjoxNzY1MzYwOTk4LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.SYltfjBjX6vJ9GjqT9xzABc4yEoDjM-ZFOyzm82QH6A&response-content-disposition=attachment%3B%20filename%3Dtonconnect-bridge-sdk-0.2.6.tgz&response-content-type=application%2Foctet-stream}
+    version: 0.2.6
+
   '@tonconnect/isomorphic-eventsource@0.0.2':
     resolution: {integrity: sha512-B4UoIjPi0QkvIzZH5fV3BQLWrqSYABdrzZQSI9sJA9aA+iC0ohOzFwVVGXanlxeDAy1bcvPbb29f6sVUk0UnnQ==}
 
@@ -2731,11 +2763,17 @@ packages:
   '@tonconnect/protocol@2.2.7':
     resolution: {integrity: sha512-mmuS5ekaRVQtXOug30znXXSnuQfuLa6kDOv17X2ttk8Al9PlTFG/AtPRkWxCp8X5BdhPzGFELTog7kypukjWnQ==}
 
+  '@tonconnect/protocol@2.3.0':
+    resolution: {integrity: sha512-OxrmcXF/EsSdGeASP9VpTRojuMtTV87DKYFLRq4ZJvF/Hirfm2cgcxzzj2uksEGm5IIR010UWo6b38RuokNwFQ==}
+
   '@tonconnect/protocol@2.3.0-beta.0':
     resolution: {integrity: sha512-YrEDSSvWaXEtEBxa1czFm5W0xRYaZfypzBzqqXQ6JZAfe+QZQWzcy+M2FYoeZWCSdCcfp+rpLIFkJ/4GFfQpqg==}
 
   '@tonconnect/sdk@3.1.0':
     resolution: {integrity: sha512-bsuuw5+NwoA8MrWMwDWEgfH/LepSKiPbugsojFoJmoJE4/hOsu6H47HEHtlD2NDLIHRhkTsEjiAyc+npfmocjw==}
+
+  '@tonconnect/sdk@3.3.1':
+    resolution: {integrity: sha512-lhXJu95VvbD36u5mMPg2sg+w4GQwkrYnHeJ8rVveu2N7UPwt0jvrEqKlvf7Ss1gh5RDtzs35SS3GbJlaIOAJNA==}
 
   '@tondevwallet/traces@0.1.6':
     resolution: {integrity: sha512-/aOwNLBUCtgweNzHzRQ1cm1kweXn3Kv5/pUYKYDiyOyV9GPKCBdWp1lwc4t9hgr6WrzUOrbovJkqxH1hG2Mhcw==}
@@ -2776,6 +2814,11 @@ packages:
         optional: true
       tedious:
         optional: true
+
+  '@truecarry/tlb-abi@0.2.0':
+    resolution: {integrity: sha512-GKcaS1OdPiy6MH7+l3Y2teFoDIYNcdPNat+PLEQk+1jajB4b8lUy5KBv/nVpxDzCuWUQo+em1lq5Gok9auUZuA==}
+    peerDependencies:
+      '@ton/core': ^0.56.3
 
   '@truecarry/tlb-abi@0.2.0-beta.8':
     resolution: {integrity: sha512-sPJUNS15MQWQU3tOhT/sdUA/Ioxg0AIKZ5/9lE1oLxxJAmCC+0LEsL/uiiyLmUSpN+3zGXP9cY7idYRHT1kh/w==}
@@ -3185,6 +3228,9 @@ packages:
 
   bl@4.1.0:
     resolution: {integrity: sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w==}
+
+  blakejs@1.2.1:
+    resolution: {integrity: sha512-QXUSXI3QVc/gJME0dBpXrag1kbzOqCjCX8/b54ntNyW6sjtoqxqRk3LTmXzaJoh71zMsDCjM+47jS7XiwN/+fQ==}
 
   bluebird@3.7.2:
     resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
@@ -5049,6 +5095,10 @@ packages:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
 
+  lru-cache@11.2.4:
+    resolution: {integrity: sha512-B5Y16Jr9LB9dHVkh6ZevG+vAbOsNOYCX+sXvFWFu7B3Iz5mijW3zdbMyhsh8ANd2mSWBYdJgnqi+mL7/LrOPYg==}
+    engines: {node: 20 || >=22}
+
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
@@ -6407,6 +6457,10 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
+
+  uuid@13.0.0:
+    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+    hasBin: true
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
@@ -7845,6 +7899,10 @@ snapshots:
       '@noble/hashes': 1.7.1
 
   '@noble/curves@1.9.6':
+    dependencies:
+      '@noble/hashes': 1.8.0
+
+  '@noble/curves@1.9.7':
     dependencies:
       '@noble/hashes': 1.8.0
 
@@ -9290,9 +9348,46 @@ snapshots:
       - debug
       - encoding
 
+  '@ton-community/assets-sdk@0.0.5(@ton/core@0.62.0(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(@ton/ton@15.3.1(@ton/core@0.61.0(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(debug@4.4.0))(debug@4.4.0)':
+    dependencies:
+      '@aws-sdk/client-s3': 3.842.0
+      '@orbs-network/ton-access': 2.3.3
+      '@pinata/sdk': 2.1.0(debug@4.4.0)
+      '@ton/core': 0.62.0(@ton/crypto@3.3.0)
+      '@ton/crypto': 3.3.0
+      '@ton/ton': 15.3.1(@ton/core@0.61.0(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(debug@4.4.0)
+      axios: 1.10.0(debug@4.4.0)
+      boxen: 5.1.2
+      dotenv: 16.6.1
+      inquirer: 8.2.6
+      zod: 3.24.2
+    transitivePeerDependencies:
+      - aws-crt
+      - debug
+      - encoding
+
+  '@ton-community/tlb-codegen@2.0.0-beta.3(@ton/crypto@3.3.0)':
+    dependencies:
+      '@ton-community/tlb-parser': 0.1.5
+      '@ton/core': 0.61.0(@ton/crypto@3.3.0)
+      meow: 9.0.0
+    transitivePeerDependencies:
+      - '@ton/crypto'
+
   '@ton-community/tlb-parser@0.1.4':
     dependencies:
       ohm-js: 16.6.0
+
+  '@ton-community/tlb-parser@0.1.5':
+    dependencies:
+      ohm-js: 16.6.0
+
+  '@ton-community/tlb-runtime@1.0.0-alpha.3':
+    dependencies:
+      '@ton-community/tlb-codegen': 2.0.0-beta.3(@ton/crypto@3.3.0)
+      '@ton-community/tlb-parser': 0.1.5
+      '@ton/core': 0.61.0(@ton/crypto@3.3.0)
+      '@ton/crypto': 3.3.0
 
   '@ton/core@0.54.0(@ton/crypto@3.3.0)':
     dependencies:
@@ -9300,6 +9395,11 @@ snapshots:
       symbol.inspect: 1.0.1
 
   '@ton/core@0.61.0(@ton/crypto@3.3.0)':
+    dependencies:
+      '@ton/crypto': 3.3.0
+      symbol.inspect: 1.0.1
+
+  '@ton/core@0.62.0(@ton/crypto@3.3.0)':
     dependencies:
       '@ton/crypto': 3.3.0
       symbol.inspect: 1.0.1
@@ -9345,6 +9445,37 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
+  '@ton/walletkit@file:../kit/packages/walletkit/ton-walletkit-0.0.3.tgz(@ton/ton@15.3.1(@ton/core@0.61.0(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(debug@4.4.0))(debug@4.4.0)':
+    dependencies:
+      '@noble/curves': 1.9.7
+      '@ton-community/assets-sdk': 0.0.5(@ton/core@0.62.0(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(@ton/ton@15.3.1(@ton/core@0.61.0(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(debug@4.4.0))(debug@4.4.0)
+      '@ton-community/tlb-runtime': 1.0.0-alpha.3
+      '@ton/core': 0.62.0(@ton/crypto@3.3.0)
+      '@ton/crypto': 3.3.0
+      '@tonconnect/bridge-sdk': https://release-assets.githubusercontent.com/github-production-release-asset/1004994143/a070df00-2e31-4792-9f58-b453ac399861?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-12-10T10%3A43%3A00Z&rscd=attachment%3B+filename%3Dtonconnect-bridge-sdk-0.2.6.tgz&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-12-10T09%3A42%3A30Z&ske=2025-12-10T10%3A43%3A00Z&sks=b&skv=2018-11-09&sig=zfZbvIioM4XF850VMyqeeQSrbdkLPZPGYdetdNd59Uw%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc2NTM2MTI5OCwibmJmIjoxNzY1MzYwOTk4LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.SYltfjBjX6vJ9GjqT9xzABc4yEoDjM-ZFOyzm82QH6A&response-content-disposition=attachment%3B%20filename%3Dtonconnect-bridge-sdk-0.2.6.tgz&response-content-type=application%2Foctet-stream
+      '@tonconnect/protocol': 2.3.0
+      '@tonconnect/sdk': 3.3.1
+      '@truecarry/tlb-abi': 0.2.0(@ton/core@0.62.0(@ton/crypto@3.3.0))
+      bip39: 3.1.0
+      lru-cache: 11.2.4
+      uuid: 13.0.0
+    transitivePeerDependencies:
+      - '@ton/ton'
+      - aws-crt
+      - debug
+      - encoding
+      - supports-color
+
+  '@tonconnect/bridge-sdk@https://release-assets.githubusercontent.com/github-production-release-asset/1004994143/a070df00-2e31-4792-9f58-b453ac399861?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-12-10T10%3A43%3A00Z&rscd=attachment%3B+filename%3Dtonconnect-bridge-sdk-0.2.6.tgz&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-12-10T09%3A42%3A30Z&ske=2025-12-10T10%3A43%3A00Z&sks=b&skv=2018-11-09&sig=zfZbvIioM4XF850VMyqeeQSrbdkLPZPGYdetdNd59Uw%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc2NTM2MTI5OCwibmJmIjoxNzY1MzYwOTk4LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.SYltfjBjX6vJ9GjqT9xzABc4yEoDjM-ZFOyzm82QH6A&response-content-disposition=attachment%3B%20filename%3Dtonconnect-bridge-sdk-0.2.6.tgz&response-content-type=application%2Foctet-stream':
+    dependencies:
+      '@tonconnect/isomorphic-eventsource': 0.0.2
+      '@tonconnect/isomorphic-fetch': 0.0.3
+      '@tonconnect/protocol': 2.3.0
+      blakejs: 1.2.1
+      tweetnacl: 1.0.3
+    transitivePeerDependencies:
+      - encoding
+
   '@tonconnect/isomorphic-eventsource@0.0.2':
     dependencies:
       eventsource: 2.0.2
@@ -9360,6 +9491,11 @@ snapshots:
       tweetnacl: 1.0.3
       tweetnacl-util: 0.15.1
 
+  '@tonconnect/protocol@2.3.0':
+    dependencies:
+      tweetnacl: 1.0.3
+      tweetnacl-util: 0.15.1
+
   '@tonconnect/protocol@2.3.0-beta.0':
     dependencies:
       tweetnacl: 1.0.3
@@ -9370,6 +9506,14 @@ snapshots:
       '@tonconnect/isomorphic-eventsource': 0.0.2
       '@tonconnect/isomorphic-fetch': 0.0.3
       '@tonconnect/protocol': 2.2.7
+    transitivePeerDependencies:
+      - encoding
+
+  '@tonconnect/sdk@3.3.1':
+    dependencies:
+      '@tonconnect/isomorphic-eventsource': 0.0.2
+      '@tonconnect/isomorphic-fetch': 0.0.3
+      '@tonconnect/protocol': 2.3.0
     transitivePeerDependencies:
       - encoding
 
@@ -9399,6 +9543,13 @@ snapshots:
       resolve-from: 5.0.0
       tarn: 3.0.2
       tildify: 2.0.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@truecarry/tlb-abi@0.2.0(@ton/core@0.62.0(@ton/crypto@3.3.0))':
+    dependencies:
+      '@ton/core': 0.62.0(@ton/crypto@3.3.0)
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 
@@ -9958,6 +10109,8 @@ snapshots:
       buffer: 5.7.1
       inherits: 2.0.4
       readable-stream: 3.6.2
+
+  blakejs@1.2.1: {}
 
   bluebird@3.7.2: {}
 
@@ -12112,6 +12265,8 @@ snapshots:
     dependencies:
       js-tokens: 4.0.0
 
+  lru-cache@11.2.4: {}
+
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
@@ -13479,6 +13634,8 @@ snapshots:
       inherits: 2.0.3
 
   utils-merge@1.0.1: {}
+
+  uuid@13.0.0: {}
 
   uuid@8.3.2: {}
 

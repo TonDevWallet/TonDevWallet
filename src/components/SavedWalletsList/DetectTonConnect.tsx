@@ -4,15 +4,13 @@ import { faPaste, faQrcode } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { getQrcodeFromScreen } from '../TonConnect/TonConnect'
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '../ui/dialog'
-// import { useState } from 'react'
 import { Card, CardDescription, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { getWalletKit } from '@/services/walletKit'
 
 export function DetectTonConnect() {
-  // const [open, setOpen] = useState(false)
   const connectState = useTonConnectState()
-
   const tonConnectState = useTonConnectState()
 
   const tryToStartConnect = async () => {
@@ -23,8 +21,13 @@ export function DetectTonConnect() {
 
     const password = await getPasswordInteractive()
     if (password) {
-      tonConnectState.connectArg.set(code)
       tonConnectState.popupOpen.set(true)
+      try {
+        const kit = await getWalletKit()
+        await kit.handleTonConnectUrl(code)
+      } catch (e) {
+        console.log('WalletKit handleTonConnectUrl error', e)
+      }
     }
   }
 

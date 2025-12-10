@@ -1,7 +1,5 @@
-import { addTonConnectSession, closeTonConnectPopup, useTonConnectState } from '@/store/tonConnect'
-import { ConnectRequest } from '@tonconnect/protocol'
+import { closeTonConnectPopup, useTonConnectState } from '@/store/tonConnect'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { useWalletListState } from '@/store/walletsListState'
 import { KeyJazzicon } from '../KeyJazzicon'
 import { cn } from '@/utils/cn'
@@ -9,48 +7,34 @@ import { Block } from '../ui/Block'
 import { WalletJazzicon } from '../WalletJazzicon'
 import { IWallet } from '@/types'
 import { getWalletFromKey } from '@/utils/wallets'
-import { useLiteclient } from '@/store/liteClient'
+import { useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { BlueButton } from '../ui/BlueButton'
-import { sendTonConnectStartMessage } from './TonConnect'
-import { decryptWalletData, getPasswordInteractive } from '@/store/passwordManager'
-import { KeyPair } from '@ton/crypto'
 import { getDatabase } from '@/db'
 import { LastSelectedWallets } from '@/types/connect'
-import { randomX25519 } from '@/utils/ed25519'
 import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
-import { Address } from '@ton/core'
 import { GlobalSearch } from '../GlobalSearch/GlobalSearch'
 import { useSearchState } from '@/store/searchState'
 import { AlertDialogDescription, AlertDialogTitle } from '@radix-ui/react-alert-dialog'
-import { Key } from '@/types/Key'
+import { consumeConnectRequest, getConnectRequest } from '@/store/walletKitRequests'
+import { getWalletKit } from '@/services/walletKit'
+import { ensureKitWalletRegistered } from '@/services/walletKitAdapter'
+import { CHAIN, Hex } from '@ton/walletkit'
 
-const optionsMatrix = {
-  bounceable: [true, false],
-  urlSafe: [true, false],
-  testOnly: [true, false],
-}
-const allOptionsPermutations = Object.keys(optionsMatrix).reduce(
-  (acc, key) => {
-    return acc.flatMap((a) => optionsMatrix[key].map((b) => ({ ...a, [key]: b })))
-  },
-  [{}]
-)
 function isWalletMatch(wallet: IWallet, keyName: string, query: string) {
   if (!query) return true
 
-  const addressStringifiers = [
-    ...allOptionsPermutations.map((options) => (a: Address) => a.toString(options)),
-    (a: Address) => a.toRawString(),
-  ]
+  const lowerQuery = query.toLowerCase()
+  const addressStr = wallet.address.toRawString().toLowerCase()
+  const friendlyAddress = wallet.address.toString().toLowerCase()
+
   return (
-    wallet.type.toLowerCase().includes(query.toLowerCase()) ||
-    (wallet.name || '').toLowerCase().includes(query.toLowerCase()) ||
-    keyName.toLowerCase().includes(query.toLowerCase()) ||
-    addressStringifiers.some((stringify) =>
-      stringify(wallet.address).toLowerCase().includes(query.toLowerCase())
-    )
+    wallet.type.toLowerCase().includes(lowerQuery) ||
+    (wallet.name || '').toLowerCase().includes(lowerQuery) ||
+    keyName.toLowerCase().includes(lowerQuery) ||
+    addressStr.includes(lowerQuery) ||
+    friendlyAddress.includes(lowerQuery)
   )
 }
 
@@ -74,8 +58,10 @@ function ConnectPopupContent() {
   const tonConnectState = useTonConnectState()
   const keys = useWalletListState()
   const liteClient = useLiteclient() as unknown as LiteClient
-  const connectLinkInfo = useConnectLink(tonConnectState.connectArg.get())
+  const liteClientState = useLiteclientState()
   const searchState = useSearchState()
+  const walletKitConnectRequest = getConnectRequest()
+  const manifest = walletKitConnectRequest?.preview?.manifest
 
   const [isLoading, setIsLoading] = useState(false)
   const [chosenKeyId, setChosenKeyIdValue] = useState<number | undefined>()
@@ -87,13 +73,13 @@ function ConnectPopupContent() {
 
   useEffect(() => {
     ;(async () => {
-      if (!connectLinkInfo?.url) {
+      if (!manifest?.url) {
         return
       }
       const db = await getDatabase()
       const savedInfo = await db<LastSelectedWallets>('last_selected_wallets')
         .where({
-          url: connectLinkInfo?.url,
+          url: manifest.url,
         })
         .first()
 
@@ -108,7 +94,7 @@ function ConnectPopupContent() {
         setChosenKeyId(key.id.get(), wallet.id)
       }
     })()
-  }, [connectLinkInfo])
+  }, [manifest])
 
   const chosenKey = useMemo(() => keys.find((k) => k.id.get() === chosenKeyId), [chosenKeyId, keys])
 
@@ -178,42 +164,35 @@ function ConnectPopupContent() {
   const doBridgeAuth = useCallback(async () => {
     try {
       setIsLoading(true)
-      if (!chosenWallet || !chosenKey || !connectLinkInfo) {
+      if (!chosenWallet || !chosenKey) {
         return
       }
 
-      const password = await getPasswordInteractive()
-      const decryptedData = await decryptWalletData(password, chosenKey?.encrypted.get())
+      const connectReq = getConnectRequest()
 
-      const sessionKeypair = randomX25519() as KeyPair
+      if (!connectReq) {
+        console.log('No WalletKit connect request available')
+        closeTonConnectPopup()
+        return
+      }
 
-      console.log('start connect, ', connectLinkInfo, tonConnectState.connectArg.get())
+      const kit = await getWalletKit()
+      const chain = liteClientState.selectedNetwork.is_testnet.get() ? CHAIN.TESTNET : CHAIN.MAINNET
 
-      await addTonConnectSession({
-        secretKey: Buffer.from(sessionKeypair.secretKey),
-        userId: connectLinkInfo.clientId,
-        keyId: chosenKey.id.get(),
-        walletId: chosenWallet.id,
-        iconUrl: connectLinkInfo.iconUrl || '',
-        name: connectLinkInfo.name,
-        url: connectLinkInfo.url,
-      })
+      // Get public key for wallet registration
+      const keyPublicHex = Buffer.from(chosenKey?.public_key.get() || '', 'base64').toString('hex')
 
-      await sendTonConnectStartMessage(
-        chosenWallet,
-        decryptedData,
-        connectLinkInfo.host,
-        sessionKeypair,
-        connectLinkInfo.clientId,
-        chosenKey.get() as Key,
-        connectLinkInfo.r
-      )
-
+      await ensureKitWalletRegistered(kit, chosenWallet, chain, `0x${keyPublicHex}` as Hex)
+      const kitWallet = kit.getWalletByAddressAndNetwork(chosenWallet.address.toRawString(), chain)
+      connectReq.walletAddress = chosenWallet.address.toRawString()
+      connectReq.walletId = kitWallet?.getWalletId()
+      await kit.approveConnectRequest(connectReq)
+      consumeConnectRequest()
       closeTonConnectPopup()
     } finally {
       setIsLoading(false)
     }
-  }, [chosenKey, chosenWallet, connectLinkInfo])
+  }, [chosenKey, chosenWallet, liteClientState])
 
   return (
     <div className="relative overflow-hidden my-8 max-h-[768px] h-full">
@@ -222,18 +201,18 @@ function ConnectPopupContent() {
       <div className="h-full relative bg-background border rounded-xl flex flex-col">
         <div className="flex-none w-full flex flex-col items-center border-b border-gray-500/50">
           <div className="p-4 w-full flex flex-col items-center">
-            {connectLinkInfo ? (
+            {manifest ? (
               <>
-                {connectLinkInfo.iconUrl ? (
-                  <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
+                {manifest.iconUrl ? (
+                  <img src={manifest.iconUrl} alt="icon" className="w-16 rounded-full" />
                 ) : (
                   <div className="blur-xs w-16 h-16 rounded-full bg-stone-800" />
                 )}
                 <div className="mt-2">
-                  <b>{connectLinkInfo.name}</b> wants to connect to your wallet
+                  <b>{manifest.name}</b> wants to connect to your wallet
                 </div>
-                <a href={connectLinkInfo.url} target="_blank">
-                  {connectLinkInfo.url}
+                <a href={manifest.url} target="_blank">
+                  {manifest.url}
                 </a>
               </>
             ) : (
@@ -320,92 +299,4 @@ function ConnectPopupContent() {
       </div>
     </div>
   )
-}
-
-function useConnectLink(link: string) {
-  const [info, setInfo] = useState<
-    | {
-        iconUrl: string
-        name: string
-        url: string
-        host: string
-        clientId: string
-        r: ConnectRequest | undefined
-      }
-    | undefined
-  >(undefined)
-
-  useEffect(() => {
-    const getData = async () => {
-      if (!link) {
-        return
-      }
-      const parsed = new URL(link.replace('--url=', ''))
-      const clientId = parsed.searchParams.get('id') || ''
-      const rString = parsed.searchParams.get('r')
-      const r = rString ? (JSON.parse(rString) as ConnectRequest) : undefined
-
-      if (!r) {
-        return
-      }
-
-      let metaInfo:
-        | {
-            iconUrl?: string
-            name?: string
-            url?: string
-          }
-        | undefined
-      try {
-        const response = await tFetch(r.manifestUrl, {
-          connectTimeout: 3000,
-        })
-        const data = await response.json()
-        metaInfo = data
-      } catch (e) {
-        //
-      }
-
-      if (!metaInfo) {
-        metaInfo = {}
-      }
-
-      if (!metaInfo.name) {
-        console.log('No connect meta', metaInfo)
-      }
-
-      if (!metaInfo.url) {
-        const parsedJsonLink = new URL(r.manifestUrl)
-        setInfo({
-          iconUrl: metaInfo?.iconUrl || '',
-          name: metaInfo?.name || parsedJsonLink.host,
-          url: metaInfo?.url || parsedJsonLink.origin,
-          host: parsedJsonLink.host,
-          clientId,
-          r,
-        })
-        return
-      }
-
-      let host = ''
-      try {
-        const serviceUrl = new URL(metaInfo.url)
-        host = serviceUrl.host || ''
-      } catch (e) {
-        console.log('Service url error popup', metaInfo, r.manifestUrl)
-      }
-
-      setInfo({
-        iconUrl: metaInfo.iconUrl || '',
-        name: metaInfo.name || '',
-        url: metaInfo.url,
-        host,
-        clientId,
-        r,
-      })
-    }
-    getData().then()
-  }, [link])
-
-  return info
 }

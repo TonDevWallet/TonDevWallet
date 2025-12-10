@@ -21,7 +21,6 @@ export interface TonConnectState {
   sessions: TonConnectSession[]
 
   popupOpen: boolean
-  connectArg: string
 
   qrcodeOpen: boolean
 }
@@ -31,7 +30,6 @@ const state = hookstate<TonConnectState>(async () => {
     sessions: await getSessions(),
 
     popupOpen: false,
-    connectArg: '',
 
     qrcodeOpen: false,
   }

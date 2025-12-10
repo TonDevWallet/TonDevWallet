@@ -64,7 +64,7 @@ export const MessageRowSign = memo(function MessageRowSign({
       session: session?.get(),
       key: key?.get(),
       liteClient,
-      walletKeyPair: walletKeyPair || { secretKey: Buffer.from([]) },
+      walletKeyPair: walletKeyPair || { secretKey: Buffer.from([]), publicKey: Buffer.from([]) },
     })
   }
 
