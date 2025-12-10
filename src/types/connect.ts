@@ -37,6 +37,7 @@ export interface ConnectMessageTransaction {
   message_mode?: number
   sign_payload?: string | null
   message_type: 'tx' | 'sign'
+  walletkit_request?: string | null // Serialized WalletKit request object
 
   created_at: Date
   updated_at: Date

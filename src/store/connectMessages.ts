@@ -18,6 +18,7 @@ export interface TonConnectMessage {
   message_cell?: string
 
   wallet_address?: string
+  walletkit_request?: string // Serialized WalletKit request object
   created_at?: Date
   updated_at?: Date
 }
@@ -37,6 +38,7 @@ export type FullTonConnectMessage = TonConnectMessage & {
   message_type: 'tx' | 'sign'
   payload?: ConnectMessageTransactionPayload
   sign_payload?: SignDataPayload
+  walletkit_request?: string
 }
 
 export const messagesState = hookstate<TonConnectMessageRecord[]>(getConnectMessages)
@@ -61,6 +63,7 @@ export async function getConnectMessages(): Promise<TonConnectMessageRecord[]> {
       payload: m.payload ? JSON.parse(m.payload) : undefined,
       message_type: m.message_type,
       sign_payload: m.sign_payload ? JSON.parse(m.sign_payload) : undefined,
+      walletkit_request: m.walletkit_request || undefined,
 
       wallet_address: m.wallet_address,
       created_at: m.created_at,
@@ -82,6 +85,7 @@ export async function addConnectMessage(input: Omit<FullTonConnectMessage, 'id'>
       ...input,
       payload: input.payload ? JSON.stringify(input.payload) : null,
       sign_payload: input.sign_payload ? JSON.stringify(input.sign_payload) : null,
+      walletkit_request: input.walletkit_request || null,
       created_at: input.created_at ?? new Date(),
       updated_at: input.created_at ?? new Date(),
     })
@@ -95,6 +99,7 @@ export async function addConnectMessage(input: Omit<FullTonConnectMessage, 'id'>
     ...res[0],
     payload: res[0].payload ? JSON.parse(res[0].payload) : undefined,
     sign_payload: res[0].sign_payload ? JSON.parse(res[0].sign_payload) : undefined,
+    walletkit_request: res[0].walletkit_request || undefined,
   }
 
   messagesState.merge([message])

@@ -1,48 +1,26 @@
-import { LiteClientState, useLiteclient } from '@/store/liteClient'
-import { addTonConnectSession } from '@/store/tonConnect'
+import { useLiteclient } from '@/store/liteClient'
+import { useTonConnectState } from '@/store/tonConnect'
 import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
-import { CreateMessage, createTonProofMessage } from '@/utils/tonProof'
 import { getWalletFromKey } from '@/utils/wallets'
-// import { useWallet } from '@/store/walletState'
-import { ConnectEventSuccess, CHAIN, ConnectRequest, TonProofItem } from '@tonconnect/protocol'
 import { useCallback, useState } from 'react'
-import { Cell, beginCell, storeStateInit, StateInit } from '@ton/core'
-import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
 import { BlueButton } from '../ui/BlueButton'
-import { fetch as tFetch } from '@tauri-apps/plugin-http'
-import { sendTonConnectMessage } from '@/utils/tonConnect'
-import { IWallet } from '@/types'
 import { Block } from '../ui/Block'
 import { invoke } from '@tauri-apps/api/core'
 import clsx from 'clsx'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
-import {
-  DecryptedWalletData,
-  getPasswordInteractive,
-  useDecryptWalletData,
-  usePassword,
-} from '@/store/passwordManager'
 import { delay } from '@/utils'
-import { randomX25519, secretKeyToED25519 } from '@/utils/ed25519'
-import { SignMessage } from '@/utils/signer'
-import { Key } from '@/types/Key'
+import { getWalletKit } from '@/services/walletKit'
 const appWindow = getCurrentWebviewWindow()
 
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
   const [isDetecting, setIsDetecting] = useState(false)
-  // const wallet = useWallet()
   const liteClient = useLiteclient() as unknown as LiteClient
+  const tonConnectState = useTonConnectState()
 
   const selectedWallet = useSelectedWallet()
   const selectedKey = useSelectedKey()
-
-  const passwrodState = usePassword()
-  const decryptedData = useDecryptWalletData(
-    passwrodState.password.get(),
-    selectedKey?.encrypted.get() || undefined
-  )
 
   const detect = async () => {
     try {
@@ -68,75 +46,27 @@ export function TonConnect() {
     return <></>
   }
 
-  const doBridgeAuth = useCallback(async () => {
-    if (!selectedWallet) {
+  // Use WalletKit to handle TonConnect URL - this opens the popup for wallet selection
+  const doConnect = useCallback(async () => {
+    if (!connectLink) {
       return
     }
 
-    const password = await getPasswordInteractive()
-    if (!password) {
-      return
-    }
-
-    const input = connectLink
-    const parsed = new URL(input)
-    console.log('parse', parsed, parsed.searchParams.get('id'))
-
-    const sessionKeypair = randomX25519() as KeyPair
-    const clientId = parsed.searchParams.get('id') || '' // '230f1e4df32364888a5dbd92a410266fcb974b73e30ff3e546a654fc8ee2c953'
-    const rString = parsed.searchParams.get('r')
-    const r = rString ? (JSON.parse(rString) as ConnectRequest) : undefined
-
-    if (!r) {
-      return
-    }
-
-    const response = await tFetch(r.manifestUrl)
-    const metaInfo = (await response.json()) as {
-      iconUrl: string
-      name: string
-      url: string
-    }
-
-    if (!metaInfo.name) {
-      console.log('No connect meta', metaInfo)
-      return
-    }
-
-    let host = ''
     try {
-      const serviceUrl = new URL(metaInfo.url)
-      host = serviceUrl.host || ''
+      tonConnectState.connectArg.set(connectLink)
+      tonConnectState.popupOpen.set(true)
+
+      const kit = await getWalletKit()
+      await kit.handleTonConnectUrl(connectLink)
     } catch (e) {
-      console.log('Service url error', metaInfo)
+      console.log('WalletKit handleTonConnectUrl error', e)
     }
-
-    await sendTonConnectStartMessage(
-      wallet,
-      decryptedData.decryptedData,
-      host,
-      sessionKeypair,
-      clientId,
-      selectedKey.get() as Key,
-      r
-    )
-
-    await addTonConnectSession({
-      secretKey: Buffer.from(sessionKeypair.secretKey),
-      userId: clientId,
-      keyId: selectedKey.id.get() || 0,
-      walletId: selectedWallet.id,
-      iconUrl: metaInfo.iconUrl,
-      name: metaInfo.name,
-      url: metaInfo.url,
-    })
 
     setConnectLink('')
-  }, [connectLink, decryptedData.decryptedData])
+  }, [connectLink, tonConnectState])
 
   return (
     <Block className="flex flex-col gap-2">
-      {/* <div className="flex"> */}
       <label htmlFor="tonconnectLink">Enter your Ton Connect link</label>
       <input
         type="text"
@@ -147,183 +77,13 @@ export function TonConnect() {
         onChange={(e) => setConnectLink(e.target.value)}
       />
       <div className="flex gap-2">
-        <BlueButton onClick={() => doBridgeAuth()}>Connect</BlueButton>
+        <BlueButton onClick={() => doConnect()}>Connect</BlueButton>
         <BlueButton onClick={() => detect()} className={clsx(isDetecting && 'bg-gray-400')}>
           Detect Code
         </BlueButton>
       </div>
-      {/* </div> */}
     </Block>
   )
-}
-
-export async function sendTonConnectStartMessage(
-  wallet: IWallet,
-  decryptedData: DecryptedWalletData | undefined,
-  host: string,
-  sessionKeyPair: KeyPair,
-  sessionClientId: string,
-  key: Key,
-  connectRequest?: ConnectRequest
-) {
-  let stateInit: Cell
-  switch (wallet.type) {
-    case 'highload':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
-        .endCell()
-      break
-    case 'highload_v2r2':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.stateInit as unknown as StateInit))
-        .endCell()
-      break
-    case 'highload_v3':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    case 'v1R1':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    case 'v2R1':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    case 'v2R2':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    case 'v1R2':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    case 'v1R3':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    case 'v3R1':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    case 'v3R2':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    case 'v4R2':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    case 'multisig_v2_v4r2':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    case 'v5R1':
-      stateInit = beginCell()
-        .store(storeStateInit(wallet.wallet.init as unknown as StateInit))
-        .endCell()
-      break
-    default:
-      throw new Error('Unknown wallet type!')
-  }
-
-  let keyPair // = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
-  let publicKey // = keyPair.publicKey.toString('base64')
-
-  try {
-    keyPair = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
-    publicKey = keyPair.publicKey.toString('hex')
-  } catch (e) {}
-
-  const proof = connectRequest?.items.find((i) => i.name === 'ton_proof') as TonProofItem
-  const timestamp = Math.floor(Date.now() / 1000)
-  const domain = {
-    LengthBytes: Buffer.from(host).length,
-    Value: host,
-  }
-
-  const data: ConnectEventSuccess = {
-    event: 'connect',
-    id: Date.now(),
-    payload: {
-      device: {
-        platform: 'windows',
-        appName: 'tonkeeper',
-        appVersion: '0.3.3',
-        maxProtocolVersion: 2,
-        features: [
-          {
-            name: 'SendTransaction',
-            maxMessages:
-              wallet.type === 'highload' || wallet.type === 'highload_v2r2'
-                ? 250
-                : wallet.type === 'highload_v3'
-                  ? 500
-                  : 4,
-            extraCurrencySupported: true,
-          },
-          {
-            name: 'SignData',
-            types: ['text', 'binary', 'cell'],
-          },
-        ],
-      },
-      items: [
-        {
-          name: 'ton_addr',
-          address: wallet.address.toRawString(),
-          network: LiteClientState.selectedNetwork.is_testnet.get() ? CHAIN.TESTNET : CHAIN.MAINNET,
-          walletStateInit: stateInit.toBoc().toString('base64'),
-          publicKey,
-        },
-      ],
-    },
-  }
-
-  if (proof) {
-    if (!decryptedData?.seed) {
-      throw new Error('no wallet seed')
-    }
-
-    const walletKeyPair = secretKeyToED25519(decryptedData.seed)
-
-    const signMessage = createTonProofMessage({
-      address: wallet.address,
-      domain,
-      payload: proof.payload,
-      stateInit: stateInit.toBoc().toString('base64'),
-      timestamp,
-    })
-    const signature = await SignMessage(
-      walletKeyPair.secretKey,
-      await CreateMessage(signMessage),
-      key
-    )
-    data.payload.items.push({
-      name: 'ton_proof',
-      proof: {
-        timestamp,
-        domain: {
-          lengthBytes: domain.LengthBytes,
-          value: domain.Value,
-        },
-        payload: proof.payload,
-        signature: Buffer.from(signature).toString('base64'),
-      },
-    })
-  }
-
-  await sendTonConnectMessage(data, sessionKeyPair.secretKey, sessionClientId)
 }
 
 export function getImageFromBase64(data: string) {

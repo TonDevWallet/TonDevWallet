@@ -1,4 +1,4 @@
-import { addTonConnectSession, closeTonConnectPopup, useTonConnectState } from '@/store/tonConnect'
+import { closeTonConnectPopup, useTonConnectState } from '@/store/tonConnect'
 import { ConnectRequest } from '@tonconnect/protocol'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetch as tFetch } from '@tauri-apps/plugin-http'
@@ -9,22 +9,21 @@ import { Block } from '../ui/Block'
 import { WalletJazzicon } from '../WalletJazzicon'
 import { IWallet } from '@/types'
 import { getWalletFromKey } from '@/utils/wallets'
-import { useLiteclient } from '@/store/liteClient'
+import { useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { BlueButton } from '../ui/BlueButton'
-import { sendTonConnectStartMessage } from './TonConnect'
-import { decryptWalletData, getPasswordInteractive } from '@/store/passwordManager'
-import { KeyPair } from '@ton/crypto'
 import { getDatabase } from '@/db'
 import { LastSelectedWallets } from '@/types/connect'
-import { randomX25519 } from '@/utils/ed25519'
 import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
 import { Address } from '@ton/core'
 import { GlobalSearch } from '../GlobalSearch/GlobalSearch'
 import { useSearchState } from '@/store/searchState'
 import { AlertDialogDescription, AlertDialogTitle } from '@radix-ui/react-alert-dialog'
-import { Key } from '@/types/Key'
+import { consumeConnectRequest, getConnectRequest } from '@/store/walletKitRequests'
+import { getWalletKit } from '@/services/walletKit'
+import { ensureKitWalletRegistered } from '@/services/walletKitAdapter'
+import { CHAIN, Hex } from '@ton/walletkit'
 
 const optionsMatrix = {
   bounceable: [true, false],
@@ -74,8 +73,10 @@ function ConnectPopupContent() {
   const tonConnectState = useTonConnectState()
   const keys = useWalletListState()
   const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClientState = useLiteclientState()
   const connectLinkInfo = useConnectLink(tonConnectState.connectArg.get())
   const searchState = useSearchState()
+  const walletKitConnectRequest = getConnectRequest()
 
   const [isLoading, setIsLoading] = useState(false)
   const [chosenKeyId, setChosenKeyIdValue] = useState<number | undefined>()
@@ -178,42 +179,35 @@ function ConnectPopupContent() {
   const doBridgeAuth = useCallback(async () => {
     try {
       setIsLoading(true)
-      if (!chosenWallet || !chosenKey || !connectLinkInfo) {
+      if (!chosenWallet || !chosenKey) {
         return
       }
 
-      const password = await getPasswordInteractive()
-      const decryptedData = await decryptWalletData(password, chosenKey?.encrypted.get())
+      const connectReq = getConnectRequest()
 
-      const sessionKeypair = randomX25519() as KeyPair
+      if (!connectReq) {
+        console.log('No WalletKit connect request available')
+        closeTonConnectPopup()
+        return
+      }
 
-      console.log('start connect, ', connectLinkInfo, tonConnectState.connectArg.get())
+      const kit = await getWalletKit()
+      const chain = liteClientState.selectedNetwork.is_testnet.get() ? CHAIN.TESTNET : CHAIN.MAINNET
 
-      await addTonConnectSession({
-        secretKey: Buffer.from(sessionKeypair.secretKey),
-        userId: connectLinkInfo.clientId,
-        keyId: chosenKey.id.get(),
-        walletId: chosenWallet.id,
-        iconUrl: connectLinkInfo.iconUrl || '',
-        name: connectLinkInfo.name,
-        url: connectLinkInfo.url,
-      })
+      // Get public key for wallet registration
+      const keyPublicHex = Buffer.from(chosenKey?.public_key.get() || '', 'base64').toString('hex')
 
-      await sendTonConnectStartMessage(
-        chosenWallet,
-        decryptedData,
-        connectLinkInfo.host,
-        sessionKeypair,
-        connectLinkInfo.clientId,
-        chosenKey.get() as Key,
-        connectLinkInfo.r
-      )
-
+      await ensureKitWalletRegistered(kit, chosenWallet, chain, `0x${keyPublicHex}` as Hex)
+      const kitWallet = kit.getWalletByAddressAndNetwork(chosenWallet.address.toRawString(), chain)
+      connectReq.walletAddress = chosenWallet.address.toRawString()
+      connectReq.walletId = kitWallet?.getWalletId()
+      await kit.approveConnectRequest(connectReq)
+      consumeConnectRequest()
       closeTonConnectPopup()
     } finally {
       setIsLoading(false)
     }
-  }, [chosenKey, chosenWallet, connectLinkInfo])
+  }, [chosenKey, chosenWallet, liteClientState])
 
   return (
     <div className="relative overflow-hidden my-8 max-h-[768px] h-full">
@@ -222,7 +216,26 @@ function ConnectPopupContent() {
       <div className="h-full relative bg-background border rounded-xl flex flex-col">
         <div className="flex-none w-full flex flex-col items-center border-b border-gray-500/50">
           <div className="p-4 w-full flex flex-col items-center">
-            {connectLinkInfo ? (
+            {walletKitConnectRequest ? (
+              <>
+                {walletKitConnectRequest.preview?.manifest?.iconUrl ? (
+                  <img
+                    src={walletKitConnectRequest.preview.manifest.iconUrl}
+                    alt="icon"
+                    className="w-16 rounded-full"
+                  />
+                ) : (
+                  <div className="blur-xs w-16 h-16 rounded-full bg-stone-800" />
+                )}
+                <div className="mt-2">
+                  <b>{walletKitConnectRequest.preview?.manifest?.name}</b> wants to connect to your
+                  wallet
+                </div>
+                <a href={walletKitConnectRequest.preview?.manifest?.url} target="_blank">
+                  {walletKitConnectRequest.preview?.manifest?.url}
+                </a>
+              </>
+            ) : connectLinkInfo ? (
               <>
                 {connectLinkInfo.iconUrl ? (
                   <img src={connectLinkInfo.iconUrl} alt="icon" className="w-16 rounded-full" />
