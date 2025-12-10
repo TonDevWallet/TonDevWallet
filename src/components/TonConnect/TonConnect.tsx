@@ -1,9 +1,5 @@
-import { useLiteclient } from '@/store/liteClient'
 import { useTonConnectState } from '@/store/tonConnect'
-import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
-import { getWalletFromKey } from '@/utils/wallets'
 import { useCallback, useState } from 'react'
-import { LiteClient } from 'ton-lite-client'
 import { BlueButton } from '../ui/BlueButton'
 import { Block } from '../ui/Block'
 import { invoke } from '@tauri-apps/api/core'
@@ -16,11 +12,7 @@ const appWindow = getCurrentWebviewWindow()
 export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
   const [isDetecting, setIsDetecting] = useState(false)
-  const liteClient = useLiteclient() as unknown as LiteClient
   const tonConnectState = useTonConnectState()
-
-  const selectedWallet = useSelectedWallet()
-  const selectedKey = useSelectedKey()
 
   const detect = async () => {
     try {
@@ -36,16 +28,6 @@ export function TonConnect() {
     }
   }
 
-  if (!selectedKey || !selectedWallet) {
-    return <></>
-  }
-
-  const wallet = getWalletFromKey(liteClient, selectedKey.get(), selectedWallet)
-
-  if (!wallet) {
-    return <></>
-  }
-
   // Use WalletKit to handle TonConnect URL - this opens the popup for wallet selection
   const doConnect = useCallback(async () => {
     if (!connectLink) {
@@ -53,7 +35,6 @@ export function TonConnect() {
     }
 
     try {
-      tonConnectState.connectArg.set(connectLink)
       tonConnectState.popupOpen.set(true)
 
       const kit = await getWalletKit()

@@ -25,7 +25,6 @@ export function TonConnectListener() {
   // Callback to initiate TonConnect flow
   const startTonConnectFlow = useCallback(
     async (link: string) => {
-      tonConnectState.connectArg.set(link)
       tonConnectState.popupOpen.set(true)
       try {
         const kit = await getWalletKit()
@@ -37,14 +36,11 @@ export function TonConnectListener() {
     [tonConnectState]
   )
 
-  // Callback for WalletKit connect requests
-  const handleConnectRequest = useCallback(
-    (manifestUrl: string) => {
-      tonConnectState.connectArg.set(manifestUrl)
-      tonConnectState.popupOpen.set(true)
-    },
-    [tonConnectState]
-  )
+  // Callback for WalletKit connect requests - just opens the popup
+  // WalletKit already has the request stored via setConnectRequest
+  const handleConnectRequest = useCallback(() => {
+    tonConnectState.popupOpen.set(true)
+  }, [tonConnectState])
 
   // Set up clipboard/paste listeners
   useClipboardTonConnect({

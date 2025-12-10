@@ -15,6 +15,7 @@ import { DeserializeTraceDump } from '@tondevwallet/traces'
 import { addTracerItem } from './store/tracerState'
 import { AddParsedToDumpTransaction } from './utils/txSerializer'
 import { secretKeyToX25519 } from './utils/ed25519'
+import { getWalletKit } from './services/walletKit'
 const appWindow = getCurrentWebviewWindow()
 
 export function useTauriEventListener() {
@@ -24,7 +25,7 @@ export function useTauriEventListener() {
   const doConnect = async (arg: string) => {
     console.log('doConnect', arg)
     if (arg.startsWith('--url=')) {
-      arg.replace('--url=', '')
+      arg = arg.replace('--url=', '')
     }
 
     if (arg.startsWith('tondevwallet://trace/')) {
@@ -38,9 +39,7 @@ export function useTauriEventListener() {
       return
     }
 
-    const startString = arg.replace('--url=', '')
-
-    if (startString === 'tondevwallet://connect/?ret=back') {
+    if (arg === 'tondevwallet://connect/?ret=back') {
       navigate('/app')
       appWindow.unminimize()
       appWindow.setFocus()
@@ -53,8 +52,13 @@ export function useTauriEventListener() {
     const password = await getPasswordInteractive()
 
     if (password) {
-      tonConnectState.connectArg.set(startString)
       tonConnectState.popupOpen.set(true)
+      try {
+        const kit = await getWalletKit()
+        await kit.handleTonConnectUrl(arg)
+      } catch (e) {
+        console.log('WalletKit handleTonConnectUrl error', e)
+      }
     }
   }
 

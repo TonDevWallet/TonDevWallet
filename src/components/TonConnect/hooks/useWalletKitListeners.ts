@@ -18,7 +18,7 @@ const appWindow = getCurrentWebviewWindow()
 interface UseWalletKitListenersOptions {
   sessions: State<TonConnectSession[]>
   liteClient: LiteClient
-  onConnectRequest: (manifestUrl: string) => void
+  onConnectRequest: () => void
 }
 
 /**
@@ -77,7 +77,7 @@ export function useWalletKitListeners({
         kit.onConnectRequest((req) => {
           console.log('onConnectRequest', req)
           setConnectRequest(req)
-          onConnectRequest(req?.preview?.manifestUrl || '')
+          onConnectRequest()
         })
 
         kit.onTransactionRequest(async (tx) => {
