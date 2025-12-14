@@ -2,6 +2,7 @@ import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import {
   TonConnectMessageSign,
   TonConnectMessageTransaction,
+  TonConnectMessageAddPlugin,
   changeConnectMessageStatus,
 } from '@/store/connectMessages'
 import { TonConnectSession } from '@/store/tonConnect'
@@ -17,11 +18,17 @@ import {
   WalletMessage,
   SignDataRpcResponseSuccess,
 } from '@tonconnect/protocol'
-import { Address, Cell } from '@ton/core'
+import { Address, beginCell, Cell, external, storeMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
 import { secretKeyToX25519 } from './ed25519'
 import { getWalletFromKey } from '@/utils/wallets'
 import { SignTonConnectData } from '@/utils/signData/sign'
+import { ActionAddExtension, packActionsList } from '@/contracts/w5/actions'
+import { Opcodes, bufferToBigInt } from '@/contracts/w5/WalletV5R1'
+import { SignMessage } from './signer'
+import { KeyPair } from '@ton/crypto'
+import { Key } from '@/types/Key'
+import { SavedWallet } from '@/types'
 
 export const bridgeUrl = 'https://bridge.tonapi.io/bridge'
 // export const bridgeUrl = 'http://localhost:8081/bridge'
@@ -226,4 +233,131 @@ export function GetTransfersFromTCMessage(
       }
     })
     .filter((m) => m) as WalletTransfer[]
+}
+
+// W5R1 Plugin Installation Functions
+
+export async function RejectTonConnectMessageAddPlugin({
+  message,
+  session,
+}: {
+  message: TonConnectMessageAddPlugin | ImmutableObject<TonConnectMessageAddPlugin>
+  session?: TonConnectSession | ImmutableObject<TonConnectSession>
+}) {
+  if (session) {
+    const msg: SendTransactionRpcResponseError = {
+      id: message.connect_event_id.toString(),
+      error: {
+        code: SEND_TRANSACTION_ERROR_CODES.USER_REJECTS_ERROR,
+        message: 'User rejected plugin installation',
+      },
+    }
+
+    await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
+  }
+
+  await changeConnectMessageStatus(message.id, ConnectMessageStatus.REJECTED)
+}
+
+export async function ApproveTonConnectMessageAddPlugin({
+  message,
+  session,
+  liteClient,
+  walletKeyPair,
+  pluginAddress,
+  key,
+  wallet,
+}: {
+  message: TonConnectMessageAddPlugin | ImmutableObject<TonConnectMessageAddPlugin>
+  session?: TonConnectSession | ImmutableObject<TonConnectSession>
+  liteClient: LiteClient | ImmutableObject<LiteClient>
+  walletKeyPair: KeyPair
+  pluginAddress: Address
+  key: any
+  wallet: SavedWallet
+}) {
+  // Get the W5 wallet
+  const tonWallet = getWalletFromKey(liteClient, key, wallet)
+  if (!tonWallet || tonWallet.type !== 'v5R1') {
+    throw new Error('Wallet is not a W5R1 wallet')
+  }
+
+  // tonWallet.wallet is already an OpenedContract<WalletV5>
+  const w5Wallet = tonWallet.wallet
+
+  // Create the add extension action
+  const addExtensionAction = new ActionAddExtension(pluginAddress)
+  const actionsList = packActionsList([addExtensionAction])
+
+  // Get seqno
+  let seqno = 0
+  try {
+    seqno = await w5Wallet.getSeqno()
+  } catch (e) {
+    // If getSeqno fails, use 0 (wallet not deployed yet)
+  }
+
+  // Create and sign the message body
+  const subwalletId = BigInt(wallet.subwallet_id)
+  const messageBody = await createAddPluginBodyV5(
+    walletKeyPair,
+    key as Key,
+    seqno,
+    subwalletId,
+    actionsList
+  )
+
+  // Create external message
+  const ext = external({
+    to: w5Wallet.address,
+    init: seqno === 0 ? w5Wallet.init : undefined,
+    body: messageBody,
+  })
+  const messageCell = beginCell().store(storeMessage(ext)).endCell()
+
+  // Send the message
+  await liteClient.sendMessage(messageCell.toBoc())
+
+  // Respond to TonConnect
+  if (session) {
+    const msg: SendTransactionRpcResponseSuccess = {
+      id: message.connect_event_id.toString(),
+      result: messageCell.toBoc().toString('base64'),
+    }
+
+    await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
+  }
+
+  // Update message status
+  await changeConnectMessageStatus(message.id, ConnectMessageStatus.APPROVED, messageCell)
+}
+
+async function createAddPluginBodyV5(
+  keyPair: KeyPair,
+  key: Key,
+  seqno: number,
+  walletId: bigint,
+  actionsList: Cell
+) {
+  // Ensure secret key is 64 bytes
+  let secretKey = keyPair.secretKey
+  if (secretKey.length === 32) {
+    secretKey = Buffer.concat([Uint8Array.from(secretKey), Uint8Array.from(keyPair.publicKey)])
+  }
+
+  const expireAt = Math.floor(Date.now() / 1000) + 60
+  const payload = beginCell()
+    .storeUint(Opcodes.auth_signed, 32)
+    .storeUint(walletId, 32)
+    .storeUint(expireAt, 32)
+    .storeUint(seqno, 32)
+    .storeSlice(actionsList.beginParse())
+    .endCell()
+
+  const signature = await SignMessage(secretKey, payload.hash(), key)
+
+  return beginCell()
+    .storeSlice(payload.beginParse())
+    .storeUint(bufferToBigInt(Buffer.from(signature)), 512)
+    .endCell()
 }
