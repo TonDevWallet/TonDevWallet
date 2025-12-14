@@ -2,10 +2,7 @@ import { useMessagesState } from '@/store/connectMessages'
 import { MessageRow } from './MessageRow'
 import { useWalletListState } from '@/store/walletsListState'
 import { useMemo } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrash } from '@fortawesome/free-solid-svg-icons'
-import { Button } from '../ui/button'
-import { RejectTonConnectMessageSign, RejectTonConnectMessageTransaction } from '@/utils/tonConnect'
+import { RejectMessages } from './RejectMessages'
 
 export function MessagesList() {
   // const sessions = useTonConnectSessions()
@@ -29,39 +26,22 @@ export function MessagesList() {
     return validMessages.length
   }, [validMessages])
 
-  const rejectAllInvalidMessages = () => {
-    messages.forEach((msg) => {
-      const s = msg.get({ noproxy: true })
-      if (s.message_type === 'tx') {
-        RejectTonConnectMessageTransaction({
-          message: s,
-        })
-      } else if (s.message_type === 'sign') {
-        RejectTonConnectMessageSign({
-          message: s,
-        })
-      }
-    })
-  }
-
   return (
     <div className="overflow-x-hidden mb-8 flex flex-col gap-4 mx-auto">
       {validMessagesCount > 0 ? (
-        messages.map((s) => {
-          return <MessageRow s={s} key={s.id.get()} />
-        })
+        <>
+          <div>
+            <div>
+              {messages.map((s) => {
+                return <MessageRow s={s} key={s.id.get()} />
+              })}
+            </div>
+          </div>
+        </>
       ) : messages.length > 0 ? (
         <div className="w-full flex flex-col gap-2 items-center justify-center">
           <div className="text-sm text-muted-foreground">No valid messages</div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 cursor-pointer"
-            onClick={rejectAllInvalidMessages}
-          >
-            <FontAwesomeIcon icon={faTrash} />
-            <span>Reject all invalid messages</span>
-          </Button>
+          <RejectMessages label="Reject all invalid messages" />
         </div>
       ) : (
         <div className="w-full flex items-center justify-center">

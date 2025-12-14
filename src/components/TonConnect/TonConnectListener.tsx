@@ -25,7 +25,11 @@ import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/
 import { getWalletListState } from '@/store/walletsListState'
 import { ImmutableObject } from '@hookstate/core'
 import { getWalletFromKey } from '@/utils/wallets'
-import { ApproveTonConnectMessageTransaction, GetTransfersFromTCMessage } from '@/utils/tonConnect'
+import {
+  ApproveTonConnectMessageTransaction,
+  bridgeUrl,
+  GetTransfersFromTCMessage,
+} from '@/utils/tonConnect'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
 import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
 import { useNavigate } from 'react-router-dom'
@@ -135,7 +139,6 @@ export function TonConnectListener() {
   }, [])
 
   useEffect(() => {
-    const bridgeUrl = 'https://bridge.tonapi.io/bridge'
     const listeners: EventSource[] = []
 
     sessions.map((s) => {
@@ -296,6 +299,7 @@ async function handleRequestTransactionRequest({
     }
   }
 
+  await updateSessionEventId(session.id, parseInt(eventData.lastEventId))
   await addConnectMessage({
     connect_event_id: parseInt(walletMessage.id),
     connect_session_id: session.id,
@@ -308,8 +312,6 @@ async function handleRequestTransactionRequest({
   })
   appWindow.unminimize()
   appWindow.setFocus()
-
-  updateSessionEventId(session.id, parseInt(eventData.lastEventId))
 }
 
 async function autoSendMessage({

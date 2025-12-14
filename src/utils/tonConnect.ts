@@ -23,7 +23,8 @@ import { secretKeyToX25519 } from './ed25519'
 import { getWalletFromKey } from '@/utils/wallets'
 import { SignTonConnectData } from '@/utils/signData/sign'
 
-const bridgeUrl = 'https://bridge.tonapi.io/bridge'
+export const bridgeUrl = 'https://bridge.tonapi.io/bridge'
+// export const bridgeUrl = 'http://localhost:8081/bridge'
 
 export async function sendTonConnectMessage(
   msg: WalletMessage,
@@ -46,6 +47,7 @@ export async function sendTonConnectMessage(
   await fetch(url, {
     method: 'post',
     body: Base64.encode(message),
+    signal: AbortSignal.timeout(1000),
   })
 }
 
