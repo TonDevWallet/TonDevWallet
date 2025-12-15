@@ -102,6 +102,7 @@
     "react-async-hook": "^4.0.0",
     "react-day-picker": "^9.6.2",
     "react-dom": "^19.1.0",
+    "react-error-boundary": "^6.0.0",
     "react-hook-form": "^7.54.2",
     "react-jazzicon": "^1.0.4",
     "react-qr-code": "^2.0.15",

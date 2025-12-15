@@ -3,6 +3,7 @@ import { MessageRow } from './MessageRow'
 import { useWalletListState } from '@/store/walletsListState'
 import { useMemo } from 'react'
 import { RejectMessages } from './RejectMessages'
+import { ErrorBoundary } from 'react-error-boundary'
 
 export function MessagesList() {
   // const sessions = useTonConnectSessions()
@@ -33,7 +34,11 @@ export function MessagesList() {
           <div>
             <div>
               {messages.map((s) => {
-                return <MessageRow s={s} key={s.id.get()} />
+                return (
+                  <ErrorBoundary fallbackRender={() => <div>Could not display message</div>}>
+                    <MessageRow s={s} key={s.id.get()} />
+                  </ErrorBoundary>
+                )
               })}
             </div>
           </div>

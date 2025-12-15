@@ -34,6 +34,7 @@ import { ConnectMessageTransactionMessage } from '@/types/connect'
 import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
 import { useNavigate } from 'react-router-dom'
 import { listen } from '@tauri-apps/api/event'
+import { detectW5PluginInstallation } from '@/utils/detectW5Plugin'
 const appWindow = getCurrentWebviewWindow()
 
 export function TonConnectListener() {
@@ -288,18 +289,42 @@ async function handleRequestTransactionRequest({
   }
 
   let walletAddress: string | undefined
+  let walletType: string | undefined
   const keys = getWalletListState()
 
   const key = keys.find((k) => k.id.get() === session.keyId)
   if (key) {
     const wallet = key.wallets.get()?.find((w) => w.id === session.walletId)
     if (wallet) {
+      walletType = wallet.type
       const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
       walletAddress = tonWallet?.address.toRawString()
     }
   }
 
   await updateSessionEventId(session.id, parseInt(eventData.lastEventId))
+
+  // Detect W5R1 plugin installation
+  if (walletType) {
+    const pluginDetection = detectW5PluginInstallation(info.messages, walletType)
+    if (pluginDetection.isPluginInstall) {
+      await addConnectMessage({
+        connect_event_id: parseInt(walletMessage.id),
+        connect_session_id: session.id,
+        key_id: session.keyId,
+        wallet_id: session.walletId,
+        status: 0,
+        wallet_address: walletAddress,
+        message_type: 'addW5R1Plugin',
+        plugin_address: pluginDetection.pluginAddress?.toString() ?? undefined,
+        plugins_to_remove: pluginDetection.pluginsToRemove.map((addr) => addr.toString()),
+      })
+      appWindow.unminimize()
+      appWindow.setFocus()
+      return
+    }
+  }
+
   await addConnectMessage({
     connect_event_id: parseInt(walletMessage.id),
     connect_session_id: session.id,
