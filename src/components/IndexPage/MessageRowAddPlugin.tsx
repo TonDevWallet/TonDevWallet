@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogCancel,
 } from '../ui/alert-dialog'
+import { Button } from '../ui/button'
 
 export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
   s,
@@ -77,10 +78,14 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
   )
 
   const pluginAddress = useMemo(() => {
+    const addr = s.plugin_address.get()
+    if (!addr) {
+      return null // addr_none - removal only
+    }
     try {
-      return Address.parse(s.plugin_address.get())
+      return Address.parse(addr)
     } catch {
-      return undefined
+      return undefined // invalid address
     }
   }, [s.plugin_address])
 
@@ -100,6 +105,10 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
       .filter((addr): addr is Address => addr !== undefined)
   }, [s.plugins_to_remove])
 
+  // Check if this is a valid request (either install or remove)
+  //   const isValidRequest = pluginAddress !== undefined || pluginsToRemove.length > 0
+  const isRemovalOnly = pluginAddress === null && pluginsToRemove.length > 0
+
   // Alert dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
@@ -118,7 +127,8 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
   }
 
   const approveConnectMessage = async () => {
-    if (!walletKeyPair || !pluginAddress) {
+    // pluginAddress can be null (removal only) but not undefined (invalid)
+    if (!walletKeyPair || pluginAddress === undefined) {
       return
     }
     setIsDialogOpen(false)
@@ -182,11 +192,21 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
     <Block className="">
       {/* Header with plugin icon */}
       <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
-        <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-          <FontAwesomeIcon icon={faPlug} className="text-amber-500 text-lg" />
+        <div
+          className={cn(
+            'w-10 h-10 rounded-full flex items-center justify-center',
+            isRemovalOnly ? 'bg-red-500/20' : 'bg-amber-500/20'
+          )}
+        >
+          <FontAwesomeIcon
+            icon={isRemovalOnly ? faTrash : faPlug}
+            className={cn('text-lg', isRemovalOnly ? 'text-red-500' : 'text-amber-500')}
+          />
         </div>
         <div>
-          <h3 className="font-semibold text-lg">Plugin Installation Request</h3>
+          <h3 className="font-semibold text-lg">
+            {isRemovalOnly ? 'Plugin Removal Request' : 'Plugin Installation Request'}
+          </h3>
           <p className="text-sm text-muted-foreground">W5R1 Extension</p>
         </div>
       </div>
@@ -236,30 +256,34 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
         </div>
       )}
 
-      {/* Plugin address - highlighted */}
-      <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 my-4">
-        <div className="flex items-center gap-2 mb-2">
-          <FontAwesomeIcon icon={faExclamationTriangle} className="text-amber-500" />
-          <span className="font-medium text-amber-600 dark:text-amber-400">
-            Plugin Address to Install
-          </span>
+      {/* Plugin address - highlighted (only show if not removal-only) */}
+      {!isRemovalOnly && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 my-4">
+          <div className="flex items-center gap-2 mb-2">
+            <FontAwesomeIcon icon={faExclamationTriangle} className="text-amber-500" />
+            <span className="font-medium text-amber-600 dark:text-amber-400">
+              Plugin Address to Install
+            </span>
+          </div>
+          {pluginAddress ? (
+            <AddressRow
+              address={pluginAddress}
+              addressClassName="text-sm font-mono"
+              containerClassName="bg-background/50 rounded p-2"
+            />
+          ) : (
+            <div className="text-red-500">Invalid plugin address</div>
+          )}
         </div>
-        {pluginAddress ? (
-          <AddressRow
-            address={pluginAddress}
-            addressClassName="text-sm font-mono"
-            containerClassName="bg-background/50 rounded p-2"
-          />
-        ) : (
-          <div className="text-red-500">Invalid plugin address</div>
-        )}
-      </div>
+      )}
 
       {/* Warning message */}
       <div className="text-sm text-muted-foreground mb-4 p-3 bg-muted/50 rounded-lg">
         <p>
-          <strong>Warning:</strong> Installing a plugin grants it the ability to execute
-          transactions on behalf of your wallet. Only approve if you trust the source.
+          <strong>Warning:</strong>{' '}
+          {isRemovalOnly
+            ? 'This will remove the specified plugin(s) from your wallet.'
+            : 'Installing a plugin grants it the ability to execute transactions on behalf of your wallet. Only approve if you trust the source.'}
         </p>
       </div>
 
@@ -272,10 +296,13 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
             </BlueButton>
             <BlueButton
               onClick={openConfirmDialog}
-              className={cn('bg-amber-500 hover:bg-amber-600', 'disabled:bg-gray-400')}
-              disabled={!walletKeyPair || !pluginAddress}
+              className={cn(
+                isRemovalOnly ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600',
+                'disabled:bg-gray-400'
+              )}
+              disabled={!walletKeyPair || pluginAddress === undefined}
             >
-              Install Plugin
+              {isRemovalOnly ? 'Remove Plugin' : 'Install Plugin'}
             </BlueButton>
           </div>
         </>
@@ -297,19 +324,31 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
                 <FontAwesomeIcon icon={faSkullCrossbones} className="text-red-500 text-xl" />
               </div>
               <AlertDialogTitle className="text-red-500 text-xl">
-                Danger: Plugin Installation
+                {isRemovalOnly ? 'Confirm Plugin Removal' : 'Danger: Plugin Installation'}
               </AlertDialogTitle>
             </div>
             <AlertDialogDescription asChild>
               <div className="space-y-4">
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-200">
-                  <p className="font-semibold mb-2">This action is extremely dangerous!</p>
-                  <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li>The plugin will have full control over your wallet</li>
-                    <li>It can send transactions without your approval</li>
-                    <li>It can drain all your funds</li>
-                    <li>This action cannot be easily undone</li>
-                  </ul>
+                  {isRemovalOnly ? (
+                    <>
+                      <p className="font-semibold mb-2">You are about to remove plugin(s)</p>
+                      <p className="text-sm">
+                        The specified plugin(s) will no longer be able to execute transactions on
+                        behalf of your wallet.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-semibold mb-2">This action is extremely dangerous!</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        <li>The plugin will have full control over your wallet</li>
+                        <li>It can send transactions without your approval</li>
+                        <li>It can drain all your funds</li>
+                        <li>This action cannot be easily undone</li>
+                      </ul>
+                    </>
+                  )}
                 </div>
 
                 {pluginsToRemove.length > 0 && (
@@ -330,34 +369,40 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
                   </div>
                 )}
 
-                <div className="text-sm text-muted-foreground">
-                  <p className="mb-2">Plugin address to be installed:</p>
-                  <code className="block bg-background/50 rounded p-2 text-xs break-all">
-                    {pluginAddress?.toString()}
-                  </code>
-                </div>
+                {!isRemovalOnly && (
+                  <div className="text-sm text-muted-foreground">
+                    <p className="mb-2">Plugin address to be installed:</p>
+                    <code className="block bg-background/50 rounded p-2 text-xs break-all">
+                      {pluginAddress?.toString()}
+                    </code>
+                  </div>
+                )}
 
                 <p className="text-sm text-amber-400 font-medium">
-                  Only proceed if you fully understand the risks and trust the plugin source.
+                  {isRemovalOnly
+                    ? 'Confirm that you want to remove these plugin(s).'
+                    : 'Only proceed if you fully understand the risks and trust the plugin source.'}
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel onClick={stopHold}>Cancel</AlertDialogCancel>
-            <button
+            <AlertDialogCancel className={cn('')} onClick={stopHold}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
               className={cn(
-                'relative overflow-hidden rounded-md px-4 py-2 font-medium text-white transition-colors',
+                'relative overflow-hidden text-white transition-colors',
                 'bg-red-600 hover:bg-red-700',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
-                'select-none'
+                'w-48'
               )}
               onMouseDown={startHold}
               onMouseUp={stopHold}
               onMouseLeave={stopHold}
               onTouchStart={startHold}
               onTouchEnd={stopHold}
-              disabled={!walletKeyPair || !pluginAddress}
+              disabled={!walletKeyPair || pluginAddress === undefined}
             >
               {/* Progress bar background */}
               <div
@@ -368,9 +413,11 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
               <span className="relative z-10">
                 {isHolding
                   ? `Hold... ${Math.ceil((holdDuration - (holdProgress / 100) * holdDuration) / 1000)}s`
-                  : 'Hold 3s to Install'}
+                  : isRemovalOnly
+                    ? 'Hold 3s to Remove'
+                    : 'Hold 3s to Install'}
               </span>
-            </button>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

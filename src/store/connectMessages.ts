@@ -35,7 +35,7 @@ export type TonConnectMessageSign = TonConnectMessage & {
 
 export type TonConnectMessageAddPlugin = TonConnectMessage & {
   message_type: 'addW5R1Plugin'
-  plugin_address: string
+  plugin_address: string | undefined // null means addr_none (only removal, no install)
   plugins_to_remove?: string[]
 }
 
@@ -47,7 +47,7 @@ export type FullTonConnectMessage = TonConnectMessage & {
   message_type: 'tx' | 'sign' | 'addW5R1Plugin'
   payload?: ConnectMessageTransactionPayload
   sign_payload?: SignDataPayload
-  plugin_address?: string
+  plugin_address?: string | undefined
   plugins_to_remove?: string[]
 }
 
@@ -81,7 +81,7 @@ function parseDbMessage(m: ConnectMessageTransaction): TonConnectMessageRecord {
       return {
         ...base,
         message_type: 'addW5R1Plugin',
-        plugin_address: m.plugin_address ?? '',
+        plugin_address: m.plugin_address ?? undefined,
         plugins_to_remove: m.plugins_to_remove ? JSON.parse(m.plugins_to_remove) : undefined,
       }
   }

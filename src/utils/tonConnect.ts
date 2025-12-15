@@ -273,7 +273,7 @@ export async function ApproveTonConnectMessageAddPlugin({
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
   liteClient: LiteClient | ImmutableObject<LiteClient>
   walletKeyPair: KeyPair
-  pluginAddress: Address
+  pluginAddress: Address | null // null means only removal, no install
   pluginsToRemove: Address[]
   key: any
   wallet: SavedWallet
@@ -287,10 +287,10 @@ export async function ApproveTonConnectMessageAddPlugin({
   // tonWallet.wallet is already an OpenedContract<WalletV5>
   const w5Wallet = tonWallet.wallet
 
-  // Create actions list: first remove old plugins, then add new one
+  // Create actions list: first remove old plugins, then optionally add new one
   const actions = [
     ...pluginsToRemove.map((addr) => new ActionRemoveExtension(addr)),
-    new ActionAddExtension(pluginAddress),
+    ...(pluginAddress ? [new ActionAddExtension(pluginAddress)] : []),
   ]
   const actionsList = packActionsList(actions)
 

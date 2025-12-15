@@ -9,9 +9,10 @@ export const MAGIC_ADD_PLUGIN = 0xae871e9f
 
 /**
  * Minimum bit length for plugin installation payload:
- * 32 bits (magic op) + 267 bits (address) = 299 bits
+ * 32 bits (magic op) + 2 bits (addr_none) = 34 bits minimum
+ * 32 bits (magic op) + 267 bits (address) = 299 bits with address
  */
-const MIN_PAYLOAD_BITS = 299
+const MIN_PAYLOAD_BITS = 34
 
 export interface PluginDetectionResult {
   isPluginInstall: false
@@ -19,7 +20,7 @@ export interface PluginDetectionResult {
 
 export interface PluginDetectionResultSuccess {
   isPluginInstall: true
-  pluginAddress: Address
+  pluginAddress: Address | null // null means addr_none (only removal, no install)
   pluginsToRemove: Address[]
 }
 
@@ -70,12 +71,12 @@ function parseRemovalAddresses(slice: Slice): Address[] {
  * Detection criteria:
  * 1. Wallet type must be 'v5R1'
  * 2. Transaction must contain exactly 1 message
- * 3. Message payload must be at least 299 bits (32-bit op + 267-bit address)
+ * 3. Message payload must be at least 34 bits (32-bit op + 2-bit addr_none)
  * 4. First 32 bits must match MAGIC_ADD_PLUGIN
  *
  * Payload format:
  * - 32 bits: magic op
- * - 267 bits: plugin address to install
+ * - MsgAddress: plugin address to install (addr_none if only removing)
  * - ^Maybe(address_to_remove, ^Maybe(address_to_remove, ...)) - snake-like structure in refs
  *
  * @param messages - Array of TonConnect transaction messages
@@ -108,7 +109,7 @@ export function detectW5PluginInstallation(
     const payloadCell = Cell.fromBase64(message.payload)
     const slice = payloadCell.beginParse()
 
-    // Check minimum bit length (32 op + 267 address = 299 bits)
+    // Check minimum bit length (32 op + 2 bits addr_none = 34 bits)
     const totalBits = slice.remainingBits
     if (totalBits < MIN_PAYLOAD_BITS) {
       return { isPluginInstall: false }
@@ -120,14 +121,17 @@ export function detectW5PluginInstallation(
       return { isPluginInstall: false }
     }
 
-    // Read the plugin address to install (267 bits)
-    const pluginAddress = slice.loadAddress()
-    if (!pluginAddress) {
-      return { isPluginInstall: false }
-    }
+    // Read the plugin address to install (MsgAddress - can be addr_none)
+    // loadMaybeAddress returns null for addr_none
+    const pluginAddress = slice.loadMaybeAddress()
 
     // Parse optional removal addresses from snake-like Maybe structure in refs
     const pluginsToRemove = parseRemovalAddresses(slice)
+
+    // Must have at least one action (install or remove)
+    if (!pluginAddress && pluginsToRemove.length === 0) {
+      return { isPluginInstall: false }
+    }
 
     return {
       isPluginInstall: true,

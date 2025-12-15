@@ -316,7 +316,7 @@ async function handleRequestTransactionRequest({
         status: 0,
         wallet_address: walletAddress,
         message_type: 'addW5R1Plugin',
-        plugin_address: pluginDetection.pluginAddress.toString(),
+        plugin_address: pluginDetection.pluginAddress?.toString() ?? undefined,
         plugins_to_remove: pluginDetection.pluginsToRemove.map((addr) => addr.toString()),
       })
       appWindow.unminimize()
