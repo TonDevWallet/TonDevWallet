@@ -19,7 +19,12 @@ import { secretKeyToED25519 } from '@/utils/ed25519'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Address } from '@ton/core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlug, faExclamationTriangle, faSkullCrossbones } from '@fortawesome/free-solid-svg-icons'
+import {
+  faPlug,
+  faExclamationTriangle,
+  faSkullCrossbones,
+  faTrash,
+} from '@fortawesome/free-solid-svg-icons'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -79,6 +84,22 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
     }
   }, [s.plugin_address])
 
+  const pluginsToRemove = useMemo(() => {
+    const addresses = s.plugins_to_remove?.get()
+    if (!addresses || addresses.length === 0) {
+      return []
+    }
+    return addresses
+      .map((addr) => {
+        try {
+          return Address.parse(addr)
+        } catch {
+          return undefined
+        }
+      })
+      .filter((addr): addr is Address => addr !== undefined)
+  }, [s.plugins_to_remove])
+
   // Alert dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
@@ -107,6 +128,7 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
       session: session?.get(),
       walletKeyPair,
       pluginAddress,
+      pluginsToRemove,
       key: key.get(),
       wallet,
     })
@@ -192,6 +214,28 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
         />
       </div>
 
+      {/* Plugins to remove - if any */}
+      {pluginsToRemove.length > 0 && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 my-4">
+          <div className="flex items-center gap-2 mb-2">
+            <FontAwesomeIcon icon={faTrash} className="text-red-500" />
+            <span className="font-medium text-red-600 dark:text-red-400">
+              Plugins to Remove ({pluginsToRemove.length})
+            </span>
+          </div>
+          <div className="space-y-2">
+            {pluginsToRemove.map((addr, index) => (
+              <AddressRow
+                key={index}
+                address={addr}
+                addressClassName="text-sm font-mono"
+                containerClassName="bg-background/50 rounded p-2"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Plugin address - highlighted */}
       <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 my-4">
         <div className="flex items-center gap-2 mb-2">
@@ -267,6 +311,24 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
                     <li>This action cannot be easily undone</li>
                   </ul>
                 </div>
+
+                {pluginsToRemove.length > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    <p className="mb-2 text-red-400">
+                      Plugins to be removed ({pluginsToRemove.length}):
+                    </p>
+                    <div className="space-y-1">
+                      {pluginsToRemove.map((addr, index) => (
+                        <code
+                          key={index}
+                          className="block bg-red-500/20 rounded p-2 text-xs break-all"
+                        >
+                          {addr.toString()}
+                        </code>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="text-sm text-muted-foreground">
                   <p className="mb-2">Plugin address to be installed:</p>

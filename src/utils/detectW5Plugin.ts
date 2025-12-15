@@ -1,4 +1,4 @@
-import { Address, Cell } from '@ton/core'
+import { Address, Cell, Slice } from '@ton/core'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
 
 /**
@@ -8,10 +8,10 @@ import { ConnectMessageTransactionMessage } from '@/types/connect'
 export const MAGIC_ADD_PLUGIN = 0xae871e9f
 
 /**
- * Expected bit length for plugin installation payload:
+ * Minimum bit length for plugin installation payload:
  * 32 bits (magic op) + 267 bits (address) = 299 bits
  */
-const EXPECTED_PAYLOAD_BITS = 299
+const MIN_PAYLOAD_BITS = 299
 
 export interface PluginDetectionResult {
   isPluginInstall: false
@@ -20,9 +20,49 @@ export interface PluginDetectionResult {
 export interface PluginDetectionResultSuccess {
   isPluginInstall: true
   pluginAddress: Address
+  pluginsToRemove: Address[]
 }
 
 export type DetectW5PluginResult = PluginDetectionResult | PluginDetectionResultSuccess
+
+/**
+ * Recursively parses a snake-like Maybe structure to extract addresses to remove.
+ *
+ * Structure: Maybe(address, ^Maybe(address, ^Maybe(...)))
+ * - If ref exists, load address from current cell and recurse into ref
+ * - If no ref, stop recursion
+ *
+ * @param slice - The slice to parse
+ * @returns Array of addresses to remove
+ */
+function parseRemovalAddresses(slice: Slice): Address[] {
+  const addresses: Address[] = []
+
+  // Check if there's a ref (Maybe has value)
+  if (slice.remainingRefs === 0) {
+    return addresses
+  }
+
+  // Load the address from the ref
+  const refCell = slice.loadRef()
+  const refSlice = refCell.beginParse()
+
+  if (refSlice.remainingBits < 267) {
+    return addresses
+  }
+
+  // Read the address (267 bits)
+  const address = refSlice.loadAddress()
+  if (address) {
+    addresses.push(address)
+
+    // Recursively parse the next Maybe ref
+    const nestedAddresses = parseRemovalAddresses(refSlice)
+    addresses.push(...nestedAddresses)
+  }
+
+  return addresses
+}
 
 /**
  * Detects if a TonConnect sendTransaction message is a W5R1 plugin installation request.
@@ -30,12 +70,17 @@ export type DetectW5PluginResult = PluginDetectionResult | PluginDetectionResult
  * Detection criteria:
  * 1. Wallet type must be 'v5R1'
  * 2. Transaction must contain exactly 1 message
- * 3. Message payload must be exactly 299 bits (32-bit op + 267-bit address)
+ * 3. Message payload must be at least 299 bits (32-bit op + 267-bit address)
  * 4. First 32 bits must match MAGIC_ADD_PLUGIN
+ *
+ * Payload format:
+ * - 32 bits: magic op
+ * - 267 bits: plugin address to install
+ * - ^Maybe(address_to_remove, ^Maybe(address_to_remove, ...)) - snake-like structure in refs
  *
  * @param messages - Array of TonConnect transaction messages
  * @param walletType - Type of the wallet (e.g., 'v5R1', 'v4R2')
- * @returns Detection result with plugin address if detected
+ * @returns Detection result with plugin address and plugins to remove if detected
  */
 export function detectW5PluginInstallation(
   messages: ConnectMessageTransactionMessage[],
@@ -63,14 +108,9 @@ export function detectW5PluginInstallation(
     const payloadCell = Cell.fromBase64(message.payload)
     const slice = payloadCell.beginParse()
 
-    // Check bit length (32 op + 267 address = 299 bits)
+    // Check minimum bit length (32 op + 267 address = 299 bits)
     const totalBits = slice.remainingBits
-    if (totalBits !== EXPECTED_PAYLOAD_BITS) {
-      return { isPluginInstall: false }
-    }
-
-    // Check if there are no refs (pure data cell)
-    if (slice.remainingRefs !== 0) {
+    if (totalBits < MIN_PAYLOAD_BITS) {
       return { isPluginInstall: false }
     }
 
@@ -80,15 +120,19 @@ export function detectW5PluginInstallation(
       return { isPluginInstall: false }
     }
 
-    // Read the plugin address (remaining 267 bits)
+    // Read the plugin address to install (267 bits)
     const pluginAddress = slice.loadAddress()
     if (!pluginAddress) {
       return { isPluginInstall: false }
     }
 
+    // Parse optional removal addresses from snake-like Maybe structure in refs
+    const pluginsToRemove = parseRemovalAddresses(slice)
+
     return {
       isPluginInstall: true,
       pluginAddress,
+      pluginsToRemove,
     }
   } catch (e) {
     // If parsing fails, it's not a valid plugin installation request

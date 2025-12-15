@@ -23,7 +23,7 @@ import { LiteClient } from 'ton-lite-client'
 import { secretKeyToX25519 } from './ed25519'
 import { getWalletFromKey } from '@/utils/wallets'
 import { SignTonConnectData } from '@/utils/signData/sign'
-import { ActionAddExtension, packActionsList } from '@/contracts/w5/actions'
+import { ActionAddExtension, ActionRemoveExtension, packActionsList } from '@/contracts/w5/actions'
 import { Opcodes, bufferToBigInt } from '@/contracts/w5/WalletV5R1'
 import { SignMessage } from './signer'
 import { KeyPair } from '@ton/crypto'
@@ -265,6 +265,7 @@ export async function ApproveTonConnectMessageAddPlugin({
   liteClient,
   walletKeyPair,
   pluginAddress,
+  pluginsToRemove,
   key,
   wallet,
 }: {
@@ -273,6 +274,7 @@ export async function ApproveTonConnectMessageAddPlugin({
   liteClient: LiteClient | ImmutableObject<LiteClient>
   walletKeyPair: KeyPair
   pluginAddress: Address
+  pluginsToRemove: Address[]
   key: any
   wallet: SavedWallet
 }) {
@@ -285,9 +287,12 @@ export async function ApproveTonConnectMessageAddPlugin({
   // tonWallet.wallet is already an OpenedContract<WalletV5>
   const w5Wallet = tonWallet.wallet
 
-  // Create the add extension action
-  const addExtensionAction = new ActionAddExtension(pluginAddress)
-  const actionsList = packActionsList([addExtensionAction])
+  // Create actions list: first remove old plugins, then add new one
+  const actions = [
+    ...pluginsToRemove.map((addr) => new ActionRemoveExtension(addr)),
+    new ActionAddExtension(pluginAddress),
+  ]
+  const actionsList = packActionsList(actions)
 
   // Get seqno
   let seqno = 0
