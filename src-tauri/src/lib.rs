@@ -12,9 +12,12 @@ extern crate objc;
 #[cfg(any(target_os = "macos", windows, target_os = "linux"))]
 use screenshots::Screen;
 
+mod migration_commands;
+pub mod migrations;
 mod proxy;
 mod ton_echo;
 
+use migration_commands::run_migrations_on_db;
 use proxy::spawn_proxy;
 use ton_echo::{get_ton_echo_port, start_ton_echo_server};
 
@@ -179,6 +182,20 @@ pub fn run() {
 
     builder
         .setup(move |app| {
+            // Run migrations on app data database before launching window
+            let app_data_dir = app.path().app_data_dir()
+                .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+            let db_path = app_data_dir.join("databases").join("data.db");
+            if db_path.exists() {
+                let backup_path = app_data_dir.join("databases").join("js_data_backup.db");
+                if !backup_path.exists() {
+                    std::fs::copy(&db_path, &backup_path)
+                        .map_err(|e| format!("Failed to backup data.db to js_data_backup.db: {}", e))?;
+                }
+            }
+            run_migrations_on_db(db_path.to_str().unwrap())
+                .map_err(|e| format!("Failed to run migrations: {}", e))?;
+
             #[cfg(any(windows, target_os = "linux"))]
             {
                 use tauri_plugin_deep_link::DeepLinkExt;
