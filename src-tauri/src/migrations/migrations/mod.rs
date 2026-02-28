@@ -29,3 +29,5 @@ pub(crate) mod m028_add_key_sign_type;
 pub(crate) mod m029_add_lite_engine_host;
 pub(crate) mod m030_add_plugin_address;
 pub(crate) mod m031_add_plugins_to_remove;
+pub(crate) mod m032_add_tonapi_network_settings;
+pub(crate) mod m033_add_chain_id;

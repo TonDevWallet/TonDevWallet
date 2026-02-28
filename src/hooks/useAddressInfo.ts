@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Address } from '@ton/core'
 import useAddressBook from './useAddressBook'
 import { useLiteclientState, useLiteclient } from '@/store/liteClient'
+import { getNetworkChainId } from '@/types/network'
 import { useWalletListState } from '@/store/walletsListState'
 import { getWalletFromKey } from '@/utils/wallets'
 import { IWallet } from '@/types'
@@ -64,7 +65,7 @@ export function useAddressInfo(address: Address | null) {
       if (!selectedNetwork || !address) return
 
       // Determine if we're on mainnet or testnet
-      const networkId = selectedNetwork.is_testnet ? -3 : -239
+      const networkId = getNetworkChainId(selectedNetwork)
 
       try {
         // Search for this address in the address book

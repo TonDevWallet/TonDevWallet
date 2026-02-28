@@ -8,7 +8,7 @@ import { AddressRow } from './AddressRow'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faShareFromSquare, faFileEdit, faCoins } from '@fortawesome/free-solid-svg-icons'
 import { WalletJazzicon } from './WalletJazzicon'
-import { Address, ExtraCurrency } from '@ton/core'
+import { Address, Dictionary, ExtraCurrency } from '@ton/core'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -60,7 +60,11 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
     )
     setBalance(state.balance.coins.toString())
     if (state.balance.other) {
-      setExtraBalances(extractEc(state.balance.other))
+      if (state.balance.other instanceof Dictionary) {
+        setExtraBalances(extractEc(state.balance.other))
+      } else {
+        setExtraBalances(state.balance.other)
+      }
     }
   }
 

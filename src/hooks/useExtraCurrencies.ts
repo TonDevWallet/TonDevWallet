@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { ExtraCurrencyConfig, ExtraCurrencyMeta } from '@/types/network'
+import { ExtraCurrencyConfig, ExtraCurrencyMeta, getNetworkChainId } from '@/types/network'
 import { getDatabase } from '@/db'
 import { Setting } from '@/types/settings'
 import { useLiteclientState } from '@/store/liteClient'
@@ -137,7 +137,7 @@ export function useExtraCurrencies() {
   // Get all currencies for the currently selected network
   const getCurrentNetworkCurrencies = useCallback((): Record<string, ExtraCurrencyMeta> => {
     if (!selectedNetwork || loading) return {}
-    return config[selectedNetwork.is_testnet ? -3 : -239] || {}
+    return config[getNetworkChainId(selectedNetwork)] || {}
   }, [selectedNetwork, loading, config])
 
   const currentNetworkCurrencies = useMemo(() => {
@@ -148,7 +148,7 @@ export function useExtraCurrencies() {
   const getCurrency = useCallback(
     (currencyId: string): ExtraCurrencyMeta | null => {
       if (!selectedNetwork || loading) return null
-      const networkCurrencies = config[selectedNetwork.network_id]
+      const networkCurrencies = config[getNetworkChainId(selectedNetwork)]
       if (!networkCurrencies) return null
       return networkCurrencies[currencyId] || null
     },

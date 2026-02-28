@@ -368,15 +368,21 @@ async function autoSendMessage({
 
   const transfers = GetTransfersFromTCMessage(messages)
 
-  const liteClient = LiteClientState.liteClient.get()
+  const blockchainClient = LiteClientState.liteClient.get() ?? LiteClientState.tonapiAdapter.get()
+  if (!blockchainClient) return false
   const keyPair = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
-  const sendWallet = getWalletFromKey(liteClient, key, wallet)
+  const sendWallet = getWalletFromKey(blockchainClient, key, wallet)
   if (!sendWallet) {
     return false
   }
   const messageCell = await sendWallet.getExternalMessageCell(keyPair, transfers)
   updateSessionEventId(session.id, parseInt(bridgeEventId))
 
-  await ApproveTonConnectMessageTransaction({ liteClient, messageCell, session, eventId })
+  await ApproveTonConnectMessageTransaction({
+    liteClient: blockchainClient,
+    messageCell,
+    session,
+    eventId,
+  })
   return true
 }

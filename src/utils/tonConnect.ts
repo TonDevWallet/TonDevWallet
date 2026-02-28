@@ -20,6 +20,7 @@ import {
 } from '@tonconnect/protocol'
 import { Address, beginCell, Cell, external, storeMessage } from '@ton/core'
 import { LiteClient } from 'ton-lite-client'
+import { TonapiBlockchainAdapter } from '@/store/tonapiBlockchainAdapter'
 import { secretKeyToX25519 } from './ed25519'
 import { getWalletFromKey } from '@/utils/wallets'
 import { SignTonConnectData } from '@/utils/signData/sign'
@@ -29,9 +30,11 @@ import { SignMessage } from './signer'
 import { KeyPair } from '@ton/crypto'
 import { Key } from '@/types/Key'
 import { SavedWallet } from '@/types'
+import { CallForSuccess } from './callForSuccess'
 
 export const bridgeUrl = 'https://bridge.tonapi.io/bridge'
 // export const bridgeUrl = 'http://localhost:8081/bridge'
+// export const bridgeUrl = 'https://walletbot.me/tonconnect-bridge/bridge'
 
 export async function sendTonConnectMessage(
   msg: WalletMessage,
@@ -51,11 +54,13 @@ export async function sendTonConnectMessage(
   })
 
   const message = sessionCrypto.encrypt(JSON.stringify(msg), hexToByteArray(clientPublicKey))
-  await fetch(url, {
-    method: 'post',
-    body: Base64.encode(message),
-    signal: AbortSignal.timeout(1000),
-  })
+  CallForSuccess(() =>
+    fetch(url, {
+      method: 'post',
+      body: Base64.encode(message),
+      signal: AbortSignal.timeout(1000),
+    })
+  )
 }
 
 export async function ApproveTonConnectMessageTransaction({
@@ -68,7 +73,11 @@ export async function ApproveTonConnectMessageTransaction({
   messageCell: Cell
   connectMessage?: TonConnectMessageTransaction | ImmutableObject<TonConnectMessageTransaction>
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
-  liteClient: LiteClient | ImmutableObject<LiteClient>
+  liteClient:
+    | LiteClient
+    | TonapiBlockchainAdapter
+    | ImmutableObject<LiteClient>
+    | ImmutableObject<TonapiBlockchainAdapter>
   eventId: string
 }) {
   await liteClient.sendMessage(messageCell?.toBoc() || Buffer.from(''))
@@ -141,7 +150,11 @@ export async function ApproveTonConnectMessageSign({
   message: TonConnectMessageSign | ImmutableObject<TonConnectMessageSign>
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
   key: any
-  liteClient: LiteClient | ImmutableObject<LiteClient>
+  liteClient:
+    | LiteClient
+    | TonapiBlockchainAdapter
+    | ImmutableObject<LiteClient>
+    | ImmutableObject<TonapiBlockchainAdapter>
   walletKeyPair: { secretKey: Uint8Array | Buffer }
 }) {
   let walletAddress: string | undefined
@@ -271,7 +284,11 @@ export async function ApproveTonConnectMessageAddPlugin({
 }: {
   message: TonConnectMessageAddPlugin | ImmutableObject<TonConnectMessageAddPlugin>
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
-  liteClient: LiteClient | ImmutableObject<LiteClient>
+  liteClient:
+    | LiteClient
+    | TonapiBlockchainAdapter
+    | ImmutableObject<LiteClient>
+    | ImmutableObject<TonapiBlockchainAdapter>
   walletKeyPair: KeyPair
   pluginAddress: Address | null // null means only removal, no install
   pluginsToRemove: Address[]

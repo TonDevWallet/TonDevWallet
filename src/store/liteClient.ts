@@ -7,9 +7,11 @@ import { Functions } from 'ton-lite-client/dist/schema'
 import { LSConfigData, Network } from '@/types/network'
 import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { Api, HttpClient } from 'tonapi-sdk-js'
+import { TonapiBlockchainAdapter } from './tonapiBlockchainAdapter'
 
 const LiteClientState = hookstate<{
-  liteClient: LiteClient
+  liteClient: LiteClient | null
+  tonapiAdapter: TonapiBlockchainAdapter | null
   networks: Network[]
   selectedNetwork: Network
   tonapiClient?: Api<unknown>
@@ -28,6 +30,8 @@ const LiteClientState = hookstate<{
       toncenter3_url: 'https://toncenter.com/api/v3/',
       lite_engine_host_mode: 'auto',
       lite_engine_host_custom: '',
+      use_tonapi_only: false,
+      tonapi_url: '',
       created_at: new Date(),
       updated_at: new Date(),
     })
@@ -41,6 +45,8 @@ const LiteClientState = hookstate<{
       toncenter3_url: 'https://testnet.toncenter.com/api/v3/',
       lite_engine_host_mode: 'auto',
       lite_engine_host_custom: '',
+      use_tonapi_only: false,
+      tonapi_url: '',
       created_at: new Date(),
       updated_at: new Date(),
     })
@@ -71,7 +77,6 @@ const LiteClientState = hookstate<{
   if (!selectedNetwork) {
     selectedNetwork = networks[0]
   }
-  // const isTestnet = testnetSetting?.value === 'true'
 
   const tonapiToken = await db<{ name: string; value: string }>('settings')
     .where('name', 'tonapi_token')
@@ -85,7 +90,9 @@ const LiteClientState = hookstate<{
     headers.Authorization = `Bearer ${tonapiToken.value}`
   }
 
-  const baseUrl = selectedNetwork.is_testnet ? 'https://testnet.tonapi.io' : 'https://tonapi.io'
+  const baseUrl =
+    selectedNetwork.tonapi_url?.trim() ||
+    (selectedNetwork.is_testnet ? 'https://testnet.tonapi.io' : 'https://tonapi.io')
 
   const httpClient = new HttpClient({
     baseUrl,
@@ -96,16 +103,45 @@ const LiteClientState = hookstate<{
 
   const tonapiClient = new Api(httpClient)
 
+  const useTonapiOnly = !!selectedNetwork.use_tonapi_only
+  let liteClient: LiteClient | null = null
+  let tonapiAdapter: TonapiBlockchainAdapter | null = null
+
+  if (useTonapiOnly) {
+    tonapiAdapter = new TonapiBlockchainAdapter(tonapiClient)
+  } else {
+    liteClient = getLiteClient(selectedNetwork.url, selectedNetwork)
+  }
+
   return {
     networks,
     selectedNetwork,
-    liteClient: getLiteClient(selectedNetwork.url, selectedNetwork),
+    liteClient,
+    tonapiAdapter,
     tonapiClient,
   }
 })
 
-export function useLiteclient() {
-  return useHookstate(LiteClientState).liteClient.get({ noproxy: true })
+/** Returns the active blockchain client (LiteClient or TonapiBlockchainAdapter) */
+export function useLiteclient(): LiteClient | TonapiBlockchainAdapter {
+  const state = useHookstate(LiteClientState)
+  const liteClient = state.liteClient.get({ noproxy: true })
+  const tonapiAdapter = state.tonapiAdapter.get({ noproxy: true })
+
+  if (liteClient) {
+    return liteClient as LiteClient
+  }
+
+  if (tonapiAdapter) {
+    return tonapiAdapter as TonapiBlockchainAdapter
+  }
+
+  throw new Error('No blockchain client found')
+}
+
+/** Whether the current network uses TonAPI only (no LiteClient) */
+export function useTonapiOnly() {
+  return !!useHookstate(LiteClientState).selectedNetwork.get({ noproxy: true }).use_tonapi_only
 }
 
 export function useTonapiClient() {
@@ -132,9 +168,24 @@ export async function updateNetworksList() {
   LiteClientState.networks.set(networks)
   LiteClientState.selectedNetwork.set(selectedNetwork)
 
-  if (oldNetworkUrl !== selectedNetwork.url) {
+  const tonapiChanged =
+    !!oldSelectedNetwork.use_tonapi_only !== !!selectedNetwork.use_tonapi_only ||
+    (oldSelectedNetwork.tonapi_url || '') !== (selectedNetwork.tonapi_url || '')
+  if (oldNetworkUrl !== selectedNetwork.url || tonapiChanged) {
     changeLiteClient(selectedNetwork.network_id)
   }
+}
+
+export function getApiClient(): LiteClient | TonapiBlockchainAdapter {
+  const liteClient =
+    LiteClientState.liteClient.get({ noproxy: true }) ??
+    LiteClientState.tonapiAdapter.get({ noproxy: true })
+
+  if (!liteClient) {
+    throw new Error('No blockchain client found')
+  }
+
+  return liteClient as LiteClient | TonapiBlockchainAdapter
 }
 
 export async function changeLiteClient(networkId: number) {
@@ -143,30 +194,34 @@ export async function changeLiteClient(networkId: number) {
   if (!selectedNetwork) {
     return
   }
-  // const selectedNetworkId = await db<{ name: string; value: string }>('settings')
-  //   .where('name', 'selected_network')
-  //   .first()
 
-  const newLiteClient = getLiteClient(selectedNetwork.url, selectedNetwork)
+  const useTonapiOnly = !!selectedNetwork.use_tonapi_only
 
   await db<{ name: string; value: string }>('settings')
     .where('name', 'selected_network')
     .update('value', String(networkId))
 
-  if (LiteClientState.liteClient.get()) {
-    LiteClientState.liteClient.get().engine.close()
+  if (useTonapiOnly) {
+    LiteClientState.selectedNetwork.set(selectedNetwork)
+    await updateTonapiClient()
+    const tonapiClient = LiteClientState.tonapiClient.get() as Api<unknown> | undefined
+    const newAdapter = tonapiClient ? new TonapiBlockchainAdapter(tonapiClient) : null
+    LiteClientState.tonapiAdapter.set(newAdapter)
+    return newAdapter
+  } else {
+    const newLiteClient = getLiteClient(selectedNetwork.url, selectedNetwork)
+    const oldLiteClient = LiteClientState.liteClient.get()
+    if (oldLiteClient?.engine) {
+      oldLiteClient.engine.close()
+    }
+    LiteClientState.merge({
+      liteClient: newLiteClient,
+      tonapiAdapter: null,
+      selectedNetwork,
+    })
+    await updateTonapiClient()
+    return newLiteClient
   }
-  LiteClientState.merge({
-    liteClient: newLiteClient,
-    selectedNetwork,
-  })
-  // LiteClientState.set({
-  //   testnet,
-  //   liteClient: newLiteClient,
-  //   networks: LiteClientState.networks.get(),
-  // })
-
-  return newLiteClient
 }
 
 export function getLiteClient(configUrl: string, network?: Network): LiteClient {
@@ -326,7 +381,9 @@ export async function updateTonapiClient() {
     headers.Authorization = `Bearer ${tonapiToken.value}`
   }
 
-  const baseUrl = selectedNetwork.is_testnet ? 'https://testnet.tonapi.io' : 'https://tonapi.io'
+  const baseUrl =
+    selectedNetwork.tonapi_url?.trim() ||
+    (selectedNetwork.is_testnet ? 'https://testnet.tonapi.io' : 'https://tonapi.io')
 
   const httpClient = new HttpClient({
     baseUrl,

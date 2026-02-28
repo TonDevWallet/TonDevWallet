@@ -82,5 +82,7 @@ pub fn get_migrations() -> Vec<Box<dyn Migration>> {
         Box::new(migrations::m029_add_lite_engine_host::M029AddLiteEngineHost::new()),
         Box::new(migrations::m030_add_plugin_address::M030AddPluginAddress::new()),
         Box::new(migrations::m031_add_plugins_to_remove::M031AddPluginsToRemove::new()),
+        Box::new(migrations::m032_add_tonapi_network_settings::M032AddTonapiNetworkSettings::new()),
+        Box::new(migrations::m033_add_chain_id::M033AddChainId::new()),
     ]
 }

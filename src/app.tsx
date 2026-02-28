@@ -6,7 +6,6 @@ import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import { useTonConnectState } from './store/tonConnect'
 import { useWalletListState } from './store/walletsListState'
-import { useTauriState } from './store/tauri'
 import { useTheme } from './hooks/useTheme'
 import { useOs } from './hooks/useOs'
 import { usePassword } from './store/passwordManager'
@@ -15,7 +14,6 @@ import { Toaster } from '@/components/ui/toaster'
 
 export function App({ db }: { db: Knex }) {
   const keysList = useWalletListState()
-  const tauriState = useTauriState()
   const passwordState = usePassword()
   const tonConnectState = useTonConnectState()
   const liteClientState = useLiteclientState()
@@ -26,8 +24,7 @@ export function App({ db }: { db: Knex }) {
   return (
     <DbContext.Provider value={db}>
       <React.Suspense>
-        {suspend(tauriState) ||
-          suspend(keysList) ||
+        {suspend(keysList) ||
           suspend(passwordState) ||
           suspend(tonConnectState) ||
           suspend(liteClientState) || <RouterProvider router={router} />}

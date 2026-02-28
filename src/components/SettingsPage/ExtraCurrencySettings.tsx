@@ -1,6 +1,11 @@
 import { memo, useState, useCallback, useEffect } from 'react'
 import { useLiteclientState } from '@/store/liteClient'
-import { ExtraCurrencyMeta } from '@/types/network'
+import {
+  ExtraCurrencyMeta,
+  getNetworkChainId,
+  MAINNET_CHAIN_ID,
+  TESTNET_CHAIN_ID,
+} from '@/types/network'
 import useExtraCurrencies from '@/hooks/useExtraCurrencies'
 import CurrenciesList from './CurrenciesList'
 import AddCurrencyForm from './AddCurrencyForm'
@@ -8,10 +13,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDollarSign } from '@fortawesome/free-solid-svg-icons'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-
-// Fixed network IDs for mainnet and testnet
-const MAINNET_ID = -239
-const TESTNET_ID = -3
 
 const ExtraCurrencySettings = memo(() => {
   const liteClientState = useLiteclientState()
@@ -23,12 +24,10 @@ const ExtraCurrencySettings = memo(() => {
   // Initialize with the app's currently selected network
   useEffect(() => {
     if (selectedAppNetwork && !selectedNetworkId) {
-      // Check if the app network is mainnet or testnet
-      const networkId = selectedAppNetwork.is_testnet ? TESTNET_ID : MAINNET_ID
+      const networkId = getNetworkChainId(selectedAppNetwork)
       setSelectedNetworkId(networkId)
     } else if (!selectedNetworkId) {
-      // Default to mainnet if no selection
-      setSelectedNetworkId(MAINNET_ID)
+      setSelectedNetworkId(MAINNET_CHAIN_ID)
     }
   }, [selectedAppNetwork, selectedNetworkId])
 
@@ -79,50 +78,110 @@ const ExtraCurrencySettings = memo(() => {
         </CardHeader>
         <CardContent className="p-6">
           {/* Network Selection as Tabs */}
-          <Tabs
-            defaultValue={selectedNetworkId?.toString() || MAINNET_ID.toString()}
-            onValueChange={handleNetworkChange}
-            className="w-full"
-          >
-            <TabsList className="grid grid-cols-2 mb-6">
-              <TabsTrigger value={MAINNET_ID.toString()} className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-green-500 inline-block"></span>
-                Mainnet
-              </TabsTrigger>
-              <TabsTrigger value={TESTNET_ID.toString()} className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-blue-500 inline-block"></span>
-                Testnet
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Tab Content for each network */}
-            <TabsContent value={MAINNET_ID.toString()} className="mt-0 space-y-6">
-              <NetworkContent
-                networkId={MAINNET_ID}
-                networkName="Mainnet"
-                currencies={selectedNetworkId === MAINNET_ID ? currencies : {}}
-                onUpdateMeta={handleUpdateMeta}
-                onRemoveCurrency={handleRemoveCurrency}
-                onAddCurrency={handleAddCurrency}
-              />
-            </TabsContent>
-
-            <TabsContent value={TESTNET_ID.toString()} className="mt-0 space-y-6">
-              <NetworkContent
-                networkId={TESTNET_ID}
-                networkName="Testnet"
-                currencies={selectedNetworkId === TESTNET_ID ? currencies : {}}
-                onUpdateMeta={handleUpdateMeta}
-                onRemoveCurrency={handleRemoveCurrency}
-                onAddCurrency={handleAddCurrency}
-              />
-            </TabsContent>
-          </Tabs>
+          <NetworkTabs
+            selectedNetworkId={selectedNetworkId}
+            selectedAppNetwork={selectedAppNetwork}
+            onNetworkChange={handleNetworkChange}
+            currencies={currencies}
+            onUpdateMeta={handleUpdateMeta}
+            onRemoveCurrency={handleRemoveCurrency}
+            onAddCurrency={handleAddCurrency}
+          />
         </CardContent>
       </Card>
     </div>
   )
 })
+
+interface NetworkTabsProps {
+  selectedNetworkId: number | null
+  selectedAppNetwork: { chain_id?: number | null } | null
+  onNetworkChange: (value: string) => void
+  currencies: Record<string, ExtraCurrencyMeta>
+  onUpdateMeta: (currencyId: string, field: keyof ExtraCurrencyMeta, value: string | number) => void
+  onRemoveCurrency: (currencyId: string) => void
+  onAddCurrency: (currencyId: string) => Promise<boolean>
+}
+
+const NetworkTabs = memo(
+  ({
+    selectedNetworkId,
+    selectedAppNetwork,
+    onNetworkChange,
+    currencies,
+    onUpdateMeta,
+    onRemoveCurrency,
+    onAddCurrency,
+  }: NetworkTabsProps) => {
+    const customChainId =
+      selectedAppNetwork &&
+      selectedAppNetwork.chain_id != null &&
+      selectedAppNetwork.chain_id !== MAINNET_CHAIN_ID &&
+      selectedAppNetwork.chain_id !== TESTNET_CHAIN_ID
+        ? selectedAppNetwork.chain_id
+        : null
+
+    const defaultValue = selectedNetworkId?.toString() || MAINNET_CHAIN_ID.toString()
+
+    return (
+      <Tabs defaultValue={defaultValue} onValueChange={onNetworkChange} className="w-full">
+        <TabsList className={`mb-6 ${customChainId != null ? 'grid-cols-3' : 'grid-cols-2'} grid`}>
+          <TabsTrigger value={MAINNET_CHAIN_ID.toString()} className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-green-500 inline-block"></span>
+            Mainnet
+          </TabsTrigger>
+          <TabsTrigger value={TESTNET_CHAIN_ID.toString()} className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-blue-500 inline-block"></span>
+            Testnet
+          </TabsTrigger>
+          {customChainId != null && (
+            <TabsTrigger value={customChainId.toString()} className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-amber-500 inline-block"></span>
+              Custom ({customChainId})
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value={MAINNET_CHAIN_ID.toString()} className="mt-0 space-y-6">
+          <NetworkContent
+            networkId={MAINNET_CHAIN_ID}
+            networkName="Mainnet"
+            currencies={selectedNetworkId === MAINNET_CHAIN_ID ? currencies : {}}
+            onUpdateMeta={onUpdateMeta}
+            onRemoveCurrency={onRemoveCurrency}
+            onAddCurrency={onAddCurrency}
+          />
+        </TabsContent>
+
+        <TabsContent value={TESTNET_CHAIN_ID.toString()} className="mt-0 space-y-6">
+          <NetworkContent
+            networkId={TESTNET_CHAIN_ID}
+            networkName="Testnet"
+            currencies={selectedNetworkId === TESTNET_CHAIN_ID ? currencies : {}}
+            onUpdateMeta={onUpdateMeta}
+            onRemoveCurrency={onRemoveCurrency}
+            onAddCurrency={onAddCurrency}
+          />
+        </TabsContent>
+
+        {customChainId != null && (
+          <TabsContent value={customChainId.toString()} className="mt-0 space-y-6">
+            <NetworkContent
+              networkId={customChainId}
+              networkName={`Custom (${customChainId})`}
+              currencies={selectedNetworkId === customChainId ? currencies : {}}
+              onUpdateMeta={onUpdateMeta}
+              onRemoveCurrency={onRemoveCurrency}
+              onAddCurrency={onAddCurrency}
+            />
+          </TabsContent>
+        )}
+      </Tabs>
+    )
+  }
+)
+
+NetworkTabs.displayName = 'NetworkTabs'
 
 // Network Content Component
 interface NetworkContentProps {
@@ -143,7 +202,12 @@ const NetworkContent = memo(
     onRemoveCurrency,
     onAddCurrency,
   }: NetworkContentProps) => {
-    const networkIndicatorClass = networkId === MAINNET_ID ? 'bg-green-500' : 'bg-blue-500'
+    const networkIndicatorClass =
+      networkId === MAINNET_CHAIN_ID
+        ? 'bg-green-500'
+        : networkId === TESTNET_CHAIN_ID
+          ? 'bg-blue-500'
+          : 'bg-amber-500'
 
     const currencyCount = Object.keys(currencies).length
 
