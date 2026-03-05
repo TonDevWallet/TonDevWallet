@@ -58,6 +58,7 @@ import {
 import { KeyPair } from '@ton/crypto'
 import { SignMessage } from './signer'
 import { LiteClient } from 'ton-lite-client'
+import { TonapiBlockchainAdapter } from '@/store/tonapiBlockchainAdapter'
 import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV3'
 import { HighloadWalletV3CodeCell } from '@/contracts/highload-wallet-v3/HighloadWalletV3.source'
 import { HighloadQueryId } from '@/contracts/highload-wallet-v3/HighloadQueryId'
@@ -68,7 +69,11 @@ import { WalletV5R1CodeCell } from '@/contracts/w5/WalletV5R1.source'
 import { ActionSendMsg, packActionsList } from '@/contracts/w5/actions'
 
 export function getWalletFromKey(
-  liteClient: LiteClient | ImmutableObject<LiteClient>,
+  blockchainClient:
+    | LiteClient
+    | TonapiBlockchainAdapter
+    | ImmutableObject<LiteClient>
+    | ImmutableObject<TonapiBlockchainAdapter>,
   key: ImmutableObject<Key>,
   wallet: SavedWallet
 ): IWallet | undefined {
@@ -151,7 +156,7 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'v1R1') {
-    const tonWallet = liteClient.open(
+    const tonWallet = blockchainClient.open(
       WalletContractV1R1.create({
         workchain: workchainId,
         publicKey: Buffer.from(key.public_key, 'base64'),
@@ -169,7 +174,7 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'v1R2') {
-    const tonWallet = liteClient.open(
+    const tonWallet = blockchainClient.open(
       WalletContractV1R2.create({
         workchain: workchainId,
         publicKey: Buffer.from(key.public_key, 'base64'),
@@ -187,7 +192,7 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'v1R3') {
-    const tonWallet = liteClient.open(
+    const tonWallet = blockchainClient.open(
       WalletContractV1R3.create({
         workchain: workchainId,
         publicKey: Buffer.from(key.public_key, 'base64'),
@@ -205,7 +210,7 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'v2R1') {
-    const tonWallet = liteClient.open(
+    const tonWallet = blockchainClient.open(
       WalletContractV2R1.create({
         workchain: workchainId,
         publicKey: Buffer.from(key.public_key, 'base64'),
@@ -223,7 +228,7 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'v2R2') {
-    const tonWallet = liteClient.open(
+    const tonWallet = blockchainClient.open(
       WalletContractV2R2.create({
         workchain: workchainId,
         publicKey: Buffer.from(key.public_key, 'base64'),
@@ -240,7 +245,7 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'v3R1') {
-    const tonWallet = liteClient.open(
+    const tonWallet = blockchainClient.open(
       WalletContractV3R1.create({
         workchain: workchainId,
         publicKey: Buffer.from(key.public_key, 'base64'),
@@ -260,7 +265,7 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'v3R2') {
-    const tonWallet = liteClient.open(
+    const tonWallet = blockchainClient.open(
       WalletContractV3R2.create({
         workchain: workchainId,
         publicKey: Buffer.from(key.public_key, 'base64'),
@@ -287,7 +292,7 @@ export function getWalletFromKey(
         '0:0000000000000000000000000000000000000000000000000000000000000000'
       ).toString({ bounceable: true, urlSafe: true })
     }
-    const tonWallet = liteClient.open(
+    const tonWallet = blockchainClient.open(
       WalletContractV4.create({
         workchain: 0, // not available for this type
         publicKey: Buffer.from(key.public_key, 'base64'),
@@ -307,7 +312,7 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'v4R2') {
-    const tonWallet = liteClient.open(
+    const tonWallet = blockchainClient.open(
       WalletContractV4.create({
         workchain: workchainId,
         publicKey: Buffer.from(key.public_key, 'base64'),
@@ -331,7 +336,7 @@ export function getWalletFromKey(
     }
     return result
   } else if (wallet.type === 'v5R1') {
-    const tonWallet = liteClient.open(
+    const tonWallet = blockchainClient.open(
       WalletV5.createFromConfig(
         {
           // workchain: 0,
@@ -680,10 +685,9 @@ function getExternalMessageCellFromTonMultisigWallet(
     )
     const expireAt = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 // 1 month
 
-    const liteClient = LiteClientState.liteClient.get() as LiteClient
-    const multisigContract = liteClient.open(
-      Multisig.createFromAddress(Address.parse(multisigAddress))
-    )
+    const client = LiteClientState.liteClient.get() ?? LiteClientState.tonapiAdapter.get()
+    if (!client) throw new Error('No blockchain client')
+    const multisigContract = client.open(Multisig.createFromAddress(Address.parse(multisigAddress)))
     const multisigData = await multisigContract.getMultisigData()
 
     const isSigner = multisigData.signers.some((s) => s.equals(wallet.address))

@@ -59,12 +59,14 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
   }
 }
 
-// let cachedMaterInfo: { info?: liteServer_masterchainInfo; ts?: number } = {}
-export async function getLastLiteBlock(lc: LiteClient): Promise<liteServer_masterchainInfo> {
-  // if (cachedMaterInfo.info && Date.now() - (cachedMaterInfo.ts || 0) < 1000) {
-  //   return cachedMaterInfo.info
-  // }
+type ClientWithMasterchainInfo = {
+  getMasterchainInfo(): Promise<liteServer_masterchainInfo>
+}
 
+// let cachedMaterInfo: { info?: liteServer_masterchainInfo; ts?: number } = {}
+export async function getLastLiteBlock(
+  lc: LiteClient | ClientWithMasterchainInfo
+): Promise<liteServer_masterchainInfo> {
   const info = await lc.getMasterchainInfo()
   // if (cachedMaterInfo.info && cachedMaterInfo?.info?.last?.seqno > info.last.seqno) {
   //   return cachedMaterInfo.info

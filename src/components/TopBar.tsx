@@ -1,4 +1,9 @@
-import { changeLiteClient, useLiteclient, useLiteclientState } from '@/store/liteClient'
+import {
+  changeLiteClient,
+  useLiteclient,
+  useLiteclientState,
+  useTonapiOnly,
+} from '@/store/liteClient'
 import { useTonConnectSessions } from '@/store/tonConnect'
 import { LiteClient } from 'ton-lite-client'
 import { useWalletListState } from '@/store/walletsListState'
@@ -34,7 +39,8 @@ import { Key } from '@/types/Key'
 function NetworkSelector() {
   const liteClientState = useLiteclientState()
   const sessions = useTonConnectSessions()
-  const liteClient = useLiteclient() as LiteClient
+  const blockchainClient = useLiteclient()
+  const isTonapiOnly = useTonapiOnly()
   const keys = useWalletListState()
 
   const [readyEngines, setReadyEngines] = useState(0)
@@ -42,13 +48,15 @@ function NetworkSelector() {
   const changeLiteClientNetwork = (newNetworkIdString: string) => {
     const newNetworkId = parseInt(newNetworkIdString, 10)
 
-    changeLiteClient(newNetworkId).then((newLiteClient) => {
-      if (!newLiteClient) {
-        return
-      }
-      setReadyEngines((newLiteClient.engine as any).readyEngines.length)
+    changeLiteClient(newNetworkId).then((newClient) => {
+      if (!newClient) return
+      setReadyEngines(
+        'engine' in newClient ? ((newClient.engine as any).readyEngines?.length ?? 0) : 1
+      )
       setTimeout(() => {
-        setReadyEngines((newLiteClient.engine as any).readyEngines.length)
+        setReadyEngines(
+          'engine' in newClient ? ((newClient.engine as any).readyEngines?.length ?? 0) : 1
+        )
       }, 500)
     })
 
@@ -65,7 +73,7 @@ function NetworkSelector() {
 
       const sessionKeyPair = secretKeyToX25519(s.secretKey) as KeyPair
 
-      const tonWallet = getWalletFromKey(liteClient, key.get(), wallet) as IWallet
+      const tonWallet = getWalletFromKey(blockchainClient, key.get(), wallet) as IWallet
 
       const serviceUrl = new URL(s.url)
       const host = serviceUrl.host
@@ -82,11 +90,16 @@ function NetworkSelector() {
   }
 
   useEffect(() => {
+    if (isTonapiOnly) {
+      setReadyEngines(1)
+      return
+    }
     const interval = setInterval(() => {
-      setReadyEngines((liteClient.engine as any).readyEngines.length)
+      const client = blockchainClient as LiteClient
+      setReadyEngines((client?.engine as any)?.readyEngines?.length ?? 0)
     }, 1000)
     return () => clearInterval(interval)
-  }, [liteClient])
+  }, [blockchainClient, isTonapiOnly])
 
   return (
     <div className="cursor-pointer rounded flex flex-col items-center my-2">

@@ -252,6 +252,10 @@ export async function sendTonConnectStartMessage(
     Value: host,
   }
 
+  const selectedChainId = LiteClientState.selectedNetwork.chain_id.get({ noproxy: true })
+  const selectedNetworkIsTestnet = LiteClientState.selectedNetwork.is_testnet.get({ noproxy: true })
+  const network = selectedChainId ?? (selectedNetworkIsTestnet ? CHAIN.TESTNET : CHAIN.MAINNET)
+
   const data: ConnectEventSuccess = {
     event: 'connect',
     id: Date.now(),
@@ -282,7 +286,7 @@ export async function sendTonConnectStartMessage(
         {
           name: 'ton_addr',
           address: wallet.address.toRawString(),
-          network: LiteClientState.selectedNetwork.is_testnet.get() ? CHAIN.TESTNET : CHAIN.MAINNET,
+          network: network.toString() as CHAIN,
           walletStateInit: stateInit.toBoc().toString('base64'),
           publicKey,
         },

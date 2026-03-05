@@ -29,6 +29,9 @@ function NetworkSettings() {
           toncenter3_url: network.toncenter3_url,
           lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
           lite_engine_host_custom: network.lite_engine_host_custom || '',
+          use_tonapi_only: !!network.use_tonapi_only,
+          tonapi_url: network.tonapi_url || '',
+          chain_id: network.chain_id ?? undefined,
         }
       }),
     },
@@ -57,6 +60,9 @@ function NetworkSettings() {
         toncenter3_url: network.toncenter3_url,
         lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
         lite_engine_host_custom: network.lite_engine_host_custom || '',
+        use_tonapi_only: !!network.use_tonapi_only,
+        tonapi_url: network.tonapi_url || '',
+        chain_id: network.chain_id ?? undefined,
       })
     }
   }, [liteClientState.networks])
@@ -82,6 +88,9 @@ function NetworkSettings() {
             toncenter3_url: network.toncenter3_url,
             lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
             lite_engine_host_custom: network.lite_engine_host_custom || '',
+            use_tonapi_only: !!network.use_tonapi_only,
+            tonapi_url: network.tonapi_url || '',
+            chain_id: network.chain_id ?? null,
           })
       }
       await updateNetworksList()
@@ -103,6 +112,9 @@ function NetworkSettings() {
         toncenter3_url: '',
         lite_engine_host_mode: 'auto',
         lite_engine_host_custom: '',
+        use_tonapi_only: false,
+        tonapi_url: '',
+        chain_id: null,
         created_at: new Date(),
         updated_at: new Date(),
       })

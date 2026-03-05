@@ -7,7 +7,7 @@ import { getPasswordInteractive } from './store/passwordManager'
 import { getMatches } from '@tauri-apps/plugin-cli'
 import { getWallets } from './store/walletsListState'
 import { getWalletFromKey } from './utils/wallets'
-import { LiteClientState } from './store/liteClient'
+import { getApiClient } from './store/liteClient'
 import { addConnectMessage } from './store/connectMessages'
 import { Address } from '@ton/core'
 import { onOpenUrl } from '@tauri-apps/plugin-deep-link'
@@ -110,7 +110,8 @@ export function useTauriEventListener() {
 
   useEffect(() => {
     const unlisten = listen('proxy_transaction', async ({ payload }) => {
-      const liteClient = LiteClientState.liteClient.get({ noproxy: true })
+      const liteClient = getApiClient()
+
       if (!payload) {
         return
       }

@@ -7,6 +7,7 @@ import { faGlobe, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { Label } from '../ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { cn } from '@/utils/cn'
+import { MAINNET_CHAIN_ID, TESTNET_CHAIN_ID } from '@/types/network'
 import { Switch } from '../ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import NetworkTestButton from './NetworkTestButton'
@@ -21,6 +22,9 @@ export interface NetworkSettingsProps {
   toncenter3_url?: string
   lite_engine_host_mode?: 'auto' | 'custom'
   lite_engine_host_custom?: string
+  use_tonapi_only?: boolean
+  tonapi_url?: string
+  chain_id?: number | null
 }
 
 // NetworkRow component
@@ -76,7 +80,14 @@ const NetworkRow = ({ field, index, control, watch, onRemove }: NetworkRowProps)
                 )}
               />
             </div>
-            <p className="text-xs text-muted-foreground">ID: {field.network_id}</p>
+            <p className="text-xs text-muted-foreground">
+              ID: {field.network_id}
+              {field.chain_id != null &&
+              field.chain_id !== undefined &&
+              !Number.isNaN(field.chain_id)
+                ? ` · Chain: ${field.chain_id}`
+                : ''}
+            </p>
           </div>
         </div>
 
@@ -159,6 +170,47 @@ const NetworkRow = ({ field, index, control, watch, onRemove }: NetworkRowProps)
       </div>
 
       <div className="mt-4">
+        <Label htmlFor={`networks.${index}.chain_id`} className="text-sm font-medium mb-1.5 block">
+          Chain ID (Optional)
+        </Label>
+        <FormField
+          control={control}
+          name={`networks.${index}.chain_id`}
+          render={({ field: chainIdField }) => (
+            <FormItem>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder={
+                    watch(`networks.${index}.is_testnet`)
+                      ? String(TESTNET_CHAIN_ID)
+                      : String(MAINNET_CHAIN_ID)
+                  }
+                  {...chainIdField}
+                  value={
+                    chainIdField.value != null && !Number.isNaN(chainIdField.value)
+                      ? chainIdField.value
+                      : ''
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value
+                    chainIdField.onChange(v === '' ? undefined : parseInt(v, 10))
+                  }}
+                  spellCheck={false}
+                  className="w-full h-10"
+                  id={`networks.${index}.chain_id`}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <p className="mt-1 text-xs text-muted-foreground">
+          TON mainnet: -239, testnet: -3. Leave empty to use default.
+        </p>
+      </div>
+
+      <div className="mt-4">
         <Label
           htmlFor={`networks.${index}.scanner_url`}
           className="text-sm font-medium mb-1.5 block"
@@ -204,6 +256,68 @@ const NetworkRow = ({ field, index, control, watch, onRemove }: NetworkRowProps)
                   spellCheck={false}
                   className="w-full h-10"
                   id={`networks.${index}.toncenter3_url`}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="mt-4">
+        <div className="flex items-center space-x-2">
+          <FormField
+            control={control}
+            name={`networks.${index}.use_tonapi_only`}
+            render={({ field: tonapiOnlyField }) => (
+              <FormItem className="flex items-center space-x-2 space-y-0">
+                <FormControl>
+                  <Switch
+                    checked={!!tonapiOnlyField.value}
+                    onCheckedChange={tonapiOnlyField.onChange}
+                    id={`network-tonapi-only-${index}`}
+                  />
+                </FormControl>
+                <Label
+                  htmlFor={`network-tonapi-only-${index}`}
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Use TonAPI only (no LiteClient)
+                </Label>
+              </FormItem>
+            )}
+          />
+        </div>
+        {watch(`networks.${index}.use_tonapi_only`) && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Wallet operations use TonAPI. A TonAPI token is recommended for better rate limits.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-4">
+        <Label
+          htmlFor={`networks.${index}.tonapi_url`}
+          className="text-sm font-medium mb-1.5 block"
+        >
+          TonAPI URL (Optional)
+        </Label>
+        <FormField
+          control={control}
+          name={`networks.${index}.tonapi_url`}
+          render={({ field: tonapiUrlField }) => (
+            <FormItem>
+              <FormControl>
+                <Input
+                  placeholder={
+                    watch(`networks.${index}.is_testnet`)
+                      ? 'https://testnet.tonapi.io'
+                      : 'https://tonapi.io'
+                  }
+                  {...tonapiUrlField}
+                  spellCheck={false}
+                  className="w-full h-10"
+                  id={`networks.${index}.tonapi_url`}
                 />
               </FormControl>
               <FormMessage />

@@ -1,5 +1,7 @@
 import { useLiteclient } from '@/store/liteClient'
+import { TonapiBlockchainAdapter } from '@/store/tonapiBlockchainAdapter'
 import { LiteClientBlockchainStorage } from '@/utils/liteClientBlockchainStorage'
+import { TonapiBlockchainStorage } from '@/utils/tonapiBlockchainStorage'
 import { ManagedSendMessageResult, ParsedTransaction } from '@/utils/ManagedBlockchain'
 import { useState, useEffect, useRef } from 'react'
 import { Address, beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
@@ -11,10 +13,16 @@ import { AllShardsResponse } from 'ton-lite-client/dist/types'
 import { getShardBitMask, isSameShard } from '@/utils/shards'
 import { RecursivelyParseCellWithBlock } from '@/utils/tlb/cellParser'
 
+type BlockchainClient = LiteClient | TonapiBlockchainAdapter
+
 const libs: Record<string, Buffer> = {}
 export let megaLibsCell = beginCell().endCell()
 
-export async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
+type EmulationClient = {
+  getLibraries(hashes: Buffer[]): Promise<{ result: { hash: Buffer; data: Buffer }[] }>
+}
+
+export async function checkForLibraries(cells: Cell[], client: EmulationClient) {
   const toCheck = [...cells]
   let libFound = false
   while (toCheck.length > 0) {
@@ -35,7 +43,7 @@ export async function checkForLibraries(cells: Cell[], liteClient: LiteClient) {
           continue
         }
 
-        const libData = await liteClient.getLibraries([libHash])
+        const libData = await client.getLibraries([libHash])
         if (libData.result.length === 0) {
           continue
         }
@@ -63,7 +71,7 @@ async function checkAndLoadLibraries(
   genericTx: ParsedTransaction,
   blockchain: Blockchain,
   storage: BlockchainStorage,
-  liteClient: LiteClient
+  blockchainClient: BlockchainClient
 ) {
   if (
     genericTx.description.type === 'generic' &&
@@ -74,7 +82,7 @@ async function checkAndLoadLibraries(
     const messageCells: Cell[] = []
     try {
       const blockchainCopy = await blockchain.snapshot()
-      const { blockchain: verboseBlockchain } = await initializeBlockchain(liteClient)
+      const { blockchain: verboseBlockchain } = await initializeBlockchain(blockchainClient)
       await verboseBlockchain.loadFrom(blockchainCopy)
 
       setBlockchainVerbosityVerbose(verboseBlockchain)
@@ -130,7 +138,7 @@ async function checkAndLoadLibraries(
       }
     }
 
-    const libFound = await checkForLibraries(messageCells, liteClient)
+    const libFound = await checkForLibraries(messageCells, blockchainClient)
     if (libFound) {
       return true
     }
@@ -138,8 +146,11 @@ async function checkAndLoadLibraries(
   return false
 }
 
-const initializeBlockchain = async (liteClient: LiteClient) => {
-  const storage = new LiteClientBlockchainStorage(liteClient)
+const initializeBlockchain = async (client: BlockchainClient) => {
+  const storage =
+    client instanceof TonapiBlockchainAdapter
+      ? new TonapiBlockchainStorage(client)
+      : new LiteClientBlockchainStorage(client)
   const blockchain = await Blockchain.create({ storage })
   setBlockchainVerbosityFull(blockchain)
   blockchain.libs = megaLibsCell
@@ -168,7 +179,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
   const [progress, setProgress] = useState<{ total: number; done: number }>({ done: 0, total: 0 })
   const [snapshot, setSnapshot] = useState<BlockchainSnapshot | undefined>()
   const [isLoading, setIsLoading] = useState(false)
-  const liteClient = useLiteclient() as LiteClient
+  const liteClient = useLiteclient()
   const txesRef = useRef<ParsedTransaction[]>([])
 
   const updateProgress = () => {
@@ -182,6 +193,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
     }
 
     let isStopped = false
+    const blockchainClient = liteClient as BlockchainClient
 
     const runEmulator = async (blockchain: Blockchain, storage: BlockchainStorage, msg: any) => {
       const iter = await blockchain.sendMessageIter(msg, { ignoreChksig: ignoreChecksig })
@@ -190,8 +202,9 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
       let shards: AllShardsResponse | undefined
       const getShards = async () => {
         try {
-          const masterchainInfo = await liteClient.getMasterchainInfo()
-          shards = await liteClient.getAllShardsInfo(masterchainInfo.last)
+          const masterchainInfo = await blockchainClient.getMasterchainInfo()
+          const last = masterchainInfo.last
+          shards = (await blockchainClient.getAllShardsInfo(last)) as AllShardsResponse
         } catch (err) {
           console.log('error getting shards', err)
         }
@@ -206,7 +219,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
           tx as ParsedTransaction,
           blockchain,
           storage,
-          liteClient
+          blockchainClient
         )
         if (shouldRestart) {
           txesRef.current = transactions
@@ -295,7 +308,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
         let restart = true
         // eslint-disable-next-line no-unmodified-loop-condition
         while (restart && !isStopped) {
-          const { blockchain, storage } = await initializeBlockchain(liteClient)
+          const { blockchain, storage } = await initializeBlockchain(blockchainClient)
           const { transactions, shouldRestart } = await runEmulator(blockchain, storage, msg)
           restart = shouldRestart
 

@@ -36,7 +36,9 @@ export interface ConnectMessageTransaction {
   message_cell?: string
   message_mode?: number
   sign_payload?: string | null
-  message_type: 'tx' | 'sign'
+  plugin_address?: string | null // For W5R1 plugin installation
+  plugins_to_remove?: string | null // JSON array of plugin addresses to remove
+  message_type: 'tx' | 'sign' | 'addW5R1Plugin'
 
   created_at: Date
   updated_at: Date

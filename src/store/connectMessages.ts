@@ -13,11 +13,12 @@ export interface TonConnectMessage {
   wallet_id: number
   status: number
   message_mode?: number
-  message_type: 'tx' | 'sign'
+  message_type: 'tx' | 'sign' | 'addW5R1Plugin'
 
   message_cell?: string
 
   wallet_address?: string
+  plugin_address?: string
   created_at?: Date
   updated_at?: Date
 }
@@ -32,11 +33,58 @@ export type TonConnectMessageSign = TonConnectMessage & {
   sign_payload: SignDataPayload
 }
 
-export type TonConnectMessageRecord = TonConnectMessageSign | TonConnectMessageTransaction
+export type TonConnectMessageAddPlugin = TonConnectMessage & {
+  message_type: 'addW5R1Plugin'
+  plugin_address: string | undefined // null means addr_none (only removal, no install)
+  plugins_to_remove?: string[]
+}
+
+export type TonConnectMessageRecord =
+  | TonConnectMessageSign
+  | TonConnectMessageTransaction
+  | TonConnectMessageAddPlugin
 export type FullTonConnectMessage = TonConnectMessage & {
-  message_type: 'tx' | 'sign'
+  message_type: 'tx' | 'sign' | 'addW5R1Plugin'
   payload?: ConnectMessageTransactionPayload
   sign_payload?: SignDataPayload
+  plugin_address?: string | undefined
+  plugins_to_remove?: string[]
+}
+
+function parseDbMessage(m: ConnectMessageTransaction): TonConnectMessageRecord {
+  const base: Omit<TonConnectMessage, 'message_type'> = {
+    id: m.id,
+    connect_session_id: m.connect_session_id,
+    connect_event_id: m.connect_event_id,
+    status: m.status,
+    key_id: m.key_id,
+    wallet_id: m.wallet_id,
+    wallet_address: m.wallet_address,
+    created_at: m.created_at,
+    updated_at: m.updated_at,
+  }
+
+  switch (m.message_type) {
+    case 'tx':
+      return {
+        ...base,
+        message_type: 'tx',
+        payload: m.payload ? JSON.parse(m.payload) : undefined,
+      }
+    case 'sign':
+      return {
+        ...base,
+        message_type: 'sign',
+        sign_payload: m.sign_payload ? JSON.parse(m.sign_payload) : undefined,
+      }
+    case 'addW5R1Plugin':
+      return {
+        ...base,
+        message_type: 'addW5R1Plugin',
+        plugin_address: m.plugin_address ?? undefined,
+        plugins_to_remove: m.plugins_to_remove ? JSON.parse(m.plugins_to_remove) : undefined,
+      }
+  }
 }
 
 export const messagesState = hookstate<TonConnectMessageRecord[]>(getConnectMessages)
@@ -49,26 +97,7 @@ export async function getConnectMessages(): Promise<TonConnectMessageRecord[]> {
     })
     .select('*')
 
-  const messages: TonConnectMessageRecord[] = dbMessages.map((m) => {
-    return {
-      id: m.id,
-      // saved_wallet_id: m.saved_wallet_id,
-      connect_session_id: m.connect_session_id,
-      connect_event_id: m.connect_event_id,
-      status: m.status,
-      key_id: m.key_id,
-      wallet_id: m.wallet_id,
-      payload: m.payload ? JSON.parse(m.payload) : undefined,
-      message_type: m.message_type,
-      sign_payload: m.sign_payload ? JSON.parse(m.sign_payload) : undefined,
-
-      wallet_address: m.wallet_address,
-      created_at: m.created_at,
-      updated_at: m.updated_at,
-    }
-  })
-
-  return messages
+  return dbMessages.map(parseDbMessage)
 }
 
 export function useMessagesState() {
@@ -82,6 +111,8 @@ export async function addConnectMessage(input: Omit<FullTonConnectMessage, 'id'>
       ...input,
       payload: input.payload ? JSON.stringify(input.payload) : null,
       sign_payload: input.sign_payload ? JSON.stringify(input.sign_payload) : null,
+      plugin_address: input.plugin_address ?? null,
+      plugins_to_remove: input.plugins_to_remove ? JSON.stringify(input.plugins_to_remove) : null,
       created_at: input.created_at ?? new Date(),
       updated_at: input.created_at ?? new Date(),
     })
@@ -91,12 +122,7 @@ export async function addConnectMessage(input: Omit<FullTonConnectMessage, 'id'>
     throw new Error("can't add session")
   }
 
-  const message: TonConnectMessageRecord = {
-    ...res[0],
-    payload: res[0].payload ? JSON.parse(res[0].payload) : undefined,
-    sign_payload: res[0].sign_payload ? JSON.parse(res[0].sign_payload) : undefined,
-  }
-
+  const message = parseDbMessage(res[0])
   messagesState.merge([message])
 }
 

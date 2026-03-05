@@ -25,11 +25,16 @@ import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/
 import { getWalletListState } from '@/store/walletsListState'
 import { ImmutableObject } from '@hookstate/core'
 import { getWalletFromKey } from '@/utils/wallets'
-import { ApproveTonConnectMessageTransaction, GetTransfersFromTCMessage } from '@/utils/tonConnect'
+import {
+  ApproveTonConnectMessageTransaction,
+  bridgeUrl,
+  GetTransfersFromTCMessage,
+} from '@/utils/tonConnect'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
 import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
 import { useNavigate } from 'react-router-dom'
 import { listen } from '@tauri-apps/api/event'
+import { detectW5PluginInstallation } from '@/utils/detectW5Plugin'
 const appWindow = getCurrentWebviewWindow()
 
 export function TonConnectListener() {
@@ -135,7 +140,6 @@ export function TonConnectListener() {
   }, [])
 
   useEffect(() => {
-    const bridgeUrl = 'https://bridge.tonapi.io/bridge'
     const listeners: EventSource[] = []
 
     sessions.map((s) => {
@@ -285,14 +289,39 @@ async function handleRequestTransactionRequest({
   }
 
   let walletAddress: string | undefined
+  let walletType: string | undefined
   const keys = getWalletListState()
 
   const key = keys.find((k) => k.id.get() === session.keyId)
   if (key) {
     const wallet = key.wallets.get()?.find((w) => w.id === session.walletId)
     if (wallet) {
+      walletType = wallet.type
       const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
       walletAddress = tonWallet?.address.toRawString()
+    }
+  }
+
+  await updateSessionEventId(session.id, parseInt(eventData.lastEventId))
+
+  // Detect W5R1 plugin installation
+  if (walletType) {
+    const pluginDetection = detectW5PluginInstallation(info.messages, walletType)
+    if (pluginDetection.isPluginInstall) {
+      await addConnectMessage({
+        connect_event_id: parseInt(walletMessage.id),
+        connect_session_id: session.id,
+        key_id: session.keyId,
+        wallet_id: session.walletId,
+        status: 0,
+        wallet_address: walletAddress,
+        message_type: 'addW5R1Plugin',
+        plugin_address: pluginDetection.pluginAddress?.toString() ?? undefined,
+        plugins_to_remove: pluginDetection.pluginsToRemove.map((addr) => addr.toString()),
+      })
+      appWindow.unminimize()
+      appWindow.setFocus()
+      return
     }
   }
 
@@ -308,8 +337,6 @@ async function handleRequestTransactionRequest({
   })
   appWindow.unminimize()
   appWindow.setFocus()
-
-  updateSessionEventId(session.id, parseInt(eventData.lastEventId))
 }
 
 async function autoSendMessage({
@@ -341,15 +368,21 @@ async function autoSendMessage({
 
   const transfers = GetTransfersFromTCMessage(messages)
 
-  const liteClient = LiteClientState.liteClient.get()
+  const blockchainClient = LiteClientState.liteClient.get() ?? LiteClientState.tonapiAdapter.get()
+  if (!blockchainClient) return false
   const keyPair = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
-  const sendWallet = getWalletFromKey(liteClient, key, wallet)
+  const sendWallet = getWalletFromKey(blockchainClient, key, wallet)
   if (!sendWallet) {
     return false
   }
   const messageCell = await sendWallet.getExternalMessageCell(keyPair, transfers)
   updateSessionEventId(session.id, parseInt(bridgeEventId))
 
-  await ApproveTonConnectMessageTransaction({ liteClient, messageCell, session, eventId })
+  await ApproveTonConnectMessageTransaction({
+    liteClient: blockchainClient,
+    messageCell,
+    session,
+    eventId,
+  })
   return true
 }

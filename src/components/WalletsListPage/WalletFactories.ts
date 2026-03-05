@@ -21,6 +21,7 @@ import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV
 import { HighloadWalletV3CodeCell } from '@/contracts/highload-wallet-v3/HighloadWalletV3.source'
 import { Account } from 'tonapi-sdk-js'
 import { LiteClient } from 'ton-lite-client'
+import { TonapiBlockchainAdapter } from '@/store/tonapiBlockchainAdapter'
 import { getLastLiteBlock } from '@/utils/liteClientBlockchainStorage'
 
 const TempClinet = new TonClient4({
@@ -305,7 +306,7 @@ export const WalletFactories = {
 export async function createWalletFromTonapiData(
   publicKey: Buffer,
   tonapiWallet: Account,
-  liteClient: LiteClient
+  blockchainClient: LiteClient | TonapiBlockchainAdapter
 ): Promise<IWallet | null> {
   try {
     const address = Address.parse(tonapiWallet.address)
@@ -324,8 +325,8 @@ export async function createWalletFromTonapiData(
 
     // Create appropriate wallet object based on type
     if (walletType === 'v4R2') {
-      const master = await getLastLiteBlock(liteClient)
-      const accountState = await liteClient.getAccountState(address, master.last)
+      const master = await getLastLiteBlock(blockchainClient)
+      const accountState = await blockchainClient.getAccountState(address, master.last)
       const data =
         accountState?.state?.storage?.state?.type === 'active' &&
         accountState?.state?.storage?.state?.state?.data
@@ -337,7 +338,7 @@ export async function createWalletFromTonapiData(
       const dataSlice = data.beginParse()
       const subwalletId = dataSlice.skip(32).loadUint(32)
 
-      const wallet = liteClient.open(
+      const wallet = blockchainClient.open(
         WalletContractV4.create({
           publicKey,
           workchain: 0,
@@ -353,8 +354,8 @@ export async function createWalletFromTonapiData(
         subwalletId,
       }
     } else if (walletType === 'v3R2') {
-      const master = await getLastLiteBlock(liteClient)
-      const accountState = await liteClient.getAccountState(address, master.last)
+      const master = await getLastLiteBlock(blockchainClient)
+      const accountState = await blockchainClient.getAccountState(address, master.last)
       const data =
         accountState?.state?.storage?.state?.type === 'active' &&
         accountState?.state?.storage?.state?.state?.data
@@ -366,7 +367,7 @@ export async function createWalletFromTonapiData(
       const dataSlice = data.beginParse()
       const subwalletId = dataSlice.skip(32).loadUint(32)
 
-      const walletv3r2 = liteClient.open(
+      const walletv3r2 = blockchainClient.open(
         WalletContractV3R2.create({
           publicKey,
           workchain: 0,
@@ -382,8 +383,8 @@ export async function createWalletFromTonapiData(
         subwalletId,
       }
     } else if (walletType === 'v5R1') {
-      const master = await getLastLiteBlock(liteClient)
-      const accountState = await liteClient.getAccountState(address, master.last)
+      const master = await getLastLiteBlock(blockchainClient)
+      const accountState = await blockchainClient.getAccountState(address, master.last)
       const data =
         accountState?.state?.storage?.state?.type === 'active' &&
         accountState?.state?.storage?.state?.state?.data
@@ -395,7 +396,7 @@ export async function createWalletFromTonapiData(
       const dataSlice = data.beginParse()
       const subwalletId = dataSlice.skip(1 + 32).loadUint(32)
 
-      const walletv5r1 = liteClient.open(
+      const walletv5r1 = blockchainClient.open(
         WalletV5.createFromConfig(
           {
             publicKey,

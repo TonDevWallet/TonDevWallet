@@ -149,18 +149,20 @@ export async function setTonConnectSessionAutoSend({
 }
 
 export async function deleteTonConnectSession(session: State<TonConnectSession>) {
-  // const session =
-
   try {
-    await sendTonConnectMessage(
-      {
-        event: 'disconnect',
-        payload: {},
-        id: Date.now(),
-      },
-      session?.secretKey.get() || Buffer.from(''),
-      session?.userId?.get() || ''
-    )
+    try {
+      await sendTonConnectMessage(
+        {
+          event: 'disconnect',
+          payload: {},
+          id: Date.now(),
+        },
+        session?.secretKey.get() || Buffer.from(''),
+        session?.userId?.get() || ''
+      )
+    } catch (e) {
+      console.log('Could not send disconnect message, error: ', e)
+    }
 
     const db = await getDatabase()
     await db<ConnectMessageTransaction>('connect_message_transactions')
