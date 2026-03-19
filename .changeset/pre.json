@@ -1,0 +1,15 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "ton_dev_wallet": "0.7.3"
+  },
+  "changesets": [
+    "bright-areas-travel",
+    "empty-islands-read",
+    "four-taxis-invent",
+    "slick-adults-say",
+    "tasty-feet-occur",
+    "tiny-ravens-send"
+  ]
+}
