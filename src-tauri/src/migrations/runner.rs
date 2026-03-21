@@ -48,7 +48,7 @@ impl<'a> MigrationRunner<'a> {
     fn acquire_lock(&mut self) -> MigrationResult<()> {
         let count: i64 = self.conn
             .query_row(
-                "SELECT COUNT(*) FROM knex_migrations_lock",
+                "SELECT COUNT(*) FROM knex_migrations_lock WHERE is_locked = 1",
                 [],
                 |row| row.get(0),
             )
