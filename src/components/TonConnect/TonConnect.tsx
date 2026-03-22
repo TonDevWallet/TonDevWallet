@@ -8,7 +8,6 @@ import { ConnectEventSuccess, CHAIN, ConnectRequest, TonProofItem } from '@tonco
 import { useCallback, useState } from 'react'
 import { Cell, beginCell, storeStateInit, StateInit } from '@ton/core'
 import { KeyPair } from '@ton/crypto'
-import { LiteClient } from 'ton-lite-client'
 import { BlueButton } from '../ui/BlueButton'
 import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
@@ -33,7 +32,7 @@ export function TonConnect() {
   const [connectLink, setConnectLink] = useState('')
   const [isDetecting, setIsDetecting] = useState(false)
   // const wallet = useWallet()
-  const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClient = useLiteclient()
 
   const selectedWallet = useSelectedWallet()
   const selectedKey = useSelectedKey()

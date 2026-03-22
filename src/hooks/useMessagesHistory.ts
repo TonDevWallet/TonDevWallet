@@ -1,7 +1,7 @@
 import { useDatabase } from '@/db'
 import { useEffect, useState } from 'react'
 import { ConnectMessageTransaction } from '@/types/connect'
-import { TonConnectMessageRecord } from '@/store/connectMessages'
+import { parseDbMessage, type TonConnectMessageRecord } from '@/store/connectMessages'
 
 interface UseMessagesHistoryOptions {
   pageSize?: number
@@ -57,23 +57,7 @@ export function useMessagesHistory(
         .offset(offset)
         .select('*')
 
-      const transformedMessages: TonConnectMessageRecord[] = dbMessages.map((m) => {
-        return {
-          id: m.id,
-          connect_session_id: m.connect_session_id,
-          connect_event_id: m.connect_event_id,
-          status: m.status,
-          key_id: m.key_id,
-          wallet_id: m.wallet_id,
-          message_cell: m.message_cell,
-          wallet_address: m.wallet_address,
-          payload: m.payload ? JSON.parse(m.payload) : undefined,
-          message_type: m.message_type,
-          sign_payload: m.sign_payload ? JSON.parse(m.sign_payload) : undefined,
-        }
-      })
-
-      setMessages(transformedMessages)
+      setMessages(dbMessages.map(parseDbMessage))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch messages')
     } finally {

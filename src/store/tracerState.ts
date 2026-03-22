@@ -6,9 +6,8 @@ import { Address } from '@ton/ton'
 import { getEmulationWithStack } from '@/utils/retracer/retracer'
 import { parseWithPayloads } from '@truecarry/tlb-abi'
 import { RecursivelyParseCellWithBlock } from '@/utils/tlb/cellParser'
-import { LiteClient } from 'ton-lite-client'
-import { LiteClientState } from './liteClient'
-import { getToncenter3Url } from '@/utils/ton'
+import { getApiClient, LiteClientState } from './liteClient'
+import { getToncenter3Url, toncenterV3RequestHeaders } from '@/utils/ton'
 
 export interface GraphData {
   transactions: ParsedTransaction[]
@@ -263,15 +262,10 @@ async function startRemoteTraceEmulation(remoteId: string, hash: string) {
     console.log('startRemoteTraceEmulation', remoteId, hash)
     // Create a local reference to liteClient for this function execution
     // We'll need to get it from the context in a real implementation
-    const liteClient = LiteClientState.liteClient.get({ noproxy: true }) as LiteClient
+    const libraryClient = getApiClient()
     const isTestnet = LiteClientState.selectedNetwork.get()?.is_testnet
     const toncenter3Url = LiteClientState.selectedNetwork.get()?.toncenter3_url
-
-    // In a real-world implementation, you would get the liteClient like this:
-    // const liteClientModule = await import('@/store/liteClient');
-    // const liteClient = liteClientModule.getLiteClient();
-    // const selectedNetwork = liteClientModule.getSelectedNetwork();
-    // const isTestnet = selectedNetwork.is_testnet;
+    const toncenterApiKey = LiteClientState.selectedNetwork.get({ noproxy: true }).toncenter_token ?? ''
 
     // Get a new abort controller for this trace
     const abortController = new AbortController()
@@ -285,6 +279,7 @@ async function startRemoteTraceEmulation(remoteId: string, hash: string) {
     const response = await CallForSuccess(async () => {
       const res = await fetch(apiUrl, {
         signal: abortController.signal,
+        headers: toncenterV3RequestHeaders(toncenterApiKey),
       })
       if (res.status !== 200) {
         throw new Error('Failed to fetch trace data')
@@ -334,12 +329,12 @@ async function startRemoteTraceEmulation(remoteId: string, hash: string) {
 
     // Since we need liteClient, we'll just simulate progress here
     // In a real implementation, you would process each transaction
-    if (!liteClient) {
+    if (!libraryClient) {
       updateRemoteTraceStatus(
         remoteId,
         false,
         { loaded: 0, total: transactionsList.length },
-        'No liteClient available for emulation',
+        'No blockchain client available for emulation',
         []
       )
       return
@@ -359,7 +354,7 @@ async function startRemoteTraceEmulation(remoteId: string, hash: string) {
         }
 
         const res = await getEmulationWithStack(
-          liteClient,
+          libraryClient,
           {
             addr: Address.parse(tx.account),
             hash: Buffer.from(tx.hash, 'base64'),
@@ -372,7 +367,8 @@ async function startRemoteTraceEmulation(remoteId: string, hash: string) {
             if (abortController.signal.aborted) {
               throw new Error('Operation was aborted')
             }
-          }
+          },
+          toncenterApiKey
         )
 
         // Check if aborted after emulation

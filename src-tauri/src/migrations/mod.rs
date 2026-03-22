@@ -84,5 +84,7 @@ pub fn get_migrations() -> Vec<Box<dyn Migration>> {
         Box::new(migrations::m031_add_plugins_to_remove::M031AddPluginsToRemove::new()),
         Box::new(migrations::m032_add_tonapi_network_settings::M032AddTonapiNetworkSettings::new()),
         Box::new(migrations::m033_add_chain_id::M033AddChainId::new()),
+        Box::new(migrations::m034_add_blockchain_source::M034AddBlockchainSource::new()),
+        Box::new(migrations::m035_add_network_api_tokens::M035AddNetworkApiTokens::new()),
     ]
 }

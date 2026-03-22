@@ -10,7 +10,6 @@ import { getWalletFromKey } from '@/utils/wallets'
 import { faClose, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { NavLink } from 'react-router-dom'
-import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { KeyJazzicon } from '../KeyJazzicon'
 import { Block } from '../ui/Block'
@@ -31,7 +30,7 @@ import { Button } from '@/components/ui/button'
 export function SessionsList() {
   const sessions = useTonConnectSessions()
   const keys = useWalletListState()
-  const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClient = useLiteclient()
 
   return (
     <div className="mb-8 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

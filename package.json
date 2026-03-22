@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
-    "build": "tauri build"
+    "build": "tauri build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
@@ -65,6 +68,7 @@
     "@ton-community/assets-sdk": "^0.0.5",
     "@ton-community/tlb-codegen": "npm:@truecarry/tlb-codegen@1.2.0",
     "@ton-community/tlb-parser": "^0.1.5",
+    "@ton-community/tlb-runtime": "1.0.0-alpha.3",
     "@ton/core": "0.63.1",
     "@ton/crypto": "^3.3.0",
     "@ton/sandbox": "^0.41.0",
@@ -142,7 +146,7 @@
     "eslint-plugin-react": "^7.33.2",
     "prettier": "^3.5.3",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.3",
     "vite": "^6.3.5"
   },
   "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"

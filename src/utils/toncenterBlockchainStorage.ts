@@ -1,5 +1,5 @@
 /**
- * BlockchainStorage implementation using tonapi-sdk-js (for emulation in tonapi-only mode)
+ * BlockchainStorage for TonCenter primary mode (stub adapter until v3 client is implemented).
  */
 import { Address, Dictionary } from '@ton/core'
 import { extractEc } from '@ton/sandbox/dist/utils/ec'
@@ -8,7 +8,7 @@ import { BlockchainStorage } from '@ton/sandbox/dist/blockchain/BlockchainStorag
 import { SmartContract } from '@ton/sandbox/dist/blockchain/SmartContract'
 import type { ApiClient } from '@/store/primaryChainClient'
 
-export class TonapiBlockchainStorage implements BlockchainStorage {
+export class ToncenterBlockchainStorage implements BlockchainStorage {
   private contracts: Map<string, SmartContract> = new Map()
   private client: ApiClient
 

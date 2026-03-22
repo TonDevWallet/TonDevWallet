@@ -19,8 +19,7 @@ import {
   SignDataRpcResponseSuccess,
 } from '@tonconnect/protocol'
 import { Address, beginCell, Cell, external, storeMessage } from '@ton/core'
-import { LiteClient } from 'ton-lite-client'
-import { TonapiBlockchainAdapter } from '@/store/tonapiBlockchainAdapter'
+import type { ApiClient } from '@/store/liteClient'
 import { secretKeyToX25519 } from './ed25519'
 import { getWalletFromKey } from '@/utils/wallets'
 import { SignTonConnectData } from '@/utils/signData/sign'
@@ -73,11 +72,7 @@ export async function ApproveTonConnectMessageTransaction({
   messageCell: Cell
   connectMessage?: TonConnectMessageTransaction | ImmutableObject<TonConnectMessageTransaction>
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
-  liteClient:
-    | LiteClient
-    | TonapiBlockchainAdapter
-    | ImmutableObject<LiteClient>
-    | ImmutableObject<TonapiBlockchainAdapter>
+  liteClient: ApiClient | ImmutableObject<ApiClient>
   eventId: string
 }) {
   await liteClient.sendMessage(messageCell?.toBoc() || Buffer.from(''))
@@ -150,11 +145,7 @@ export async function ApproveTonConnectMessageSign({
   message: TonConnectMessageSign | ImmutableObject<TonConnectMessageSign>
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
   key: any
-  liteClient:
-    | LiteClient
-    | TonapiBlockchainAdapter
-    | ImmutableObject<LiteClient>
-    | ImmutableObject<TonapiBlockchainAdapter>
+  liteClient: ApiClient | ImmutableObject<ApiClient>
   walletKeyPair: { secretKey: Uint8Array | Buffer }
 }) {
   let walletAddress: string | undefined
@@ -284,11 +275,7 @@ export async function ApproveTonConnectMessageAddPlugin({
 }: {
   message: TonConnectMessageAddPlugin | ImmutableObject<TonConnectMessageAddPlugin>
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
-  liteClient:
-    | LiteClient
-    | TonapiBlockchainAdapter
-    | ImmutableObject<LiteClient>
-    | ImmutableObject<TonapiBlockchainAdapter>
+  liteClient: ApiClient | ImmutableObject<ApiClient>
   walletKeyPair: KeyPair
   pluginAddress: Address | null // null means only removal, no install
   pluginsToRemove: Address[]

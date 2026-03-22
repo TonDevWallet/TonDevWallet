@@ -3,11 +3,16 @@ import { FormControl, FormField, FormItem, FormMessage } from '../ui/form'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faGlobe, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faGlobe, faKey, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { Label } from '../ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { cn } from '@/utils/cn'
-import { MAINNET_CHAIN_ID, TESTNET_CHAIN_ID } from '@/types/network'
+import {
+  BLOCKCHAIN_SOURCES,
+  BlockchainSource,
+  MAINNET_CHAIN_ID,
+  TESTNET_CHAIN_ID,
+} from '@/types/network'
 import { Switch } from '../ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import NetworkTestButton from './NetworkTestButton'
@@ -22,8 +27,10 @@ export interface NetworkSettingsProps {
   toncenter3_url?: string
   lite_engine_host_mode?: 'auto' | 'custom'
   lite_engine_host_custom?: string
-  use_tonapi_only?: boolean
+  blockchain_source?: BlockchainSource
   tonapi_url?: string
+  tonapi_token?: string
+  toncenter_token?: string
   chain_id?: number | null
 }
 
@@ -265,34 +272,48 @@ const NetworkRow = ({ field, index, control, watch, onRemove }: NetworkRowProps)
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center space-x-2">
-          <FormField
-            control={control}
-            name={`networks.${index}.use_tonapi_only`}
-            render={({ field: tonapiOnlyField }) => (
-              <FormItem className="flex items-center space-x-2 space-y-0">
+        <Label
+          htmlFor={`networks.${index}.blockchain_source`}
+          className="text-sm font-medium mb-1.5 block"
+        >
+          Blockchain data source
+        </Label>
+        <FormField
+          control={control}
+          name={`networks.${index}.blockchain_source`}
+          render={({ field: sourceField }) => (
+            <FormItem>
+              <Select
+                value={sourceField.value || 'liteclient'}
+                onValueChange={(v) => {
+                  sourceField.onChange(v as BlockchainSource)
+                }}
+              >
                 <FormControl>
-                  <Switch
-                    checked={!!tonapiOnlyField.value}
-                    onCheckedChange={tonapiOnlyField.onChange}
-                    id={`network-tonapi-only-${index}`}
-                  />
+                  <SelectTrigger id={`networks.${index}.blockchain_source`} className="w-full h-10">
+                    <SelectValue placeholder="Source" />
+                  </SelectTrigger>
                 </FormControl>
-                <Label
-                  htmlFor={`network-tonapi-only-${index}`}
-                  className="text-sm font-medium cursor-pointer"
-                >
-                  Use TonAPI only (no LiteClient)
-                </Label>
-              </FormItem>
-            )}
-          />
-        </div>
-        {watch(`networks.${index}.use_tonapi_only`) && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            Wallet operations use TonAPI. A TonAPI token is recommended for better rate limits.
-          </p>
-        )}
+                <SelectContent>
+                  {BLOCKCHAIN_SOURCES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s === 'liteclient'
+                        ? 'LiteClient (liteservers)'
+                        : s === 'tonapi'
+                          ? 'TonAPI'
+                          : 'TonCenter v3'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Primary client for wallet ops and chain reads. Traces use the TonCenter v3 URL field
+                above when set.
+              </p>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
 
       <div className="mt-4">
@@ -320,11 +341,105 @@ const NetworkRow = ({ field, index, control, watch, onRemove }: NetworkRowProps)
                   id={`networks.${index}.tonapi_url`}
                 />
               </FormControl>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Used for the auxiliary TonAPI client (wallet discovery, assets). When TonAPI is the
+                primary source, this is also the primary endpoint. Set the bearer token for this
+                network in the API tokens section below.
+              </p>
               <FormMessage />
             </FormItem>
           )}
         />
       </div>
+
+      <div className="mt-4 rounded-md border border-border/80 bg-muted/20 p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <FontAwesomeIcon icon={faKey} className="text-primary" />
+          <div>
+            <p className="text-sm font-medium">API tokens (this network)</p>
+            <p className="text-xs text-muted-foreground">
+              Optional keys for higher rate limits. Saved with this network row.
+            </p>
+          </div>
+        </div>
+        <FormField
+          control={control}
+          name={`networks.${index}.tonapi_token`}
+          render={({ field: tokenField }) => (
+            <FormItem>
+              <Label
+                htmlFor={`networks.${index}.tonapi_token`}
+                className="text-sm font-medium mb-1.5 block"
+              >
+                TonAPI bearer token
+              </Label>
+              <FormControl>
+                <Input
+                  {...tokenField}
+                  type="password"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="h-10"
+                  placeholder="Optional"
+                  id={`networks.${index}.tonapi_token`}
+                  value={tokenField.value ?? ''}
+                />
+              </FormControl>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Sent as <code className="text-xs">Authorization: Bearer …</code> for TonAPI requests
+                when this network is selected.
+              </p>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`networks.${index}.toncenter_token`}
+          render={({ field: tcField }) => (
+            <FormItem>
+              <Label
+                htmlFor={`networks.${index}.toncenter_token`}
+                className="text-sm font-medium mb-1.5 block"
+              >
+                TON Center API v3 key
+              </Label>
+              <FormControl>
+                <Input
+                  {...tcField}
+                  type="password"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="h-10"
+                  placeholder="Optional"
+                  id={`networks.${index}.toncenter_token`}
+                  value={tcField.value ?? ''}
+                />
+              </FormControl>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Sent as <code className="text-xs">X-Api-Key</code> for TonCenter v3 (
+                <a
+                  className="underline underline-offset-2 hover:text-foreground"
+                  href="https://toncenter.com/api/v3/doc"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  docs
+                </a>
+                ) when this network is selected.
+              </p>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      {watch(`networks.${index}.blockchain_source`) === 'toncenter' && (
+        <div className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-muted-foreground">
+          TonCenter v3 as primary client is not fully implemented yet. Use LiteClient or TonAPI for
+          day-to-day wallet use until the adapter is ready.
+        </div>
+      )}
 
       <div className="mt-4">
         <Label

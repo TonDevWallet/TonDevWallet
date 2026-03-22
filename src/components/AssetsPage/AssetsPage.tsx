@@ -31,6 +31,13 @@ interface JettonBalance {
   usdValue?: number
 }
 
+function jettonVerificationFromApi(v: unknown): 'whitelist' | 'blacklist' | 'none' {
+  if (v === 'whitelist' || v === 'blacklist' || v === 'none') {
+    return v
+  }
+  return 'none'
+}
+
 interface NFTItem {
   address: string
   index: number
@@ -115,7 +122,7 @@ export function AssetsPage() {
             image: balance.jetton.image,
           },
           price: balance.price ? { usd: balance.price?.prices?.USD ?? 0 } : { usd: 0 },
-          verification: balance.jetton.verification || 'none',
+          verification: jettonVerificationFromApi(balance.jetton.verification),
           usdValue,
           walletAddress: balance.wallet_address.address,
         }

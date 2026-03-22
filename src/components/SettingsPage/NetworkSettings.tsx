@@ -4,9 +4,13 @@ import { useEffect, useState } from 'react'
 import { Button } from '../ui/button'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faNetworkWired, faPlus } from '@fortawesome/free-solid-svg-icons'
-import { updateNetworksList, useLiteclientState } from '@/store/liteClient'
+import {
+  getNetworkSourceDbFields,
+  updateNetworksList,
+  useLiteclientState,
+} from '@/store/liteClient'
 import { getDatabase } from '@/db'
-import { Network } from '@/types/network'
+import { getNetworkBlockchainSource, Network } from '@/types/network'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import NetworkRow, { NetworkSettingsProps } from './NetworkRow'
 
@@ -29,8 +33,10 @@ function NetworkSettings() {
           toncenter3_url: network.toncenter3_url,
           lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
           lite_engine_host_custom: network.lite_engine_host_custom || '',
-          use_tonapi_only: !!network.use_tonapi_only,
+          blockchain_source: getNetworkBlockchainSource(network),
           tonapi_url: network.tonapi_url || '',
+          tonapi_token: network.tonapi_token || '',
+          toncenter_token: network.toncenter_token || '',
           chain_id: network.chain_id ?? undefined,
         }
       }),
@@ -60,8 +66,10 @@ function NetworkSettings() {
         toncenter3_url: network.toncenter3_url,
         lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
         lite_engine_host_custom: network.lite_engine_host_custom || '',
-        use_tonapi_only: !!network.use_tonapi_only,
+        blockchain_source: getNetworkBlockchainSource(network),
         tonapi_url: network.tonapi_url || '',
+        tonapi_token: network.tonapi_token || '',
+        toncenter_token: network.toncenter_token || '',
         chain_id: network.chain_id ?? undefined,
       })
     }
@@ -78,6 +86,9 @@ function NetworkSettings() {
         if (!network) {
           continue
         }
+        const sourceFields = getNetworkSourceDbFields({
+          blockchain_source: network.blockchain_source,
+        })
         await db<Network>('networks')
           .where('network_id', network.network_id)
           .update({
@@ -88,8 +99,10 @@ function NetworkSettings() {
             toncenter3_url: network.toncenter3_url,
             lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
             lite_engine_host_custom: network.lite_engine_host_custom || '',
-            use_tonapi_only: !!network.use_tonapi_only,
+            ...sourceFields,
             tonapi_url: network.tonapi_url || '',
+            tonapi_token: network.tonapi_token ?? '',
+            toncenter_token: network.toncenter_token ?? '',
             chain_id: network.chain_id ?? null,
           })
       }
@@ -112,8 +125,10 @@ function NetworkSettings() {
         toncenter3_url: '',
         lite_engine_host_mode: 'auto',
         lite_engine_host_custom: '',
-        use_tonapi_only: false,
+        blockchain_source: 'liteclient',
         tonapi_url: '',
+        tonapi_token: '',
+        toncenter_token: '',
         chain_id: null,
         created_at: new Date(),
         updated_at: new Date(),

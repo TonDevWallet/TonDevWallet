@@ -1,11 +1,8 @@
 import { useLiteclient } from '@/store/liteClient'
-import { TonapiBlockchainAdapter } from '@/store/tonapiBlockchainAdapter'
-import { LiteClientBlockchainStorage } from '@/utils/liteClientBlockchainStorage'
-import { TonapiBlockchainStorage } from '@/utils/tonapiBlockchainStorage'
+import type { ApiClient, LibraryClient } from '@/store/primaryChainClient'
 import { ManagedSendMessageResult, ParsedTransaction } from '@/utils/ManagedBlockchain'
 import { useState, useEffect, useRef } from 'react'
 import { Address, beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
-import { LiteClient } from 'ton-lite-client'
 import { parseWithPayloads } from '@truecarry/tlb-abi'
 import { Blockchain, BlockchainSnapshot, BlockchainStorage } from '@ton/sandbox'
 import { bigIntToBuffer } from '@/utils/ton'
@@ -13,16 +10,10 @@ import { AllShardsResponse } from 'ton-lite-client/dist/types'
 import { getShardBitMask, isSameShard } from '@/utils/shards'
 import { RecursivelyParseCellWithBlock } from '@/utils/tlb/cellParser'
 
-type BlockchainClient = LiteClient | TonapiBlockchainAdapter
-
 const libs: Record<string, Buffer> = {}
 export let megaLibsCell = beginCell().endCell()
 
-type EmulationClient = {
-  getLibraries(hashes: Buffer[]): Promise<{ result: { hash: Buffer; data: Buffer }[] }>
-}
-
-export async function checkForLibraries(cells: Cell[], client: EmulationClient) {
+export async function checkForLibraries(cells: Cell[], client: LibraryClient) {
   const toCheck = [...cells]
   let libFound = false
   while (toCheck.length > 0) {
@@ -71,7 +62,7 @@ async function checkAndLoadLibraries(
   genericTx: ParsedTransaction,
   blockchain: Blockchain,
   storage: BlockchainStorage,
-  blockchainClient: BlockchainClient
+  blockchainClient: ApiClient
 ) {
   if (
     genericTx.description.type === 'generic' &&
@@ -146,11 +137,8 @@ async function checkAndLoadLibraries(
   return false
 }
 
-const initializeBlockchain = async (client: BlockchainClient) => {
-  const storage =
-    client instanceof TonapiBlockchainAdapter
-      ? new TonapiBlockchainStorage(client)
-      : new LiteClientBlockchainStorage(client)
+const initializeBlockchain = async (client: ApiClient) => {
+  const storage = client.createStorageAdapter()
   const blockchain = await Blockchain.create({ storage })
   setBlockchainVerbosityFull(blockchain)
   blockchain.libs = megaLibsCell
@@ -193,7 +181,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
     }
 
     let isStopped = false
-    const blockchainClient = liteClient as BlockchainClient
+    const blockchainClient = liteClient
 
     const runEmulator = async (blockchain: Blockchain, storage: BlockchainStorage, msg: any) => {
       const iter = await blockchain.sendMessageIter(msg, { ignoreChksig: ignoreChecksig })

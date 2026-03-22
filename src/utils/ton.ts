@@ -1,6 +1,15 @@
 import { beginCell, Cell, loadMessage, storeMessage } from '@ton/core'
 import { ToncenterV3Traces } from '@/utils/retracer/traces'
 
+/** TON Center HTTP API v3 (see securityDefinitions in doc.json). */
+export const TONCENTER_V3_API_KEY_HEADER = 'X-Api-Key' as const
+
+export function toncenterV3RequestHeaders(apiKey?: string | null): Record<string, string> {
+  const k = apiKey?.trim()
+  if (!k) return {}
+  return { [TONCENTER_V3_API_KEY_HEADER]: k }
+}
+
 export function bigIntToBuffer(data: bigint | undefined): Buffer {
   if (!data) {
     return Buffer.from([])
@@ -54,11 +63,14 @@ export async function fetchToncenterTrace({
   isTestnet = false,
   pending = false,
   toncenter3Url,
+  toncenterApiKey,
   signal,
 }: {
   hash: string
   isTestnet?: boolean
   toncenter3Url?: string
+  /** TON Center v3 API key (sent as `X-Api-Key`). */
+  toncenterApiKey?: string
   pending?: boolean
   signal?: AbortSignal
 }): Promise<ToncenterV3Traces> {
@@ -66,7 +78,7 @@ export async function fetchToncenterTrace({
   const hashParam = pending ? 'ext_msg_hash' : 'msg_hash'
   const apiUrl = `${getToncenter3Url(isTestnet, toncenter3Url)}${endpoint}?${hashParam}=${hash}`
 
-  const res = await fetch(apiUrl, { signal })
+  const res = await fetch(apiUrl, { signal, headers: toncenterV3RequestHeaders(toncenterApiKey) })
   if (res.status !== 200) {
     throw new Error(`Failed to fetch trace data: HTTP ${res.status}`)
   }

@@ -51,7 +51,7 @@ export type FullTonConnectMessage = TonConnectMessage & {
   plugins_to_remove?: string[]
 }
 
-function parseDbMessage(m: ConnectMessageTransaction): TonConnectMessageRecord {
+export function parseDbMessage(m: ConnectMessageTransaction): TonConnectMessageRecord {
   const base: Omit<TonConnectMessage, 'message_type'> = {
     id: m.id,
     connect_session_id: m.connect_session_id,
@@ -59,6 +59,8 @@ function parseDbMessage(m: ConnectMessageTransaction): TonConnectMessageRecord {
     status: m.status,
     key_id: m.key_id,
     wallet_id: m.wallet_id,
+    message_cell: m.message_cell,
+    message_mode: m.message_mode,
     wallet_address: m.wallet_address,
     created_at: m.created_at,
     updated_at: m.updated_at,

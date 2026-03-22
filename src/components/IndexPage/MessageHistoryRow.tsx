@@ -4,7 +4,6 @@ import { useTonConnectSessions } from '@/store/tonConnect'
 import { useWalletListState } from '@/store/walletsListState'
 import { getWalletFromKey } from '@/utils/wallets'
 import { memo, useMemo, useEffect, useState } from 'react'
-import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
@@ -24,7 +23,7 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
   shouldFetch: boolean
 }) {
   const keys = useWalletListState()
-  const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClient = useLiteclient()
   const sessions = useTonConnectSessions()
 
   const totalAmountOut =
@@ -100,6 +99,7 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
             hash: hashHex,
             isTestnet: selectedNetworkState.selectedNetwork.get().is_testnet,
             toncenter3Url: selectedNetworkState.selectedNetwork.get().toncenter3_url,
+            toncenterApiKey: selectedNetworkState.selectedNetwork.get().toncenter_token ?? '',
             pending: true,
             signal: abortController.signal,
           })
@@ -112,6 +112,7 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
               hash: hashHex,
               isTestnet: selectedNetworkState.selectedNetwork.get().is_testnet,
               toncenter3Url: selectedNetworkState.selectedNetwork.get().toncenter3_url,
+              toncenterApiKey: selectedNetworkState.selectedNetwork.get().toncenter_token ?? '',
               pending: false,
               signal: abortController.signal,
             })

@@ -10,7 +10,6 @@ import {
 import { getWalletFromKey } from '@/utils/wallets'
 import { ImmutableObject, State } from '@hookstate/core'
 import { memo, useMemo, useState, useRef, useCallback, useEffect } from 'react'
-import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
@@ -42,7 +41,7 @@ export const MessageRowAddPlugin = memo(function MessageRowAddPlugin({
   s: State<ImmutableObject<TonConnectMessageAddPlugin>>
 }) {
   const keys = useWalletListState()
-  const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClient = useLiteclient()
   const sessions = useTonConnectSessions()
   const password = usePassword().password.get()
 

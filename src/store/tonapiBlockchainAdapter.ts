@@ -14,9 +14,18 @@ import {
   openContract,
 } from '@ton/core'
 import { Api } from 'tonapi-sdk-js'
+import type { BlockchainStorage } from '@ton/sandbox/dist/blockchain/BlockchainStorage'
+import { TonapiBlockchainStorage } from '@/utils/tonapiBlockchainStorage'
 import { CallForSuccess } from '@/utils/callForSuccess'
 // eslint-disable-next-line camelcase
 import { liteServer_masterchainInfo } from 'ton-lite-client/dist/schema'
+import type {
+  BlockRef,
+  AccountState,
+  ApiClient,
+  ShardQuery,
+  ShardsResponse,
+} from './primaryChainClient'
 
 /** Parse cell from tonapi - handles both base64 and hex BOC format */
 function parseTonapiCell(data: string): Cell {
@@ -174,30 +183,22 @@ export class TonapiContractProvider implements ContractProvider {
   }
 }
 
-/** Minimal account state for balance/state checks - compatible with LiteClient format */
-export type TonapiAccountState = {
-  balance: { coins: bigint; other?: Record<number, bigint> }
-  state?: {
-    storage?: {
-      state?: { type: string; state?: { data?: Cell; code?: Cell } }
-    }
-  }
-}
-
-/** Minimal masterchain info - compatible with LiteClient format */
-export type TonapiMasterchainInfo = {
-  last: { seqno: number; shard: string; workchain: number; rootHash: Buffer; fileHash: Buffer }
-}
+/** Alias for {@link AccountState} (TonAPI-backed rows). */
+export type TonapiAccountState = AccountState
 
 /**
  * Adapter that provides open(), sendMessage(), getAccountState, getMasterchainInfo
- * using only tonapi-sdk-js. Use when useTonapiOnly is true - replaces LiteClient.
+ * using only tonapi-sdk-js.
  */
-export class TonapiBlockchainAdapter {
+export class TonapiBlockchainAdapter implements ApiClient {
   // eslint-disable-next-line no-useless-constructor
   constructor(private api: Api<unknown>) {}
 
-  async getAccountState(address: Address): Promise<TonapiAccountState> {
+  async getAccountState(
+    address: Address,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- liteserver block id; TonAPI ignores it
+    _block?: BlockRef
+  ): Promise<AccountState> {
     const raw = await CallForSuccess(
       () => (this.api as any).blockchain.getBlockchainRawAccount(address.toString()),
       20,
@@ -282,20 +283,18 @@ export class TonapiBlockchainAdapter {
     return provider.open(contract)
   }
 
-  async sendMessage(boc: Buffer): Promise<void> {
+  async sendMessage(boc: Buffer): Promise<{ status: number }> {
     const bocBase64 = boc.toString('base64')
     await CallForSuccess(
       () => (this.api as any).blockchain.sendBlockchainMessage({ boc: bocBase64 }),
       20,
       500
     )
+    return { status: 1 }
   }
 
   /** Get shards info for emulation - converts tonapi format to AllShardsResponse-like */
-  async getAllShardsInfo(block: { seqno: number }): Promise<{
-    id: { seqno: number; shard: string; workchain: number }
-    shards: { [key: string]: { [key: string]: number } }
-  }> {
+  async getAllShardsInfo(block: ShardQuery): Promise<ShardsResponse> {
     const shardsData = await CallForSuccess(
       () => (this.api as any).blockchain.getBlockchainMasterchainShards(block.seqno),
       20,
@@ -336,5 +335,9 @@ export class TonapiBlockchainAdapter {
       }
     }
     return { result }
+  }
+
+  createStorageAdapter(): BlockchainStorage {
+    return new TonapiBlockchainStorage(this)
   }
 }

@@ -9,8 +9,8 @@ import { faKey } from '@fortawesome/free-solid-svg-icons'
 import { savePublicKeyOnly } from '@/store/walletsListState'
 import { ActiveWalletsSelector } from './ActiveWalletsSelector'
 import { WalletNameInput, ImportButton, useWalletSelection } from './shared'
+import { useLiteClientRequired } from '@/store/liteClient'
 import { LiteClient } from 'ton-lite-client'
-import { useLiteclient } from '@/store/liteClient'
 import { Address, Cell, parseTuple, TupleItemInt } from '@ton/core'
 import { bigIntToBuffer } from '@/utils/ton'
 
@@ -101,7 +101,7 @@ export function FromPublicKey() {
   const [name, setName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const liteClient = useLiteclient() as LiteClient
+  const liteClient = useLiteClientRequired()
 
   // Use the custom hook for public key processing
   const { publicKeyBuffer, isValidPublicKey } = usePublicKeyFromRaw(publicKey, liteClient)

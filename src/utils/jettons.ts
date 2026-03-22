@@ -1,9 +1,8 @@
 import { Address, Cell, Dictionary, Slice, TupleItem } from '@ton/core'
 import { Blockchain } from '@ton/sandbox'
-import { LiteClientBlockchainStorage } from '@/utils/liteClientBlockchainStorage'
+import type { ApiClient } from '@/store/liteClient'
 // eslint-disable-next-line camelcase
 import { sha256_sync } from '@ton/crypto'
-import { LiteClient } from 'ton-lite-client'
 import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { JettonContent } from '@/types/jetton'
 import { checkForLibraries, megaLibsCell } from '@/hooks/useEmulatedTxInfo'
@@ -163,10 +162,9 @@ export async function loadJettonMetadata(contentCell: Cell): Promise<JettonConte
   return result
 }
 
-export async function fetchJettonInfo(address: Address, liteClient: LiteClient) {
+export async function fetchJettonInfo(address: Address, chainClient: ApiClient) {
   try {
-    // Create blockchain instance with lite client storage
-    const storage = new LiteClientBlockchainStorage(liteClient as any)
+    const storage = chainClient.createStorageAdapter()
     const blockchain = await Blockchain.create({
       storage,
     })
@@ -200,7 +198,7 @@ export async function fetchJettonInfo(address: Address, liteClient: LiteClient) 
               }
             }
           }
-          const libFound = await checkForLibraries(messageCells, liteClient)
+          const libFound = await checkForLibraries(messageCells, chainClient)
           if (libFound) {
             ok = false
           }

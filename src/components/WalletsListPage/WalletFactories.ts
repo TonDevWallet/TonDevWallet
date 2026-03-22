@@ -20,8 +20,7 @@ import {
 import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV3'
 import { HighloadWalletV3CodeCell } from '@/contracts/highload-wallet-v3/HighloadWalletV3.source'
 import { Account } from 'tonapi-sdk-js'
-import { LiteClient } from 'ton-lite-client'
-import { TonapiBlockchainAdapter } from '@/store/tonapiBlockchainAdapter'
+import { ApiClient } from '@/store/liteClient'
 import { getLastLiteBlock } from '@/utils/liteClientBlockchainStorage'
 
 const TempClinet = new TonClient4({
@@ -306,7 +305,7 @@ export const WalletFactories = {
 export async function createWalletFromTonapiData(
   publicKey: Buffer,
   tonapiWallet: Account,
-  blockchainClient: LiteClient | TonapiBlockchainAdapter
+  blockchainClient: ApiClient
 ): Promise<IWallet | null> {
   try {
     const address = Address.parse(tonapiWallet.address)

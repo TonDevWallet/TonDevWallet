@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { IWallet } from '@/types'
 import { Address } from '@ton/core'
-import { LiteClient } from 'ton-lite-client'
 import { useLiteclient, useTonapiClient } from '@/store/liteClient'
 import {
   createWalletFromTonapiData,
@@ -24,7 +23,7 @@ export function useFindActiveWallets(publicKey: Buffer): UseFindActiveWalletsRes
   const [activeWallets, setActiveWallets] = useState<ActiveWallet[]>([])
   const [totalWallets, setTotalWallets] = useState<number>(0)
   const [isSearching, setIsSearching] = useState(false)
-  const liteClient = useLiteclient() as LiteClient
+  const liteClient = useLiteclient()
   const tonapiClient = useTonapiClient()
 
   // Generate wallet addresses from the public key
@@ -45,7 +44,7 @@ export function useFindActiveWallets(publicKey: Buffer): UseFindActiveWalletsRes
     async (address: Address) => {
       const master = await liteClient.getMasterchainInfo()
       const state = await liteClient.getAccountState(address, master.last)
-      return state?.balance?.coins || 0n
+      return BigInt(state?.balance?.coins ?? 0)
     },
     [liteClient]
   )
