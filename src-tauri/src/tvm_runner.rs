@@ -103,11 +103,14 @@ fn shard_from_b64(s: &str) -> TbResult<ShardAccount> {
 fn parse_stack_boc_to_entries(stack_boc_base64: &str) -> TbResult<Vec<StackEntry>> {
     let cell = cell_from_config_b64(stack_boc_base64)?;
     let mut slice = SliceData::load_cell(cell)?;
-    let item = read_stack_item(&mut slice)?;
-    let items: Vec<StackItem> = match &item {
-        StackItem::Tuple(arc) => arc.as_ref().clone(),
-        _ => vec![item.clone()],
-    };
+    let depth = slice.get_next_int(24)? as usize;
+    let mut items = Vec::with_capacity(depth);
+    for _ in 0..depth {
+        let rest = slice.checked_drain_reference()?;
+        let item = read_stack_item(&mut slice)?;
+        items.insert(0, item);
+        slice = SliceData::load_cell(rest)?;
+    }
     convert_stack(&items)
 }
 
@@ -125,7 +128,7 @@ fn stack_item_to_json(item: &StackItem) -> StackSlotJson {
             b64: base64_encode(write_boc(c).unwrap_or_default()),
         },
         StackItem::Slice(s) => StackSlotJson::Slice {
-            b64: base64_encode(s.get_bytestring(0)),
+            b64: base64_encode(write_boc(&s.clone().into_cell().unwrap_or_default()).unwrap_or_default()),
         },
         StackItem::Tuple(arc) => StackSlotJson::Tuple {
             items: arc.iter().map(stack_item_to_json).collect(),
@@ -202,8 +205,10 @@ fn run_smc_method_with_logs(
     mc_state_cell: Cell,
     method_id: u32,
     stack: Vec<StackEntry>,
+    state_libs: HashmapE,
     verbosity: u8,
     debug_enabled: bool,
+    gas_limit: u64,
 ) -> TbResult<RunGetMethodWithLogsResult> {
     let account = shard_account.read_account()?;
     let code = account.get_code().ok_or_else(|| error!("Account has no code"))?;
@@ -218,9 +223,9 @@ fn run_smc_method_with_logs(
     ctrls.put(7, smc_info.as_temp_data_item())?;
     ctrls.put(4, StackItem::Cell(data))?;
 
-    let gas = Gas::new(1_000_000, 0, 1_000_000, 1_000_000);
-    let mc_state = ShardStateUnsplit::construct_from_cell(mc_state_cell)?;
-    let libraries = vec![account.libraries().inner(), mc_state.libraries().clone().inner()];
+    let gas_limit = i64::try_from(gas_limit).unwrap_or(i64::MAX);
+    let gas = Gas::new(gas_limit, 0, gas_limit, gas_limit);
+    let libraries = vec![account.libraries().inner(), state_libs];
     let caps = smc_info.config_params.capabilities();
     let mut vm = Engine::with_capabilities(caps).setup_checked(code, ctrls, stack, gas, libraries)?;
     let block_version = smc_info.config_params.get_global_version()?.version;
@@ -411,13 +416,18 @@ pub fn tvm_run_get_method_json(req: TvmRunGetMethodRequest) -> Result<String, St
         let mut state = StateInit::default();
         state.set_code(code);
         state.set_data(data);
+        let libs = match req.libs_boc.as_deref() {
+            Some(s) => libs_cell_from_b64_opt(s)?,
+            None => None,
+        };
+        let state_libs = HashmapE::with_hashmap(256, libs);
         if let Some(ref lb) = req.libs_boc {
             if let Some(lib_cell) = libs_cell_from_b64_opt(lb)? {
                 state.set_library(lib_cell);
             }
         }
 
-        let _gas_limit: u64 = req.gas_limit.parse().unwrap_or(1_000_000);
+        let gas_limit: u64 = req.gas_limit.parse().unwrap_or(10_000_000);
 
         let account = Account::active(
             addr,
@@ -435,15 +445,17 @@ pub fn tvm_run_get_method_json(req: TvmRunGetMethodRequest) -> Result<String, St
             mc_cell,
             req.method_id as u32,
             stack_entries,
+            state_libs,
             req.verbosity.unwrap_or(1),
             req.debug_enabled.unwrap_or(false),
+            gas_limit,
         )?;
 
         let vm_stack_items = convert_ton_stack(&rr.stack)?;
         let stack_slots: Vec<StackSlotJson> = vm_stack_items.iter().map(stack_item_to_json).collect();
 
         let output = json!({
-            "success": rr.exit_code == 0,
+            "success": true,
             "stack": "",
             "stackSlots": stack_slots,
             "gas_used": rr.gas_used.to_string(),

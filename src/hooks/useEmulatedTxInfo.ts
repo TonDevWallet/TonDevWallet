@@ -32,6 +32,9 @@ function detectMissingLibrary(vmLogs: string | undefined, exitCode: number | und
 }
 
 function rebuildMegaLibsCell() {
+  if (Object.keys(libs).length === 0) {
+    return
+  }
   const libDict = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell())
   for (const [hash, lib] of Object.entries(libs)) {
     libDict.set(BigInt(`0x${hash}`), Cell.fromBoc(lib)[0])
@@ -43,11 +46,21 @@ function rememberFetchedLibrary(hash: Buffer, data: Buffer) {
   const expectedHex = hash.toString('hex')
   const cell = Cell.fromBoc(data)[0]
   const actualHex = cell.hash().toString('hex')
-  if (actualHex !== expectedHex) {
-    return false
+
+  if (actualHex === expectedHex) {
+    libs[expectedHex] = data
+    return true
   }
-  libs[expectedHex] = data
-  return true
+
+  if (cell.refs) {
+    for (const ref of cell.refs) {
+      if (rememberFetchedLibrary(hash, ref.toBoc())) {
+        return true
+      }
+    }
+  }
+
+  return false
 }
 
 async function fetchLibrariesByHashes(hashes: string[], client: LibraryClient) {

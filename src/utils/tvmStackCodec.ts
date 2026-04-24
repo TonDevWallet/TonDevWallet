@@ -1,4 +1,4 @@
-import { beginCell, Cell, type TupleItem, serializeTuple } from '@ton/core'
+import { Cell, type TupleItem, serializeTuple } from '@ton/core'
 
 /** Mirrors `StackSlotJson` from `src-tauri/src/tvm_runner.rs`. */
 export type TvmStackSlotJson =
@@ -20,10 +20,7 @@ function slotToTupleItem(s: TvmStackSlotJson): TupleItem {
     case 'cell':
       return { type: 'cell', cell: Cell.fromBoc(Buffer.from(s.b64, 'base64'))[0] }
     case 'slice':
-      return {
-        type: 'slice',
-        cell: beginCell().storeBuffer(Buffer.from(s.b64, 'base64')).endCell(),
-      }
+      return { type: 'slice', cell: Cell.fromBoc(Buffer.from(s.b64, 'base64'))[0] }
     case 'tuple':
       return { type: 'tuple', items: s.items.map(slotToTupleItem) }
     default:
