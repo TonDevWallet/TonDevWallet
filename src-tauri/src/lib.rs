@@ -16,6 +16,7 @@ mod migration_commands;
 pub mod migrations;
 mod proxy;
 mod ton_echo;
+pub mod tvm_runner;
 
 use migration_commands::run_migrations_on_db;
 use proxy::spawn_proxy;
@@ -149,6 +150,16 @@ fn get_ton_echo_ws_port() -> String {
     return get_ton_echo_port().to_string();
 }
 
+#[tauri::command]
+fn tvm_emulate_transaction(req: tvm_runner::TvmEmulateRequest) -> Result<String, String> {
+    tvm_runner::tvm_emulate_transaction_json(req)
+}
+
+#[tauri::command]
+fn tvm_run_get_method(req: tvm_runner::TvmRunGetMethodRequest) -> Result<String, String> {
+    tvm_runner::tvm_run_get_method_json(req)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // tauri_plugin_deep_link::prepare("de.fabianlars.deep-link-test");
@@ -238,6 +249,8 @@ pub fn run() {
             get_os_name,
             detect_qr_code,
             detect_qr_code_from_image,
+            tvm_emulate_transaction,
+            tvm_run_get_method,
         ])
         .build(context)
         .expect("error while running tauri application")

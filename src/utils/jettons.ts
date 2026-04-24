@@ -1,5 +1,6 @@
 import { Address, Cell, Dictionary, Slice, TupleItem } from '@ton/core'
 import { Blockchain } from '@ton/sandbox'
+import { createAppExecutor } from '@/utils/appExecutor'
 import type { ApiClient } from '@/store/liteClient'
 // eslint-disable-next-line camelcase
 import { sha256_sync } from '@ton/crypto'
@@ -167,6 +168,7 @@ export async function fetchJettonInfo(address: Address, chainClient: ApiClient) 
     const storage = chainClient.createStorageAdapter()
     const blockchain = await Blockchain.create({
       storage,
+      executor: await createAppExecutor(),
     })
 
     // Run get_jetton_data() method

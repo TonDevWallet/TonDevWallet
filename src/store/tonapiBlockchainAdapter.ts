@@ -36,6 +36,40 @@ function parseTonapiCell(data: string): Cell {
   return Cell.fromBase64(data)
 }
 
+function parseLibraryCellByExpectedHash(data: string, expectedHash: Buffer): Cell {
+  const candidates: { source: string; cell: Cell }[] = []
+  const trimmed = data.trim()
+  const expectedHex = expectedHash.toString('hex')
+  const pushCandidate = (source: string, parse: () => Cell) => {
+    try {
+      candidates.push({ source, cell: parse() })
+    } catch {
+      // try next representation
+    }
+  }
+
+  if (/^[0-9a-fA-F]+$/.test(trimmed)) {
+    pushCandidate('hex-boc', () => Cell.fromBoc(Buffer.from(trimmed, 'hex'))[0])
+    pushCandidate('hex-cell', () => Cell.fromHex(trimmed))
+  }
+  pushCandidate('base64-boc', () => Cell.fromBoc(Buffer.from(trimmed, 'base64'))[0])
+  pushCandidate('base64-cell', () => Cell.fromBase64(trimmed))
+
+  for (const candidate of candidates) {
+    const hash = candidate.cell.hash().toString('hex')
+    if (hash === expectedHex) {
+      return candidate.cell
+    }
+  }
+
+  const first = candidates[0]
+  if (first) {
+    return first.cell
+  }
+
+  throw new Error('Unable to parse library cell BOC')
+}
+
 type TvmStackRecord = {
   type: 'cell' | 'num' | 'nan' | 'null' | 'tuple'
   cell?: string
@@ -327,11 +361,11 @@ export class TonapiBlockchainAdapter implements ApiClient {
           500
         )
         if (lib?.boc) {
-          const cell = parseTonapiCell(lib.boc)
+          const cell = parseLibraryCellByExpectedHash(lib.boc, hash)
           result.push({ hash, data: Buffer.from(cell.toBoc()) })
         }
-      } catch {
-        // Library not found, skip
+      } catch (e) {
+        // silent
       }
     }
     return { result }

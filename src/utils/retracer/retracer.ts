@@ -1,4 +1,4 @@
-import { Blockchain, SmartContractTransaction } from '@ton/sandbox'
+import { SmartContractTransaction } from '@ton/sandbox'
 import {
   beginCell,
   Cell,
@@ -21,6 +21,7 @@ import {
 import { EmulationResult, IExecutor } from '@ton/sandbox/dist/executor/Executor'
 import { checkForLibraries, megaLibsCell } from '@/hooks/useEmulatedTxInfo'
 import { ParsedTransaction } from '../ManagedBlockchain'
+import { createAppExecutor } from '@/utils/appExecutor'
 
 /** @deprecated Use {@link LibraryClient} */
 export type LibraryLookupClient = LibraryClient
@@ -45,7 +46,12 @@ export async function getEmulationWithStack(
   tx: ParsedTransaction
 }> {
   // Parse transaction info from link or use provided info
-  const { txInfo, testnet } = await parseTxInfo(txLink, forcedTestnet, toncenter3Url, toncenterApiKey)
+  const { txInfo, testnet } = await parseTxInfo(
+    txLink,
+    forcedTestnet,
+    toncenter3Url,
+    toncenterApiKey
+  )
 
   // Initialize TON clients
   const { clientV4, clientV2 } = initializeClients(testnet)
@@ -89,9 +95,8 @@ export async function getEmulationWithStack(
 
   // Create blockchain emulator
   sendStatus('Creating emulator')
-  // const { emulateFunction } = await createEmulator(blockConfig, randSeed)
-  const blockchain = await Blockchain.create()
-  const executor = blockchain.executor
+  const executor = await createAppExecutor()
+  // const blockchain = await Blockchain.create({ executor })
 
   // Emulate previous transactions
   const { lastTxEmulated, hashMismatch } = await emulateTransactions(

@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Address, beginCell, Cell, Dictionary, loadMessage } from '@ton/core'
 import { parseWithPayloads } from '@truecarry/tlb-abi'
 import { Blockchain, BlockchainSnapshot, BlockchainStorage } from '@ton/sandbox'
+import { createAppExecutor } from '@/utils/appExecutor'
 import { bigIntToBuffer } from '@/utils/ton'
 import { AllShardsResponse } from 'ton-lite-client/dist/types'
 import { getShardBitMask, isSameShard } from '@/utils/shards'
@@ -12,6 +13,57 @@ import { RecursivelyParseCellWithBlock } from '@/utils/tlb/cellParser'
 
 const libs: Record<string, Buffer> = {}
 export let megaLibsCell = beginCell().endCell()
+
+function detectMissingLibrary(vmLogs: string | undefined, exitCode: number | undefined) {
+  const logs = vmLogs ?? ''
+  const lower = logs.toLowerCase()
+  const missingHashes = [
+    ...logs.matchAll(
+      /(?:libraries do not contain code with hash|failed to load library cell:.*?hash)\s+([a-fA-F0-9]{64})/gi
+    ),
+  ].map((m) => m[1].toLowerCase())
+  return {
+    isMissingLibrary:
+      exitCode === 9 ||
+      lower.includes('failed to load library cell') ||
+      lower.includes('libraries do not contain code with hash'),
+    missingHashes: [...new Set(missingHashes)],
+  }
+}
+
+function rebuildMegaLibsCell() {
+  const libDict = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell())
+  for (const [hash, lib] of Object.entries(libs)) {
+    libDict.set(BigInt(`0x${hash}`), Cell.fromBoc(lib)[0])
+  }
+  megaLibsCell = beginCell().storeDictDirect(libDict).endCell()
+}
+
+function rememberFetchedLibrary(hash: Buffer, data: Buffer) {
+  const expectedHex = hash.toString('hex')
+  const cell = Cell.fromBoc(data)[0]
+  const actualHex = cell.hash().toString('hex')
+  if (actualHex !== expectedHex) {
+    return false
+  }
+  libs[expectedHex] = data
+  return true
+}
+
+async function fetchLibrariesByHashes(hashes: string[], client: LibraryClient) {
+  const toFetch = hashes.filter((hash) => !libs[hash])
+  if (toFetch.length === 0) return false
+  const libData = await client.getLibraries(toFetch.map((hash) => Buffer.from(hash, 'hex')))
+  let added = 0
+  for (const lib of libData.result) {
+    if (rememberFetchedLibrary(lib.hash, lib.data)) added++
+  }
+  if (added > 0) {
+    rebuildMegaLibsCell()
+    return true
+  }
+  return false
+}
 
 export async function checkForLibraries(cells: Cell[], client: LibraryClient) {
   const toCheck = [...cells]
@@ -34,27 +86,14 @@ export async function checkForLibraries(cells: Cell[], client: LibraryClient) {
           continue
         }
 
-        const libData = await client.getLibraries([libHash])
-        if (libData.result.length === 0) {
+        const directLibFound = await fetchLibrariesByHashes([libHash.toString('hex')], client)
+        if (directLibFound) {
+          libFound = true
           continue
         }
-
-        for (const lib of libData.result) {
-          libs[lib.hash.toString('hex')] = lib.data
-        }
-
-        const libDict = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell())
-
-        for (const [hash, lib] of Object.entries(libs)) {
-          libDict.set(BigInt(`0x${hash}`), Cell.fromBoc(lib)[0])
-        }
-
-        megaLibsCell = beginCell().storeDictDirect(libDict).endCell()
-        libFound = true
       }
     }
   }
-
   return libFound
 }
 
@@ -64,12 +103,21 @@ async function checkAndLoadLibraries(
   storage: BlockchainStorage,
   blockchainClient: ApiClient
 ) {
+  const exitCode =
+    genericTx.description.type === 'generic' && genericTx.description.computePhase.type === 'vm'
+      ? genericTx.description.computePhase.exitCode
+      : undefined
+  const detection = detectMissingLibrary(genericTx.vmLogs, exitCode)
   if (
     genericTx.description.type === 'generic' &&
     genericTx.description.computePhase.type === 'vm' &&
-    genericTx.description.computePhase.exitCode === 9 &&
-    genericTx.vmLogs.includes('failed to load library cell')
+    detection.isMissingLibrary
   ) {
+    const directLibFound = await fetchLibrariesByHashes(detection.missingHashes, blockchainClient)
+    if (directLibFound) {
+      return true
+    }
+
     const messageCells: Cell[] = []
     try {
       const blockchainCopy = await blockchain.snapshot()
@@ -86,7 +134,7 @@ async function checkAndLoadLibraries(
       })
       const verboseEmulatedTx = verboseEmulatedTxResult.transactions[0]
 
-      const cellRegex = /C{([A-Fb0-9]+)}/g
+      const cellRegex = /[cC]\{([A-Fa-f0-9]+)\}/g
       const cellMatch = verboseEmulatedTx.vmLogs.matchAll(cellRegex)
       const hexes: Record<string, number> = {}
 
@@ -139,7 +187,7 @@ async function checkAndLoadLibraries(
 
 const initializeBlockchain = async (client: ApiClient) => {
   const storage = client.createStorageAdapter()
-  const blockchain = await Blockchain.create({ storage })
+  const blockchain = await Blockchain.create({ storage, executor: await createAppExecutor() })
   setBlockchainVerbosityFull(blockchain)
   blockchain.libs = megaLibsCell
   return { storage, blockchain }
