@@ -68,7 +68,9 @@ interface NFTItem {
   }
 }
 
-export function AssetsPage() {
+export type AssetsPageTab = 'jettons' | 'nfts'
+
+export function AssetsPage({ defaultTab = 'jettons' }: { defaultTab?: AssetsPageTab }) {
   const { keyId, walletId } = useParams<{ keyId: string; walletId: string }>()
   const walletsList = useWalletListState()
   const liteClient = useLiteclient()
@@ -149,7 +151,7 @@ export function AssetsPage() {
             name: balance.jetton.name || 'Unknown',
             symbol: balance.jetton.symbol || 'UNKNOWN',
             decimals: balance.jetton.decimals || 9,
-            image: balance.jetton.image,
+            image: balance.jetton.image || undefined,
           },
           price: balance.price ? { usd: balance.price?.prices?.USD ?? 0 } : { usd: 0 },
           verification: jettonVerificationFromApi(balance.jetton.verification),
@@ -279,7 +281,7 @@ export function AssetsPage() {
     <div className="container mx-auto p-6">
       {walletHeader}
 
-      <Tabs defaultValue="jettons" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="jettons">Jettons ({jettons.length})</TabsTrigger>
           <TabsTrigger value="nfts">NFTs ({nfts.length})</TabsTrigger>

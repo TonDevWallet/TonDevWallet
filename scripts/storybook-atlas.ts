@@ -62,7 +62,7 @@ Options:
   --port=6006                   Port to start Storybook on when --url is not running
   --out=storybook-atlas         Output directory
   --themes=light,dark           Comma-separated app themes to capture
-  --columns=2                   Atlas columns
+  --columns=4                   Atlas columns
   --tile-width=1440             Width of each atlas tile / capture viewport by default
   --tile-height=900             Height of each screenshot area in the atlas
   --viewport=1440x900           Browser viewport for captures
@@ -89,7 +89,7 @@ if (themes.length === 0) {
     'No valid themes selected. Use --themes=light,dark, --themes=light, or --themes=dark'
   )
 }
-const columns = numberOption('columns', Number(process.env.STORYBOOK_ATLAS_COLUMNS) || 2)
+const columns = numberOption('columns', Number(process.env.STORYBOOK_ATLAS_COLUMNS) || 4)
 const [viewportWidth, viewportHeight] = parseViewport(
   stringOption('viewport', process.env.STORYBOOK_ATLAS_VIEWPORT ?? '1440x900')
 )
@@ -132,7 +132,7 @@ try {
 } catch (error) {
   if (String(error).includes("Executable doesn't exist")) {
     console.error(
-      'Playwright Chromium is not installed. Run: pnpm exec playwright install chromium'
+      'Playwright Chromium is not installed and no system Chromium channel could be launched. Run: pnpm exec playwright install chromium'
     )
   }
   console.error(error)
@@ -201,8 +201,26 @@ async function loadStoryEntries() {
     .sort((a, b) => `${a.title}/${a.name}`.localeCompare(`${b.title}/${b.name}`))
 }
 
+async function launchCaptureBrowser() {
+  try {
+    return await chromium.launch({ headless: true })
+  } catch (error) {
+    if (!String(error).includes("Executable doesn't exist")) throw error
+
+    for (const channel of ['msedge', 'chrome'] as const) {
+      try {
+        return await chromium.launch({ channel, headless: true })
+      } catch {
+        // Try the next installed system browser channel.
+      }
+    }
+
+    throw error
+  }
+}
+
 async function captureStories(entries: StorybookEntry[]) {
-  const browser = await chromium.launch({ headless: true })
+  const browser = await launchCaptureBrowser()
   const jobs = themes.flatMap((theme, themeIndex) =>
     entries.map((entry, entryIndex) => ({
       globalIndex: themeIndex * entries.length + entryIndex + 1,
@@ -233,7 +251,8 @@ async function captureStory(browser: Browser, job: CaptureJob): Promise<Captured
   const errors: string[] = []
   const onPageError = (error: Error) => errors.push(error.message)
   const onConsole = (message: { type: () => string; text: () => string }) => {
-    if (message.type() === 'error') errors.push(message.text())
+    const text = message.text()
+    if (message.type() === 'error' && !isIgnoredConsoleError(text)) errors.push(text)
   }
 
   page.on('pageerror', onPageError)
@@ -477,6 +496,13 @@ function safeFileName(value: string) {
 
 function pad(value: number) {
   return String(value).padStart(3, '0')
+}
+
+function isIgnoredConsoleError(message: string) {
+  return (
+    message.includes('Failed to load resource: the server responded with a status of 404') ||
+    message.includes('An empty string ("") was passed to the %s attribute')
+  )
 }
 
 function unique(values: string[]) {
