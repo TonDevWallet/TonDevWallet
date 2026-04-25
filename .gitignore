@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+storybook-static
 *.local
 
 # Editor directories and files
@@ -27,3 +28,4 @@ wsproxy/target
 ton-dev-wallet.key*
 extension.key.pem
 packages/browser-extension/dist.crx
+storybook-atlas

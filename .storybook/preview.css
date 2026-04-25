@@ -1,0 +1,21 @@
+html,
+body,
+#storybook-root {
+  min-height: 100%;
+}
+
+body.sb-show-main {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+body.sb-show-main.sb-main-fullscreen,
+#storybook-root {
+  min-height: 100vh;
+}
+
+.docs-story,
+.sbdocs-preview,
+.sbdocs-wrapper {
+  overflow: visible !important;
+}
