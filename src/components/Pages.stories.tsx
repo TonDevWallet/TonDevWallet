@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { beginCell, Dictionary, type Message, type Transaction } from '@ton/core'
 import { Buffer } from 'buffer'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useState, type ReactNode } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { Layout } from './Layout'
 import { IndexPage } from './IndexPage/IndexPage'
@@ -15,6 +15,7 @@ import { type RawTransactionFormat } from './TxInfoPage/RawTransactionInfo'
 import { WalletsListPage } from './WalletsListPage/WalletsListPage'
 import { setTransactionState } from '@/store/txInfo'
 import { addTracerItem, clearTracerState, setActiveItem } from '@/store/tracerState'
+import type { ParsedTransaction } from '@/utils/ManagedBlockchain'
 
 const mockVmLogs = [
   'stack: [ ]',
@@ -77,6 +78,49 @@ function createMockTransaction(): Transaction {
   }
 }
 
+function createMockTransactionState() {
+  return {
+    tx: createMockTransaction(),
+    vmLogs: mockVmLogs,
+    debugLogs: 'Storybook VM debug log\nexecute PUSHINT\nexecute ADD',
+    blockchainLogs: mockBlockchainLogs,
+  }
+}
+
+function createTraceTransaction(overrides: Partial<ParsedTransaction> = {}): ParsedTransaction {
+  return {
+    ...createMockTransaction(),
+    children: [],
+    ...overrides,
+  } as ParsedTransaction
+}
+
+function createMockTraceTransactions(offset = 0): ParsedTransaction[] {
+  const root = createTraceTransaction({
+    address: BigInt(0x1000 + offset),
+    lt: BigInt(10_000 + offset),
+    totalFees: { coins: 123_000_000n },
+  })
+  const child = createTraceTransaction({
+    address: BigInt(0x2000 + offset),
+    lt: BigInt(10_001 + offset),
+    parent: root,
+    totalFees: { coins: 64_000_000n },
+  })
+  const response = createTraceTransaction({
+    address: BigInt(0x3000 + offset),
+    lt: BigInt(10_002 + offset),
+    parent: child,
+    totalFees: { coins: 28_000_000n },
+    hashMismatch: offset !== 0,
+  })
+
+  root.children = [child]
+  child.children = [response]
+
+  return [root, child, response]
+}
+
 function SeededTxInfoPage({
   defaultTab = 'stack',
   defaultRawFormat = 'yaml',
@@ -84,40 +128,42 @@ function SeededTxInfoPage({
   defaultTab?: TxInfoPageTab
   defaultRawFormat?: RawTransactionFormat
 }) {
-  const [isReady, setIsReady] = useState(false)
+  const [storyState] = useState(() => {
+    const state = createMockTransactionState()
+    setTransactionState(state)
+    return state
+  })
 
-  useEffect(() => {
-    setTransactionState({
-      tx: createMockTransaction(),
-      vmLogs: mockVmLogs,
-      debugLogs: 'Storybook VM debug log\nexecute PUSHINT\nexecute ADD',
-      blockchainLogs: mockBlockchainLogs,
-    })
-    setIsReady(true)
-  }, [])
-
-  if (!isReady) {
-    return <div className="p-6 text-muted-foreground">Loading transaction story…</div>
-  }
+  useLayoutEffect(() => {
+    setTransactionState(storyState)
+  }, [storyState])
 
   return <TxInfoPage defaultTab={defaultTab} defaultRawFormat={defaultRawFormat} />
 }
 
 function SeededTracerPage() {
-  useEffect(() => {
+  const [firstId] = useState(() => {
     clearTracerState()
-    const firstId = addTracerItem('Inbound transfer', { transactions: [] })
-    addTracerItem('Contract deploy', { transactions: [] })
+    const firstId = addTracerItem('Inbound transfer', {
+      transactions: createMockTraceTransactions(),
+    })
+    addTracerItem('Contract deploy', {
+      transactions: createMockTraceTransactions(100),
+    })
     setActiveItem(firstId)
+    return firstId
+  })
 
+  useLayoutEffect(() => {
+    setActiveItem(firstId)
     return () => clearTracerState()
-  }, [])
+  }, [firstId])
 
   return <TracerPage />
 }
 
 function PageCanvas({ children }: { children: ReactNode }) {
-  return <div className="bg-window-background p-6">{children}</div>
+  return <div className="h-screen min-h-screen bg-window-background p-6">{children}</div>
 }
 
 function RoutedPage({ path, element }: { path: string; element: ReactNode }) {

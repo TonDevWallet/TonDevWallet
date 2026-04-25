@@ -59,12 +59,14 @@ const preview: Preview = {
   decorators: [
     (Story, context) => {
       const appTheme: AppTheme = context.globals.appTheme === 'dark' ? 'dark' : 'light'
-      React.useEffect(() => applyAppTheme(appTheme), [appTheme])
+      React.useLayoutEffect(() => applyAppTheme(appTheme), [appTheme])
       return (
         <DbContext.Provider value={mockDb as any}>
           <MemoryRouter initialEntries={[context.parameters.route ?? '/app']}>
-            <React.Suspense fallback={<div className="p-6 text-muted-foreground">Loading story…</div>}>
-              <div className="bg-background text-foreground">
+            <React.Suspense
+              fallback={<div className="p-6 text-muted-foreground">Loading story...</div>}
+            >
+              <div className="min-h-screen bg-background text-foreground">
                 <Story />
                 <Toaster />
               </div>
