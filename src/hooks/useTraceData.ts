@@ -51,7 +51,8 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
 
       const isTestnet = selectedNetwork.selectedNetwork.get().is_testnet
       const toncenter3Url = selectedNetwork.selectedNetwork.get().toncenter3_url
-      const toncenterApiKey = selectedNetwork.selectedNetwork.get({ noproxy: true }).toncenter_token ?? ''
+      const toncenterApiKey =
+        selectedNetwork.selectedNetwork.get({ noproxy: true }).toncenter_token ?? ''
 
       // Create a new AbortController for this execution
       const abortController = new AbortController()

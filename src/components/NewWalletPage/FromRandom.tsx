@@ -3,16 +3,13 @@ import { saveKeyFromData } from '@/store/walletsListState'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { mnemonicToSeed, mnemonicNew } from '@ton/crypto'
-import { cn } from '@/utils/cn'
-import { Textarea } from '../ui/textarea'
 import { Button } from '../ui/button'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faRefresh, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faRefresh } from '@fortawesome/free-solid-svg-icons'
 import { Separator } from '../ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
-import clipboard from 'clipboardy'
-import { WalletNameInput, ImportButton, KeyInfoDisplay } from './shared'
+import { WalletNameInput, ImportButton, KeyInfoDisplay, HiddenSecretValue } from './shared'
 import { generateFireblocksPrivateKey } from '@/utils/fireblocks'
 import * as ed from '@noble/ed25519'
 import { sha512 } from '@noble/hashes/sha512'
@@ -26,7 +23,6 @@ export function FromRandom() {
   const [fireblocksPrivateKey, setFireblocksPrivateKey] = useState<string | undefined>()
   const [name, setName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [copySuccess, setCopySuccess] = useState(false)
 
   const generateNewMnemonic = async () => {
     try {
@@ -78,16 +74,6 @@ export function FromRandom() {
     }
   }
 
-  const copyMnemonicToClipboard = () => {
-    clipboard.write(words)
-    setCopySuccess(true)
-
-    // Reset copy success state after animation duration
-    setTimeout(() => {
-      setCopySuccess(false)
-    }, 1500)
-  }
-
   return (
     <div className="space-y-6">
       <Alert>
@@ -115,49 +101,12 @@ export function FromRandom() {
 
       {seed && (
         <div className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium" htmlFor="mnemonicInput">
-                Mnemonic Phrase:
-              </label>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  'h-7 text-xs flex items-center gap-1 transition-colors duration-300',
-                  copySuccess
-                    ? 'text-green-600 bg-green-50 border border-green-200'
-                    : 'text-primary hover:bg-primary/5'
-                )}
-                onClick={copyMnemonicToClipboard}
-              >
-                {copySuccess ? (
-                  <>
-                    <span className="relative flex h-3.5 w-3.5 items-center justify-center">
-                      <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-30"></span>
-                      <FontAwesomeIcon icon={faCheck} className="relative text-green-600" />
-                    </span>
-                    <span className="animate-pulse">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
-                    Copy phrase
-                  </>
-                )}
-              </Button>
-            </div>
-            <Textarea
-              className="font-mono text-sm min-h-[100px] bg-muted/30"
-              id="mnemonicInput"
-              value={words}
-              readOnly
-              spellCheck={false}
-            />
-            <p className="text-xs text-muted-foreground">
-              This is your 24-word recovery phrase. Write it down and keep it safe.
-            </p>
-          </div>
+          <HiddenSecretValue
+            label="Mnemonic Phrase"
+            value={words}
+            multiline
+            description="This is your 24-word recovery phrase. Hidden by default; reveal only in a private environment."
+          />
 
           <Separator />
 

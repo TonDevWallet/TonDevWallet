@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useSelectedKey, setWalletKey } from '@/store/walletState'
+import {
+  setSelectedWallet as setGlobalSelectedWallet,
+  setWalletKey,
+  useSelectedKey,
+} from '@/store/walletState'
 import { getWalletFromKey } from '@/utils/wallets'
 import { useTonapiClient, useLiteclient } from '@/store/liteClient'
 import { useWalletListState } from '@/store/walletsListState'
@@ -12,7 +16,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { formatUnits } from '@/utils/units'
 import { JettonTransferModal } from './JettonTransferModal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
+import {
+  faCheckCircle,
+  faExclamationTriangle,
+  faArrowLeft,
+} from '@fortawesome/free-solid-svg-icons'
+import { IWallet } from '@/types'
+import { WalletJazzicon } from '@/components/WalletJazzicon'
+import {
+  WalletAddressPopover,
+  getWalletDisplayName,
+  getWalletMetadata,
+  getWalletTypeLabel,
+} from '@/components/WalletManagement'
 
 interface JettonBalance {
   balance: string
@@ -60,25 +76,39 @@ export function AssetsPage() {
   const tonapiClient = useTonapiClient()
 
   // Find the specific wallet by keyId and walletId
-  const [selectedWallet, setSelectedWallet] = useState<any>(null)
+  const [selectedWallet, setSelectedWalletForPage] = useState<IWallet | null>(null)
 
   useEffect(() => {
-    if (keyId && walletId && walletsList.get().length > 0) {
-      const keyData = walletsList.get().find((k) => k.id === parseInt(keyId))
-      if (keyData) {
-        // Set the key if it's not already selected
-        if (selectedKey?.id.get() !== parseInt(keyId)) {
-          setWalletKey(parseInt(keyId))
-        }
+    if (!keyId || !walletId || walletsList.get().length === 0) return
 
-        // Find the specific wallet
-        const walletData = keyData.wallets?.find((w) => w.id === parseInt(walletId))
-        if (walletData) {
-          const wallet = getWalletFromKey(liteClient, keyData, walletData)
-          setSelectedWallet(wallet)
-        }
-      }
+    const parsedKeyId = parseInt(keyId)
+    const parsedWalletId = parseInt(walletId)
+    const keyData = walletsList.get().find((k) => k.id === parsedKeyId)
+    if (!keyData) {
+      setLoading(false)
+      return
     }
+
+    if (selectedKey?.id.get() !== parsedKeyId) {
+      setWalletKey(parsedKeyId).catch((error) =>
+        console.error('Failed to set assets page key context:', error)
+      )
+    }
+
+    const walletData = keyData.wallets?.find((w) => w.id === parsedWalletId)
+    if (!walletData) {
+      setLoading(false)
+      return
+    }
+
+    const wallet = getWalletFromKey(liteClient, keyData, walletData)
+    if (!wallet) {
+      setLoading(false)
+      return
+    }
+
+    setSelectedWalletForPage(wallet)
+    setGlobalSelectedWallet(wallet)
   }, [keyId, walletId, walletsList, liteClient, selectedKey])
 
   const [jettons, setJettons] = useState<JettonBalance[]>([])
@@ -176,11 +206,70 @@ export function AssetsPage() {
     }
   }
 
+  const walletMetadata = selectedWallet ? getWalletMetadata(selectedWallet) : []
+  const walletHeader = selectedWallet ? (
+    <div className="mb-6 rounded-[28px] border border-border/70 bg-card/75 p-4 shadow-sm backdrop-blur sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <WalletJazzicon wallet={selectedWallet} diameter={44} className="shrink-0" />
+          <div className="min-w-0">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h1 className="truncate text-2xl font-semibold tracking-tight">Assets</h1>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                {getWalletTypeLabel(selectedWallet)}
+              </span>
+            </div>
+            <p className="mt-1 truncate text-sm text-muted-foreground">
+              {getWalletDisplayName(selectedWallet)} · {selectedKey?.name.get() || 'Key'}
+            </p>
+          </div>
+        </div>
+        <Button asChild variant="ghost" size="sm" className="rounded-full">
+          <Link to="/app/wallets_list">
+            <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
+            Wallets
+          </Link>
+        </Button>
+      </div>
+      <div className="mt-4 flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <WalletAddressPopover
+          wallet={selectedWallet}
+          className="max-w-full rounded-full sm:max-w-[460px]"
+        />
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {walletMetadata.map((meta) => (
+            <span key={meta.label} className="inline-flex items-baseline gap-1">
+              <span>{meta.label}</span>
+              <span className="font-mono tabular-nums text-foreground/75">{meta.value}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="mb-6">
+      <h1 className="text-2xl font-semibold tracking-tight">Assets</h1>
+      <p className="text-muted-foreground">Loading wallet context...</p>
+    </div>
+  )
+
   if (loading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading assets...</div>
+        {walletHeader}
+        <div className="flex h-48 items-center justify-center rounded-[28px] border border-border/70 bg-card/60">
+          <div className="text-sm text-muted-foreground">Loading assets...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!selectedWallet) {
+    return (
+      <div className="container mx-auto p-6">
+        {walletHeader}
+        <div className="rounded-[28px] border border-border/70 bg-card/60 p-6 text-sm text-muted-foreground">
+          Wallet context is unavailable. Return to All Wallets and open Assets from a wallet row.
         </div>
       </div>
     )
@@ -188,12 +277,7 @@ export function AssetsPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Assets</h1>
-        <p className="text-muted-foreground">
-          Manage your jettons and NFTs for wallet {selectedKey?.name.get()}
-        </p>
-      </div>
+      {walletHeader}
 
       <Tabs defaultValue="jettons" className="w-full">
         <TabsList className="mb-6">

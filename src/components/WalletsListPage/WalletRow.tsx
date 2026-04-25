@@ -36,16 +36,19 @@ export function WalletRow({ wallet, keyId }: { wallet: IWallet; keyId: number })
     updateBalance()
   }, [wallet])
 
+  const liteClientState = useLiteclientState()
+  const scannerUrl = liteClientState.selectedNetwork.scanner_url.get() || 'https://tonviewer.com/'
+  const scanAddress = wallet.address.toString({ bounceable: true, urlSafe: true })
+  const scanLink = useMemo(() => {
+    const addAddress = scannerUrl.indexOf('tonviewer.com') === -1
+    return `${scannerUrl}${addAddress ? 'address/' : ''}${scanAddress}`
+  }, [scannerUrl, scanAddress])
+
   return (
     <TableRow>
       <TableCell className="w-48">
         {wallet.name || `Wallet ${wallet.type}`}
-        <a
-          href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }))}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-2"
-        >
+        <a href={scanLink} target="_blank" rel="noopener noreferrer" className="ml-2">
           <FontAwesomeIcon icon={faShareFromSquare} />
         </a>
       </TableCell>
@@ -62,13 +65,4 @@ export function WalletRow({ wallet, keyId }: { wallet: IWallet; keyId: number })
       </TableCell>
     </TableRow>
   )
-}
-
-function getScanLink(address: string): string {
-  const scannerUrl =
-    useLiteclientState().selectedNetwork.scanner_url.get() || 'https://tonviewer.com/'
-
-  const addAddress = scannerUrl.indexOf('tonviewer.com') === -1
-
-  return useMemo(() => `${scannerUrl}${addAddress ? 'address/' : ''}${address}`, [scannerUrl])
 }

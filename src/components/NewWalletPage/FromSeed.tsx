@@ -14,6 +14,9 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Label } from '../ui/label'
 import { hexToNumber } from '@noble/curves/abstract/utils'
 import { ExtendedPoint } from '@noble/ed25519'
+import { Button } from '../ui/button'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 
 export function FromSeed() {
   const navigate = useNavigate()
@@ -27,6 +30,7 @@ export function FromSeed() {
   const [publicKeyOverride, setPublicKeyOverride] = useState('')
   const [derivedKeyPair, setDerivedKeyPair] = useState<KeyPair | undefined>(undefined)
   const [signType, setSignType] = useState<'ton' | 'fireblocks'>('ton')
+  const [showSeed, setShowSeed] = useState(false)
 
   // Parse seed when words, sign type, or public key settings change
   useEffect(() => {
@@ -179,9 +183,21 @@ export function FromSeed() {
       </Alert>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="seedInput">
-          Seed (64 hex characters):
-        </label>
+        <div className="flex items-center justify-between gap-2">
+          <label className="text-sm font-medium" htmlFor="seedInput">
+            {signType === 'fireblocks' ? 'Fireblocks private key' : 'Seed'} (64 hex characters):
+          </label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 rounded-full px-2 text-xs"
+            onClick={() => setShowSeed((value) => !value)}
+          >
+            <FontAwesomeIcon icon={showSeed ? faEyeSlash : faEye} className="mr-1" />
+            {showSeed ? 'Hide' : 'Show'}
+          </Button>
+        </div>
         <Input
           className="font-mono text-sm"
           id="seedInput"
@@ -190,11 +206,12 @@ export function FromSeed() {
           autoFocus
           placeholder="Enter your 64-character hexadecimal seed..."
           autoComplete="off"
+          type={showSeed ? 'text' : 'password'}
         />
         {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
         <p className="text-xs text-muted-foreground">
-          The seed should be a 64-character hexadecimal string. Only enter this if you know what
-          you're doing.
+          The value is hidden by default. Only reveal it in a private environment when you need to
+          verify or edit it.
         </p>
       </div>
 

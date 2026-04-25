@@ -240,7 +240,7 @@ function TopBarLinkWrapper({
 
 export function TopBar() {
   return (
-    <div className={cn('flex flex-wrap py-2 px-4 gap-4 w-full')}>
+    <div className={cn('flex flex-wrap items-center py-2 px-4 gap-3 w-full')}>
       <NetworkSelector />
 
       <ThemeSwitcher />

@@ -265,7 +265,8 @@ async function startRemoteTraceEmulation(remoteId: string, hash: string) {
     const libraryClient = getApiClient()
     const isTestnet = LiteClientState.selectedNetwork.get()?.is_testnet
     const toncenter3Url = LiteClientState.selectedNetwork.get()?.toncenter3_url
-    const toncenterApiKey = LiteClientState.selectedNetwork.get({ noproxy: true }).toncenter_token ?? ''
+    const toncenterApiKey =
+      LiteClientState.selectedNetwork.get({ noproxy: true }).toncenter_token ?? ''
 
     // Get a new abort controller for this trace
     const abortController = new AbortController()

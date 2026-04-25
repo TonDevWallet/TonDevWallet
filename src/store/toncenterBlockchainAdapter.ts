@@ -197,6 +197,7 @@ function accountRowToContractState(row: AccountStateFullJson): ContractState {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- retained for future masterchainInfo response mapping
 function blockToBlockIdExt(b: ToncenterBlockJson) {
   const rootB64 = b.root_hash ?? ''
   const fileB64 = b.file_hash ?? ''

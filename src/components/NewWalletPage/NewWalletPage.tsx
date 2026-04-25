@@ -12,7 +12,7 @@ export function NewWalletPage() {
           <TabsTrigger value="random">Create random wallet</TabsTrigger>
           <TabsTrigger value="mnemonic">From Mnemonic</TabsTrigger>
           <TabsTrigger value="seed">From Seed</TabsTrigger>
-          <TabsTrigger value="public-key">From Public Key</TabsTrigger>
+          <TabsTrigger value="public-key">Watch only</TabsTrigger>
         </TabsList>
         <TabsContent
           value="random" /* forceMount={true} className="hidden data-[state=active]:block" */

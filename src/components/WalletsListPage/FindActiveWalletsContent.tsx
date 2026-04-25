@@ -83,7 +83,7 @@ export function FindActiveWalletsContent({
   return (
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Active Wallets for {keyName}</DialogTitle>
+        <DialogTitle>Deployed wallets for {keyName}</DialogTitle>
         <DialogDescription>
           Wallets associated with this key that have a balance on the blockchain.
         </DialogDescription>
@@ -93,7 +93,7 @@ export function FindActiveWalletsContent({
         {isSearching ? (
           <div className="flex flex-col items-center justify-center py-8">
             <FontAwesomeIcon icon={faSearch} spin className="text-2xl text-primary mb-4" />
-            <p>Searching for active wallets on the blockchain...</p>
+            <p>Searching for deployed wallets on the blockchain...</p>
             <p className="text-sm text-muted-foreground mt-2">This may take a moment</p>
           </div>
         ) : activeWallets.length > 0 ? (
@@ -150,7 +150,7 @@ export function FindActiveWalletsContent({
           </div>
         ) : (
           <div className="text-center py-8">
-            <p>No active wallets found for this key.</p>
+            <p>No deployed wallets found for this key.</p>
             <p className="text-sm text-muted-foreground mt-2">
               Try creating a new wallet and sending some TON to it.
             </p>

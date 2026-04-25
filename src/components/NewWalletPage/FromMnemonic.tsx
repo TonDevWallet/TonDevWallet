@@ -12,6 +12,10 @@ import { WalletNameInput, ImportButton, useWalletSelection, KeyInfoDisplay } fro
 import { mnemonicToSeed as bip39MnemonicToSeed } from 'bip39'
 import { Label } from '../ui/label'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
+import { Button } from '../ui/button'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
+import { cn } from '@/utils/cn'
 
 async function bip39ToPrivateKey(mnemonic: string[]) {
   const seed = await bip39MnemonicToSeed(mnemonic.join(' '))
@@ -29,6 +33,7 @@ export function FromMnemonic() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mnemonicType, setMnemonicType] = useState<'bip39' | 'ton'>('ton')
+  const [showMnemonic, setShowMnemonic] = useState(false)
 
   const newWords = async (words: string, _mnemonicType: 'bip39' | 'ton' | null = null) => {
     try {
@@ -148,11 +153,26 @@ export function FromMnemonic() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="mnemonicInput" className="text-sm font-medium">
-            Recovery Phrase ({mnemonicType === 'ton' ? 'TON' : 'BIP39'})
-          </Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="mnemonicInput" className="text-sm font-medium">
+              Recovery Phrase ({mnemonicType === 'ton' ? 'TON' : 'BIP39'})
+            </Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 rounded-full px-2 text-xs"
+              onClick={() => setShowMnemonic((value) => !value)}
+            >
+              <FontAwesomeIcon icon={showMnemonic ? faEyeSlash : faEye} className="mr-1" />
+              {showMnemonic ? 'Hide' : 'Show'}
+            </Button>
+          </div>
           <Textarea
-            className="font-mono text-sm min-h-[100px]"
+            className={cn(
+              'min-h-[100px] font-mono text-sm',
+              !showMnemonic && '[-webkit-text-security:disc]'
+            )}
             id="mnemonicInput"
             onChange={onWordsChange}
             value={words}
@@ -162,7 +182,8 @@ export function FromMnemonic() {
           />
           {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
           <p className="text-xs text-muted-foreground">
-            Words should be separated by single spaces. The phrase is case-sensitive.
+            Words should be separated by single spaces. Hidden by default; use Show only in a
+            private environment.
           </p>
         </div>
       </div>
