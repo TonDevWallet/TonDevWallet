@@ -29,3 +29,5 @@ ton-dev-wallet.key*
 extension.key.pem
 packages/browser-extension/dist.crx
 storybook-atlas
+
+.vs/
