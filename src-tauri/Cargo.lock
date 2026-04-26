@@ -3284,6 +3284,7 @@ dependencies = [
 [[package]]
 name = "lockfree"
 version = "0.5.2"
+source = "git+https://github.com/RSquad/ton-rust-node.git?rev=fe020307b94d6350f8791cad40c3f678d7fbe573#fe020307b94d6350f8791cad40c3f678d7fbe573"
 dependencies = [
  "owned-alloc",
 ]
@@ -6768,6 +6769,7 @@ dependencies = [
 [[package]]
 name = "ton_api"
 version = "0.4.32"
+source = "git+https://github.com/RSquad/ton-rust-node.git?rev=fe020307b94d6350f8791cad40c3f678d7fbe573#fe020307b94d6350f8791cad40c3f678d7fbe573"
 dependencies = [
  "anyhow",
  "byteorder",
@@ -6787,6 +6789,7 @@ dependencies = [
 [[package]]
 name = "ton_block"
 version = "1.11.22"
+source = "git+https://github.com/RSquad/ton-rust-node.git?rev=fe020307b94d6350f8791cad40c3f678d7fbe573#fe020307b94d6350f8791cad40c3f678d7fbe573"
 dependencies = [
  "aes",
  "ahash",
@@ -6824,6 +6827,7 @@ dependencies = [
 [[package]]
 name = "ton_block_json"
 version = "0.9.41"
+source = "git+https://github.com/RSquad/ton-rust-node.git?rev=fe020307b94d6350f8791cad40c3f678d7fbe573#fe020307b94d6350f8791cad40c3f678d7fbe573"
 dependencies = [
  "anyhow",
  "hex",
@@ -6842,6 +6846,7 @@ dependencies = [
 [[package]]
 name = "ton_executor"
 version = "1.18.31"
+source = "git+https://github.com/RSquad/ton-rust-node.git?rev=fe020307b94d6350f8791cad40c3f678d7fbe573#fe020307b94d6350f8791cad40c3f678d7fbe573"
 dependencies = [
  "anyhow",
  "log",
@@ -6855,6 +6860,7 @@ dependencies = [
 [[package]]
 name = "ton_tl_codegen"
 version = "0.1.0"
+source = "git+https://github.com/RSquad/ton-rust-node.git?rev=fe020307b94d6350f8791cad40c3f678d7fbe573#fe020307b94d6350f8791cad40c3f678d7fbe573"
 dependencies = [
  "crc",
  "pom",
@@ -6868,6 +6874,7 @@ dependencies = [
 [[package]]
 name = "ton_vm"
 version = "2.2.26"
+source = "git+https://github.com/RSquad/ton-rust-node.git?rev=fe020307b94d6350f8791cad40c3f678d7fbe573#fe020307b94d6350f8791cad40c3f678d7fbe573"
 dependencies = [
  "anyhow",
  "hex",

@@ -139,7 +139,7 @@ fn stack_item_to_json(item: &StackItem) -> StackSlotJson {
 
 fn build_mc_state_cell(config_root: Cell, unixtime: u32, gen_lt: u64) -> TbResult<Cell> {
     let mut mc_extra = McStateExtra::default();
-    mc_extra.config = ConfigParams::with_root(config_root);
+    mc_extra.config = ConfigParams::with_root(config_root)?;
     let mut mc_state = ShardStateUnsplit::with_ident(ShardIdent::masterchain());
     mc_state.set_global_id(-239);
     mc_state.set_gen_time(unixtime);
@@ -156,11 +156,7 @@ fn format_trace_line(engine: &Engine, info: &EngineTraceInfo) -> String {
         EngineTraceInfoType::Finish => "".to_string(),
         EngineTraceInfoType::Exception => {
             let stack = info.stack.iter().map(|item| item.dump_as_fift()).collect::<Vec<_>>().join(" ");
-            let mut exception = info.cmd_str.clone();
-            if exception.contains("Libraries do not contain code with hash") || exception.contains("Failed to load library cell") {
-                exception.push_str("\navailable libraries: ");
-                exception.push_str(&engine.available_libraries_debug(32));
-            }
+            let exception = info.cmd_str.clone();
             format!("stack: [ {stack} ]\nhandling exception code {exception}")
         }
         EngineTraceInfoType::Normal | EngineTraceInfoType::Implicit => {
@@ -213,7 +209,7 @@ fn run_smc_method_with_logs(
     let account = shard_account.read_account()?;
     let code = account.get_code().ok_or_else(|| error!("Account has no code"))?;
     let data = account.get_data().unwrap_or_default();
-    let smc_info = SmartContractInfo::with_params(Some(shard_account), None, Some(mc_state_cell.clone()))?;
+    let smc_info = SmartContractInfo::with_params(Some(&account), None, Some(mc_state_cell.clone()))?;
 
     let mut storage = convert_ton_stack(&stack)?;
     storage.push(StackItem::int(method_id));
@@ -354,7 +350,7 @@ fn parse_prev_blocks(prev_boc: Option<&str>) -> TbResult<PrevBlocksInfo> {
 pub fn tvm_emulate_transaction_json(req: TvmEmulateRequest) -> Result<String, String> {
     (|| -> TbResult<String> {
         let config_root = cell_from_config_b64(&req.config_params_boc)?;
-        let config_params = ConfigParams::with_root(config_root);
+        let config_params = ConfigParams::with_root(config_root)?;
         let shard_acc = shard_from_b64(&req.shard_account_boc)?;
         let in_msg = if req.message_boc.is_empty() {
             None
@@ -401,7 +397,7 @@ pub fn tvm_emulate_transaction_json(req: TvmEmulateRequest) -> Result<String, St
 pub fn tvm_run_get_method_json(req: TvmRunGetMethodRequest) -> Result<String, String> {
     (|| -> TbResult<String> {
         let config_root = cell_from_config_b64(&req.config_params_boc)?;
-        let config_params = ConfigParams::with_root(config_root);
+        let config_params = ConfigParams::with_root(config_root)?;
         let cfg_cell = config_params
             .root()
             .ok_or_else(|| error!("config has no root"))?
