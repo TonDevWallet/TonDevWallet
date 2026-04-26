@@ -60,54 +60,99 @@ const LiteClientState = hookstate<{
 }>(async () => {
   const db = await getDatabase()
 
-  let networks = await db<Network>('networks').select()
+  let networks = await db.select<Network>('SELECT * FROM networks ORDER BY item_order ASC')
   if (networks.length === 0) {
-    await db<Network>('networks').insert({
-      name: 'Mainnet',
-      url: 'https://ton-blockchain.github.io/global.config.json',
-      item_order: 0,
-      is_default: true,
-      is_testnet: false,
-      scanner_url: 'https://tonviewer.com/',
-      toncenter3_url: 'https://toncenter.com/api/v3/',
-      lite_engine_host_mode: 'auto',
-      lite_engine_host_custom: '',
-      blockchain_source: 'liteclient',
-      tonapi_url: '',
-      tonapi_token: '',
-      toncenter_token: '',
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-    await db<Network>('networks').insert({
-      name: 'Testnet',
-      url: 'https://ton-blockchain.github.io/testnet-global.config.json',
-      item_order: 1,
-      is_default: true,
-      is_testnet: true,
-      scanner_url: 'https://testnet.tonviewer.com/',
-      toncenter3_url: 'https://testnet.toncenter.com/api/v3/',
-      lite_engine_host_mode: 'auto',
-      lite_engine_host_custom: '',
-      blockchain_source: 'liteclient',
-      tonapi_url: '',
-      tonapi_token: '',
-      toncenter_token: '',
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-    networks = await db<Network>('networks').select()
+    await db.execute(
+      `
+        INSERT INTO networks (
+          name,
+          url,
+          item_order,
+          is_default,
+          is_testnet,
+          scanner_url,
+          toncenter3_url,
+          lite_engine_host_mode,
+          lite_engine_host_custom,
+          blockchain_source,
+          tonapi_url,
+          tonapi_token,
+          toncenter_token,
+          created_at,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        'Mainnet',
+        'https://ton-blockchain.github.io/global.config.json',
+        0,
+        true,
+        false,
+        'https://tonviewer.com/',
+        'https://toncenter.com/api/v3/',
+        'auto',
+        '',
+        'liteclient',
+        '',
+        '',
+        '',
+        new Date(),
+        new Date(),
+      ]
+    )
+    await db.execute(
+      `
+        INSERT INTO networks (
+          name,
+          url,
+          item_order,
+          is_default,
+          is_testnet,
+          scanner_url,
+          toncenter3_url,
+          lite_engine_host_mode,
+          lite_engine_host_custom,
+          blockchain_source,
+          tonapi_url,
+          tonapi_token,
+          toncenter_token,
+          created_at,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        'Testnet',
+        'https://ton-blockchain.github.io/testnet-global.config.json',
+        1,
+        true,
+        true,
+        'https://testnet.tonviewer.com/',
+        'https://testnet.toncenter.com/api/v3/',
+        'auto',
+        '',
+        'liteclient',
+        '',
+        '',
+        '',
+        new Date(),
+        new Date(),
+      ]
+    )
+    networks = await db.select<Network>('SELECT * FROM networks ORDER BY item_order ASC')
   }
 
-  let selectedNetworkId = await db<{ name: string; value: string }>('settings')
-    .where('name', 'selected_network')
-    .first()
+  let selectedNetworkId = await db.first<{ name: string; value: string }>(
+    'SELECT * FROM settings WHERE name = ?',
+    ['selected_network']
+  )
 
   if (!selectedNetworkId) {
-    await db('settings').insert({
-      name: 'selected_network',
-      value: networks[0].network_id,
-    })
+    await db.execute('INSERT INTO settings (name, value) VALUES (?, ?)', [
+      'selected_network',
+      String(networks[0].network_id),
+    ])
     selectedNetworkId = {
       name: 'selected_network',
       value: networks[0].network_id.toString(),
@@ -256,7 +301,7 @@ export function useLiteclientState() {
 
 export async function updateNetworksList() {
   const db = await getDatabase()
-  const networks = await db<Network>('networks').select()
+  const networks = await db.select<Network>('SELECT * FROM networks ORDER BY item_order ASC')
 
   const oldSelectedNetwork = LiteClientState.selectedNetwork.get()
   const selectedId = oldSelectedNetwork.network_id
@@ -309,9 +354,10 @@ export async function changeLiteClient(networkId: number) {
     return
   }
 
-  await db<{ name: string; value: string }>('settings')
-    .where('name', 'selected_network')
-    .update('value', String(networkId))
+  await db.execute('UPDATE settings SET value = ? WHERE name = ?', [
+    String(networkId),
+    'selected_network',
+  ])
 
   const oldLiteClient = LiteClientState.liteClient.get()
   if (oldLiteClient?.engine) {

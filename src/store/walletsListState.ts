@@ -1,11 +1,9 @@
-import { getDatabase } from '@/db'
+import { type AppDatabase, getDatabase } from '@/db'
 import { Key } from '@/types/Key'
 import { hookstate, useHookstate } from '@hookstate/core'
-import { Knex } from 'knex'
 import { getWalletState, setWalletKey } from './walletState'
 import { NavigateFunction } from 'react-router-dom'
 import { IWallet, SavedWallet, WalletType } from '@/types'
-import { ConnectMessageTransaction, LastSelectedWallets } from '@/types/connect'
 import { encryptWalletData, getPasswordInteractive } from './passwordManager'
 import { secretKeyToED25519 } from '@/utils/ed25519'
 
@@ -33,12 +31,49 @@ function getDefaultWalletsToSave(
   return defaultWallets
 }
 
+async function insertSavedWallets(
+  db: AppDatabase,
+  wallets: Omit<SavedWallet, 'id'>[]
+): Promise<SavedWallet[]> {
+  if (wallets.length === 0) {
+    return []
+  }
+
+  const values = wallets.flatMap((wallet) => [
+    wallet.type,
+    wallet.key_id,
+    wallet.subwallet_id,
+    wallet.wallet_address ?? null,
+    wallet.extra_data ?? null,
+    wallet.name ?? null,
+    wallet.workchain_id ?? null,
+  ])
+  const placeholders = wallets.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ')
+
+  return db.select<SavedWallet>(
+    `
+      INSERT INTO wallets (
+        type,
+        key_id,
+        subwallet_id,
+        wallet_address,
+        extra_data,
+        name,
+        workchain_id
+      )
+      VALUES ${placeholders}
+      RETURNING *
+    `,
+    values
+  )
+}
+
 const state = hookstate<Key[]>(() => getWallets())
 
 export async function getWallets() {
   const db = await getDatabase()
-  const res = await db<Key>('keys')
-  const wallets = await db<SavedWallet>('wallets').select('*')
+  const res = await db.select<Key>('SELECT * FROM keys')
+  const wallets = await db.select<SavedWallet>('SELECT * FROM wallets')
 
   for (let i = 0; i < res.length; i++) {
     for (const w of wallets) {
@@ -67,53 +102,47 @@ export function getWalletListState() {
   return state
 }
 
-export async function saveKey(db: Knex, key: Key, walletName: string): Promise<Key> {
+export async function saveKey(db: AppDatabase, key: Key, walletName: string): Promise<Key> {
   // const key = wallet.key.get()
   if (!key?.encrypted) {
     throw new Error('no encrypted')
   }
 
-  const existing = await db('keys').where('public_key', key.public_key).first()
+  const existing = await db.first<Key>('SELECT * FROM keys WHERE public_key = ?', [key.public_key])
   console.log('existing', existing, key.public_key)
   if (existing) {
     throw new Error('Seed exists')
   }
 
-  const res = await db<Key>('keys')
-    .insert({
-      encrypted: key.encrypted,
-      public_key: key.public_key,
-      name: walletName,
-      sign_type: key.sign_type || 'ton',
-    })
-    .returning('*')
+  const res = await db.select<Key>(
+    `
+      INSERT INTO keys (encrypted, public_key, name, sign_type)
+      VALUES (?, ?, ?, ?)
+      RETURNING *
+    `,
+    [key.encrypted, key.public_key, walletName, key.sign_type || 'ton']
+  )
 
   await updateWalletsList()
 
   return res[0]
 }
 
-export async function deleteWallet(db: Knex, key: number) {
-  await db.transaction(async (tx) => {
-    await tx.raw(`DELETE FROM connect_message_transactions WHERE key_id = ?`, [key])
-    await tx.raw(`DELETE FROM connect_sessions WHERE key_id = ?`, [key])
-    await tx.raw(`DELETE FROM last_selected_wallets WHERE key_id = ?`, [key])
-    await tx.raw(`DELETE FROM wallets WHERE key_id = ?`, [key])
-    await tx.raw(`DELETE FROM keys WHERE id = ?`, [key])
-  })
+export async function deleteWallet(db: AppDatabase, key: number) {
+  await db.executeTransaction([
+    { sql: `DELETE FROM connect_message_transactions WHERE key_id = ?`, bindings: [key] },
+    { sql: `DELETE FROM connect_sessions WHERE key_id = ?`, bindings: [key] },
+    { sql: `DELETE FROM last_selected_wallets WHERE key_id = ?`, bindings: [key] },
+    { sql: `DELETE FROM wallets WHERE key_id = ?`, bindings: [key] },
+    { sql: `DELETE FROM keys WHERE id = ?`, bindings: [key] },
+  ])
 
   await updateWalletsList()
 }
 
 export async function updateWalletName(newName: string, keyId: number) {
   const db = await getDatabase()
-  await db<Key>('keys')
-    .where({
-      id: keyId,
-    })
-    .update({
-      name: newName,
-    })
+  await db.execute('UPDATE keys SET name = ? WHERE id = ?', [newName, keyId])
   await updateWalletsList()
 }
 
@@ -145,20 +174,69 @@ export async function saveKeyFromData(
   await saveKeyAndWallets(db, key, name, navigate, wallets)
 }
 export async function saveKeyAndWallets(
-  db: Knex,
+  db: AppDatabase,
   key: Key,
   walletName: string,
   navigate: NavigateFunction,
   walletsToSave?: IWallet[]
 ) {
-  const newWallet = await saveKey(db, key, walletName)
+  if (!key?.encrypted) {
+    throw new Error('no encrypted')
+  }
 
-  const defaultWallets = getDefaultWalletsToSave(newWallet.id, walletsToSave)
+  const existing = await db.first<Key>('SELECT * FROM keys WHERE public_key = ?', [key.public_key])
+  console.log('existing', existing, key.public_key)
+  if (existing) {
+    throw new Error('Seed exists')
+  }
 
-  await setWalletKey(newWallet.id)
+  const defaultWallets = getDefaultWalletsToSave(0, walletsToSave)
+  const walletPlaceholders = defaultWallets
+    .map(() => '(?, last_insert_rowid(), ?, ?, ?, ?, ?)')
+    .join(', ')
+  const walletValues = defaultWallets.flatMap((wallet) => [
+    wallet.type,
+    wallet.subwallet_id,
+    wallet.wallet_address ?? null,
+    wallet.extra_data ?? null,
+    wallet.name ?? null,
+    wallet.workchain_id ?? null,
+  ])
 
-  const wallets = await db<SavedWallet>('wallets').insert(defaultWallets).returning('*')
+  const transactionResult = await db.executeTransaction<Key | SavedWallet>([
+    {
+      sql: `
+        INSERT INTO keys (encrypted, public_key, name, sign_type)
+        VALUES (?, ?, ?, ?)
+        RETURNING *
+      `,
+      bindings: [key.encrypted, key.public_key, walletName, key.sign_type || 'ton'],
+      returnRows: true,
+    },
+    {
+      sql: `
+        INSERT INTO wallets (
+          type,
+          key_id,
+          subwallet_id,
+          wallet_address,
+          extra_data,
+          name,
+          workchain_id
+        )
+        VALUES ${walletPlaceholders}
+        RETURNING *
+      `,
+      bindings: walletValues,
+      returnRows: true,
+    },
+  ])
+
+  const newWallet = transactionResult[0][0] as Key
+  const wallets = transactionResult[1] as SavedWallet[]
+
   await updateWalletsList()
+  await setWalletKey(newWallet.id)
 
   const walletState = getWalletState()
   const stateKey = state.find((k) => k.id === walletState.keyId)
@@ -188,17 +266,30 @@ export async function CreateNewKeyWallet({
   workchainId?: number | null
 }) {
   const db = await getDatabase()
-  const wallets = await db<SavedWallet>('wallets')
-    .insert({
+  const wallets = await db.select<SavedWallet>(
+    `
+      INSERT INTO wallets (
+        type,
+        key_id,
+        subwallet_id,
+        wallet_address,
+        extra_data,
+        name,
+        workchain_id
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      RETURNING *
+    `,
+    [
       type,
-      key_id: keyId,
-      subwallet_id: subwalletId.toString(),
-      wallet_address: walletAddress,
-      extra_data: extraData,
-      name,
-      workchain_id: workchainId,
-    })
-    .returning('*')
+      keyId,
+      subwalletId.toString(),
+      walletAddress,
+      extraData,
+      name ?? null,
+      workchainId ?? null,
+    ]
+  )
 
   const walletState = getWalletState()
   const stateKey = state.find((k) => k.id.get() === walletState.keyId.get())
@@ -213,42 +304,33 @@ export async function CreateNewKeyWallet({
 export async function DeleteKeyWallet(walletId: number) {
   const db = await getDatabase()
 
-  const sessionsCount = await db('connect_sessions')
-    .where({ wallet_id: walletId })
-    .count({ count: '*' })
-    .first()
-  const transactionsCount = await db<ConnectMessageTransaction>('connect_message_transactions')
-    .where({ wallet_id: walletId, status: 0 })
-    .count({ count: '*' })
-    .first()
+  const sessionsCount = await db.first<{ count: number }>(
+    'SELECT COUNT(*) AS count FROM connect_sessions WHERE wallet_id = ?',
+    [walletId]
+  )
+  const transactionsCount = await db.first<{ count: number }>(
+    `
+      SELECT COUNT(*) AS count
+      FROM connect_message_transactions
+      WHERE wallet_id = ? AND status = 0
+    `,
+    [walletId]
+  )
 
-  if (sessionsCount?.count || transactionsCount?.count) {
+  if (Number(sessionsCount?.count ?? 0) > 0 || Number(transactionsCount?.count ?? 0) > 0) {
     console.log(sessionsCount, transactionsCount)
     throw new Error('Wallet already used')
   }
 
-  await db<LastSelectedWallets>('last_selected_wallets')
-    .where({
-      wallet_id: walletId,
-    })
-    .delete()
-
-  await db<SavedWallet>('wallets')
-    .where({
-      id: walletId,
-    })
-    .delete()
+  await db.execute('DELETE FROM last_selected_wallets WHERE wallet_id = ?', [walletId])
+  await db.execute('DELETE FROM wallets WHERE id = ?', [walletId])
 
   await updateWalletsList()
 }
 
 export async function UpdateKeyWalletName(walletId: number, name: string) {
   const db = await getDatabase()
-  await db<SavedWallet>('wallets')
-    .where({
-      id: walletId,
-    })
-    .update({ name })
+  await db.execute('UPDATE wallets SET name = ? WHERE id = ?', [name, walletId])
   await updateWalletsList()
 }
 
@@ -283,25 +365,25 @@ export async function savePublicKeyOnly(
 }
 
 export async function savePublicKeyAndWallets(
-  db: Knex,
+  db: AppDatabase,
   key: Key,
   walletName: string,
   navigate: NavigateFunction,
   walletsToSave?: IWallet[]
 ) {
   // Check if the public key already exists
-  const existing = await db('keys').where('public_key', key.public_key).first()
+  const existing = await db.first<Key>('SELECT * FROM keys WHERE public_key = ?', [key.public_key])
   if (existing) {
     throw new Error('Public key already exists')
   }
 
   // Insert the key without requiring encrypted data
-  const res = await db.raw<Key>(
+  const res = await db.select<Key>(
     `
-    INSERT INTO keys (public_key, name, sign_type)
-    VALUES (?, ?, ?)
-    RETURNING *
-  `,
+      INSERT INTO keys (public_key, name, sign_type)
+      VALUES (?, ?, ?)
+      RETURNING *
+    `,
     [key.public_key, walletName, key.sign_type || 'ton']
   )
 
@@ -312,7 +394,7 @@ export async function savePublicKeyAndWallets(
 
   await setWalletKey(newWallet.id)
 
-  const wallets = await db<SavedWallet>('wallets').insert(defaultWallets).returning('*')
+  const wallets = await insertSavedWallets(db, defaultWallets)
   await updateWalletsList()
 
   const walletState = getWalletState()

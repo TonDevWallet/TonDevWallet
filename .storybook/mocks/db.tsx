@@ -2,7 +2,13 @@ import { Buffer } from 'buffer'
 import { createContext, useContext } from 'react'
 
 type Row = Record<string, any>
-type Predicate = (row: Row) => boolean
+type SqlValue = string | number | boolean | Date | null | undefined
+type TransactionStatement = {
+  sql: string
+  bindings?: SqlValue[]
+  returnRows?: boolean
+  expectedRowsAffected?: number
+}
 
 const now = new Date('2026-01-01T00:00:00.000Z')
 const publicKeyA = Buffer.alloc(32, 1).toString('base64')
@@ -63,7 +69,13 @@ export const storybookTables: Record<string, Row[]> = {
       id: 1,
       name: 'Primary signer',
       public_key: publicKeyA,
-      encrypted: JSON.stringify({ cypher: 'encrypted-scrypt-tweetnacl', salt: 'storybook', N: 1, r: 1, p: 1 }),
+      encrypted: JSON.stringify({
+        cypher: 'encrypted-scrypt-tweetnacl',
+        salt: 'storybook',
+        N: 1,
+        r: 1,
+        p: 1,
+      }),
       sign_type: 'ton',
     },
     {
@@ -134,172 +146,271 @@ export const storybookTables: Record<string, Row[]> = {
   ],
 }
 
-function nextId(table: string, key = 'id') {
-  const rows = storybookTables[table] ?? []
-  return rows.reduce((max, row) => Math.max(max, Number(row[key] ?? row.id ?? 0)), 0) + 1
+const primaryKeys: Record<string, string> = {
+  address_book: 'address_book_id',
+  networks: 'network_id',
+  last_selected_wallets: 'url',
+}
+
+function compactSql(sql: string) {
+  return sql.replace(/\s+/g, ' ').trim()
 }
 
 function cloneRow(row: Row) {
   return { ...row }
 }
 
-class QueryBuilder {
-  private predicates: Predicate[] = []
-  private lastInserted: Row[] | undefined
-  private take: number | undefined
-  private skip = 0
-  private countMode = false
+function getPrimaryKey(table: string) {
+  return primaryKeys[table] || 'id'
+}
 
-  constructor(private table: string) {}
+function nextId(table: string, key = getPrimaryKey(table)) {
+  const rows = storybookTables[table] ?? []
+  return rows.reduce((max, row) => Math.max(max, Number(row[key] ?? row.id ?? 0)), 0) + 1
+}
 
-  where(arg: string | Row | ((builder: QueryBuilder) => void), value?: unknown) {
-    if (typeof arg === 'function') {
-      arg(this)
-      return this
+function normalizeValue(value: SqlValue) {
+  if (value instanceof Date) {
+    return value.valueOf()
+  }
+  if (typeof value === 'boolean') {
+    return Number(value)
+  }
+  return value ?? null
+}
+
+function normalizeParams(params: SqlValue[] = []) {
+  return params.map(normalizeValue)
+}
+
+function tableFromSql(sql: string) {
+  return sql.match(/\bfrom\s+([a-z_]+)/i)?.[1] || sql.match(/\binto\s+([a-z_]+)/i)?.[1]
+}
+
+class MockDatabase {
+  async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
+    const compact = compactSql(sql)
+    const lower = compact.toLowerCase()
+    const normalizedParams = normalizeParams(params)
+
+    if (lower.startsWith('insert into')) {
+      return this.insertRows<T>(compact, normalizedParams, true)
     }
-    if (typeof arg === 'string') {
-      this.predicates.push((row) => row[arg] === value)
-      return this
+
+    const table = tableFromSql(compact)
+    if (!table) {
+      return []
     }
-    this.predicates.push((row) => Object.entries(arg).every(([key, val]) => row[key] === val))
-    return this
+
+    let rows = this.filterRows(table, compact, normalizedParams)
+
+    const order = compact.match(/order by ([a-z_]+)(?: (asc|desc))?/i)
+    if (order) {
+      const [, field, direction = 'asc'] = order
+      const factor = direction.toLowerCase() === 'desc' ? -1 : 1
+      rows = rows.sort((a, b) => (a[field] > b[field] ? factor : a[field] < b[field] ? -factor : 0))
+    }
+
+    if (lower.includes('count(')) {
+      return [{ count: rows.length } as T]
+    }
+
+    const limitMatch = compact.match(/limit \? offset \?/i)
+    if (limitMatch) {
+      const limit = Number(normalizedParams[normalizedParams.length - 2] ?? rows.length)
+      const offset = Number(normalizedParams[normalizedParams.length - 1] ?? 0)
+      rows = rows.slice(offset, offset + limit)
+    }
+
+    return rows.map(cloneRow) as T[]
   }
 
-  whereRaw() {
-    return this
+  async first<T>(sql: string, params: SqlValue[] = []): Promise<T | undefined> {
+    const rows = await this.select<T>(sql, params)
+    return rows[0]
   }
 
-  orWhereRaw() {
-    return this
-  }
+  async execute(sql: string, params: SqlValue[] = []) {
+    const compact = compactSql(sql)
+    const lower = compact.toLowerCase()
+    const normalizedParams = normalizeParams(params)
 
-  select() {
-    return this
-  }
+    if (lower === 'begin immediate' || lower === 'commit' || lower === 'rollback') {
+      return { rowsAffected: 0, lastInsertId: undefined }
+    }
 
-  orderBy(field: string, direction: 'asc' | 'desc' = 'asc') {
-    const factor = direction === 'desc' ? -1 : 1
-    const data = storybookTables[this.table] ?? []
-    data.sort((a, b) => (a[field] > b[field] ? factor : a[field] < b[field] ? -factor : 0))
-    return this
-  }
-
-  limit(size: number) {
-    this.take = size
-    return this
-  }
-
-  offset(size: number) {
-    this.skip = size
-    return this
-  }
-
-  count() {
-    this.countMode = true
-    return this
-  }
-
-  insert(payload: Row | Row[]) {
-    const rows = Array.isArray(payload) ? payload : [payload]
-    const tableRows = (storybookTables[this.table] = storybookTables[this.table] ?? [])
-    const primaryKey = this.table === 'address_book' ? 'address_book_id' : 'id'
-    this.lastInserted = rows.map((row) => {
-      const withId = { ...row }
-      if (withId[primaryKey] == null && withId.id == null) {
-        withId[primaryKey] = nextId(this.table, primaryKey)
+    if (lower.startsWith('insert into last_selected_wallets') && lower.includes('on conflict')) {
+      const [url, keyId, walletId] = normalizedParams
+      const rows = (storybookTables.last_selected_wallets =
+        storybookTables.last_selected_wallets ?? [])
+      const existing = rows.find((row) => row.url === url)
+      if (existing) {
+        existing.key_id = keyId
+        existing.wallet_id = walletId
+        return { rowsAffected: 1, lastInsertId: undefined }
       }
-      if (withId.id == null && primaryKey !== 'id') {
-        withId.id = withId[primaryKey]
-      }
-      tableRows.push(withId)
-      return cloneRow(withId)
-    })
-    return this
-  }
-
-  returning() {
-    return Promise.resolve(this.lastInserted ?? this.rows())
-  }
-
-  onConflict() {
-    return this
-  }
-
-  merge() {
-    return Promise.resolve(this.lastInserted ?? this.rows())
-  }
-
-  async update(arg: Row | string, value?: unknown) {
-    const update = typeof arg === 'string' ? { [arg]: value } : arg
-    let changed = 0
-    for (const row of storybookTables[this.table] ?? []) {
-      if (this.predicates.every((predicate) => predicate(row))) {
-        Object.assign(row, update)
-        changed += 1
-      }
+      rows.push({ url, key_id: keyId, wallet_id: walletId })
+      return { rowsAffected: 1, lastInsertId: undefined }
     }
-    return changed
-  }
 
-  async delete() {
-    const data = storybookTables[this.table] ?? []
-    const keep = data.filter((row) => !this.predicates.every((predicate) => predicate(row)))
-    const deleted = data.length - keep.length
-    storybookTables[this.table] = keep
-    return deleted
-  }
-
-  async first() {
-    if (this.countMode) {
-      return { count: this.rows().length }
+    if (lower.startsWith('insert into')) {
+      const rows = await this.insertRows<Row>(compact, normalizedParams, false)
+      const table = tableFromSql(compact) || ''
+      const primaryKey = getPrimaryKey(table)
+      return { rowsAffected: rows.length, lastInsertId: rows[rows.length - 1]?.[primaryKey] }
     }
-    return this.rows()[0]
+
+    if (lower.startsWith('update')) {
+      const updateMatch = compact.match(/^update ([a-z_]+) set (.+) where ([a-z_]+) = \?$/i)
+      if (!updateMatch) {
+        return { rowsAffected: 0, lastInsertId: undefined }
+      }
+      const [, table, setPart, whereColumn] = updateMatch
+      const columns = [...setPart.matchAll(/([a-z_]+)\s*=\s*\?/gi)].map((match) => match[1])
+      const whereValue = normalizedParams[columns.length]
+      let rowsAffected = 0
+      for (const row of storybookTables[table] ?? []) {
+        if (row[whereColumn] === whereValue) {
+          columns.forEach((column, index) => {
+            row[column] = normalizedParams[index]
+          })
+          rowsAffected += 1
+        }
+      }
+      return { rowsAffected, lastInsertId: undefined }
+    }
+
+    if (lower.startsWith('delete from')) {
+      const deleteMatch = compact.match(/^delete from ([a-z_]+) where ([a-z_]+) = \?$/i)
+      if (!deleteMatch) {
+        return { rowsAffected: 0, lastInsertId: undefined }
+      }
+      const [, table, whereColumn] = deleteMatch
+      const before = storybookTables[table] ?? []
+      const keep = before.filter((row) => row[whereColumn] !== normalizedParams[0])
+      storybookTables[table] = keep
+      return { rowsAffected: before.length - keep.length, lastInsertId: undefined }
+    }
+
+    return { rowsAffected: 0, lastInsertId: undefined }
   }
 
-  private rows() {
-    const rows = (storybookTables[this.table] ?? [])
-      .filter((row) => this.predicates.every((predicate) => predicate(row)))
-      .slice(this.skip, this.take == null ? undefined : this.skip + this.take)
-      .map(cloneRow)
-    return this.countMode ? [{ count: rows.length }] : rows
+  async executeTransaction<T = unknown>(statements: TransactionStatement[]): Promise<T[][]> {
+    const backup = Object.fromEntries(
+      Object.entries(storybookTables).map(([table, rows]) => [table, rows.map(cloneRow)])
+    )
+    const results: T[][] = []
+
+    try {
+      for (const statement of statements) {
+        if (statement.returnRows) {
+          results.push(await this.select<T>(statement.sql, statement.bindings ?? []))
+          continue
+        }
+
+        const result = await this.execute(statement.sql, statement.bindings ?? [])
+        if (
+          statement.expectedRowsAffected !== undefined &&
+          result.rowsAffected !== statement.expectedRowsAffected
+        ) {
+          throw new Error(
+            'Expected ' +
+              statement.expectedRowsAffected +
+              ' rows affected, got ' +
+              result.rowsAffected
+          )
+        }
+        results.push([])
+      }
+    } catch (error) {
+      Object.keys(storybookTables).forEach((table) => delete storybookTables[table])
+      Object.assign(storybookTables, backup)
+      throw error
+    }
+
+    return results
   }
 
-  then(resolve: (value: Row[]) => void, reject?: (reason?: unknown) => void) {
-    return Promise.resolve(this.rows()).then(resolve, reject)
+  async transaction<T>(callback: (tx: MockDatabase) => Promise<T>): Promise<T> {
+    return callback(this)
+  }
+
+  async close() {
+    return true
+  }
+
+  private filterRows(table: string, sql: string, params: unknown[]) {
+    const lower = sql.toLowerCase()
+    let rows = [...(storybookTables[table] ?? [])]
+
+    if (!lower.includes(' where ')) {
+      return rows
+    }
+
+    if (table === 'address_book' && lower.includes('lower(address) like')) {
+      const hasLimit = lower.includes('limit ? offset ?')
+      const whereParams = hasLimit ? params.slice(0, -2) : params
+      const [networkId, search] = whereParams
+      const needle = String(search ?? '')
+        .replace(/%/g, '')
+        .toLowerCase()
+      return rows.filter(
+        (row) =>
+          row.network_id === networkId &&
+          ['address', 'title', 'description'].some((field) =>
+            String(row[field] ?? '')
+              .toLowerCase()
+              .includes(needle)
+          )
+      )
+    }
+
+    const hasLimit = lower.includes('limit ? offset ?')
+    const whereParams = hasLimit ? params.slice(0, -2) : params
+    const wherePart = sql.split(/ where /i)[1].split(/ order by | limit /i)[0]
+    const columns = [...wherePart.matchAll(/([a-z_]+)\s*=\s*\?/gi)].map((match) => match[1])
+
+    return rows.filter((row) =>
+      columns.every((column, index) => row[column] === whereParams[index])
+    )
+  }
+
+  private async insertRows<T>(sql: string, params: unknown[], returning: boolean): Promise<T[]> {
+    const insertMatch = sql.match(/^insert into ([a-z_]+) \((.+?)\) values/i)
+    if (!insertMatch) {
+      return []
+    }
+
+    const [, table, columnsPart] = insertMatch
+    const columns = columnsPart.split(',').map((column) => column.trim())
+    const rowCount = Math.max(1, Math.floor(params.length / columns.length))
+    const insertedRows: Row[] = []
+    const rows = (storybookTables[table] = storybookTables[table] ?? [])
+
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+      const row: Row = {}
+      columns.forEach((column, columnIndex) => {
+        row[column] = params[rowIndex * columns.length + columnIndex]
+      })
+
+      const primaryKey = getPrimaryKey(table)
+      if (row[primaryKey] == null && primaryKey !== 'url') {
+        row[primaryKey] = nextId(table, primaryKey)
+      }
+      if (row.id == null && primaryKey !== 'id' && primaryKey !== 'url') {
+        row.id = row[primaryKey]
+      }
+
+      rows.push(row)
+      insertedRows.push(row)
+    }
+
+    return returning ? (insertedRows.map(cloneRow) as T[]) : (insertedRows as T[])
   }
 }
 
-function createMockDb() {
-  const db = ((table: string) => new QueryBuilder(table)) as any
-
-  db.raw = async (sql: string, params: unknown[] = []) => {
-    const normalized = sql.trim().toLowerCase()
-    if (normalized.startsWith('insert into keys')) {
-      const [publicKey, name, signType] = params
-      return new QueryBuilder('keys')
-        .insert({ public_key: publicKey, name, sign_type: signType, encrypted: null })
-        .returning('*')
-    }
-    return []
-  }
-
-  db.transaction = async (callback?: (tx: any) => Promise<void>) => {
-    const tx = Object.assign(createMockDb(), {
-      commit: async () => undefined,
-      rollback: async () => undefined,
-      isCompleted: () => true,
-    })
-    if (callback) {
-      await callback(tx)
-    }
-    return tx
-  }
-
-  return db
-}
-
-export const mockDb = createMockDb()
-export const DbContext = createContext<any>(mockDb)
+export const mockDb = new MockDatabase()
+export const DbContext = createContext<MockDatabase>(mockDb)
 export const useDatabase = () => useContext(DbContext)
 export async function InitDB() {}
 export async function getDatabase() {

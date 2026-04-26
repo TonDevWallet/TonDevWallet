@@ -101,7 +101,6 @@
     "events": "^3.3.0",
     "express": "^4.21.2",
     "jsqr": "^1.4.0",
-    "knex": "npm:@truecarry/knex@^2.3.0",
     "lru_map": "^0.4.1",
     "next-themes": "^0.4.6",
     "postcss": "^8.5.3",

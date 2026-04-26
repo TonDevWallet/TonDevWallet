@@ -41,21 +41,25 @@ export function useMessagesHistory(
       const offset = (page - 1) * pageSize
 
       // Get total count
-      const countResult = await db<ConnectMessageTransaction>('connect_message_transactions')
-        .where({ status: 1 })
-        .count('* as count')
-        .first()
+      const countResult = await db.first<{ count: number }>(
+        'SELECT COUNT(*) AS count FROM connect_message_transactions WHERE status = ?',
+        [1]
+      )
 
-      const count = (countResult as any)?.count || 0
+      const count = Number(countResult?.count ?? 0)
       setTotalCount(count)
 
       // Get paginated messages
-      const dbMessages = await db<ConnectMessageTransaction>('connect_message_transactions')
-        .where({ status: 1 })
-        .orderBy('id', 'desc')
-        .limit(pageSize)
-        .offset(offset)
-        .select('*')
+      const dbMessages = await db.select<ConnectMessageTransaction>(
+        `
+          SELECT *
+          FROM connect_message_transactions
+          WHERE status = ?
+          ORDER BY id DESC
+          LIMIT ? OFFSET ?
+        `,
+        [1, pageSize, offset]
+      )
 
       setMessages(dbMessages.map(parseDbMessage))
     } catch (err) {

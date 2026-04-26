@@ -14,9 +14,9 @@ export function useExtraCurrencies() {
   const loadConfig = useCallback(async () => {
     setLoading(true)
     const db = await getDatabase()
-    const configSetting = await db<Setting>('settings')
-      .where('name', 'extra_currency_config')
-      .first()
+    const configSetting = await db.first<Setting>('SELECT * FROM settings WHERE name = ?', [
+      'extra_currency_config',
+    ])
 
     if (configSetting) {
       try {
@@ -39,19 +39,20 @@ export function useExtraCurrencies() {
   // Save config to database
   const saveConfig = useCallback(async (newConfig: ExtraCurrencyConfig) => {
     const db = await getDatabase()
-    const configSetting = await db<Setting>('settings')
-      .where('name', 'extra_currency_config')
-      .first()
+    const configSetting = await db.first<Setting>('SELECT * FROM settings WHERE name = ?', [
+      'extra_currency_config',
+    ])
 
     if (configSetting) {
-      await db<Setting>('settings')
-        .where('name', 'extra_currency_config')
-        .update({ value: JSON.stringify(newConfig) })
+      await db.execute('UPDATE settings SET value = ? WHERE name = ?', [
+        JSON.stringify(newConfig),
+        'extra_currency_config',
+      ])
     } else {
-      await db<Setting>('settings').insert({
-        name: 'extra_currency_config',
-        value: JSON.stringify(newConfig),
-      })
+      await db.execute('INSERT INTO settings (name, value) VALUES (?, ?)', [
+        'extra_currency_config',
+        JSON.stringify(newConfig),
+      ])
     }
 
     setConfig(newConfig)

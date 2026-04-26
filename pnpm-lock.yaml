@@ -269,9 +269,6 @@ importers:
       jsqr:
         specifier: ^1.4.0
         version: 1.4.0
-      knex:
-        specifier: npm:@truecarry/knex@^2.3.0
-        version: '@truecarry/knex@2.3.0'
       lru_map:
         specifier: ^0.4.1
         version: 0.4.1
@@ -3194,34 +3191,6 @@ packages:
 
   '@tonstudio/parser-runtime@0.0.1':
     resolution: {integrity: sha512-5s4fLkXWxa4SAd7QGGvJXe13GakEo0J3VF5dUI/i3A//bGZxMwCp1FcnbErpNs3y0LcAZoXE5FCUnDowDQptqw==}
-
-  '@truecarry/knex@2.3.0':
-    resolution: {integrity: sha512-ahLC733cwksxeJcFeTSswalAqgnqy4dd/lQ+svIJ+mfBs+Voxv+jQy3vNrscr8hrRkd1rAr8ovveCWS/WH/0cA==}
-    engines: {node: '>=12'}
-    hasBin: true
-    peerDependencies:
-      better-sqlite3: '*'
-      mysql: '*'
-      mysql2: '*'
-      pg: '*'
-      pg-native: '*'
-      sqlite3: '*'
-      tedious: '*'
-    peerDependenciesMeta:
-      better-sqlite3:
-        optional: true
-      mysql:
-        optional: true
-      mysql2:
-        optional: true
-      pg:
-        optional: true
-      pg-native:
-        optional: true
-      sqlite3:
-        optional: true
-      tedious:
-        optional: true
 
   '@truecarry/tlb-abi@0.2.0-beta.8':
     resolution: {integrity: sha512-sPJUNS15MQWQU3tOhT/sdUA/Ioxg0AIKZ5/9lE1oLxxJAmCC+0LEsL/uiiyLmUSpN+3zGXP9cY7idYRHT1kh/w==}
@@ -11169,25 +11138,6 @@ snapshots:
       '@ton/crypto': 3.3.0
 
   '@tonstudio/parser-runtime@0.0.1': {}
-
-  '@truecarry/knex@2.3.0':
-    dependencies:
-      colorette: 2.0.19
-      commander: 9.5.0
-      debug: 4.3.4
-      escalade: 3.1.2
-      esm: 3.2.25
-      get-package-type: 0.1.0
-      getopts: 2.3.0
-      interpret: 2.2.0
-      lodash: 4.17.21
-      pg-connection-string: 2.5.0
-      rechoir: 0.8.0
-      resolve-from: 5.0.0
-      tarn: 3.0.2
-      tildify: 2.0.0
-    transitivePeerDependencies:
-      - supports-color
 
   '@truecarry/tlb-abi@0.2.0-beta.8(@ton/core@0.63.1(@ton/crypto@3.3.0))':
     dependencies:

@@ -56,9 +56,15 @@ export function useAddressBook(): UseAddressBookResult {
     try {
       setLoading(true)
       const db = await getDatabase()
-      const addresses = await db<AddressBookEntry>('address_book')
-        .where('network_id', networkId)
-        .orderBy('created_at', 'desc')
+      const addresses = await db.select<AddressBookEntry>(
+        `
+          SELECT *
+          FROM address_book
+          WHERE network_id = ?
+          ORDER BY created_at DESC
+        `,
+        [networkId]
+      )
 
       return addresses
     } catch (error) {
@@ -77,12 +83,12 @@ export function useAddressBook(): UseAddressBookResult {
         const db = await getDatabase()
 
         // Get total count
-        const countResult = await db('address_book')
-          .where('network_id', networkId)
-          .count('address_book_id as count')
-          .first()
+        const countResult = await db.first<{ count: number }>(
+          'SELECT COUNT(address_book_id) AS count FROM address_book WHERE network_id = ?',
+          [networkId]
+        )
 
-        const totalCount = countResult ? (countResult.count as number) : 0
+        const totalCount = Number(countResult?.count ?? 0)
         const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
         const currentPage = Math.min(Math.max(1, page), totalPages)
 
@@ -90,11 +96,16 @@ export function useAddressBook(): UseAddressBookResult {
         const offset = (currentPage - 1) * pageSize
 
         // Get paginated data
-        const entries = await db<AddressBookEntry>('address_book')
-          .where('network_id', networkId)
-          .orderBy('created_at', 'desc')
-          .limit(pageSize)
-          .offset(offset)
+        const entries = await db.select<AddressBookEntry>(
+          `
+            SELECT *
+            FROM address_book
+            WHERE network_id = ?
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+          `,
+          [networkId, pageSize, offset]
+        )
 
         return {
           entries,
@@ -123,9 +134,10 @@ export function useAddressBook(): UseAddressBookResult {
       try {
         setLoading(true)
         const db = await getDatabase()
-        const address = await db<AddressBookEntry>('address_book')
-          .where('address_book_id', addressBookId)
-          .first()
+        const address = await db.first<AddressBookEntry>(
+          'SELECT * FROM address_book WHERE address_book_id = ?',
+          [addressBookId]
+        )
 
         return address || null
       } catch (error) {
@@ -157,15 +169,21 @@ export function useAddressBook(): UseAddressBookResult {
         // Format the address to a consistent format
         const formattedAddress = formatTonAddress(address)
 
-        const [addressBookId] = await db<AddressBookEntry>('address_book').insert({
-          network_id: networkId,
-          address: formattedAddress,
-          title: title.trim() || 'Untitled',
-          description: description.trim() || null,
-          created_at: Date.now(),
-        })
+        const result = await db.execute(
+          `
+            INSERT INTO address_book (network_id, address, title, description, created_at)
+            VALUES (?, ?, ?, ?, ?)
+          `,
+          [
+            networkId,
+            formattedAddress,
+            title.trim() || 'Untitled',
+            description.trim() || null,
+            Date.now(),
+          ]
+        )
 
-        return addressBookId
+        return Number(result.lastInsertId ?? 0)
       } catch (error) {
         console.error('Error adding address:', error)
         return 0
@@ -187,7 +205,7 @@ export function useAddressBook(): UseAddressBookResult {
         const db = await getDatabase()
 
         // Clean up updates object
-        const cleanUpdates: Record<string, any> = {}
+        const cleanUpdates: Record<string, string | null> = {}
 
         if (updates.address !== undefined) {
           cleanUpdates.address = formatTonAddress(updates.address)
@@ -201,11 +219,18 @@ export function useAddressBook(): UseAddressBookResult {
           cleanUpdates.description = updates.description ? updates.description.trim() || null : null
         }
 
-        const updated = await db<AddressBookEntry>('address_book')
-          .where('address_book_id', addressBookId)
-          .update(cleanUpdates)
+        const entries = Object.entries(cleanUpdates)
+        if (entries.length === 0) {
+          return true
+        }
 
-        return updated > 0
+        const setClause = entries.map(([column]) => `${column} = ?`).join(', ')
+        const updated = await db.execute(
+          `UPDATE address_book SET ${setClause} WHERE address_book_id = ?`,
+          [...entries.map(([, value]) => value), addressBookId]
+        )
+
+        return updated.rowsAffected > 0
       } catch (error) {
         console.error('Error updating address:', error)
         return false
@@ -222,11 +247,11 @@ export function useAddressBook(): UseAddressBookResult {
       setLoading(true)
       const db = await getDatabase()
 
-      const deleted = await db<AddressBookEntry>('address_book')
-        .where('address_book_id', addressBookId)
-        .delete()
+      const deleted = await db.execute('DELETE FROM address_book WHERE address_book_id = ?', [
+        addressBookId,
+      ])
 
-      return deleted > 0
+      return deleted.rowsAffected > 0
     } catch (error) {
       console.error('Error removing address:', error)
       return false
@@ -254,18 +279,21 @@ export function useAddressBook(): UseAddressBookResult {
         const searchQuery = `%${query.trim().toLowerCase()}%`
 
         // Get total count for search
-        const countResult = await db('address_book')
-          .where('network_id', networkId)
-          .where((builder) => {
-            builder
-              .whereRaw('LOWER(address) LIKE ?', [searchQuery])
-              .orWhereRaw('LOWER(title) LIKE ?', [searchQuery])
-              .orWhereRaw('LOWER(description) LIKE ?', [searchQuery])
-          })
-          .count('address_book_id as count')
-          .first()
+        const countResult = await db.first<{ count: number }>(
+          `
+            SELECT COUNT(address_book_id) AS count
+            FROM address_book
+            WHERE network_id = ?
+              AND (
+                LOWER(address) LIKE ?
+                OR LOWER(title) LIKE ?
+                OR LOWER(description) LIKE ?
+              )
+          `,
+          [networkId, searchQuery, searchQuery, searchQuery]
+        )
 
-        const totalCount = countResult ? (countResult.count as number) : 0
+        const totalCount = Number(countResult?.count ?? 0)
         const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
         const currentPage = Math.min(Math.max(1, page), totalPages)
 
@@ -273,17 +301,21 @@ export function useAddressBook(): UseAddressBookResult {
         const offset = (currentPage - 1) * pageSize
 
         // Get paginated search results
-        const entries = await db<AddressBookEntry>('address_book')
-          .where('network_id', networkId)
-          .where((builder) => {
-            builder
-              .whereRaw('LOWER(address) LIKE ?', [searchQuery])
-              .orWhereRaw('LOWER(title) LIKE ?', [searchQuery])
-              .orWhereRaw('LOWER(description) LIKE ?', [searchQuery])
-          })
-          .orderBy('created_at', 'desc')
-          .limit(pageSize)
-          .offset(offset)
+        const entries = await db.select<AddressBookEntry>(
+          `
+            SELECT *
+            FROM address_book
+            WHERE network_id = ?
+              AND (
+                LOWER(address) LIKE ?
+                OR LOWER(title) LIKE ?
+                OR LOWER(description) LIKE ?
+              )
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+          `,
+          [networkId, searchQuery, searchQuery, searchQuery, pageSize, offset]
+        )
 
         return {
           entries,

@@ -90,11 +90,10 @@ function ConnectPopupContent() {
         return
       }
       const db = await getDatabase()
-      const savedInfo = await db<LastSelectedWallets>('last_selected_wallets')
-        .where({
-          url: connectLinkInfo?.url,
-        })
-        .first()
+      const savedInfo = await db.first<LastSelectedWallets>(
+        'SELECT * FROM last_selected_wallets WHERE url = ?',
+        [connectLinkInfo?.url]
+      )
 
       if (!savedInfo) {
         return
