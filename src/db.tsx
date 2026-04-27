@@ -7,18 +7,15 @@ import { createContext, useContext } from 'react'
 export type SqlValue = string | number | boolean | Date | null | undefined
 export type SqlParams = SqlValue[]
 export type ExecuteResult = QueryResult
-export type TransactionStatement = {
-  sql: string
-  bindings?: SqlParams
-  returnRows?: boolean
-  expectedRowsAffected?: number
+
+export interface SqlConnection {
+  select<T>(sql: string, bindings?: SqlParams): Promise<T[]>
+  first<T>(sql: string, bindings?: SqlParams): Promise<T | undefined>
+  execute(sql: string, bindings?: SqlParams): Promise<ExecuteResult>
 }
 
-type NativeTransactionStatement = {
-  sql: string
-  values: ReturnType<typeof normalizeBindings>
-  returnRows?: boolean
-  expectedRowsAffected?: number
+type DbClientContext = {
+  clientId: number
 }
 
 function normalizeBindings(bindings: SqlParams = []) {
@@ -35,28 +32,61 @@ function normalizeBindings(bindings: SqlParams = []) {
   })
 }
 
-class AppDatabaseTransaction {
-  readonly statements: TransactionStatement[] = []
+export class AppDatabaseClient implements SqlConnection {
+  private readonly context: DbClientContext
+  private released = false
 
-  async execute(sql: string, bindings?: SqlParams): Promise<ExecuteResult> {
-    this.statements.push({ sql, bindings })
-    return { rowsAffected: 0 }
+  constructor(context: DbClientContext) {
+    this.context = context
   }
 
-  select<T>(): Promise<T[]> {
-    return Promise.reject(
-      new Error('Transactional SELECT is not supported; read before executeTransaction')
-    )
+  private assertActive() {
+    if (this.released) {
+      throw new Error('Database client has been released')
+    }
   }
 
-  first<T>(): Promise<T | undefined> {
-    return Promise.reject(
-      new Error('Transactional SELECT is not supported; read before executeTransaction')
-    )
+  select<T>(sql: string, bindings?: SqlParams): Promise<T[]> {
+    this.assertActive()
+    return invoke<T[]>('db_client_select', {
+      context: this.context,
+      sql,
+      values: normalizeBindings(bindings),
+    })
+  }
+
+  async first<T>(sql: string, bindings?: SqlParams): Promise<T | undefined> {
+    const rows = await this.select<T>(sql, bindings)
+    return rows[0]
+  }
+
+  execute(sql: string, bindings?: SqlParams): Promise<ExecuteResult> {
+    this.assertActive()
+    return invoke<ExecuteResult>('db_client_execute', {
+      context: this.context,
+      sql,
+      values: normalizeBindings(bindings),
+    })
+  }
+
+  async release(): Promise<void> {
+    if (this.released) {
+      return
+    }
+
+    try {
+      await invoke('db_release_client', { context: this.context })
+    } finally {
+      this.released = true
+    }
+  }
+
+  close(): Promise<void> {
+    return this.release()
   }
 }
 
-export class AppDatabase {
+export class AppDatabase implements SqlConnection {
   private readonly connection: Database
 
   constructor(connection: Database) {
@@ -76,26 +106,13 @@ export class AppDatabase {
     return this.connection.execute(sql, normalizeBindings(bindings))
   }
 
-  async executeTransaction<T = unknown>(statements: TransactionStatement[]): Promise<T[][]> {
-    if (statements.length === 0) {
-      return []
-    }
-
-    const nativeStatements: NativeTransactionStatement[] = statements.map((statement) => ({
-      sql: statement.sql,
-      values: normalizeBindings(statement.bindings),
-      returnRows: statement.returnRows,
-      expectedRowsAffected: statement.expectedRowsAffected,
-    }))
-
-    return invoke<T[][]>('db_transaction', { statements: nativeStatements })
+  async connect(): Promise<AppDatabaseClient> {
+    const context = await invoke<DbClientContext>('db_acquire_client')
+    return new AppDatabaseClient(context)
   }
 
-  async transaction<T>(callback: (tx: AppDatabaseTransaction) => Promise<T>): Promise<T> {
-    const tx = new AppDatabaseTransaction()
-    const result = await callback(tx)
-    await this.executeTransaction(tx.statements)
-    return result
+  getClient(): Promise<AppDatabaseClient> {
+    return this.connect()
   }
 
   close() {
@@ -146,4 +163,9 @@ export async function getDatabase() {
   await waiting
 
   return db
+}
+
+export async function getDatabaseClient() {
+  const database = await getDatabase()
+  return database.connect()
 }

@@ -2,13 +2,9 @@ import { Buffer } from 'buffer'
 import { createContext, useContext } from 'react'
 
 type Row = Record<string, any>
-type SqlValue = string | number | boolean | Date | null | undefined
-type TransactionStatement = {
-  sql: string
-  bindings?: SqlValue[]
-  returnRows?: boolean
-  expectedRowsAffected?: number
-}
+export type SqlValue = string | number | boolean | Date | null | undefined
+export type SqlParams = SqlValue[]
+export type ExecuteResult = { rowsAffected: number; lastInsertId?: number }
 
 const now = new Date('2026-01-01T00:00:00.000Z')
 const publicKeyA = Buffer.alloc(32, 1).toString('base64')
@@ -160,6 +156,17 @@ function cloneRow(row: Row) {
   return { ...row }
 }
 
+function cloneTables() {
+  return Object.fromEntries(
+    Object.entries(storybookTables).map(([table, rows]) => [table, rows.map(cloneRow)])
+  ) as Record<string, Row[]>
+}
+
+function restoreTables(snapshot: Record<string, Row[]>) {
+  Object.keys(storybookTables).forEach((table) => delete storybookTables[table])
+  Object.assign(storybookTables, snapshot)
+}
+
 function getPrimaryKey(table: string) {
   return primaryKeys[table] || 'id'
 }
@@ -187,7 +194,7 @@ function tableFromSql(sql: string) {
   return sql.match(/\bfrom\s+([a-z_]+)/i)?.[1] || sql.match(/\binto\s+([a-z_]+)/i)?.[1]
 }
 
-class MockDatabase {
+export class MockDatabase {
   async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
     const compact = compactSql(sql)
     const lower = compact.toLowerCase()
@@ -230,12 +237,18 @@ class MockDatabase {
     return rows[0]
   }
 
-  async execute(sql: string, params: SqlValue[] = []) {
+  async execute(sql: string, params: SqlValue[] = []): Promise<ExecuteResult> {
     const compact = compactSql(sql)
     const lower = compact.toLowerCase()
     const normalizedParams = normalizeParams(params)
 
-    if (lower === 'begin immediate' || lower === 'commit' || lower === 'rollback') {
+    if (
+      lower === 'begin' ||
+      lower === 'begin immediate' ||
+      lower === 'begin transaction' ||
+      lower === 'commit' ||
+      lower === 'rollback'
+    ) {
       return { rowsAffected: 0, lastInsertId: undefined }
     }
 
@@ -258,6 +271,25 @@ class MockDatabase {
       const table = tableFromSql(compact) || ''
       const primaryKey = getPrimaryKey(table)
       return { rowsAffected: rows.length, lastInsertId: rows[rows.length - 1]?.[primaryKey] }
+    }
+
+    if (lower.startsWith('update settings set value = ? where name = ?')) {
+      const [value, name, expectedKeyCount, expectedMaxKeyId] = normalizedParams
+      const keys = storybookTables.keys ?? []
+      const keyCount = keys.length
+      const maxKeyId = keys.reduce((max, key) => Math.max(max, Number(key.id ?? 0)), 0)
+
+      if (keyCount !== expectedKeyCount || maxKeyId !== expectedMaxKeyId) {
+        return { rowsAffected: 0, lastInsertId: undefined }
+      }
+
+      const row = (storybookTables.settings ?? []).find((setting) => setting.name === name)
+      if (!row) {
+        return { rowsAffected: 0, lastInsertId: undefined }
+      }
+
+      row.value = value
+      return { rowsAffected: 1, lastInsertId: undefined }
     }
 
     if (lower.startsWith('update')) {
@@ -295,44 +327,12 @@ class MockDatabase {
     return { rowsAffected: 0, lastInsertId: undefined }
   }
 
-  async executeTransaction<T = unknown>(statements: TransactionStatement[]): Promise<T[][]> {
-    const backup = Object.fromEntries(
-      Object.entries(storybookTables).map(([table, rows]) => [table, rows.map(cloneRow)])
-    )
-    const results: T[][] = []
-
-    try {
-      for (const statement of statements) {
-        if (statement.returnRows) {
-          results.push(await this.select<T>(statement.sql, statement.bindings ?? []))
-          continue
-        }
-
-        const result = await this.execute(statement.sql, statement.bindings ?? [])
-        if (
-          statement.expectedRowsAffected !== undefined &&
-          result.rowsAffected !== statement.expectedRowsAffected
-        ) {
-          throw new Error(
-            'Expected ' +
-              statement.expectedRowsAffected +
-              ' rows affected, got ' +
-              result.rowsAffected
-          )
-        }
-        results.push([])
-      }
-    } catch (error) {
-      Object.keys(storybookTables).forEach((table) => delete storybookTables[table])
-      Object.assign(storybookTables, backup)
-      throw error
-    }
-
-    return results
+  async connect(): Promise<MockDatabaseClient> {
+    return new MockDatabaseClient()
   }
 
-  async transaction<T>(callback: (tx: MockDatabase) => Promise<T>): Promise<T> {
-    return callback(this)
+  getClient(): Promise<MockDatabaseClient> {
+    return this.connect()
   }
 
   async close() {
@@ -408,6 +408,70 @@ class MockDatabase {
     return returning ? (insertedRows.map(cloneRow) as T[]) : (insertedRows as T[])
   }
 }
+
+export class MockDatabaseClient extends MockDatabase {
+  private released = false
+  private transactionSnapshot?: Record<string, Row[]>
+
+  private assertActive() {
+    if (this.released) {
+      throw new Error('Database client has been released')
+    }
+  }
+
+  async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
+    this.assertActive()
+    return super.select<T>(sql, params)
+  }
+
+  async first<T>(sql: string, params: SqlValue[] = []): Promise<T | undefined> {
+    this.assertActive()
+    return super.first<T>(sql, params)
+  }
+
+  async execute(sql: string, params: SqlValue[] = []): Promise<ExecuteResult> {
+    this.assertActive()
+    const lower = compactSql(sql).toLowerCase()
+
+    if (lower === 'begin' || lower === 'begin immediate' || lower === 'begin transaction') {
+      this.transactionSnapshot = cloneTables()
+      return { rowsAffected: 0, lastInsertId: undefined }
+    }
+
+    if (lower === 'commit') {
+      this.transactionSnapshot = undefined
+      return { rowsAffected: 0, lastInsertId: undefined }
+    }
+
+    if (lower === 'rollback') {
+      if (this.transactionSnapshot) {
+        restoreTables(this.transactionSnapshot)
+        this.transactionSnapshot = undefined
+      }
+      return { rowsAffected: 0, lastInsertId: undefined }
+    }
+
+    return super.execute(sql, params)
+  }
+
+  async release(): Promise<void> {
+    if (this.released) {
+      return
+    }
+    if (this.transactionSnapshot) {
+      restoreTables(this.transactionSnapshot)
+      this.transactionSnapshot = undefined
+    }
+    this.released = true
+  }
+
+  close(): Promise<void> {
+    return this.release()
+  }
+}
+
+export type AppDatabase = MockDatabase
+export type AppDatabaseClient = MockDatabaseClient
 
 export const mockDb = new MockDatabase()
 export const DbContext = createContext<MockDatabase>(mockDb)

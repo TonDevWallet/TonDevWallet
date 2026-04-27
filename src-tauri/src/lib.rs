@@ -12,22 +12,21 @@ extern crate objc;
 #[cfg(any(target_os = "macos", windows, target_os = "linux"))]
 use screenshots::Screen;
 
+mod db_client;
 mod migration_commands;
 pub mod migrations;
 mod proxy;
 mod ton_echo;
 pub mod tvm_runner;
 
+use db_client::{
+    db_acquire_client, db_client_execute, db_client_select, db_release_client, DbClientState,
+};
 use migration_commands::run_migrations_on_db;
 use proxy::spawn_proxy;
 use ton_echo::{get_ton_echo_port, start_ton_echo_server};
 
 use image::{self};
-use rusqlite::{
-    params_from_iter,
-    types::{Value as SqliteValue, ValueRef},
-    Connection,
-};
 use rxing;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU16, Ordering};
@@ -165,131 +164,6 @@ fn tvm_run_get_method(req: tvm_runner::TvmRunGetMethodRequest) -> Result<String,
     tvm_runner::tvm_run_get_method_json(req)
 }
 
-#[derive(serde::Deserialize)]
-struct DbTransactionStatement {
-    sql: String,
-    values: Vec<serde_json::Value>,
-    #[serde(default, rename = "returnRows")]
-    return_rows: bool,
-    #[serde(default, rename = "expectedRowsAffected")]
-    expected_rows_affected: Option<usize>,
-}
-
-fn json_to_sqlite_value(value: serde_json::Value) -> Result<SqliteValue, String> {
-    match value {
-        serde_json::Value::Null => Ok(SqliteValue::Null),
-        serde_json::Value::Bool(value) => Ok(SqliteValue::Integer(if value { 1 } else { 0 })),
-        serde_json::Value::Number(value) => {
-            if let Some(value) = value.as_i64() {
-                Ok(SqliteValue::Integer(value))
-            } else if let Some(value) = value.as_u64() {
-                if value <= i64::MAX as u64 {
-                    Ok(SqliteValue::Integer(value as i64))
-                } else {
-                    Ok(SqliteValue::Real(value as f64))
-                }
-            } else if let Some(value) = value.as_f64() {
-                Ok(SqliteValue::Real(value))
-            } else {
-                Err("Unsupported SQLite numeric value".to_string())
-            }
-        }
-        serde_json::Value::String(value) => Ok(SqliteValue::Text(value)),
-        _ => Err("Unsupported SQLite parameter value".to_string()),
-    }
-}
-
-fn sqlite_value_to_json(value: ValueRef<'_>) -> Result<serde_json::Value, String> {
-    match value {
-        ValueRef::Null => Ok(serde_json::Value::Null),
-        ValueRef::Integer(value) => Ok(serde_json::Value::Number(value.into())),
-        ValueRef::Real(value) => serde_json::Number::from_f64(value)
-            .map(serde_json::Value::Number)
-            .ok_or_else(|| "Unsupported SQLite real value".to_string()),
-        ValueRef::Text(value) => Ok(serde_json::Value::String(
-            String::from_utf8_lossy(value).to_string(),
-        )),
-        ValueRef::Blob(value) => Ok(serde_json::Value::String(
-            general_purpose::STANDARD.encode(value),
-        )),
-    }
-}
-
-#[tauri::command]
-fn db_transaction(
-    app: tauri::AppHandle,
-    statements: Vec<DbTransactionStatement>,
-) -> Result<Vec<Vec<serde_json::Value>>, String> {
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
-    let db_path = app_data_dir.join("databases").join("data.db");
-    let mut connection = Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open database {}: {}", db_path.display(), e))?;
-    let tx = connection
-        .transaction()
-        .map_err(|e| format!("Failed to start database transaction: {}", e))?;
-    let mut results = Vec::new();
-
-    for statement in statements {
-        let values = statement
-            .values
-            .into_iter()
-            .map(json_to_sqlite_value)
-            .collect::<Result<Vec<_>, _>>()?;
-
-        if statement.return_rows {
-            let mut prepared = tx
-                .prepare(&statement.sql)
-                .map_err(|e| format!("Failed to prepare transaction query: {}", e))?;
-            let column_names = prepared
-                .column_names()
-                .into_iter()
-                .map(|column| column.to_string())
-                .collect::<Vec<_>>();
-            let mut rows = prepared
-                .query(params_from_iter(values.iter()))
-                .map_err(|e| format!("Failed to execute transaction query: {}", e))?;
-            let mut statement_rows = Vec::new();
-
-            while let Some(row) = rows
-                .next()
-                .map_err(|e| format!("Failed to read transaction row: {}", e))?
-            {
-                let mut object = serde_json::Map::new();
-                for (index, column) in column_names.iter().enumerate() {
-                    let value = row
-                        .get_ref(index)
-                        .map_err(|e| format!("Failed to read transaction column: {}", e))?;
-                    object.insert(column.clone(), sqlite_value_to_json(value)?);
-                }
-                statement_rows.push(serde_json::Value::Object(object));
-            }
-
-            results.push(statement_rows);
-        } else {
-            let rows_affected = tx
-                .execute(&statement.sql, params_from_iter(values.iter()))
-                .map_err(|e| format!("Failed to execute transaction statement: {}", e))?;
-
-            if let Some(expected) = statement.expected_rows_affected {
-                if rows_affected != expected {
-                    return Err(format!(
-                        "Expected {} rows affected, got {}",
-                        expected, rows_affected
-                    ));
-                }
-            }
-
-            results.push(Vec::new());
-        }
-    }
-
-    tx.commit()
-        .map_err(|e| format!("Failed to commit database transaction: {}", e))?;
-    Ok(results)
-}
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // tauri_plugin_deep_link::prepare("de.fabianlars.deep-link-test");
@@ -377,6 +251,7 @@ pub fn run() {
 
             Ok(())
         })
+        .manage(DbClientState::default())
         .invoke_handler(tauri::generate_handler![
             get_ws_port,
             get_ton_echo_ws_port,
@@ -385,7 +260,10 @@ pub fn run() {
             detect_qr_code_from_image,
             tvm_emulate_transaction,
             tvm_run_get_method,
-            db_transaction,
+            db_acquire_client,
+            db_client_select,
+            db_client_execute,
+            db_release_client,
         ])
         .build(context)
         .expect("error while running tauri application")

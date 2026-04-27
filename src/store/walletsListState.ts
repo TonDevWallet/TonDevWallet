@@ -129,13 +129,29 @@ export async function saveKey(db: AppDatabase, key: Key, walletName: string): Pr
 }
 
 export async function deleteWallet(db: AppDatabase, key: number) {
-  await db.executeTransaction([
-    { sql: `DELETE FROM connect_message_transactions WHERE key_id = ?`, bindings: [key] },
-    { sql: `DELETE FROM connect_sessions WHERE key_id = ?`, bindings: [key] },
-    { sql: `DELETE FROM last_selected_wallets WHERE key_id = ?`, bindings: [key] },
-    { sql: `DELETE FROM wallets WHERE key_id = ?`, bindings: [key] },
-    { sql: `DELETE FROM keys WHERE id = ?`, bindings: [key] },
-  ])
+  const client = await db.connect()
+  let committed = false
+  try {
+    await client.execute('BEGIN IMMEDIATE')
+    await client.execute(`DELETE FROM connect_message_transactions WHERE key_id = ?`, [key])
+    await client.execute(`DELETE FROM connect_sessions WHERE key_id = ?`, [key])
+    await client.execute(`DELETE FROM last_selected_wallets WHERE key_id = ?`, [key])
+    await client.execute(`DELETE FROM wallets WHERE key_id = ?`, [key])
+    await client.execute(`DELETE FROM keys WHERE id = ?`, [key])
+    await client.execute('COMMIT')
+    committed = true
+  } catch (error) {
+    if (!committed) {
+      try {
+        await client.execute('ROLLBACK')
+      } catch (rollbackError) {
+        console.error('database rollback error', rollbackError)
+      }
+    }
+    throw error
+  } finally {
+    await client.release()
+  }
 
   await updateWalletsList()
 }
@@ -191,30 +207,40 @@ export async function saveKeyAndWallets(
   }
 
   const defaultWallets = getDefaultWalletsToSave(0, walletsToSave)
-  const walletPlaceholders = defaultWallets
-    .map(() => '(?, last_insert_rowid(), ?, ?, ?, ?, ?)')
-    .join(', ')
-  const walletValues = defaultWallets.flatMap((wallet) => [
-    wallet.type,
-    wallet.subwallet_id,
-    wallet.wallet_address ?? null,
-    wallet.extra_data ?? null,
-    wallet.name ?? null,
-    wallet.workchain_id ?? null,
-  ])
 
-  const transactionResult = await db.executeTransaction<Key | SavedWallet>([
-    {
-      sql: `
+  const client = await db.connect()
+  let committed = false
+  let newWallet: Key | undefined
+  let wallets: SavedWallet[] = []
+
+  try {
+    await client.execute('BEGIN')
+    const insertedKeys = await client.select<Key>(
+      `
         INSERT INTO keys (encrypted, public_key, name, sign_type)
         VALUES (?, ?, ?, ?)
         RETURNING *
       `,
-      bindings: [key.encrypted, key.public_key, walletName, key.sign_type || 'ton'],
-      returnRows: true,
-    },
-    {
-      sql: `
+      [key.encrypted, key.public_key, walletName, key.sign_type || 'ton']
+    )
+    newWallet = insertedKeys[0]
+    if (!newWallet) {
+      throw new Error('Failed to insert key')
+    }
+
+    const walletPlaceholders = defaultWallets.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ')
+    const walletValues = defaultWallets.flatMap((wallet) => [
+      wallet.type,
+      newWallet!.id,
+      wallet.subwallet_id,
+      wallet.wallet_address ?? null,
+      wallet.extra_data ?? null,
+      wallet.name ?? null,
+      wallet.workchain_id ?? null,
+    ])
+
+    wallets = await client.select<SavedWallet>(
+      `
         INSERT INTO wallets (
           type,
           key_id,
@@ -227,13 +253,27 @@ export async function saveKeyAndWallets(
         VALUES ${walletPlaceholders}
         RETURNING *
       `,
-      bindings: walletValues,
-      returnRows: true,
-    },
-  ])
+      walletValues
+    )
 
-  const newWallet = transactionResult[0][0] as Key
-  const wallets = transactionResult[1] as SavedWallet[]
+    await client.execute('COMMIT')
+    committed = true
+  } catch (error) {
+    if (!committed) {
+      try {
+        await client.execute('ROLLBACK')
+      } catch (rollbackError) {
+        console.error('database rollback error', rollbackError)
+      }
+    }
+    throw error
+  } finally {
+    await client.release()
+  }
+
+  if (!newWallet) {
+    throw new Error('Failed to insert key')
+  }
 
   await updateWalletsList()
   await setWalletKey(newWallet.id)

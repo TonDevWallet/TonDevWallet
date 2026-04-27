@@ -1,4 +1,4 @@
-import { getDatabase, type TransactionStatement } from '@/db'
+import { getDatabase } from '@/db'
 import { hookstate, useHookstate } from '@hookstate/core'
 import { useEffect, useState } from 'react'
 import { scrypt } from 'scrypt-js'
@@ -171,24 +171,8 @@ export async function setNewPassword(oldPassword: string, newPassword: string) {
       32
     )
   )
-  const statements: TransactionStatement[] = [
-    {
-      sql: `
-        UPDATE settings
-        SET value = ?
-        WHERE name = ?
-          AND (SELECT COUNT(*) FROM keys) = ?
-          AND COALESCE((SELECT MAX(id) FROM keys), 0) = ?
-      `,
-      bindings: [
-        `${salt.toString('base64')}:${key.toString('base64')}`,
-        'password',
-        keyCount,
-        maxKeyId,
-      ],
-      expectedRowsAffected: 1,
-    },
-  ]
+  const passwordHash = `${salt.toString('base64')}:${key.toString('base64')}`
+  const encryptedKeys: Array<{ id: number; encrypted: string }> = []
 
   for (const key of walletKeys) {
     if (!key.encrypted) {
@@ -200,14 +184,50 @@ export async function setNewPassword(oldPassword: string, newPassword: string) {
     }
     const encrypted = await encryptWalletData(newPassword, decrypted)
 
-    statements.push({
-      sql: 'UPDATE keys SET encrypted = ? WHERE id = ?',
-      bindings: [encrypted, key.id],
-    })
+    encryptedKeys.push({ id: key.id, encrypted })
     console.log('updating', key, encrypted)
   }
 
-  await database.executeTransaction(statements)
+  const client = await database.connect()
+  let committed = false
+  try {
+    await client.execute('BEGIN')
+    const passwordUpdate = await client.execute(
+      `
+        UPDATE settings
+        SET value = ?
+        WHERE name = ?
+          AND (SELECT COUNT(*) FROM keys) = ?
+          AND COALESCE((SELECT MAX(id) FROM keys), 0) = ?
+      `,
+      [passwordHash, 'password', keyCount, maxKeyId]
+    )
+
+    if (passwordUpdate.rowsAffected !== 1) {
+      throw new Error(`Expected 1 rows affected, got ${passwordUpdate.rowsAffected}`)
+    }
+
+    for (const encryptedKey of encryptedKeys) {
+      await client.execute('UPDATE keys SET encrypted = ? WHERE id = ?', [
+        encryptedKey.encrypted,
+        encryptedKey.id,
+      ])
+    }
+
+    await client.execute('COMMIT')
+    committed = true
+  } catch (error) {
+    if (!committed) {
+      try {
+        await client.execute('ROLLBACK')
+      } catch (rollbackError) {
+        console.error('database rollback error', rollbackError)
+      }
+    }
+    throw error
+  } finally {
+    await client.release()
+  }
 
   console.log('set new password', newPassword)
   passwordState.password.set(newPassword)
