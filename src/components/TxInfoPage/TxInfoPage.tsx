@@ -6,11 +6,19 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch, faCircleExclamation } from '@fortawesome/free-solid-svg-icons'
 import { StackInfo } from '@/hooks/useVmLogsNavigation'
 import { KeyboardShortcutHint } from './KeyboardShortcutHint'
-import { RawTransactionInfo } from './RawTransactionInfo'
+import { RawTransactionInfo, type RawTransactionFormat } from './RawTransactionInfo'
 import { TxStackInfo } from './TxStackInfo'
 import { BlockchainLogsInfo } from './BlockchainLogsInfo'
 
-export function TxInfoPage() {
+export type TxInfoPageTab = 'stack' | 'logs' | 'raw'
+
+export function TxInfoPage({
+  defaultTab = 'stack',
+  defaultRawFormat = 'yaml',
+}: {
+  defaultTab?: TxInfoPageTab
+  defaultRawFormat?: RawTransactionFormat
+}) {
   const transactionState = useTransactionState()
   const [filterText, setFilterText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -20,7 +28,7 @@ export function TxInfoPage() {
     new: '',
     i: -1,
   })
-  const [activeTab, setActiveTab] = useState<'stack' | 'logs' | 'raw'>('stack')
+  const [activeTab, setActiveTab] = useState<TxInfoPageTab>(defaultTab)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Parse the logs to determine if data is available
@@ -193,7 +201,10 @@ export function TxInfoPage() {
       ) : activeTab === 'logs' ? (
         <BlockchainLogsInfo logs={transactionState.blockchainLogs.get()} />
       ) : (
-        <RawTransactionInfo tx={transactionState.tx.get() as Transaction} />
+        <RawTransactionInfo
+          tx={transactionState.tx.get() as Transaction}
+          defaultFormat={defaultRawFormat}
+        />
       )}
 
       {/* Keyboard Shortcut Hint */}

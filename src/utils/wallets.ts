@@ -4,7 +4,7 @@ import {
 } from '@/contracts/highload-wallet-v2/HighloadWalletV2'
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import { SignCell } from '@/contracts/utils/SignExternalMessage'
-import { LiteClientState, useLiteclient } from '@/store/liteClient'
+import { ApiClient, getApiClient, useLiteclient } from '@/store/liteClient'
 import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
 import {
   GetExternalMessageCell,
@@ -57,8 +57,6 @@ import {
 } from '@ton/ton'
 import { KeyPair } from '@ton/crypto'
 import { SignMessage } from './signer'
-import { LiteClient } from 'ton-lite-client'
-import { TonapiBlockchainAdapter } from '@/store/tonapiBlockchainAdapter'
 import { HighloadWalletV3 } from '@/contracts/highload-wallet-v3/HighloadWalletV3'
 import { HighloadWalletV3CodeCell } from '@/contracts/highload-wallet-v3/HighloadWalletV3.source'
 import { HighloadQueryId } from '@/contracts/highload-wallet-v3/HighloadQueryId'
@@ -69,11 +67,7 @@ import { WalletV5R1CodeCell } from '@/contracts/w5/WalletV5R1.source'
 import { ActionSendMsg, packActionsList } from '@/contracts/w5/actions'
 
 export function getWalletFromKey(
-  blockchainClient:
-    | LiteClient
-    | TonapiBlockchainAdapter
-    | ImmutableObject<LiteClient>
-    | ImmutableObject<TonapiBlockchainAdapter>,
+  blockchainClient: ApiClient | ImmutableObject<ApiClient>,
   key: ImmutableObject<Key>,
   wallet: SavedWallet
 ): IWallet | undefined {
@@ -370,7 +364,7 @@ export function getWalletFromKey(
 }
 
 export function useSelectedTonWallet() {
-  const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClient = useLiteclient()
   const selectedKey = useSelectedKey()
   const selectedWallet = useSelectedWallet()
 
@@ -685,7 +679,7 @@ function getExternalMessageCellFromTonMultisigWallet(
     )
     const expireAt = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 // 1 month
 
-    const client = LiteClientState.liteClient.get() ?? LiteClientState.tonapiAdapter.get()
+    const client = getApiClient()
     if (!client) throw new Error('No blockchain client')
     const multisigContract = client.open(Multisig.createFromAddress(Address.parse(multisigAddress)))
     const multisigData = await multisigContract.getMultisigData()

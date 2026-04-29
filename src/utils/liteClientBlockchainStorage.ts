@@ -1,18 +1,18 @@
 /* eslint-disable camelcase */
-import { Address } from '@ton/core'
+import { Address, Dictionary } from '@ton/core'
 import { Blockchain } from '@ton/sandbox'
 import { BlockchainStorage } from '@ton/sandbox/dist/blockchain/BlockchainStorage'
 import { SmartContract } from '@ton/sandbox/dist/blockchain/SmartContract'
 import { extractEc } from '@ton/sandbox/dist/utils/ec'
-import { LiteClient } from 'ton-lite-client'
+import type { ApiClient } from '@/store/primaryChainClient'
 // eslint-disable-next-line camelcase
 import { liteServer_masterchainInfo } from 'ton-lite-client/dist/schema'
 
 export class LiteClientBlockchainStorage implements BlockchainStorage {
   private contracts: Map<string, SmartContract> = new Map()
-  private client: LiteClient
+  private client: ApiClient
 
-  constructor(client: LiteClient) {
+  constructor(client: ApiClient) {
     this.client = client
   }
 
@@ -21,26 +21,30 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
     if (!existing) {
       const lastBlock = await getLastLiteBlock(this.client)
       const account = await this.client.getAccountState(address, lastBlock.last)
+      const accState = account.state?.storage?.state
+      const statePayload = accState?.state
 
-      if (
-        account.state?.storage?.state?.type !== 'active' ||
-        !account.state.storage.state.state.data ||
-        !account.state.storage.state.state.code
-      ) {
+      if (accState?.type !== 'active' || !statePayload?.data || !statePayload?.code) {
         existing = SmartContract.empty(blockchain, address)
         existing.balance = BigInt(account.balance.coins)
         if (account.balance.other) {
-          existing.ec = extractEc(account.balance.other)
+          existing.ec =
+            account.balance.other instanceof Dictionary
+              ? extractEc(account.balance.other)
+              : account.balance.other
         }
       } else {
         existing = SmartContract.create(blockchain, {
           address,
-          data: account.state.storage.state.state.data,
-          code: account.state.storage.state.state.code,
+          data: statePayload.data,
+          code: statePayload.code,
           balance: BigInt(account.balance.coins),
         })
         if (account.balance.other) {
-          existing.ec = extractEc(account.balance.other)
+          existing.ec =
+            account.balance.other instanceof Dictionary
+              ? extractEc(account.balance.other)
+              : account.balance.other
         }
       }
 
@@ -59,13 +63,9 @@ export class LiteClientBlockchainStorage implements BlockchainStorage {
   }
 }
 
-type ClientWithMasterchainInfo = {
-  getMasterchainInfo(): Promise<liteServer_masterchainInfo>
-}
-
 // let cachedMaterInfo: { info?: liteServer_masterchainInfo; ts?: number } = {}
 export async function getLastLiteBlock(
-  lc: LiteClient | ClientWithMasterchainInfo
+  lc: Pick<ApiClient, 'getMasterchainInfo'>
 ): Promise<liteServer_masterchainInfo> {
   const info = await lc.getMasterchainInfo()
   // if (cachedMaterInfo.info && cachedMaterInfo?.info?.last?.seqno > info.last.seqno) {

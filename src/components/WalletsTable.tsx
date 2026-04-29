@@ -1,7 +1,6 @@
 import { useLiteclient, useLiteclientState } from '@/store/liteClient'
 import { UpdateKeyWalletName } from '@/store/walletsListState'
 import { useSelectedKey } from '@/store/walletState'
-import { useSelectedTonWallet } from '@/utils/wallets'
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { IWallet } from '@/types'
 import { AddressRow } from './AddressRow'
@@ -18,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { cn } from '@/utils/cn'
 import { Input } from '@/components/ui/input'
 import { extractEc } from '@ton/sandbox/dist/utils/ec'
 import useExtraCurrencies from '@/hooks/useExtraCurrencies'
@@ -28,8 +26,15 @@ import { Key } from '@/types/Key'
 import DeleteButton from './wallets/tonweb/DeleteButton'
 import { Link } from 'react-router-dom'
 
-function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolean }) {
-  const isTestnet = useLiteclientState().selectedNetwork.is_testnet.get()
+function WalletRow({ wallet }: { wallet: IWallet }) {
+  const liteClientState = useLiteclientState()
+  const isTestnet = liteClientState.selectedNetwork.is_testnet.get()
+  const scannerUrl = liteClientState.selectedNetwork.scanner_url.get() || 'https://tonviewer.com/'
+  const scanAddress = wallet.address.toString({ bounceable: true, urlSafe: true })
+  const scanLink = useMemo(() => {
+    const addAddress = scannerUrl.indexOf('tonviewer.com') === -1
+    return `${scannerUrl}${addAddress ? 'address/' : ''}${scanAddress}`
+  }, [scannerUrl, scanAddress])
   const selectedKey = useSelectedKey()
   const liteClient = useLiteclient()
   const [isEditing, setIsEditing] = useState(false)
@@ -80,7 +85,7 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
   //   key={wallet.address.toString({ bounceable: true, urlSafe: true })}
   // >
   return (
-    <Card className={cn(isSelected && 'bg-accent')}>
+    <Card>
       <CardHeader>
         <CardTitle className={'flex items-center justify-between'}>
           <div className="flex items-center h-9">
@@ -109,12 +114,7 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
               </div>
             )}
           </div>
-          <a
-            href={getScanLink(wallet.address.toString({ bounceable: true, urlSafe: true }))}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-2"
-          >
+          <a href={scanLink} target="_blank" rel="noopener noreferrer" className="ml-2">
             <FontAwesomeIcon icon={faShareFromSquare} />
           </a>
         </CardTitle>
@@ -195,22 +195,9 @@ function WalletRow({ wallet, isSelected }: { wallet: IWallet; isSelected: boolea
 }
 
 export function WalletsTable({ walletsToShow }: { walletsToShow?: IWallet[] }) {
-  const currentWallet = useSelectedTonWallet()
-
   return (
     <div className={'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4'}>
-      {walletsToShow?.map((wallet) => (
-        <WalletRow wallet={wallet} isSelected={currentWallet?.id === wallet.id} key={wallet.id} />
-      ))}
+      {walletsToShow?.map((wallet) => <WalletRow wallet={wallet} key={wallet.id} />)}
     </div>
   )
-}
-
-function getScanLink(address: string): string {
-  const scannerUrl =
-    useLiteclientState().selectedNetwork.scanner_url.get() || 'https://tonviewer.com/'
-
-  const addAddress = scannerUrl.indexOf('tonviewer.com') === -1
-
-  return useMemo(() => `${scannerUrl}${addAddress ? 'address/' : ''}${address}`, [scannerUrl])
 }

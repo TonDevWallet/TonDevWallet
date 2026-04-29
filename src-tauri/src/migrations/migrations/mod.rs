@@ -31,3 +31,5 @@ pub(crate) mod m030_add_plugin_address;
 pub(crate) mod m031_add_plugins_to_remove;
 pub(crate) mod m032_add_tonapi_network_settings;
 pub(crate) mod m033_add_chain_id;
+pub(crate) mod m034_add_blockchain_source;
+pub(crate) mod m035_add_network_api_tokens;

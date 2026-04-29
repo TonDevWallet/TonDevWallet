@@ -12,11 +12,16 @@ extern crate objc;
 #[cfg(any(target_os = "macos", windows, target_os = "linux"))]
 use screenshots::Screen;
 
+mod db_client;
 mod migration_commands;
 pub mod migrations;
 mod proxy;
 mod ton_echo;
+pub mod tvm_runner;
 
+use db_client::{
+    db_acquire_client, db_client_execute, db_client_select, db_release_client, DbClientState,
+};
 use migration_commands::run_migrations_on_db;
 use proxy::spawn_proxy;
 use ton_echo::{get_ton_echo_port, start_ton_echo_server};
@@ -149,6 +154,16 @@ fn get_ton_echo_ws_port() -> String {
     return get_ton_echo_port().to_string();
 }
 
+#[tauri::command]
+fn tvm_emulate_transaction(req: tvm_runner::TvmEmulateRequest) -> Result<String, String> {
+    tvm_runner::tvm_emulate_transaction_json(req)
+}
+
+#[tauri::command]
+fn tvm_run_get_method(req: tvm_runner::TvmRunGetMethodRequest) -> Result<String, String> {
+    tvm_runner::tvm_run_get_method_json(req)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // tauri_plugin_deep_link::prepare("de.fabianlars.deep-link-test");
@@ -183,14 +198,17 @@ pub fn run() {
     builder
         .setup(move |app| {
             // Run migrations on app data database before launching window
-            let app_data_dir = app.path().app_data_dir()
+            let app_data_dir = app
+                .path()
+                .app_data_dir()
                 .map_err(|e| format!("Failed to get app data dir: {}", e))?;
             let db_path = app_data_dir.join("databases").join("data.db");
             if db_path.exists() {
                 let backup_path = app_data_dir.join("databases").join("js_data_backup.db");
                 if !backup_path.exists() {
-                    std::fs::copy(&db_path, &backup_path)
-                        .map_err(|e| format!("Failed to backup data.db to js_data_backup.db: {}", e))?;
+                    std::fs::copy(&db_path, &backup_path).map_err(|e| {
+                        format!("Failed to backup data.db to js_data_backup.db: {}", e)
+                    })?;
                 }
             }
             run_migrations_on_db(db_path.to_str().unwrap())
@@ -203,7 +221,8 @@ pub fn run() {
             }
 
             #[cfg(desktop)]
-            let _ = app.handle()
+            let _ = app
+                .handle()
                 .plugin(tauri_plugin_updater::Builder::new().build());
 
             tauri::async_runtime::spawn(async move {
@@ -232,12 +251,19 @@ pub fn run() {
 
             Ok(())
         })
+        .manage(DbClientState::default())
         .invoke_handler(tauri::generate_handler![
             get_ws_port,
             get_ton_echo_ws_port,
             get_os_name,
             detect_qr_code,
             detect_qr_code_from_image,
+            tvm_emulate_transaction,
+            tvm_run_get_method,
+            db_acquire_client,
+            db_client_select,
+            db_client_execute,
+            db_release_client,
         ])
         .build(context)
         .expect("error while running tauri application")

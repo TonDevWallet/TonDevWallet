@@ -1,16 +1,15 @@
 import { Address } from '@ton/core'
 import { useState, useEffect } from 'react'
-import { useLiteclient } from '@/store/liteClient'
+import { useLiteclient, type ApiClient, LiteClientPrimaryAdapter } from '@/store/liteClient'
 // eslint-disable-next-line camelcase
 import DataLoader from 'dataloader'
-import { LiteClient } from 'ton-lite-client'
 import { LRUMap } from 'lru_map'
 import { JettonInfo } from '@/types/jetton'
 import { fetchJettonInfo } from '@/utils/jettons'
 
 type loaderKey = {
   address: Address
-  liteClient: LiteClient
+  liteClient: ApiClient
 }
 
 const jettonInfoDataLoader = new DataLoader(
@@ -26,8 +25,11 @@ const jettonInfoDataLoader = new DataLoader(
   {
     cacheMap: new LRUMap(1000),
     cacheKeyFn(key) {
-      const keyStr = key.address.toString() + '/' + (key.liteClient as any).configUrl
-      return keyStr
+      const clientId =
+        key.liteClient instanceof LiteClientPrimaryAdapter
+          ? String((key.liteClient.unwrap() as { configUrl?: string }).configUrl ?? 'lite')
+          : key.liteClient.constructor.name
+      return key.address.toString() + '/' + clientId
     },
   }
 )
@@ -73,7 +75,7 @@ export function useJettonInfo(address: Address | string | null) {
       try {
         const info = await jettonInfoDataLoader.load({
           address: address as Address,
-          liteClient: liteClient as LiteClient,
+          liteClient,
         })
         setJettonInfo(info)
       } catch (e) {

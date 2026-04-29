@@ -12,11 +12,11 @@ import {
   loadOutList,
 } from '@ton/core'
 import { TonClient } from '@ton/ton'
-import { LiteClient } from 'ton-lite-client'
+import type { LibraryClient } from '@/store/primaryChainClient'
 import { CallForSuccess } from '../callForSuccess'
 import DataLoader from 'dataloader'
 import { LRUMap } from 'lru_map'
-import { getToncenter3Url } from '../ton'
+import { getToncenter3Url, toncenterV3RequestHeaders } from '../ton'
 
 export type StateFromAPI =
   | {
@@ -228,7 +228,8 @@ export type BaseTxInfo = { lt: bigint; hash: Buffer; addr: Address }
 export async function fetchTransactions(
   params: GetTransactionsParams,
   testnet: boolean,
-  toncenter3Url?: string
+  toncenter3Url?: string,
+  toncenterApiKey?: string
 ): Promise<TransactionList> {
   try {
     const url = new URL(`${getToncenter3Url(testnet, toncenter3Url)}transactions`)
@@ -264,7 +265,9 @@ export async function fetchTransactions(
 
     const data = await CallForSuccess(
       async () => {
-        const res = await fetch(url.toString())
+        const res = await fetch(url.toString(), {
+          headers: toncenterV3RequestHeaders(toncenterApiKey),
+        })
         if (res.status !== 200) {
           throw new Error('Failed to fetch transactions')
         }
@@ -288,7 +291,8 @@ export async function _mcSeqnoByShard(
     rootHash: string
     fileHash: string
   },
-  testnet: boolean
+  testnet: boolean,
+  toncenterApiKey?: string
 ): Promise<{
   mcSeqno: number
   randSeed: Buffer
@@ -304,7 +308,9 @@ export async function _mcSeqnoByShard(
 
     const response = await CallForSuccess(async () => {
       console.log('mcSeqnoByShard work')
-      const res = await fetch(url.toString())
+      const res = await fetch(url.toString(), {
+        headers: toncenterV3RequestHeaders(toncenterApiKey),
+      })
       if (res.status !== 200) {
         throw new Error('Failed to fetch mc_seqno')
       }
@@ -334,6 +340,7 @@ type ShardKey = {
   rootHash: string
   fileHash: string
   testnet: boolean
+  toncenterApiKey?: string
 }
 
 type McSeqnoResult = {
@@ -350,8 +357,8 @@ export const mcSeqnoByShardLoader = new DataLoader<ShardKey, McSeqnoResult, stri
     // Process each key individually but batch them for efficiency
     const results = await Promise.all(
       keys.map(async (key) => {
-        const { testnet, ...shard } = key
-        return _mcSeqnoByShard(shard, testnet)
+        const { testnet, toncenterApiKey, ...shard } = key
+        return _mcSeqnoByShard(shard, testnet, toncenterApiKey)
       })
     )
     return results
@@ -360,7 +367,8 @@ export const mcSeqnoByShardLoader = new DataLoader<ShardKey, McSeqnoResult, stri
     // Use LRU cache with a maximum of 1000 entries
     cacheMap: new LRUMap(1000),
     // Define a cache key function that converts the ShardKey to a unique string
-    cacheKeyFn: (key) => `${key.workchain}/${key.seqno}/${key.shard}/${key.testnet}`,
+    cacheKeyFn: (key) =>
+      `${key.workchain}/${key.seqno}/${key.shard}/${key.testnet}/${key.toncenterApiKey ?? ''}`,
   }
 )
 
@@ -377,7 +385,8 @@ export async function getMcSeqnoByShard(
     rootHash: string
     fileHash: string
   },
-  testnet: boolean
+  testnet: boolean,
+  toncenterApiKey?: string
 ): Promise<{
   mcSeqno: number
   randSeed: Buffer
@@ -386,6 +395,7 @@ export async function getMcSeqnoByShard(
   const key: ShardKey = {
     ...shard,
     testnet,
+    toncenterApiKey,
   }
 
   // Use the DataLoader to load the result
@@ -393,7 +403,7 @@ export async function getMcSeqnoByShard(
 }
 
 export async function getLib(
-  liteClient: LiteClient,
+  libraryClient: LibraryClient,
   libhash: string
   // testnet: boolean
 ): Promise<Cell> {
@@ -408,7 +418,7 @@ export async function getLib(
   //   variables: {},
   // }
   try {
-    const libData = await liteClient.getLibraries([Buffer.from(libhash, 'hex')])
+    const libData = await libraryClient.getLibraries([Buffer.from(libhash, 'hex')])
     // const res = await axios.post(dtonEndpoint, graphqlQuery, {
     //   headers: {
     //     'Content-Type': 'application/json',
@@ -427,7 +437,8 @@ export async function getLib(
 export async function linkToTx(
   txLink: string,
   forcedTestnet?: boolean,
-  toncenter3Url?: string
+  toncenter3Url?: string,
+  toncenterApiKey?: string
 ): Promise<{ tx: BaseTxInfo; testnet: boolean }> {
   // break given tx link to lt, hash, addr
 
@@ -451,7 +462,12 @@ export async function linkToTx(
     // https://tonviewer.com/transaction/3e5f49798de239da5d8f80b4dc300204d37613e4203a3f7b877c04a88c81856b
     testnet = forcedTestnet || txLink.includes('testnet.')
     const infoPart = testnet ? txLink.slice(42) : txLink.slice(34)
-    const res = await fetchTransactions({ hash: infoPart, limit: 1 }, testnet, toncenter3Url)
+    const res = await fetchTransactions(
+      { hash: infoPart, limit: 1 },
+      testnet,
+      toncenter3Url,
+      toncenterApiKey
+    )
     hash = Buffer.from(infoPart, 'hex')
     addr = Address.parseRaw(res.transactions[0].account)
     lt = BigInt(res.transactions[0].lt)
@@ -463,7 +479,12 @@ export async function linkToTx(
     // https://tonscan.org/tx/Pl9JeY3iOdpdj4C03DACBNN2E+QgOj97h3wEqIyBhWs=
     testnet = forcedTestnet || txLink.includes('testnet.')
     const infoPart = testnet ? txLink.slice(31) : txLink.slice(23)
-    const res = await fetchTransactions({ hash: infoPart, limit: 1 }, testnet, toncenter3Url)
+    const res = await fetchTransactions(
+      { hash: infoPart, limit: 1 },
+      testnet,
+      toncenter3Url,
+      toncenterApiKey
+    )
     hash = Buffer.from(infoPart, 'base64')
     addr = Address.parseRaw(res.transactions[0].account)
     lt = BigInt(res.transactions[0].lt)
@@ -486,7 +507,12 @@ export async function linkToTx(
     // https://dton.io/tx/F64C6A3CDF3FAD1D786AACF9A6130F18F3F76EEB71294F53BBD812AD3703E70A
     testnet = forcedTestnet || txLink.includes('testnet.')
     const infoPart = testnet ? txLink.slice(27) : txLink.slice(19)
-    const res = await fetchTransactions({ hash: infoPart, limit: 1 }, testnet, toncenter3Url)
+    const res = await fetchTransactions(
+      { hash: infoPart, limit: 1 },
+      testnet,
+      toncenter3Url,
+      toncenterApiKey
+    )
     hash = Buffer.from(infoPart, 'hex')
     addr = Address.parseRaw(res.transactions[0].account)
     lt = BigInt(res.transactions[0].lt)
@@ -505,16 +531,31 @@ export async function linkToTx(
       testnet = forcedTestnet || false
 
       if (forcedTestnet)
-        res = await fetchTransactions({ hash: hashStr, limit: 1 }, forcedTestnet, toncenter3Url)
+        res = await fetchTransactions(
+          { hash: hashStr, limit: 1 },
+          forcedTestnet,
+          toncenter3Url,
+          toncenterApiKey
+        )
       else
         try {
-          res = await fetchTransactions({ hash: hashStr, limit: 1 }, testnet, toncenter3Url)
+          res = await fetchTransactions(
+            { hash: hashStr, limit: 1 },
+            testnet,
+            toncenter3Url,
+            toncenterApiKey
+          )
           if (res.transactions.length === 0) throw new Error('No transactions found')
         } catch {
           console.log(`Trying testnet for ${hashStr}...`)
           testnet = true
           await waitForRateLimit()
-          res = await fetchTransactions({ hash: hashStr, limit: 1 }, testnet, toncenter3Url)
+          res = await fetchTransactions(
+            { hash: hashStr, limit: 1 },
+            testnet,
+            toncenter3Url,
+            toncenterApiKey
+          )
           if (res.transactions.length === 0) throw new Error('No transactions found')
         }
       addr = Address.parseRaw(res.transactions[0].account)
@@ -537,17 +578,32 @@ export async function linkToTx(
 
         await waitForRateLimit()
         if (forcedTestnet)
-          res = await fetchTransactions({ hash: txLink, limit: 1 }, forcedTestnet, toncenter3Url)
+          res = await fetchTransactions(
+            { hash: txLink, limit: 1 },
+            forcedTestnet,
+            toncenter3Url,
+            toncenterApiKey
+          )
         else
           try {
             console.log(`Trying mainnet for ${txLink}...`)
-            res = await fetchTransactions({ hash: txLink, limit: 1 }, testnet, toncenter3Url)
+            res = await fetchTransactions(
+              { hash: txLink, limit: 1 },
+              testnet,
+              toncenter3Url,
+              toncenterApiKey
+            )
             if (res.transactions.length === 0) throw new Error('No transactions found')
           } catch {
             console.log(`Trying testnet for ${txLink}...`)
             testnet = true
             await waitForRateLimit()
-            res = await fetchTransactions({ hash: txLink, limit: 1 }, testnet, toncenter3Url)
+            res = await fetchTransactions(
+              { hash: txLink, limit: 1 },
+              testnet,
+              toncenter3Url,
+              toncenterApiKey
+            )
             if (res.transactions.length === 0) throw new Error(`No transactions found`)
           }
         hash = Buffer.from(res.transactions[0].hash, 'base64')

@@ -71,9 +71,9 @@ export default function SendMessage() {
 
 const SendModal = ({
   recepient,
-  body: bodyString,
+  // body: bodyString,
   // provider,
-  stateInit: stateInitString,
+  // stateInit: stateInitString,
 }: // updateBalance,
 {
   recepient: string
@@ -82,7 +82,7 @@ const SendModal = ({
   // provider: HttpProvider
   // updateBalance: () => void
 }) => {
-  const liteClient = useLiteclient()
+  // const liteClient = useLiteclient()
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
 

@@ -51,7 +51,7 @@ export type FullTonConnectMessage = TonConnectMessage & {
   plugins_to_remove?: string[]
 }
 
-function parseDbMessage(m: ConnectMessageTransaction): TonConnectMessageRecord {
+export function parseDbMessage(m: ConnectMessageTransaction): TonConnectMessageRecord {
   const base: Omit<TonConnectMessage, 'message_type'> = {
     id: m.id,
     connect_session_id: m.connect_session_id,
@@ -59,6 +59,8 @@ function parseDbMessage(m: ConnectMessageTransaction): TonConnectMessageRecord {
     status: m.status,
     key_id: m.key_id,
     wallet_id: m.wallet_id,
+    message_cell: m.message_cell,
+    message_mode: m.message_mode,
     wallet_address: m.wallet_address,
     created_at: m.created_at,
     updated_at: m.updated_at,
@@ -91,11 +93,10 @@ export const messagesState = hookstate<TonConnectMessageRecord[]>(getConnectMess
 
 export async function getConnectMessages(): Promise<TonConnectMessageRecord[]> {
   const db = await getDatabase()
-  const dbMessages = await db<ConnectMessageTransaction>('connect_message_transactions')
-    .where({
-      status: 0,
-    })
-    .select('*')
+  const dbMessages = await db.select<ConnectMessageTransaction>(
+    'SELECT * FROM connect_message_transactions WHERE status = ?',
+    [0]
+  )
 
   return dbMessages.map(parseDbMessage)
 }
@@ -106,17 +107,46 @@ export function useMessagesState() {
 
 export async function addConnectMessage(input: Omit<FullTonConnectMessage, 'id'>) {
   const db = await getDatabase()
-  const res = await db<ConnectMessageTransaction>('connect_message_transactions')
-    .insert({
-      ...input,
-      payload: input.payload ? JSON.stringify(input.payload) : null,
-      sign_payload: input.sign_payload ? JSON.stringify(input.sign_payload) : null,
-      plugin_address: input.plugin_address ?? null,
-      plugins_to_remove: input.plugins_to_remove ? JSON.stringify(input.plugins_to_remove) : null,
-      created_at: input.created_at ?? new Date(),
-      updated_at: input.created_at ?? new Date(),
-    })
-    .returning('*')
+  const res = await db.select<ConnectMessageTransaction>(
+    `
+      INSERT INTO connect_message_transactions (
+        connect_session_id,
+        connect_event_id,
+        key_id,
+        wallet_id,
+        status,
+        message_mode,
+        message_type,
+        message_cell,
+        wallet_address,
+        payload,
+        sign_payload,
+        plugin_address,
+        plugins_to_remove,
+        created_at,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING *
+    `,
+    [
+      input.connect_session_id,
+      input.connect_event_id,
+      input.key_id,
+      input.wallet_id,
+      input.status,
+      input.message_mode ?? null,
+      input.message_type,
+      input.message_cell ?? null,
+      input.wallet_address ?? null,
+      input.payload ? JSON.stringify(input.payload) : null,
+      input.sign_payload ? JSON.stringify(input.sign_payload) : null,
+      input.plugin_address ?? null,
+      input.plugins_to_remove ? JSON.stringify(input.plugins_to_remove) : null,
+      input.created_at ?? new Date(),
+      input.created_at ?? new Date(),
+    ]
+  )
 
   if (res.length < 1) {
     throw new Error("can't add session")
@@ -132,15 +162,27 @@ export async function changeConnectMessageStatus(
   messageCell?: Cell
 ) {
   const db = await getDatabase()
-  await db<ConnectMessageTransaction>('connect_message_transactions')
-    .where({
-      id: messageId,
-    })
-    .update({
-      status: newStatus,
-      updated_at: new Date(),
-      message_cell: messageCell?.toBoc().toString('base64'),
-    })
+  const updatedAt = new Date()
+
+  if (messageCell) {
+    await db.execute(
+      `
+        UPDATE connect_message_transactions
+        SET status = ?, updated_at = ?, message_cell = ?
+        WHERE id = ?
+      `,
+      [newStatus, updatedAt, messageCell.toBoc().toString('base64'), messageId]
+    )
+  } else {
+    await db.execute(
+      `
+        UPDATE connect_message_transactions
+        SET status = ?, updated_at = ?
+        WHERE id = ?
+      `,
+      [newStatus, updatedAt, messageId]
+    )
+  }
 
   await removeConnectMessages()
 }

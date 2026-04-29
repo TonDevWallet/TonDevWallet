@@ -35,14 +35,14 @@ export function ActiveWalletsSelector({
   return (
     <Card className="mt-6">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Active Wallets</CardTitle>
+        <CardTitle className="text-base">Deployed wallets</CardTitle>
         <CardDescription>Select wallets to import based on the provided public key</CardDescription>
       </CardHeader>
       <CardContent>
         {isSearching ? (
           <div className="flex flex-col items-center justify-center py-8">
             <FontAwesomeIcon icon={faSearch} spin className="text-2xl text-primary mb-4" />
-            <p>Searching for active wallets on the blockchain...</p>
+            <p>Searching for deployed wallets on the blockchain...</p>
             <p className="text-sm text-muted-foreground mt-2">This may take a moment</p>
           </div>
         ) : activeWallets.length > 0 ? (
@@ -97,7 +97,7 @@ export function ActiveWalletsSelector({
           </div>
         ) : (
           <div className="text-center py-8">
-            <p>No active wallets found for this public key.</p>
+            <p>No deployed wallets found for this public key.</p>
             <p className="text-sm text-muted-foreground mt-2">
               Try checking another key or creating a new wallet.
             </p>

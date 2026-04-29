@@ -4,9 +4,13 @@ import { useEffect, useState } from 'react'
 import { Button } from '../ui/button'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faNetworkWired, faPlus } from '@fortawesome/free-solid-svg-icons'
-import { updateNetworksList, useLiteclientState } from '@/store/liteClient'
+import {
+  getNetworkSourceDbFields,
+  updateNetworksList,
+  useLiteclientState,
+} from '@/store/liteClient'
 import { getDatabase } from '@/db'
-import { Network } from '@/types/network'
+import { getNetworkBlockchainSource } from '@/types/network'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import NetworkRow, { NetworkSettingsProps } from './NetworkRow'
 
@@ -29,8 +33,10 @@ function NetworkSettings() {
           toncenter3_url: network.toncenter3_url,
           lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
           lite_engine_host_custom: network.lite_engine_host_custom || '',
-          use_tonapi_only: !!network.use_tonapi_only,
+          blockchain_source: getNetworkBlockchainSource(network),
           tonapi_url: network.tonapi_url || '',
+          tonapi_token: network.tonapi_token || '',
+          toncenter_token: network.toncenter_token || '',
           chain_id: network.chain_id ?? undefined,
         }
       }),
@@ -60,8 +66,10 @@ function NetworkSettings() {
         toncenter3_url: network.toncenter3_url,
         lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
         lite_engine_host_custom: network.lite_engine_host_custom || '',
-        use_tonapi_only: !!network.use_tonapi_only,
+        blockchain_source: getNetworkBlockchainSource(network),
         tonapi_url: network.tonapi_url || '',
+        tonapi_token: network.tonapi_token || '',
+        toncenter_token: network.toncenter_token || '',
         chain_id: network.chain_id ?? undefined,
       })
     }
@@ -78,20 +86,43 @@ function NetworkSettings() {
         if (!network) {
           continue
         }
-        await db<Network>('networks')
-          .where('network_id', network.network_id)
-          .update({
-            name: network.name,
-            url: network.url,
-            is_testnet: network.is_testnet,
-            scanner_url: network.scanner_url,
-            toncenter3_url: network.toncenter3_url,
-            lite_engine_host_mode: network.lite_engine_host_mode || 'auto',
-            lite_engine_host_custom: network.lite_engine_host_custom || '',
-            use_tonapi_only: !!network.use_tonapi_only,
-            tonapi_url: network.tonapi_url || '',
-            chain_id: network.chain_id ?? null,
-          })
+        const sourceFields = getNetworkSourceDbFields({
+          blockchain_source: network.blockchain_source,
+        })
+        await db.execute(
+          `
+            UPDATE networks
+            SET
+              name = ?,
+              url = ?,
+              is_testnet = ?,
+              scanner_url = ?,
+              toncenter3_url = ?,
+              lite_engine_host_mode = ?,
+              lite_engine_host_custom = ?,
+              blockchain_source = ?,
+              tonapi_url = ?,
+              tonapi_token = ?,
+              toncenter_token = ?,
+              chain_id = ?
+            WHERE network_id = ?
+          `,
+          [
+            network.name,
+            network.url,
+            network.is_testnet,
+            network.scanner_url,
+            network.toncenter3_url,
+            network.lite_engine_host_mode || 'auto',
+            network.lite_engine_host_custom || '',
+            sourceFields.blockchain_source,
+            network.tonapi_url || '',
+            network.tonapi_token ?? '',
+            network.toncenter_token ?? '',
+            network.chain_id ?? null,
+            network.network_id,
+          ]
+        )
       }
       await updateNetworksList()
     })
@@ -102,22 +133,47 @@ function NetworkSettings() {
     setIsAdding(true)
     try {
       const db = await getDatabase()
-      await db<Network>('networks').insert({
-        name: `Custom network #${fields.length}`,
-        url: 'https://ton-blockchain.github.io/global.config.json',
-        item_order: fields.length + 1,
-        is_default: false,
-        is_testnet: false,
-        scanner_url: 'https://tonviewer.com/',
-        toncenter3_url: '',
-        lite_engine_host_mode: 'auto',
-        lite_engine_host_custom: '',
-        use_tonapi_only: false,
-        tonapi_url: '',
-        chain_id: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
+      await db.execute(
+        `
+          INSERT INTO networks (
+            name,
+            url,
+            item_order,
+            is_default,
+            is_testnet,
+            scanner_url,
+            toncenter3_url,
+            lite_engine_host_mode,
+            lite_engine_host_custom,
+            blockchain_source,
+            tonapi_url,
+            tonapi_token,
+            toncenter_token,
+            chain_id,
+            created_at,
+            updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          `Custom network #${fields.length}`,
+          'https://ton-blockchain.github.io/global.config.json',
+          fields.length + 1,
+          false,
+          false,
+          'https://tonviewer.com/',
+          '',
+          'auto',
+          '',
+          'liteclient',
+          '',
+          '',
+          '',
+          null,
+          new Date(),
+          new Date(),
+        ]
+      )
       await updateNetworksList()
     } finally {
       setIsAdding(false)
@@ -126,7 +182,7 @@ function NetworkSettings() {
 
   const removeField = async (field: NetworkSettingsProps) => {
     const db = await getDatabase()
-    await db<Network>('networks').where('network_id', field.network_id).delete()
+    await db.execute('DELETE FROM networks WHERE network_id = ?', [field.network_id])
     await updateNetworksList()
   }
 

@@ -12,7 +12,6 @@ import { getWalletFromKey, useWalletExternalMessageCell } from '@/utils/wallets'
 import { ImmutableObject, State } from '@hookstate/core'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { KeyPair } from '@ton/crypto'
-import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
@@ -48,7 +47,7 @@ export const MessageRowTx = memo(function MessageRowTx({
   s: State<ImmutableObject<TonConnectMessageTransaction>>
 }) {
   const keys = useWalletListState()
-  const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClient = useLiteclient()
   const sessions = useTonConnectSessions()
   const password = usePassword().password.get()
 

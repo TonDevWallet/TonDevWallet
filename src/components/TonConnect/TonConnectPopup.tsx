@@ -10,7 +10,6 @@ import { WalletJazzicon } from '../WalletJazzicon'
 import { IWallet } from '@/types'
 import { getWalletFromKey } from '@/utils/wallets'
 import { useLiteclient } from '@/store/liteClient'
-import { LiteClient } from 'ton-lite-client'
 import { AddressRow } from '../AddressRow'
 import { BlueButton } from '../ui/BlueButton'
 import { sendTonConnectStartMessage } from './TonConnect'
@@ -73,7 +72,7 @@ export function TonConnectPopup() {
 function ConnectPopupContent() {
   const tonConnectState = useTonConnectState()
   const keys = useWalletListState()
-  const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClient = useLiteclient()
   const connectLinkInfo = useConnectLink(tonConnectState.connectArg.get())
   const searchState = useSearchState()
 
@@ -91,11 +90,10 @@ function ConnectPopupContent() {
         return
       }
       const db = await getDatabase()
-      const savedInfo = await db<LastSelectedWallets>('last_selected_wallets')
-        .where({
-          url: connectLinkInfo?.url,
-        })
-        .first()
+      const savedInfo = await db.first<LastSelectedWallets>(
+        'SELECT * FROM last_selected_wallets WHERE url = ?',
+        [connectLinkInfo?.url]
+      )
 
       if (!savedInfo) {
         return

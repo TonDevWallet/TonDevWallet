@@ -6,7 +6,6 @@ import { useWalletListState } from '@/store/walletsListState'
 import { ApproveTonConnectMessageSign, RejectTonConnectMessageSign } from '@/utils/tonConnect'
 import { ImmutableObject, State } from '@hookstate/core'
 import { memo, useMemo } from 'react'
-import { LiteClient } from 'ton-lite-client'
 import { Block } from '@/components/ui/Block'
 import { secretKeyToED25519 } from '@/utils/ed25519'
 import { TextPayloadView, BinaryPayloadView, CellPayloadView } from './SignPayloads'
@@ -19,7 +18,7 @@ export const MessageRowSign = memo(function MessageRowSign({
   s: State<ImmutableObject<TonConnectMessageSign>>
 }) {
   const keys = useWalletListState()
-  const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClient = useLiteclient()
   const sessions = useTonConnectSessions()
   const password = usePassword().password.get()
 

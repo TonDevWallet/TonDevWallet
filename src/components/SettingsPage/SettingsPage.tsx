@@ -15,8 +15,10 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { cn } from '@/utils/cn'
 
-export function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('security')
+export type SettingsPageTab = 'security' | 'networks' | 'currencies' | 'address-book'
+
+export function SettingsPage({ defaultTab = 'security' }: { defaultTab?: SettingsPageTab }) {
+  const [activeTab, setActiveTab] = useState<SettingsPageTab>(defaultTab)
 
   return (
     <div className="container mx-auto py-6 max-w-6xl">
@@ -34,7 +36,11 @@ export function SettingsPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as SettingsPageTab)}
+        className="w-full"
+      >
         <div className="border-b">
           <TabsList className="bg-transparent h-auto p-0 mb-0 w-full justify-start">
             {/* Commenting out General tab

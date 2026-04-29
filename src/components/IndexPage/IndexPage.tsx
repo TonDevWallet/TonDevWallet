@@ -5,13 +5,19 @@ import { SessionsList } from './SessionsList'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RejectMessages } from './RejectMessages'
 
-export function IndexPage() {
-  const [activeTab, setActiveTab] = useState('messages')
+export type IndexPageTab = 'messages' | 'history' | 'sessions'
+
+export function IndexPage({ defaultTab = 'messages' }: { defaultTab?: IndexPageTab }) {
+  const [activeTab, setActiveTab] = useState<IndexPageTab>(defaultTab)
 
   return (
     // <div className="grid grid-cols-2 md:grid-cols-[300px_1fr] gap-2 mt-2 mr-2">
     <div>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as IndexPageTab)}
+        className="flex flex-col"
+      >
         <div className="w-full flex justify-center relative">
           <TabsList className="mb-4 mx-auto">
             <TabsTrigger value="messages" className="cursor-pointer">

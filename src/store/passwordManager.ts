@@ -51,7 +51,7 @@ const defaultScryptSettings = {
 
 const passwordState = hookstate(async () => {
   const db = await getDatabase()
-  const exists = await db('settings').where({ name: 'password' }).first()
+  const exists = await db.first<Setting>('SELECT * FROM settings WHERE name = ?', ['password'])
   return {
     password: '',
     popupOpen: false,
@@ -110,9 +110,10 @@ export async function getPasswordInteractive(): Promise<string> {
 
 export async function checkPassword(password: string) {
   const db = await getDatabase()
-  const existingPasword = await db<{ name: string; value: string }>('settings')
-    .where('name', 'password')
-    .first()
+  const existingPasword = await db.first<{ name: string; value: string }>(
+    'SELECT * FROM settings WHERE name = ?',
+    ['password']
+  )
 
   if (!existingPasword) {
     throw new Error('Password not exists')
@@ -156,56 +157,89 @@ export async function setNewPassword(oldPassword: string, newPassword: string) {
   }
 
   const database = await getDatabase()
-  const tx = await database.transaction()
-  try {
-    const salt = Buffer.from(getRandomBytes(32))
-    const key = Buffer.from(
-      await scrypt(
-        Buffer.from(newPassword, 'utf8'),
-        salt,
-        defaultScryptSettings.N,
-        defaultScryptSettings.r,
-        defaultScryptSettings.p,
-        32
-      )
+  const walletKeys = await database.select<Key>('SELECT * FROM keys')
+  const keyCount = walletKeys.length
+  const maxKeyId = walletKeys.reduce((max, key) => Math.max(max, key.id), 0)
+  const salt = Buffer.from(getRandomBytes(32))
+  const key = Buffer.from(
+    await scrypt(
+      Buffer.from(newPassword, 'utf8'),
+      salt,
+      defaultScryptSettings.N,
+      defaultScryptSettings.r,
+      defaultScryptSettings.p,
+      32
     )
-    await tx<Setting>('settings')
-      .where({ name: 'password' })
-      .update({
-        value: `${salt.toString('base64')}:${key.toString('base64')}`,
-      })
+  )
+  const passwordHash = `${salt.toString('base64')}:${key.toString('base64')}`
+  const encryptedKeys: Array<{ id: number; encrypted: string }> = []
 
-    const walletKeys = await tx<Key>('keys').select()
-    for (const key of walletKeys) {
-      if (key.encrypted === '') {
-        continue
-      }
-      const decrypted = await decryptWalletData(oldPassword, key.encrypted)
-      if (!decrypted) {
-        throw new Error('Failed to decrypt wallet data')
-      }
-      const encrypted = await encryptWalletData(newPassword, decrypted)
-
-      await tx<Key>('keys').where({ id: key.id }).update({ encrypted })
-      console.log('updating', key, encrypted)
+  for (const key of walletKeys) {
+    if (!key.encrypted) {
+      continue
     }
-
-    await tx.commit()
-
-    console.log('set new password', newPassword)
-    passwordState.password.set(newPassword)
-    updateWalletsList()
-  } finally {
-    if (!tx.isCompleted()) {
-      await tx.rollback()
+    const decrypted = await decryptWalletData(oldPassword, key.encrypted)
+    if (!decrypted) {
+      throw new Error('Failed to decrypt wallet data')
     }
+    const encrypted = await encryptWalletData(newPassword, decrypted)
+
+    encryptedKeys.push({ id: key.id, encrypted })
+    console.log('updating', key, encrypted)
   }
+
+  const client = await database.connect()
+  let committed = false
+  try {
+    await client.execute('BEGIN')
+    const passwordUpdate = await client.execute(
+      `
+        UPDATE settings
+        SET value = ?
+        WHERE name = ?
+          AND (SELECT COUNT(*) FROM keys) = ?
+          AND COALESCE((SELECT MAX(id) FROM keys), 0) = ?
+      `,
+      [passwordHash, 'password', keyCount, maxKeyId]
+    )
+
+    if (passwordUpdate.rowsAffected !== 1) {
+      throw new Error(`Expected 1 rows affected, got ${passwordUpdate.rowsAffected}`)
+    }
+
+    for (const encryptedKey of encryptedKeys) {
+      await client.execute('UPDATE keys SET encrypted = ? WHERE id = ?', [
+        encryptedKey.encrypted,
+        encryptedKey.id,
+      ])
+    }
+
+    await client.execute('COMMIT')
+    committed = true
+  } catch (error) {
+    if (!committed) {
+      try {
+        await client.execute('ROLLBACK')
+      } catch (rollbackError) {
+        console.error('database rollback error', rollbackError)
+      }
+    }
+    throw error
+  } finally {
+    await client.release()
+  }
+
+  console.log('set new password', newPassword)
+  passwordState.password.set(newPassword)
+  updateWalletsList()
 }
 
 export async function setFirstPassword(password: string) {
   const db = await getDatabase()
 
-  const existingPassword = await db<Setting>('settings').where({ name: 'password' }).first()
+  const existingPassword = await db.first<Setting>('SELECT * FROM settings WHERE name = ?', [
+    'password',
+  ])
   if (existingPassword) {
     throw new Error('Password already exists')
   }
@@ -220,10 +254,10 @@ export async function setFirstPassword(password: string) {
       32
     )
   )
-  await db<Setting>('settings').insert({
-    name: 'password',
-    value: `${salt.toString('base64')}:${key.toString('base64')}`,
-  })
+  await db.execute('INSERT INTO settings (name, value) VALUES (?, ?)', [
+    'password',
+    `${salt.toString('base64')}:${key.toString('base64')}`,
+  ])
   passwordState.password.set(password)
   passwordState.passwordExists.set(true)
 }

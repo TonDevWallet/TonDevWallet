@@ -1,5 +1,5 @@
 import { addConnectMessage } from '@/store/connectMessages'
-import { LiteClientState, useLiteclient } from '@/store/liteClient'
+import { ApiClient, getApiClient, useLiteclient } from '@/store/liteClient'
 import {
   TonConnectSession,
   deleteTonConnectSession,
@@ -18,7 +18,6 @@ import {
   SignDataRpcRequest,
 } from '@tonconnect/protocol'
 import { useEffect } from 'react'
-import { LiteClient } from 'ton-lite-client'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { invoke } from '@tauri-apps/api/core'
 import { decryptWalletData, getPassword, getPasswordInteractive } from '@/store/passwordManager'
@@ -39,7 +38,7 @@ const appWindow = getCurrentWebviewWindow()
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
-  const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClient = useLiteclient()
   const tonConnectState = useTonConnectState()
   const navigate = useNavigate()
 
@@ -220,7 +219,7 @@ async function handleSignDataRequest({
   walletMessage: SignDataRpcRequest
   session: TonConnectSession
   eventData: { lastEventId: string }
-  liteClient: LiteClient
+  liteClient: ApiClient
 }) {
   try {
     const payload: SignDataPayload = JSON.parse(walletMessage.params[0])
@@ -265,7 +264,7 @@ async function handleRequestTransactionRequest({
   walletMessage: SendTransactionRpcRequest
   session: TonConnectSession // Using any for now to accommodate the State wrapper
   eventData: { lastEventId: string }
-  liteClient: LiteClient
+  liteClient: ApiClient
 }) {
   const info = JSON.parse(walletMessage.params[0]) as {
     messages: {
@@ -368,7 +367,7 @@ async function autoSendMessage({
 
   const transfers = GetTransfersFromTCMessage(messages)
 
-  const blockchainClient = LiteClientState.liteClient.get() ?? LiteClientState.tonapiAdapter.get()
+  const blockchainClient = getApiClient()
   if (!blockchainClient) return false
   const keyPair = secretKeyToED25519(decryptedData?.seed || Buffer.from([]))
   const sendWallet = getWalletFromKey(blockchainClient, key, wallet)

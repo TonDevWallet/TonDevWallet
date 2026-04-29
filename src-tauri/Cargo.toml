@@ -15,6 +15,12 @@ rust-version = "1.57"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+# GPL-3.0 — ton-rust-node workspace crates.
+ton_block = { git = "https://github.com/RSquad/ton-rust-node.git", rev = "fe020307b94d6350f8791cad40c3f678d7fbe573" }
+ton_executor = { git = "https://github.com/RSquad/ton-rust-node.git", rev = "fe020307b94d6350f8791cad40c3f678d7fbe573" }
+ton_vm = { git = "https://github.com/RSquad/ton-rust-node.git", rev = "fe020307b94d6350f8791cad40c3f678d7fbe573" }
+ton_api = { git = "https://github.com/RSquad/ton-rust-node.git", rev = "fe020307b94d6350f8791cad40c3f678d7fbe573" }
+anyhow = "1.0"
 rand = "0.8.5"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }

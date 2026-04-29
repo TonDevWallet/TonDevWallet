@@ -6,7 +6,6 @@ import { WalletsTable } from '@/components/WalletsTable'
 
 import { setWalletKey, useSelectedKey } from '@/store/walletState'
 import { useLiteclient } from '@/store/liteClient'
-import { LiteClient } from 'ton-lite-client'
 import { useParams } from 'react-router-dom'
 import { updateWalletName, useWalletListState } from '@/store/walletsListState'
 import { getWalletFromKey } from '@/utils/wallets'
@@ -58,7 +57,7 @@ function WalletHeader(props: { name?: string; keyId: number }) {
 }
 
 export function WalletPage() {
-  const liteClient = useLiteclient() as unknown as LiteClient
+  const liteClient = useLiteclient()
   const urlParams = useParams()
   const walletsList = useWalletListState()
 

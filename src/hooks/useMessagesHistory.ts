@@ -1,7 +1,7 @@
 import { useDatabase } from '@/db'
 import { useEffect, useState } from 'react'
 import { ConnectMessageTransaction } from '@/types/connect'
-import { TonConnectMessageRecord } from '@/store/connectMessages'
+import { parseDbMessage, type TonConnectMessageRecord } from '@/store/connectMessages'
 
 interface UseMessagesHistoryOptions {
   pageSize?: number
@@ -41,39 +41,27 @@ export function useMessagesHistory(
       const offset = (page - 1) * pageSize
 
       // Get total count
-      const countResult = await db<ConnectMessageTransaction>('connect_message_transactions')
-        .where({ status: 1 })
-        .count('* as count')
-        .first()
+      const countResult = await db.first<{ count: number }>(
+        'SELECT COUNT(*) AS count FROM connect_message_transactions WHERE status = ?',
+        [1]
+      )
 
-      const count = (countResult as any)?.count || 0
+      const count = Number(countResult?.count ?? 0)
       setTotalCount(count)
 
       // Get paginated messages
-      const dbMessages = await db<ConnectMessageTransaction>('connect_message_transactions')
-        .where({ status: 1 })
-        .orderBy('id', 'desc')
-        .limit(pageSize)
-        .offset(offset)
-        .select('*')
+      const dbMessages = await db.select<ConnectMessageTransaction>(
+        `
+          SELECT *
+          FROM connect_message_transactions
+          WHERE status = ?
+          ORDER BY id DESC
+          LIMIT ? OFFSET ?
+        `,
+        [1, pageSize, offset]
+      )
 
-      const transformedMessages: TonConnectMessageRecord[] = dbMessages.map((m) => {
-        return {
-          id: m.id,
-          connect_session_id: m.connect_session_id,
-          connect_event_id: m.connect_event_id,
-          status: m.status,
-          key_id: m.key_id,
-          wallet_id: m.wallet_id,
-          message_cell: m.message_cell,
-          wallet_address: m.wallet_address,
-          payload: m.payload ? JSON.parse(m.payload) : undefined,
-          message_type: m.message_type,
-          sign_payload: m.sign_payload ? JSON.parse(m.sign_payload) : undefined,
-        }
-      })
-
-      setMessages(transformedMessages)
+      setMessages(dbMessages.map(parseDbMessage))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch messages')
     } finally {

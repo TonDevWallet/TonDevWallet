@@ -4,67 +4,155 @@ import { tauriState } from './tauri'
 import { getDatabase } from '@/db'
 import { delay } from '@/utils'
 import { Functions } from 'ton-lite-client/dist/schema'
-import { LSConfigData, Network } from '@/types/network'
+import {
+  LSConfigData,
+  Network,
+  BlockchainSource,
+  getNetworkBlockchainSource,
+  isLiteClientBlockchainSource,
+} from '@/types/network'
 import { fetch as tFetch } from '@tauri-apps/plugin-http'
 import { Api, HttpClient } from 'tonapi-sdk-js'
 import { TonapiBlockchainAdapter } from './tonapiBlockchainAdapter'
+import { ToncenterBlockchainAdapter } from './toncenterBlockchainAdapter'
+import type { ApiClient } from './primaryChainClient'
+import { LiteClientPrimaryAdapter } from './liteClientPrimaryAdapter'
+
+export type {
+  BlockRef,
+  AccountState,
+  ApiClient,
+  LibraryClient,
+  ShardQuery,
+  ShardsResponse,
+} from './primaryChainClient'
+
+export { LiteClientPrimaryAdapter } from './liteClientPrimaryAdapter'
+
+const litePrimaryAdapterCache = new WeakMap<LiteClient, LiteClientPrimaryAdapter>()
+
+function wrapLiteClientAsPrimary(lc: LiteClient): ApiClient {
+  let w = litePrimaryAdapterCache.get(lc)
+  if (!w) {
+    w = new LiteClientPrimaryAdapter(lc)
+    litePrimaryAdapterCache.set(lc, w)
+  }
+  return w
+}
+
+function toncenterBaseUrl(network: Network): string {
+  const t = network.toncenter3_url?.trim()
+  if (t) {
+    return t.endsWith('/') ? t : `${t}/`
+  }
+  return network.is_testnet
+    ? 'https://testnet.toncenter.com/api/v3/'
+    : 'https://toncenter.com/api/v3/'
+}
 
 const LiteClientState = hookstate<{
   liteClient: LiteClient | null
   tonapiAdapter: TonapiBlockchainAdapter | null
+  toncenterAdapter: ToncenterBlockchainAdapter | null
   networks: Network[]
   selectedNetwork: Network
   tonapiClient?: Api<unknown>
 }>(async () => {
   const db = await getDatabase()
 
-  let networks = await db<Network>('networks').select()
+  let networks = await db.select<Network>('SELECT * FROM networks ORDER BY item_order ASC')
   if (networks.length === 0) {
-    await db<Network>('networks').insert({
-      name: 'Mainnet',
-      url: 'https://ton-blockchain.github.io/global.config.json',
-      item_order: 0,
-      is_default: true,
-      is_testnet: false,
-      scanner_url: 'https://tonviewer.com/',
-      toncenter3_url: 'https://toncenter.com/api/v3/',
-      lite_engine_host_mode: 'auto',
-      lite_engine_host_custom: '',
-      use_tonapi_only: false,
-      tonapi_url: '',
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-    await db<Network>('networks').insert({
-      name: 'Testnet',
-      url: 'https://ton-blockchain.github.io/testnet-global.config.json',
-      item_order: 1,
-      is_default: true,
-      is_testnet: true,
-      scanner_url: 'https://testnet.tonviewer.com/',
-      toncenter3_url: 'https://testnet.toncenter.com/api/v3/',
-      lite_engine_host_mode: 'auto',
-      lite_engine_host_custom: '',
-      use_tonapi_only: false,
-      tonapi_url: '',
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-    networks = await db<Network>('networks').select()
+    await db.execute(
+      `
+        INSERT INTO networks (
+          name,
+          url,
+          item_order,
+          is_default,
+          is_testnet,
+          scanner_url,
+          toncenter3_url,
+          lite_engine_host_mode,
+          lite_engine_host_custom,
+          blockchain_source,
+          tonapi_url,
+          tonapi_token,
+          toncenter_token,
+          created_at,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        'Mainnet',
+        'https://ton-blockchain.github.io/global.config.json',
+        0,
+        true,
+        false,
+        'https://tonviewer.com/',
+        'https://toncenter.com/api/v3/',
+        'auto',
+        '',
+        'liteclient',
+        '',
+        '',
+        '',
+        new Date(),
+        new Date(),
+      ]
+    )
+    await db.execute(
+      `
+        INSERT INTO networks (
+          name,
+          url,
+          item_order,
+          is_default,
+          is_testnet,
+          scanner_url,
+          toncenter3_url,
+          lite_engine_host_mode,
+          lite_engine_host_custom,
+          blockchain_source,
+          tonapi_url,
+          tonapi_token,
+          toncenter_token,
+          created_at,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        'Testnet',
+        'https://ton-blockchain.github.io/testnet-global.config.json',
+        1,
+        true,
+        true,
+        'https://testnet.tonviewer.com/',
+        'https://testnet.toncenter.com/api/v3/',
+        'auto',
+        '',
+        'liteclient',
+        '',
+        '',
+        '',
+        new Date(),
+        new Date(),
+      ]
+    )
+    networks = await db.select<Network>('SELECT * FROM networks ORDER BY item_order ASC')
   }
 
-  let selectedNetworkId = await db<{ name: string; value: string }>('settings')
-    .where('name', 'selected_network')
-    .first()
-  // const testnetSetting = await db<{ name: string; value: string }>('settings')
-  //   .where('name', 'is_testnet')
-  //   .first()
+  let selectedNetworkId = await db.first<{ name: string; value: string }>(
+    'SELECT * FROM settings WHERE name = ?',
+    ['selected_network']
+  )
 
   if (!selectedNetworkId) {
-    await db('settings').insert({
-      name: 'selected_network',
-      value: networks[0].network_id,
-    })
+    await db.execute('INSERT INTO settings (name, value) VALUES (?, ?)', [
+      'selected_network',
+      String(networks[0].network_id),
+    ])
     selectedNetworkId = {
       name: 'selected_network',
       value: networks[0].network_id.toString(),
@@ -78,16 +166,13 @@ const LiteClientState = hookstate<{
     selectedNetwork = networks[0]
   }
 
-  const tonapiToken = await db<{ name: string; value: string }>('settings')
-    .where('name', 'tonapi_token')
-    .first()
-
   const headers: Record<string, string> = {
     'Content-type': 'application/json',
   }
 
-  if (tonapiToken?.value) {
-    headers.Authorization = `Bearer ${tonapiToken.value}`
+  const tonapiBearer = selectedNetwork.tonapi_token?.trim()
+  if (tonapiBearer) {
+    headers.Authorization = `Bearer ${tonapiBearer}`
   }
 
   const baseUrl =
@@ -103,45 +188,107 @@ const LiteClientState = hookstate<{
 
   const tonapiClient = new Api(httpClient)
 
-  const useTonapiOnly = !!selectedNetwork.use_tonapi_only
-  let liteClient: LiteClient | null = null
-  let tonapiAdapter: TonapiBlockchainAdapter | null = null
-
-  if (useTonapiOnly) {
-    tonapiAdapter = new TonapiBlockchainAdapter(tonapiClient)
-  } else {
-    liteClient = getLiteClient(selectedNetwork.url, selectedNetwork)
-  }
+  const { liteClient, tonapiAdapter, toncenterAdapter } = buildPrimaryClients(
+    selectedNetwork,
+    tonapiClient
+  )
 
   return {
     networks,
     selectedNetwork,
     liteClient,
     tonapiAdapter,
+    toncenterAdapter,
     tonapiClient,
   }
 })
 
-/** Returns the active blockchain client (LiteClient or TonapiBlockchainAdapter) */
-export function useLiteclient(): LiteClient | TonapiBlockchainAdapter {
+function buildPrimaryClients(selectedNetwork: Network, tonapiClient: Api<unknown>) {
+  const toncenterKey = selectedNetwork.toncenter_token?.trim()
+  const source = getNetworkBlockchainSource(selectedNetwork)
+  if (source === 'liteclient') {
+    return {
+      liteClient: getLiteClient(selectedNetwork.url, selectedNetwork),
+      tonapiAdapter: null as TonapiBlockchainAdapter | null,
+      toncenterAdapter: null as ToncenterBlockchainAdapter | null,
+    }
+  }
+  if (source === 'tonapi') {
+    return {
+      liteClient: null,
+      tonapiAdapter: new TonapiBlockchainAdapter(tonapiClient),
+      toncenterAdapter: null,
+    }
+  }
+  return {
+    liteClient: null,
+    tonapiAdapter: null,
+    toncenterAdapter: new ToncenterBlockchainAdapter(
+      toncenterBaseUrl(selectedNetwork),
+      toncenterKey || undefined
+    ),
+  }
+}
+
+/** Active primary chain client (liteserver, TonAPI, or TonCenter). */
+export function useLiteclient(): ApiClient {
+  return useApiClient()
+}
+
+/** Same as useLiteclient — use when emphasizing HTTP vs liteserver. */
+export function useApiClient(): ApiClient {
   const state = useHookstate(LiteClientState)
   const liteClient = state.liteClient.get({ noproxy: true })
   const tonapiAdapter = state.tonapiAdapter.get({ noproxy: true })
-
-  if (liteClient) {
-    return liteClient as LiteClient
+  const toncenterAdapter = state.toncenterAdapter.get({ noproxy: true })
+  const rawLite = liteClient as LiteClient | null
+  const c = rawLite
+    ? wrapLiteClientAsPrimary(rawLite)
+    : ((tonapiAdapter ?? toncenterAdapter) as ApiClient | null)
+  if (!c) {
+    throw new Error('No blockchain client found')
   }
-
-  if (tonapiAdapter) {
-    return tonapiAdapter as TonapiBlockchainAdapter
-  }
-
-  throw new Error('No blockchain client found')
+  return c
 }
 
-/** Whether the current network uses TonAPI only (no LiteClient) */
-export function useTonapiOnly() {
-  return !!useHookstate(LiteClientState).selectedNetwork.get({ noproxy: true }).use_tonapi_only
+/** Throws unless the current network uses LiteClient (liteservers). */
+export function useLiteClientRequired(): LiteClient {
+  const raw = useHookstate(LiteClientState).liteClient.get({ noproxy: true }) as LiteClient | null
+  if (!raw) {
+    throw new Error('This action requires LiteClient (liteserver) network mode')
+  }
+  return raw
+}
+
+export function getApiClient(): ApiClient {
+  const rawLite = LiteClientState.liteClient.get({ noproxy: true }) as LiteClient | null
+  if (rawLite) {
+    return wrapLiteClientAsPrimary(rawLite)
+  }
+  const c = (LiteClientState.tonapiAdapter.get({ noproxy: true }) ??
+    LiteClientState.toncenterAdapter.get({ noproxy: true })) as ApiClient | null
+
+  if (!c) {
+    throw new Error('No blockchain client found')
+  }
+
+  return c
+}
+
+/** Current network primary source. */
+export function useBlockchainSource(): BlockchainSource {
+  const n = useHookstate(LiteClientState).selectedNetwork.get({ noproxy: true })
+  return getNetworkBlockchainSource(n)
+}
+
+/** True when using liteservers for the primary client. */
+export function useIsLiteClientMode(): boolean {
+  return isLiteClientBlockchainSource(useBlockchainSource())
+}
+
+/** True only when primary client is TonAPI (not TonCenter, not LiteClient). */
+export function useTonapiOnly(): boolean {
+  return useBlockchainSource() === 'tonapi'
 }
 
 export function useTonapiClient() {
@@ -154,7 +301,7 @@ export function useLiteclientState() {
 
 export async function updateNetworksList() {
   const db = await getDatabase()
-  const networks = await db<Network>('networks').select()
+  const networks = await db.select<Network>('SELECT * FROM networks ORDER BY item_order ASC')
 
   const oldSelectedNetwork = LiteClientState.selectedNetwork.get()
   const selectedId = oldSelectedNetwork.network_id
@@ -168,24 +315,36 @@ export async function updateNetworksList() {
   LiteClientState.networks.set(networks)
   LiteClientState.selectedNetwork.set(selectedNetwork)
 
-  const tonapiChanged =
-    !!oldSelectedNetwork.use_tonapi_only !== !!selectedNetwork.use_tonapi_only ||
-    (oldSelectedNetwork.tonapi_url || '') !== (selectedNetwork.tonapi_url || '')
-  if (oldNetworkUrl !== selectedNetwork.url || tonapiChanged) {
-    changeLiteClient(selectedNetwork.network_id)
+  const oldSrc = getNetworkBlockchainSource(oldSelectedNetwork)
+  const newSrc = getNetworkBlockchainSource(selectedNetwork)
+  const sourceOrEndpointsChanged =
+    oldSrc !== newSrc ||
+    (oldSelectedNetwork.tonapi_url || '') !== (selectedNetwork.tonapi_url || '') ||
+    (oldSelectedNetwork.toncenter3_url || '') !== (selectedNetwork.toncenter3_url || '')
+
+  const tokensChanged =
+    (oldSelectedNetwork.tonapi_token || '') !== (selectedNetwork.tonapi_token || '') ||
+    (oldSelectedNetwork.toncenter_token || '') !== (selectedNetwork.toncenter_token || '')
+
+  const needsLiteClientRebuild = oldNetworkUrl !== selectedNetwork.url || sourceOrEndpointsChanged
+
+  if (needsLiteClientRebuild) {
+    await changeLiteClient(selectedNetwork.network_id)
+  } else if (tokensChanged) {
+    await refreshBlockchainHttpClients()
+    const tonapiClient = LiteClientState.tonapiClient.get() as Api<unknown> | undefined
+    const src = getNetworkBlockchainSource(selectedNetwork)
+    if (src === 'tonapi') {
+      LiteClientState.tonapiAdapter.set(new TonapiBlockchainAdapter(tonapiClient as Api<unknown>))
+    } else if (src === 'toncenter') {
+      LiteClientState.toncenterAdapter.set(
+        new ToncenterBlockchainAdapter(
+          toncenterBaseUrl(selectedNetwork),
+          selectedNetwork.toncenter_token?.trim() || undefined
+        )
+      )
+    }
   }
-}
-
-export function getApiClient(): LiteClient | TonapiBlockchainAdapter {
-  const liteClient =
-    LiteClientState.liteClient.get({ noproxy: true }) ??
-    LiteClientState.tonapiAdapter.get({ noproxy: true })
-
-  if (!liteClient) {
-    throw new Error('No blockchain client found')
-  }
-
-  return liteClient as LiteClient | TonapiBlockchainAdapter
 }
 
 export async function changeLiteClient(networkId: number) {
@@ -195,33 +354,32 @@ export async function changeLiteClient(networkId: number) {
     return
   }
 
-  const useTonapiOnly = !!selectedNetwork.use_tonapi_only
+  await db.execute('UPDATE settings SET value = ? WHERE name = ?', [
+    String(networkId),
+    'selected_network',
+  ])
 
-  await db<{ name: string; value: string }>('settings')
-    .where('name', 'selected_network')
-    .update('value', String(networkId))
-
-  if (useTonapiOnly) {
-    LiteClientState.selectedNetwork.set(selectedNetwork)
-    await updateTonapiClient()
-    const tonapiClient = LiteClientState.tonapiClient.get() as Api<unknown> | undefined
-    const newAdapter = tonapiClient ? new TonapiBlockchainAdapter(tonapiClient) : null
-    LiteClientState.tonapiAdapter.set(newAdapter)
-    return newAdapter
-  } else {
-    const newLiteClient = getLiteClient(selectedNetwork.url, selectedNetwork)
-    const oldLiteClient = LiteClientState.liteClient.get()
-    if (oldLiteClient?.engine) {
-      oldLiteClient.engine.close()
-    }
-    LiteClientState.merge({
-      liteClient: newLiteClient,
-      tonapiAdapter: null,
-      selectedNetwork,
-    })
-    await updateTonapiClient()
-    return newLiteClient
+  const oldLiteClient = LiteClientState.liteClient.get()
+  if (oldLiteClient?.engine) {
+    oldLiteClient.engine.close()
   }
+
+  LiteClientState.selectedNetwork.set(selectedNetwork)
+  await refreshBlockchainHttpClients()
+  const tonapiClient = LiteClientState.tonapiClient.get() as Api<unknown> | undefined
+  const { liteClient, tonapiAdapter, toncenterAdapter } = buildPrimaryClients(
+    selectedNetwork,
+    tonapiClient as Api<unknown>
+  )
+
+  LiteClientState.merge({
+    liteClient,
+    tonapiAdapter,
+    toncenterAdapter,
+    selectedNetwork,
+  })
+
+  return liteClient ?? tonapiAdapter ?? toncenterAdapter
 }
 
 export function getLiteClient(configUrl: string, network?: Network): LiteClient {
@@ -317,13 +475,9 @@ function shuffle<T>(array: T[]): T[] {
   let currentIndex = array.length
   let randomIndex
 
-  // While there remain elements to shuffle.
   while (currentIndex !== 0) {
-    // Pick a remaining element.
     randomIndex = Math.floor(Math.random() * currentIndex)
     currentIndex--
-
-    // And swap it with the current element.
     ;[array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]]
   }
 
@@ -365,20 +519,17 @@ async function checkEngine(engine: LiteSingleEngine): Promise<boolean> {
   return promise
 }
 
-export async function updateTonapiClient() {
-  const db = await getDatabase()
-  const tonapiToken = await db<{ name: string; value: string }>('settings')
-    .where('name', 'tonapi_token')
-    .first()
-
+/** Reloads TonAPI HTTP client from the current network row (URL + TonAPI bearer token). */
+export async function refreshBlockchainHttpClients() {
   const selectedNetwork = LiteClientState.selectedNetwork.get()
 
   const headers: Record<string, string> = {
     'Content-type': 'application/json',
   }
 
-  if (tonapiToken?.value) {
-    headers.Authorization = `Bearer ${tonapiToken.value}`
+  const tonapiBearer = selectedNetwork.tonapi_token?.trim()
+  if (tonapiBearer) {
+    headers.Authorization = `Bearer ${tonapiBearer}`
   }
 
   const baseUrl =
@@ -395,4 +546,25 @@ export async function updateTonapiClient() {
   const tonapiClient = new Api(httpClient)
 
   LiteClientState.tonapiClient.set(tonapiClient)
+
+  if (getNetworkBlockchainSource(selectedNetwork) === 'toncenter') {
+    LiteClientState.toncenterAdapter.set(
+      new ToncenterBlockchainAdapter(
+        toncenterBaseUrl(selectedNetwork),
+        selectedNetwork.toncenter_token?.trim() || undefined
+      )
+    )
+  }
+}
+
+/** @deprecated Use {@link refreshBlockchainHttpClients} */
+export async function updateTonapiClient() {
+  await refreshBlockchainHttpClients()
+}
+
+/** Normalize blockchain_source for DB writes from form/network row. */
+export function getNetworkSourceDbFields(network: Pick<Network, 'blockchain_source'>) {
+  return {
+    blockchain_source: getNetworkBlockchainSource(network),
+  }
 }

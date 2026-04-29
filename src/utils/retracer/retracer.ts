@@ -1,4 +1,4 @@
-import { Blockchain, SmartContractTransaction } from '@ton/sandbox'
+import { SmartContractTransaction } from '@ton/sandbox'
 import {
   beginCell,
   Cell,
@@ -10,7 +10,7 @@ import {
   storeTransaction,
 } from '@ton/core'
 import { loadConfigParamsAsSlice, parseFullConfig, TonClient, TonClient4 } from '@ton/ton'
-import { LiteClient } from 'ton-lite-client'
+import type { LibraryClient } from '@/store/primaryChainClient'
 import {
   BaseTxInfo,
   createShardAccountFromAPI,
@@ -21,27 +21,37 @@ import {
 import { EmulationResult, IExecutor } from '@ton/sandbox/dist/executor/Executor'
 import { checkForLibraries, megaLibsCell } from '@/hooks/useEmulatedTxInfo'
 import { ParsedTransaction } from '../ManagedBlockchain'
+import { createAppExecutor } from '@/utils/appExecutor'
+
+/** @deprecated Use {@link LibraryClient} */
+export type LibraryLookupClient = LibraryClient
 
 /**
  * Emulates a transaction with full execution stack details
  *
- * @param liteClient - The LiteClient instance for TON blockchain
+ * @param libraryClient - Client with getLibraries (LiteClient, TonapiBlockchainAdapter, etc.)
  * @param txLink - Transaction link or transaction info object
  * @param forcedTestnet - Force using testnet instead of mainnet
  * @param sendStatus - Optional callback for reporting status updates
  * @returns Transaction emulation result with stack information
  */
 export async function getEmulationWithStack(
-  liteClient: LiteClient,
+  libraryClient: LibraryLookupClient,
   txLink: string | BaseTxInfo,
   forcedTestnet: boolean = false,
   toncenter3Url?: string,
-  sendStatus: (status: string) => void = () => {}
+  sendStatus: (status: string) => void = () => {},
+  toncenterApiKey?: string
 ): Promise<{
   tx: ParsedTransaction
 }> {
   // Parse transaction info from link or use provided info
-  const { txInfo, testnet } = await parseTxInfo(txLink, forcedTestnet, toncenter3Url)
+  const { txInfo, testnet } = await parseTxInfo(
+    txLink,
+    forcedTestnet,
+    toncenter3Url,
+    toncenterApiKey
+  )
 
   // Initialize TON clients
   const { clientV4, clientV2 } = initializeClients(testnet)
@@ -51,7 +61,8 @@ export async function getEmulationWithStack(
     clientV4,
     txInfo,
     testnet,
-    sendStatus
+    sendStatus,
+    toncenterApiKey
   )
 
   // Find minimum LT for account in block
@@ -80,13 +91,12 @@ export async function getEmulationWithStack(
   )
 
   // Check libraries
-  await checkForLibraries(libsToCheck, liteClient)
+  await checkForLibraries(libsToCheck, libraryClient)
 
   // Create blockchain emulator
   sendStatus('Creating emulator')
-  // const { emulateFunction } = await createEmulator(blockConfig, randSeed)
-  const blockchain = await Blockchain.create()
-  const executor = blockchain.executor
+  const executor = await createAppExecutor()
+  // const blockchain = await Blockchain.create({ executor })
 
   // Emulate previous transactions
   const { lastTxEmulated, hashMismatch } = await emulateTransactions(
@@ -121,13 +131,14 @@ export async function getEmulationWithStack(
 async function parseTxInfo(
   txLink: string | BaseTxInfo,
   forcedTestnet: boolean,
-  toncenter3Url?: string
+  toncenter3Url?: string,
+  toncenterApiKey?: string
 ): Promise<{ txInfo: BaseTxInfo; testnet: boolean }> {
   let txInfo: BaseTxInfo
   let testnet = forcedTestnet || false
 
   if (typeof txLink === 'string') {
-    const txGot = await linkToTx(txLink, forcedTestnet, toncenter3Url)
+    const txGot = await linkToTx(txLink, forcedTestnet, toncenter3Url, toncenterApiKey)
     txInfo = txGot.tx
     testnet = txGot.testnet
   } else {
@@ -165,7 +176,8 @@ async function fetchTransactionData(
   clientV4: TonClient4,
   txInfo: BaseTxInfo,
   testnet: boolean,
-  sendStatus: (status: string) => void
+  sendStatus: (status: string) => void,
+  toncenterApiKey?: string
 ): Promise<{
   tx: any
   mcBlockSeqno: number
@@ -177,7 +189,7 @@ async function fetchTransactionData(
   sendStatus('Getting the tx')
   const tx = (await clientV4.getAccountTransactions(address, lt, hash))[0]
 
-  const { mcSeqno, randSeed } = await getMcSeqnoByShard(tx.block, testnet)
+  const { mcSeqno, randSeed } = await getMcSeqnoByShard(tx.block, testnet, toncenterApiKey)
   const fullBlock = await clientV4.getBlock(mcSeqno)
   const mcBlockSeqno = fullBlock.shards[0].seqno
 

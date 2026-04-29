@@ -1,6 +1,5 @@
-import Copier from '@/components/copier'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faKey } from '@fortawesome/free-solid-svg-icons'
+import { KeyInfoRow } from './HiddenSecretValue'
 
 interface KeyInfoDisplayProps {
   seed: string
@@ -15,50 +14,34 @@ export function KeyInfoDisplay({
   fireblocksPrivateKey,
   seedLabel = 'Seed',
 }: KeyInfoDisplayProps) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium flex items-center gap-2">
-          <FontAwesomeIcon icon={faKey} className="text-primary" />
-          {seedLabel}:
-        </label>
-        <div className="flex items-center p-2 bg-muted rounded-md">
-          <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">{seed}</code>
-          <Copier className="w-5 h-5 ml-2 shrink-0" text={seed} />
-        </div>
-      </div>
+  const publicKeyHex = publicKey ? Buffer.from(publicKey).toString('hex') : ''
 
-      {publicKey && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-2">
-            <FontAwesomeIcon icon={faKey} className="text-primary" />
-            Public Key:
-          </label>
-          <div className="flex items-center p-2 bg-muted rounded-md">
-            <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
-              {Buffer.from(publicKey).toString('hex')}
-            </code>
-            <Copier
-              className="w-5 h-5 ml-2 shrink-0"
-              text={Buffer.from(publicKey).toString('hex')}
-            />
-          </div>
-        </div>
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <KeyInfoRow
+        label={seedLabel}
+        value={seed}
+        privacy="secret"
+        description="Hidden by default. Reveal only when you need to verify it."
+      />
+
+      {publicKeyHex && (
+        <KeyInfoRow
+          label="Public Key"
+          value={publicKeyHex}
+          privacy="public"
+          icon={faKey}
+          iconClassName="text-primary"
+        />
       )}
 
       {fireblocksPrivateKey && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-2">
-            <FontAwesomeIcon icon={faKey} className="text-primary" />
-            Fireblocks Private Key:
-          </label>
-          <div className="flex items-center p-2 bg-muted rounded-md">
-            <code className="text-xs overflow-hidden text-ellipsis font-mono break-all">
-              {fireblocksPrivateKey}
-            </code>
-            <Copier className="w-5 h-5 ml-2 shrink-0" text={fireblocksPrivateKey} />
-          </div>
-        </div>
+        <KeyInfoRow
+          label="Fireblocks Private Key"
+          value={fireblocksPrivateKey}
+          privacy="secret"
+          description="This is private signing material. Keep it hidden unless required."
+        />
       )}
     </div>
   )

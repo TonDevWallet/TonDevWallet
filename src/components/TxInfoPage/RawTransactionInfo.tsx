@@ -9,9 +9,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
 import Editor from '@monaco-editor/react'
 
-export function RawTransactionInfo({ tx }: { tx: Transaction }) {
+export type RawTransactionFormat = 'yaml' | 'json'
+
+export function RawTransactionInfo({
+  tx,
+  defaultFormat = 'yaml',
+}: {
+  tx: Transaction
+  defaultFormat?: RawTransactionFormat
+}) {
   const [copied, setCopied] = useState(false)
-  const [activeFormat, setActiveFormat] = useState<'yaml' | 'json'>('yaml')
+  const [activeFormat, setActiveFormat] = useState<RawTransactionFormat>(defaultFormat)
   const editorRef = useRef(null)
 
   const rawTransactionInfo = useMemo(() => {
@@ -52,7 +60,10 @@ export function RawTransactionInfo({ tx }: { tx: Transaction }) {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Raw Transaction Data</CardTitle>
           <div className="flex items-center gap-4">
-            <Tabs value={activeFormat} onValueChange={(v) => setActiveFormat(v as 'yaml' | 'json')}>
+            <Tabs
+              value={activeFormat}
+              onValueChange={(v) => setActiveFormat(v as RawTransactionFormat)}
+            >
               <TabsList className="grid w-[160px] grid-cols-2">
                 <TabsTrigger value="yaml">YAML</TabsTrigger>
                 <TabsTrigger value="json">JSON</TabsTrigger>

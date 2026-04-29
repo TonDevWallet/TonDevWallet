@@ -1,6 +1,6 @@
 import { SignDataPayloadCell } from '@tonconnect/protocol'
 import { memo, useMemo } from 'react'
-import { parseTLB } from '@/tlb-runtime'
+// import { parseTLB } from '@ton-community/tlb-runtime'
 
 export const CellPayloadView = memo(function CellPayloadView({
   payload,
@@ -9,7 +9,8 @@ export const CellPayloadView = memo(function CellPayloadView({
 }) {
   const parsedTlb = useMemo(() => {
     try {
-      return JSON.stringify(parseTLB(payload.schema).deserialize(payload.cell), null, 2)
+      // return JSON.stringify(parseTLB(payload.schema).deserialize(payload.cell), null, 2)
+      return null
     } catch (error) {
       console.error(error)
       return null

@@ -7,7 +7,7 @@ import { CallForSuccess } from '@/utils/callForSuccess'
 import { parseWithPayloads } from '@truecarry/tlb-abi'
 import { RecursivelyParseCellWithBlock } from '@/utils/tlb/cellParser'
 import { Address } from '@ton/ton'
-import { getToncenter3Url } from '@/utils/ton'
+import { getToncenter3Url, toncenterV3RequestHeaders } from '@/utils/ton'
 
 interface UseTraceDataResult {
   transactions: ParsedTransaction[]
@@ -51,6 +51,8 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
 
       const isTestnet = selectedNetwork.selectedNetwork.get().is_testnet
       const toncenter3Url = selectedNetwork.selectedNetwork.get().toncenter3_url
+      const toncenterApiKey =
+        selectedNetwork.selectedNetwork.get({ noproxy: true }).toncenter_token ?? ''
 
       // Create a new AbortController for this execution
       const abortController = new AbortController()
@@ -70,6 +72,7 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
         const response = await CallForSuccess(async () => {
           const res = await fetch(apiUrl, {
             signal: abortController.signal,
+            headers: toncenterV3RequestHeaders(toncenterApiKey),
           })
           if (res.status !== 200) {
             throw new Error('Failed to fetch trace data')
@@ -126,7 +129,7 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
             }
 
             const res = await getEmulationWithStack(
-              liteClient as any,
+              liteClient,
               {
                 addr: Address.parse(tx.account),
                 hash: Buffer.from(tx.hash, 'base64'),
@@ -142,7 +145,8 @@ export function useTraceData(txHash: string | null): UseTraceDataResult {
                 ) {
                   throw new Error('Operation was aborted')
                 }
-              }
+              },
+              toncenterApiKey
             )
 
             // Check again after emulation completes

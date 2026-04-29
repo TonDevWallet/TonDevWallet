@@ -2,10 +2,9 @@ import {
   changeLiteClient,
   useLiteclient,
   useLiteclientState,
-  useTonapiOnly,
+  useIsLiteClientMode,
 } from '@/store/liteClient'
 import { useTonConnectSessions } from '@/store/tonConnect'
-import { LiteClient } from 'ton-lite-client'
 import { useWalletListState } from '@/store/walletsListState'
 import { cleanPassword, openPasswordPopup, usePassword } from '@/store/passwordManager'
 import { secretKeyToX25519 } from '@/utils/ed25519'
@@ -40,7 +39,7 @@ function NetworkSelector() {
   const liteClientState = useLiteclientState()
   const sessions = useTonConnectSessions()
   const blockchainClient = useLiteclient()
-  const isTonapiOnly = useTonapiOnly()
+  const isLiteClientMode = useIsLiteClientMode()
   const keys = useWalletListState()
 
   const [readyEngines, setReadyEngines] = useState(0)
@@ -90,16 +89,18 @@ function NetworkSelector() {
   }
 
   useEffect(() => {
-    if (isTonapiOnly) {
+    if (!isLiteClientMode) {
       setReadyEngines(1)
       return
     }
     const interval = setInterval(() => {
-      const client = blockchainClient as LiteClient
-      setReadyEngines((client?.engine as any)?.readyEngines?.length ?? 0)
+      const raw = liteClientState.liteClient.get({ noproxy: true })
+      if (raw) {
+        setReadyEngines((raw.engine as any)?.readyEngines?.length ?? 0)
+      }
     }, 1000)
     return () => clearInterval(interval)
-  }, [blockchainClient, isTonapiOnly])
+  }, [liteClientState.liteClient, isLiteClientMode])
 
   return (
     <div className="cursor-pointer rounded flex flex-col items-center my-2">
@@ -239,7 +240,7 @@ function TopBarLinkWrapper({
 
 export function TopBar() {
   return (
-    <div className={cn('flex flex-wrap py-2 px-4 gap-4 w-full')}>
+    <div className={cn('flex flex-wrap items-center py-2 px-4 gap-3 w-full')}>
       <NetworkSelector />
 
       <ThemeSwitcher />

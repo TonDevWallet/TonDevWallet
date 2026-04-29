@@ -191,6 +191,9 @@ const SendModal = ({
       }
 
       const decrypted = await decryptWalletData(password, wallet.key)
+      if (!decrypted) {
+        throw new Error('Failed to decrypt wallet')
+      }
       const keyPair = secretKeyToED25519(decrypted.seed || Buffer.from([]))
       if (keyPair.secretKey.length === 32) {
         keyPair.secretKey = Buffer.concat([

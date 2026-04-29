@@ -1,7 +1,6 @@
 import { suspend } from '@hookstate/core'
-import { Knex } from 'knex'
 import React from 'react'
-import { DbContext } from './db'
+import { AppDatabase, DbContext } from './db'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import { useTonConnectState } from './store/tonConnect'
@@ -12,7 +11,7 @@ import { usePassword } from './store/passwordManager'
 import { useLiteclientState } from './store/liteClient'
 import { Toaster } from '@/components/ui/toaster'
 
-export function App({ db }: { db: Knex }) {
+export function App({ db }: { db: AppDatabase }) {
   const keysList = useWalletListState()
   const passwordState = usePassword()
   const tonConnectState = useTonConnectState()

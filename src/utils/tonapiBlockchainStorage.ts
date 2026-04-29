@@ -1,17 +1,18 @@
 /**
  * BlockchainStorage implementation using tonapi-sdk-js (for emulation in tonapi-only mode)
  */
-import { Address } from '@ton/core'
+import { Address, Dictionary } from '@ton/core'
+import { extractEc } from '@ton/sandbox/dist/utils/ec'
 import { Blockchain } from '@ton/sandbox'
 import { BlockchainStorage } from '@ton/sandbox/dist/blockchain/BlockchainStorage'
 import { SmartContract } from '@ton/sandbox/dist/blockchain/SmartContract'
-import { TonapiBlockchainAdapter } from '@/store/tonapiBlockchainAdapter'
+import type { ApiClient } from '@/store/primaryChainClient'
 
 export class TonapiBlockchainStorage implements BlockchainStorage {
   private contracts: Map<string, SmartContract> = new Map()
-  private client: TonapiBlockchainAdapter
+  private client: ApiClient
 
-  constructor(client: TonapiBlockchainAdapter) {
+  constructor(client: ApiClient) {
     this.client = client
   }
 
@@ -27,19 +28,25 @@ export class TonapiBlockchainStorage implements BlockchainStorage {
         !stateData?.code
       ) {
         existing = SmartContract.empty(blockchain, address)
-        existing.balance = accountState.balance.coins
+        existing.balance = BigInt(accountState.balance.coins)
         if (accountState.balance.other) {
-          existing.ec = accountState.balance.other
+          existing.ec =
+            accountState.balance.other instanceof Dictionary
+              ? extractEc(accountState.balance.other)
+              : accountState.balance.other
         }
       } else {
         existing = SmartContract.create(blockchain, {
           address,
           data: stateData.data,
           code: stateData.code,
-          balance: accountState.balance.coins,
+          balance: BigInt(accountState.balance.coins),
         })
         if (accountState.balance.other) {
-          existing.ec = accountState.balance.other
+          existing.ec =
+            accountState.balance.other instanceof Dictionary
+              ? extractEc(accountState.balance.other)
+              : accountState.balance.other
         }
       }
 

@@ -4,15 +4,20 @@ import { FromSeed } from './FromSeed'
 import { FromPublicKey } from './FromPublicKey'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-export function NewWalletPage() {
+export type NewWalletTab = 'random' | 'mnemonic' | 'seed' | 'public-key'
+interface NewWalletPageProps {
+  defaultTab?: NewWalletTab
+}
+
+export function NewWalletPage({ defaultTab = 'random' }: NewWalletPageProps) {
   return (
     <div className="mt-2">
-      <Tabs defaultValue="random" className="">
+      <Tabs defaultValue={defaultTab} className="">
         <TabsList className="mb-4">
           <TabsTrigger value="random">Create random wallet</TabsTrigger>
           <TabsTrigger value="mnemonic">From Mnemonic</TabsTrigger>
           <TabsTrigger value="seed">From Seed</TabsTrigger>
-          <TabsTrigger value="public-key">From Public Key</TabsTrigger>
+          <TabsTrigger value="public-key">Watch only</TabsTrigger>
         </TabsList>
         <TabsContent
           value="random" /* forceMount={true} className="hidden data-[state=active]:block" */

@@ -1,5 +1,5 @@
 import { getDatabase } from '@/db'
-import { ConnectMessageTransaction, ConnectSession, LastSelectedWallets } from '@/types/connect'
+import { ConnectSession } from '@/types/connect'
 import { sendTonConnectMessage } from '@/utils/tonConnect'
 import { hookstate, State, useHookstate } from '@hookstate/core'
 import { removeConnectMessages } from './connectMessages'
@@ -39,7 +39,7 @@ const state = hookstate<TonConnectState>(async () => {
 
 export async function getSessions() {
   const db = await getDatabase()
-  const dbSessions = await db<ConnectSession>('connect_sessions').select('*')
+  const dbSessions = await db.select<ConnectSession>('SELECT * FROM connect_sessions')
 
   const sessions: TonConnectSession[] = dbSessions.map((dbSession) => {
     return {
@@ -52,7 +52,7 @@ export async function getSessions() {
       url: dbSession.url,
       name: dbSession.name,
       iconUrl: dbSession.icon_url,
-      autoSend: dbSession.auto_send,
+      autoSend: !!dbSession.auto_send,
     }
   })
 
@@ -88,31 +88,39 @@ export async function addTonConnectSession({
   iconUrl: string
 }) {
   const db = await getDatabase()
-  const res = await db<ConnectSession>('connect_sessions')
-    .insert({
-      secret_key: secretKey.toString('hex'),
-      user_id: userId,
-      key_id: keyId,
-      wallet_id: walletId,
-      last_event_id: 0,
-      url,
-      name,
-      icon_url: iconUrl,
-    })
-    .returning('*')
+  const res = await db.select<ConnectSession>(
+    `
+      INSERT INTO connect_sessions (
+        secret_key,
+        user_id,
+        key_id,
+        wallet_id,
+        last_event_id,
+        url,
+        name,
+        icon_url,
+        auto_send
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING *
+    `,
+    [secretKey.toString('hex'), userId, keyId, walletId, 0, url, name, iconUrl, false]
+  )
 
   if (res.length < 1) {
     throw new Error("can't add session")
   }
 
-  await db<LastSelectedWallets>('last_selected_wallets')
-    .insert({
-      url,
-      key_id: keyId,
-      wallet_id: walletId,
-    })
-    .onConflict('url')
-    .merge()
+  await db.execute(
+    `
+      INSERT INTO last_selected_wallets (url, key_id, wallet_id)
+      VALUES (?, ?, ?)
+      ON CONFLICT(url) DO UPDATE SET
+        key_id = excluded.key_id,
+        wallet_id = excluded.wallet_id
+    `,
+    [url, keyId, walletId]
+  )
 
   const session: TonConnectSession = {
     secretKey,
@@ -138,13 +146,10 @@ export async function setTonConnectSessionAutoSend({
   autoSend: boolean
 }) {
   const db = await getDatabase()
-  await db<ConnectSession>('connect_sessions')
-    .where({
-      id: session.id.get(),
-    })
-    .update({
-      auto_send: autoSend,
-    })
+  await db.execute('UPDATE connect_sessions SET auto_send = ? WHERE id = ?', [
+    autoSend,
+    session.id.get(),
+  ])
   state.sessions.set(await getSessions())
 }
 
@@ -165,16 +170,10 @@ export async function deleteTonConnectSession(session: State<TonConnectSession>)
     }
 
     const db = await getDatabase()
-    await db<ConnectMessageTransaction>('connect_message_transactions')
-      .where({
-        connect_session_id: session.id.get(),
-      })
-      .delete()
-    await db<ConnectSession>('connect_sessions')
-      .where({
-        id: session.id.get(),
-      })
-      .delete()
+    await db.execute('DELETE FROM connect_message_transactions WHERE connect_session_id = ?', [
+      session.id.get(),
+    ])
+    await db.execute('DELETE FROM connect_sessions WHERE id = ?', [session.id.get()])
 
     state.sessions.set(await getSessions())
     await removeConnectMessages()
@@ -194,13 +193,10 @@ export async function updateSessionEventId(id: number, eventId: number) {
     lastEventId: eventId,
   })
 
-  await db<ConnectSession>('connect_sessions')
-    .where({
-      secret_key: session.secretKey.get().toString('hex'),
-    })
-    .update({
-      last_event_id: eventId,
-    })
+  await db.execute('UPDATE connect_sessions SET last_event_id = ? WHERE secret_key = ?', [
+    eventId,
+    session.secretKey.get().toString('hex'),
+  ])
 }
 
 export function closeTonConnectPopup() {

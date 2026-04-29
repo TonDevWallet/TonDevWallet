@@ -5,7 +5,7 @@ import inject from '@rollup/plugin-inject'
 import tailwindcss from '@tailwindcss/vite'
 // import { analyzer } from 'vite-bundle-analyzer'
 
-const host = process.env.TAURI_DEV_HOST;
+const host = process.env.TAURI_DEV_HOST
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
