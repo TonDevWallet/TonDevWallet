@@ -186,8 +186,8 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0
       '@ton/sandbox':
-        specifier: ^0.41.0
-        version: 0.41.0(@ton-community/func-js@0.11.0)(@ton/core@0.63.1(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(@ton/test-utils@0.12.0(@jest/globals@29.7.0)(@ton/core@0.63.1(@ton/crypto@3.3.0)))(jest@29.7.0(@types/node@22.14.0)(node-notifier@10.0.1))
+        specifier: ^0.42.0
+        version: 0.42.0(@ton-community/func-js@0.11.0)(@ton/core@0.63.1(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(@ton/test-utils@0.12.0(@jest/globals@29.7.0)(@ton/core@0.63.1(@ton/crypto@3.3.0)))(jest@29.7.0(@types/node@22.14.0)(node-notifier@10.0.1))
       '@ton/test-utils':
         specifier: ^0.12.0
         version: 0.12.0(@jest/globals@29.7.0)(@ton/core@0.63.1(@ton/crypto@3.3.0))
@@ -2854,8 +2854,8 @@ packages:
   '@ton/crypto@3.3.0':
     resolution: {integrity: sha512-/A6CYGgA/H36OZ9BbTaGerKtzWp50rg67ZCH2oIjV1NcrBaCK9Z343M+CxedvM7Haf3f/Ee9EhxyeTp0GKMUpA==}
 
-  '@ton/sandbox@0.41.0':
-    resolution: {integrity: sha512-+WRWiHfm62xQebVt6BvLb2UhVphpBHCwSby8R5vP9llzdVck+XEs+p4csIkZBh6gRQsy1Xomzh1PpgZS5XVE3A==}
+  '@ton/sandbox@0.42.0':
+    resolution: {integrity: sha512-OOqjNalZNkjnnilFC/KJTCz9sBoJxLskhi4O6t+ugoMemIlJMtBgzoSRD/WVv+zmrqAMxs0nvc7SJs2lOvsFkA==}
     peerDependencies:
       '@ton-community/func-js': '>=0.10.0'
       '@ton/core': '>=0.61.0'
@@ -6800,6 +6800,7 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   uuid@9.0.1:
@@ -10088,7 +10089,7 @@ snapshots:
       jssha: 3.2.0
       tweetnacl: 1.0.3
 
-  '@ton/sandbox@0.41.0(@ton-community/func-js@0.11.0)(@ton/core@0.63.1(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(@ton/test-utils@0.12.0(@jest/globals@29.7.0)(@ton/core@0.63.1(@ton/crypto@3.3.0)))(jest@29.7.0(@types/node@22.14.0)(node-notifier@10.0.1))':
+  '@ton/sandbox@0.42.0(@ton-community/func-js@0.11.0)(@ton/core@0.63.1(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)(@ton/test-utils@0.12.0(@jest/globals@29.7.0)(@ton/core@0.63.1(@ton/crypto@3.3.0)))(jest@29.7.0(@types/node@22.14.0)(node-notifier@10.0.1))':
     dependencies:
       '@ton-community/func-js': 0.11.0
       '@ton/core': 0.63.1(@ton/crypto@3.3.0)

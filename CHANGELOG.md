@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.8.0] - 2026-05-07
+
+### Minor Changes
+
+- Updated @ton/sandbox to support new network config
+
+### Patch Changes
+
+- 87d7796: chore: Updated @ton/ dependencies
+- 06e8511: Added expiremental feature to install plugin for w5r1
+- 06e8511: Added button to reject all pending messages
+- 06e8511: Moved migrations from JS to Rust side to avoid broken migrations
+- a109f51: Added support for TonApi only mode
+- a109f51: Added support for tetra chain and signature
+
+## 0.8.0-beta.1
+
+### Minor Changes
+
+- Updated @ton/sandbox to support new network config
+
 ## 0.7.4-beta.0
 
 ### Patch Changes
