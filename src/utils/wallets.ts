@@ -8,6 +8,7 @@ import { LiteClientState, useLiteclient } from '@/store/liteClient'
 import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
 import {
   GetExternalMessageCell,
+  GetSignedInternalCell,
   ITonHighloadWalletV2,
   ITonHighloadWalletV2R2,
   ITonHighloadWalletV3,
@@ -36,7 +37,9 @@ import {
   Dictionary,
   external,
   internal,
+  loadMessageRelaxed,
   loadStateInit,
+  Message,
   OutActionSendMsg,
   SendMode,
   StateInit,
@@ -359,6 +362,11 @@ export function getWalletFromKey(
         BigInt(wallet.subwallet_id),
         key as Key
       ),
+      getSignedInternalCell: getSignedInternalCellFromTonWalletV5(
+        tonWallet,
+        BigInt(wallet.subwallet_id),
+        key as Key
+      ),
       key: encryptedData,
       id: wallet.id,
       subwalletId: BigInt(wallet.subwallet_id),
@@ -586,6 +594,72 @@ function getExternalMessageCellFromTonWalletV5(
   }
 }
 
+// Builds the signed internal-message body for TonConnect signMessage (W5 `internal_signed`
+// opcode). The wallet does not broadcast it; the dApp submits it through a relayer.
+function getSignedInternalCellFromTonWalletV5(
+  wallet: OpenedContract<WalletV5>,
+  subwalletId: bigint,
+  key: Key
+): GetSignedInternalCell {
+  return async (keyPair: KeyPair, transfers: WalletTransfer[], validUntil?: number) => {
+    if (keyPair.secretKey.length === 32) {
+      keyPair.secretKey = Buffer.concat([
+        Uint8Array.from(keyPair.secretKey),
+        Uint8Array.from(keyPair.publicKey),
+      ])
+    }
+
+    const actions = packActionsList(
+      transfers.map((m) => {
+        const msg = internal({
+          body: m.body,
+          to: m.destination,
+          value: m.amount,
+          bounce: m.bounce,
+          extracurrency: m.extraCurrency,
+        })
+
+        if (m.state) {
+          msg.init = loadStateInit(m.state.asSlice())
+        }
+        // signMessage spec requires send mode 3 (PAY_GAS_SEPARATELY + IGNORE_ERRORS)
+        return new ActionSendMsg(SendMode.PAY_GAS_SEPARATELY + SendMode.IGNORE_ERRORS, msg)
+      })
+    )
+
+    let seqno = 0
+    try {
+      seqno = await wallet.getSeqno()
+    } catch (e) {}
+
+    const expireAt = validUntil ?? Math.floor(Date.now() / 1000) + 5 * 60
+    const payload = beginCell()
+      .storeUint(Opcodes.auth_signed_internal, 32)
+      .storeUint(subwalletId, 32)
+      .storeUint(expireAt, 32)
+      .storeUint(seqno, 32)
+      .storeSlice(actions.beginParse())
+      .endCell()
+
+    const signature = await SignMessage(keyPair.secretKey, payload.hash(), key)
+    const transfer = beginCell()
+      .storeSlice(payload.beginParse())
+      .storeUint(bufferToBigInt(Buffer.from(signature)), 512)
+      .endCell()
+
+    // For gasless relaying, the signed body (auth_signed_internal opcode) must be
+    // delivered to the wallet via an internal message from a relayer contract.
+    const msg = internal({
+      to: wallet.address,
+      value: 0n,
+      body: transfer,
+      bounce: true,
+      init: wallet.init,
+    })
+    return beginCell().store(storeMessageRelaxed(msg)).endCell()
+  }
+}
+
 function getExternalMessageCellFromTonWalletV4R2(
   wallet: OpenedContract<WalletContractV4>,
   subwalletId: bigint,
@@ -743,6 +817,70 @@ export function useWalletExternalMessageCell(
       setCell(c)
     })
   }, [wallet?.id, transfers, liteClient, keyPair])
+
+  return cell
+}
+
+export const SIGN_MODE_EMULATION_VALUE = toNano('0.1')
+
+// Converts the relaxed internal message produced for signMessage into a full internal
+// message suitable for emulation, simulating the relayer attaching gas to it.
+export function wrapInternalForSignEmulation(
+  relaxedCell: Cell,
+  relayGas: bigint = SIGN_MODE_EMULATION_VALUE
+): Cell {
+  const message = loadMessageRelaxed(relaxedCell.beginParse())
+  if (message.info.type !== 'internal') {
+    throw new Error('Expected relaxed internal message for sign-mode emulation')
+  }
+
+  const fullMessage: Message = {
+    info: {
+      type: 'internal',
+      ihrDisabled: true,
+      bounce: message.info.bounce,
+      bounced: false,
+      // Dummy relayer address, the actual relayer is unknown at signing time
+      src: new Address(0, Buffer.alloc(32)),
+      dest: message.info.dest,
+      value: { coins: relayGas },
+      ihrFee: 0n,
+      forwardFee: 0n,
+      createdLt: 0n,
+      createdAt: Math.floor(Date.now() / 1000),
+    },
+    init: message.init,
+    body: message.body,
+  }
+
+  return beginCell().store(storeMessage(fullMessage)).endCell()
+}
+
+export function useWalletSignedInternalCell(
+  wallet: IWallet | undefined,
+  keyPair: KeyPair | undefined,
+  transfers: WalletTransfer[],
+  validUntil?: number
+) {
+  const [cell, setCell] = useState<Cell | undefined>()
+  const liteClient = useLiteclient()
+
+  useEffect(() => {
+    if (!keyPair || !wallet?.getSignedInternalCell) {
+      setCell(undefined)
+      return
+    }
+
+    wallet
+      .getSignedInternalCell(keyPair, transfers, validUntil)
+      .then((c) => {
+        setCell(c)
+      })
+      .catch((e) => {
+        console.error('error building signed internal cell', e)
+        setCell(undefined)
+      })
+  }, [wallet?.id, transfers, liteClient, keyPair, validUntil])
 
   return cell
 }

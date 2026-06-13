@@ -1,6 +1,7 @@
 import { WalletTransfer } from '@/contracts/utils/HighloadWalletTypes'
 import {
   TonConnectMessageSign,
+  TonConnectMessageSignMessage,
   TonConnectMessageTransaction,
   TonConnectMessageAddPlugin,
   changeConnectMessageStatus,
@@ -101,6 +102,57 @@ export async function RejectTonConnectMessageTransaction({
   session,
 }: {
   message: TonConnectMessageTransaction | ImmutableObject<TonConnectMessageTransaction>
+  session?: TonConnectSession | ImmutableObject<TonConnectSession>
+}) {
+  if (session) {
+    const msg: SendTransactionRpcResponseError = {
+      id: message.connect_event_id.toString(),
+      error: {
+        code: SEND_TRANSACTION_ERROR_CODES.USER_REJECTS_ERROR,
+        message: 'User rejected',
+      },
+    }
+
+    await sendTonConnectMessage(msg, session?.secretKey || Buffer.from(''), session?.userId || '')
+  }
+
+  await changeConnectMessageStatus(message.id, ConnectMessageStatus.REJECTED)
+}
+
+// TonConnect v3 signMessage response (not present in @tonconnect/protocol 2.x typings)
+
+export async function ApproveTonConnectMessageSignMessage({
+  signedCell,
+  connectMessage,
+  session,
+}: {
+  signedCell: Cell
+  connectMessage: TonConnectMessageSignMessage | ImmutableObject<TonConnectMessageSignMessage>
+  session?: TonConnectSession | ImmutableObject<TonConnectSession>
+}) {
+  if (session) {
+    const msg = {
+      id: connectMessage.connect_event_id.toString(),
+      result: {
+        internalBoc: signedCell.toBoc().toString('base64'),
+      },
+    }
+
+    await sendTonConnectMessage(
+      msg as unknown as WalletMessage,
+      session?.secretKey || Buffer.from(''),
+      session?.userId || ''
+    )
+  }
+
+  await changeConnectMessageStatus(connectMessage.id, ConnectMessageStatus.APPROVED, signedCell)
+}
+
+export async function RejectTonConnectMessageSignMessage({
+  message,
+  session,
+}: {
+  message: TonConnectMessageSignMessage | ImmutableObject<TonConnectMessageSignMessage>
   session?: TonConnectSession | ImmutableObject<TonConnectSession>
 }) {
   if (session) {

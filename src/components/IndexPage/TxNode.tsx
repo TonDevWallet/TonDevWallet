@@ -40,8 +40,11 @@ export const TxNode = memo(({ data }: { data: TxNodeData; id: string }) => {
 
   const tx = data.tx
   const { txAddress, rootAddress, jettonOwnerAddress, addressColor } = useMemo(() => {
-    const txAddress = new Address(0, bigIntToBuffer(tx.address))
-    const rootAddress = new Address(0, bigIntToBuffer(data.rootTx.address))
+    const txAddress = new Address(0, tx.address ? bigIntToBuffer(tx.address) : Buffer.alloc(32))
+    const rootAddress = new Address(
+      0,
+      data.rootTx.address ? bigIntToBuffer(data.rootTx.address) : Buffer.alloc(32)
+    )
     const jettonOwnerAddress = tx.jettonData?.owner
 
     const addressColor = getAddressColor(jettonOwnerAddress || txAddress, data.addresses)

@@ -2,7 +2,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '../ui/button'
 import { useMessagesState } from '@/store/connectMessages'
-import { RejectTonConnectMessageSign, RejectTonConnectMessageTransaction } from '@/utils/tonConnect'
+import {
+  RejectTonConnectMessageSign,
+  RejectTonConnectMessageSignMessage,
+  RejectTonConnectMessageTransaction,
+} from '@/utils/tonConnect'
 
 interface RejectMessagesProps {
   label?: string
@@ -26,6 +30,10 @@ export function RejectMessages({
         })
       } else if (s.message_type === 'sign') {
         RejectTonConnectMessageSign({
+          message: s,
+        })
+      } else if (s.message_type === 'signMessage') {
+        RejectTonConnectMessageSignMessage({
           message: s,
         })
       }

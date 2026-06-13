@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { memo, useCallback, useEffect, useRef } from 'react'
 import {
   Controls,
   Background,
@@ -9,6 +9,8 @@ import {
   Edge,
   ReactFlowInstance,
   ReactFlow,
+  Handle,
+  Position,
 } from '@xyflow/react'
 import ELK from 'elkjs/lib/elk.bundled'
 
@@ -19,6 +21,7 @@ import { ParsedTransaction } from '@/utils/ManagedBlockchain'
 import { Address } from '@ton/core'
 import { bigIntToBuffer } from '@/utils/ton'
 import { checkForJettonPayload } from '@/utils/jettonPayload'
+import { formatUnits } from '@/utils/units'
 
 export type GraphTx = ParsedTransaction & { id: number }
 
@@ -29,13 +32,43 @@ export interface TxNodeData {
   addresses: string[] // list of all addresses in the trace
 }
 
+export interface OriginNodeData {
+  amount: bigint
+  src: Address | undefined
+}
+
+// Node representing the external originator (e.g. relayer for signMessage emulation)
+// that delivers the first internal message with attached gas.
+const OriginNode = memo(({ data }: { data: OriginNodeData }) => {
+  return (
+    <div className="relative p-4 rounded-lg border-2 border-dashed border-amber-500/70 bg-amber-950/90 text-amber-100 shadow-lg">
+      <div className="font-medium mb-1">Relayer (emulated)</div>
+      <div className="text-xs text-amber-100/70 mb-2">
+        Assumed sender delivering the signed message with gas
+      </div>
+      <div className="text-sm font-medium">{formatUnits(data.amount, 9)} TON</div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        isConnectable={false}
+        draggable={false}
+        className="w-3 h-3 bg-secondary border-2 border-background"
+        id="a"
+      />
+    </div>
+  )
+})
+
 const nodeTypes = {
   tx: TxNode,
+  origin: OriginNode,
 }
 
 const edgeTypes = {
   tx: TxEdge,
 }
+
+const ORIGIN_NODE_ID = 'origin'
 
 export interface MessageFlowProps {
   transactions: ParsedTransaction[] | undefined
@@ -60,7 +93,10 @@ export function MessageFlow({ transactions: _txes }: MessageFlowProps) {
     const transactions = _txes as GraphTx[]
     for (let i = 0; i < transactions?.length; i++) {
       transactions[i].id = i
-      addressesSet.add(new Address(0, bigIntToBuffer(transactions[i].address)).toRawString())
+      const address = transactions[i].address
+      addressesSet.add(
+        new Address(0, address ? bigIntToBuffer(address) : Buffer.alloc(32)).toRawString()
+      )
     }
 
     const addresses = [...addressesSet]
@@ -174,6 +210,34 @@ export function MessageFlow({ transactions: _txes }: MessageFlowProps) {
             },
             type: 'tx',
           })
+        }
+
+        // If the root transaction was triggered by an internal message (signMessage
+        // emulation), add a synthetic node for the originator that carries the gas.
+        const rootTx = transactions.find((t) => !t.parent) || transactions[0]
+        const rootInMessage = rootTx?.inMessage
+        if (rootInMessage?.info.type === 'internal') {
+          const rootNode = nodes.find((n) => n.id === rootTx.id.toString())
+          if (rootNode) {
+            nodes.push({
+              id: ORIGIN_NODE_ID,
+              position: { x: rootNode.position.x - 500, y: rootNode.position.y },
+              data: {
+                amount: rootInMessage.info.value.coins,
+                src: rootInMessage.info.src instanceof Address ? rootInMessage.info.src : undefined,
+              },
+              style: {
+                width: 300,
+              },
+              type: 'origin',
+            })
+            edges.push({
+              id: `edge-${ORIGIN_NODE_ID}-${rootTx.id}`,
+              source: ORIGIN_NODE_ID,
+              target: rootTx.id.toString(),
+              label: `${formatUnits(rootInMessage.info.value.coins, 9)} TON`,
+            })
+          }
         }
 
         setNodes(nodes as any)

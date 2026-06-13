@@ -12,7 +12,9 @@ import {
   ConnectRequest,
   DisconnectRpcRequest,
   hexToByteArray,
+  SEND_TRANSACTION_ERROR_CODES,
   SendTransactionRpcRequest,
+  SendTransactionRpcResponseError,
   SessionCrypto,
   SignDataPayload,
   SignDataRpcRequest,
@@ -29,6 +31,7 @@ import {
   ApproveTonConnectMessageTransaction,
   bridgeUrl,
   GetTransfersFromTCMessage,
+  sendTonConnectMessage,
 } from '@/utils/tonConnect'
 import { ConnectMessageTransactionMessage } from '@/types/connect'
 import { secretKeyToED25519, secretKeyToX25519 } from '@/utils/ed25519'
@@ -36,6 +39,13 @@ import { useNavigate } from 'react-router-dom'
 import { listen } from '@tauri-apps/api/event'
 import { detectW5PluginInstallation } from '@/utils/detectW5Plugin'
 const appWindow = getCurrentWebviewWindow()
+
+// TonConnect v3 signMessage request (not present in @tonconnect/protocol 2.x typings)
+interface SignMessageRpcRequest {
+  method: 'signMessage'
+  params: [string] // JSON string of the same shape as sendTransaction
+  id: string
+}
 
 export function TonConnectListener() {
   const sessions = useTonConnectSessions()
@@ -161,13 +171,16 @@ export function TonConnectListener() {
 
       sse.addEventListener('message', async (e) => {
         const bridgeIncomingMessage = JSON.parse(e.data)
-        const walletMessage: SendTransactionRpcRequest | DisconnectRpcRequest | SignDataRpcRequest =
-          JSON.parse(
-            session.decrypt(
-              Base64.decode(bridgeIncomingMessage.message).toUint8Array(),
-              hexToByteArray(bridgeIncomingMessage.from)
-            )
+        const walletMessage:
+          | SendTransactionRpcRequest
+          | DisconnectRpcRequest
+          | SignDataRpcRequest
+          | SignMessageRpcRequest = JSON.parse(
+          session.decrypt(
+            Base64.decode(bridgeIncomingMessage.message).toUint8Array(),
+            hexToByteArray(bridgeIncomingMessage.from)
           )
+        )
         console.log('wallet message', walletMessage)
 
         if (walletMessage.method === 'disconnect') {
@@ -189,6 +202,16 @@ export function TonConnectListener() {
 
         if (walletMessage.method === 'signData') {
           await handleSignDataRequest({
+            walletMessage,
+            session: s.get({ noproxy: true }),
+            eventData: e,
+            liteClient,
+          })
+          return
+        }
+
+        if (walletMessage.method === 'signMessage') {
+          await handleSignMessageRequest({
             walletMessage,
             session: s.get({ noproxy: true }),
             eventData: e,
@@ -253,6 +276,83 @@ async function handleSignDataRequest({
     updateSessionEventId(session.id, parseInt(eventData.lastEventId))
   } catch (e) {
     console.log('Error during handling of sign data request', e)
+  }
+}
+
+async function handleSignMessageRequest({
+  walletMessage,
+  session,
+  eventData,
+  liteClient,
+}: {
+  walletMessage: SignMessageRpcRequest
+  session: TonConnectSession
+  eventData: { lastEventId: string }
+  liteClient: LiteClient
+}) {
+  try {
+    const info = JSON.parse(walletMessage.params[0]) as {
+      messages?: ConnectMessageTransactionMessage[]
+      items?: unknown[]
+      valid_until: number
+    }
+
+    await updateSessionEventId(session.id, parseInt(eventData.lastEventId))
+
+    // Structured items are not supported, only raw messages
+    if (!info.messages || info.items) {
+      const msg: SendTransactionRpcResponseError = {
+        id: walletMessage.id,
+        error: {
+          code: SEND_TRANSACTION_ERROR_CODES.BAD_REQUEST_ERROR,
+          message: 'Only raw messages are supported',
+        },
+      }
+      await sendTonConnectMessage(msg, session.secretKey, session.userId)
+      return
+    }
+
+    let walletAddress: string | undefined
+    const keys = getWalletListState()
+    const key = keys.find((k) => k.id.get() === session.keyId)
+    if (key) {
+      const wallet = key.wallets.get()?.find((w) => w.id === session.walletId)
+      if (wallet) {
+        const tonWallet = getWalletFromKey(liteClient, key.get(), wallet)
+        walletAddress = tonWallet?.address.toRawString()
+
+        // signMessage requires building a signed internal message, which is wallet specific
+        if (!tonWallet?.getSignedInternalCell) {
+          const msg: SendTransactionRpcResponseError = {
+            id: walletMessage.id,
+            error: {
+              code: SEND_TRANSACTION_ERROR_CODES.METHOD_NOT_SUPPORTED,
+              message: `signMessage is not supported for ${wallet.type} wallets`,
+            },
+          }
+          await sendTonConnectMessage(msg, session.secretKey, session.userId)
+          return
+        }
+      }
+    }
+
+    await addConnectMessage({
+      message_type: 'signMessage',
+      connect_event_id: parseInt(walletMessage.id),
+      connect_session_id: session.id,
+      payload: {
+        messages: info.messages,
+        valid_until: info.valid_until,
+      },
+      key_id: session.keyId,
+      wallet_id: session.walletId,
+      status: 0,
+      wallet_address: walletAddress,
+    })
+    appWindow.unminimize()
+    appWindow.setFocus()
+  } catch (e) {
+    console.log('Error during handling of sign message request', e)
   }
 }
 

@@ -70,7 +70,7 @@ export function useMessagesHistory(
           payload: m.payload ? JSON.parse(m.payload) : undefined,
           message_type: m.message_type,
           sign_payload: m.sign_payload ? JSON.parse(m.sign_payload) : undefined,
-        }
+        } as TonConnectMessageRecord
       })
 
       setMessages(transformedMessages)
