@@ -28,7 +28,7 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
   const sessions = useTonConnectSessions()
 
   const totalAmountOut =
-    (connectMessage.message_type === 'tx' &&
+    ((connectMessage.message_type === 'tx' || connectMessage.message_type === 'signMessage') &&
       connectMessage?.payload?.messages?.reduce((acc, c) => acc + BigInt(c.amount), 0n)) ||
     0n
   const amountOut = formatUnits(totalAmountOut, 9)
@@ -174,7 +174,12 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
         }
       </div>
 
-      {connectMessage?.message_type === 'tx' && (
+      {connectMessage?.message_type === 'signMessage' && (
+        <div className="mt-2 text-amber-500">Signed message (not broadcasted by wallet)</div>
+      )}
+
+      {(connectMessage?.message_type === 'tx' ||
+        connectMessage?.message_type === 'signMessage') && (
         <div className="flex mt-4">
           <div>Messages count:&nbsp;</div>
           <div className="break-words break-all">
@@ -183,7 +188,8 @@ export const MessageHistoryRow = memo(function MessageHistoryRow({
         </div>
       )}
 
-      {connectMessage?.message_type === 'tx' && (
+      {(connectMessage?.message_type === 'tx' ||
+        connectMessage?.message_type === 'signMessage') && (
         <div className="flex flex-col gap-4">
           <p className="mt-4">Messages:</p>
 

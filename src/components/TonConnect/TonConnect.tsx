@@ -280,6 +280,16 @@ export async function sendTonConnectStartMessage(
             name: 'SignData',
             types: ['text', 'binary', 'cell'],
           },
+          // signMessage (TonConnect v3): sign without broadcasting, v5R1 only
+          ...(wallet.type === 'v5R1'
+            ? [
+                {
+                  name: 'SignMessage',
+                  maxMessages: 4,
+                  extraCurrencySupported: true,
+                } as any,
+              ]
+            : []),
         ],
       },
       items: [

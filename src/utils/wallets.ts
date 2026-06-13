@@ -8,6 +8,7 @@ import { LiteClientState, useLiteclient } from '@/store/liteClient'
 import { useSelectedKey, useSelectedWallet } from '@/store/walletState'
 import {
   GetExternalMessageCell,
+  GetSignedInternalCell,
   ITonHighloadWalletV2,
   ITonHighloadWalletV2R2,
   ITonHighloadWalletV3,
@@ -359,6 +360,11 @@ export function getWalletFromKey(
         BigInt(wallet.subwallet_id),
         key as Key
       ),
+      getSignedInternalCell: getSignedInternalCellFromTonWalletV5(
+        tonWallet,
+        BigInt(wallet.subwallet_id),
+        key as Key
+      ),
       key: encryptedData,
       id: wallet.id,
       subwalletId: BigInt(wallet.subwallet_id),
@@ -583,6 +589,72 @@ function getExternalMessageCellFromTonWalletV5(
       body: transfer,
     })
     return beginCell().store(storeMessage(ext)).endCell()
+  }
+}
+
+// Builds the signed internal-message body for TonConnect signMessage (W5 `internal_signed`
+// opcode). The wallet does not broadcast it; the dApp submits it through a relayer.
+function getSignedInternalCellFromTonWalletV5(
+  wallet: OpenedContract<WalletV5>,
+  subwalletId: bigint,
+  key: Key
+): GetSignedInternalCell {
+  return async (keyPair: KeyPair, transfers: WalletTransfer[], validUntil?: number) => {
+    if (keyPair.secretKey.length === 32) {
+      keyPair.secretKey = Buffer.concat([
+        Uint8Array.from(keyPair.secretKey),
+        Uint8Array.from(keyPair.publicKey),
+      ])
+    }
+
+    const actions = packActionsList(
+      transfers.map((m) => {
+        const msg = internal({
+          body: m.body,
+          to: m.destination,
+          value: m.amount,
+          bounce: m.bounce,
+          extracurrency: m.extraCurrency,
+        })
+
+        if (m.state) {
+          msg.init = loadStateInit(m.state.asSlice())
+        }
+        // signMessage spec requires send mode 3 (PAY_GAS_SEPARATELY + IGNORE_ERRORS)
+        return new ActionSendMsg(SendMode.PAY_GAS_SEPARATELY + SendMode.IGNORE_ERRORS, msg)
+      })
+    )
+
+    let seqno = 0
+    try {
+      seqno = await wallet.getSeqno()
+    } catch (e) {}
+
+    const expireAt = validUntil ?? Math.floor(Date.now() / 1000) + 5 * 60
+    const payload = beginCell()
+      .storeUint(Opcodes.auth_signed_internal, 32)
+      .storeUint(subwalletId, 32)
+      .storeUint(expireAt, 32)
+      .storeUint(seqno, 32)
+      .storeSlice(actions.beginParse())
+      .endCell()
+
+    const signature = await SignMessage(keyPair.secretKey, payload.hash(), key)
+    const transfer = beginCell()
+      .storeSlice(payload.beginParse())
+      .storeUint(bufferToBigInt(Buffer.from(signature)), 512)
+      .endCell()
+
+    // For gasless relaying, the signed body (auth_signed_internal opcode) must be
+    // delivered to the wallet via an internal message from a relayer contract.
+    const msg = internal({
+      to: wallet.address,
+      value: 0n,
+      body: transfer,
+      bounce: true,
+      init: wallet.init,
+    })
+    return beginCell().store(storeMessageRelaxed(msg)).endCell()
   }
 }
 

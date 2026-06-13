@@ -32,9 +32,17 @@ export type GetExternalMessageCell = (
   transfers: WalletTransfer[]
 ) => Promise<Cell>
 
+// Builds a signed internal message (TonConnect signMessage, not broadcasted by the wallet)
+export type GetSignedInternalCell = (
+  keyPair: KeyPair,
+  transfers: WalletTransfer[],
+  validUntil?: number
+) => Promise<Cell>
+
 export interface ITonWalletBase {
   address: Address
   getExternalMessageCell: GetExternalMessageCell
+  getSignedInternalCell?: GetSignedInternalCell
   key: EncryptedWalletData
   id: number
   name?: string | null

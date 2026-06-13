@@ -13,7 +13,7 @@ export interface TonConnectMessage {
   wallet_id: number
   status: number
   message_mode?: number
-  message_type: 'tx' | 'sign' | 'addW5R1Plugin'
+  message_type: 'tx' | 'sign' | 'signMessage' | 'addW5R1Plugin'
 
   message_cell?: string
 
@@ -33,6 +33,12 @@ export type TonConnectMessageSign = TonConnectMessage & {
   sign_payload: SignDataPayload
 }
 
+// signMessage: sign a transaction-like payload without broadcasting it
+export type TonConnectMessageSignMessage = TonConnectMessage & {
+  message_type: 'signMessage'
+  payload: ConnectMessageTransactionPayload
+}
+
 export type TonConnectMessageAddPlugin = TonConnectMessage & {
   message_type: 'addW5R1Plugin'
   plugin_address: string | undefined // null means addr_none (only removal, no install)
@@ -41,10 +47,11 @@ export type TonConnectMessageAddPlugin = TonConnectMessage & {
 
 export type TonConnectMessageRecord =
   | TonConnectMessageSign
+  | TonConnectMessageSignMessage
   | TonConnectMessageTransaction
   | TonConnectMessageAddPlugin
 export type FullTonConnectMessage = TonConnectMessage & {
-  message_type: 'tx' | 'sign' | 'addW5R1Plugin'
+  message_type: 'tx' | 'sign' | 'signMessage' | 'addW5R1Plugin'
   payload?: ConnectMessageTransactionPayload
   sign_payload?: SignDataPayload
   plugin_address?: string | undefined
@@ -76,6 +83,12 @@ function parseDbMessage(m: ConnectMessageTransaction): TonConnectMessageRecord {
         ...base,
         message_type: 'sign',
         sign_payload: m.sign_payload ? JSON.parse(m.sign_payload) : undefined,
+      }
+    case 'signMessage':
+      return {
+        ...base,
+        message_type: 'signMessage',
+        payload: m.payload ? JSON.parse(m.payload) : undefined,
       }
     case 'addW5R1Plugin':
       return {

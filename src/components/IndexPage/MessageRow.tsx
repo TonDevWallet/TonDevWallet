@@ -3,6 +3,7 @@ import { ImmutableObject, State } from '@hookstate/core'
 import { memo } from 'react'
 import { MessageRowTx } from './MessageRowTx'
 import { MessageRowSign } from './MessageRowSign'
+import { MessageRowSignMessage } from './MessageRowSignMessage'
 import { MessageRowAddPlugin } from './MessageRowAddPlugin'
 
 export const MessageRow = memo(function MessageRow({
@@ -15,6 +16,9 @@ export const MessageRow = memo(function MessageRow({
   }
   if (s.message_type.get() === 'sign') {
     return <MessageRowSign s={s as any} />
+  }
+  if (s.message_type.get() === 'signMessage') {
+    return <MessageRowSignMessage s={s as any} />
   }
   if (s.message_type.get() === 'addW5R1Plugin') {
     return <MessageRowAddPlugin s={s as any} />
