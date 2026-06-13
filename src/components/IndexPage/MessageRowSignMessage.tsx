@@ -8,21 +8,39 @@ import {
   GetTransfersFromTCMessage,
   RejectTonConnectMessageSignMessage,
 } from '@/utils/tonConnect'
-import { getWalletFromKey } from '@/utils/wallets'
+import {
+  getWalletFromKey,
+  SIGN_MODE_EMULATION_VALUE,
+  useWalletSignedInternalCell,
+  wrapInternalForSignEmulation,
+} from '@/utils/wallets'
 import { ImmutableObject, State } from '@hookstate/core'
-import { memo, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
+import { KeyPair } from '@ton/crypto'
 import { LiteClient } from 'ton-lite-client'
-import { SendMode } from '@ton/core'
+import { Address, SendMode } from '@ton/core'
 import { AddressRow } from '../AddressRow'
 import { Block } from '../ui/Block'
 import { BlueButton } from '../ui/BlueButton'
+import { Input } from '../ui/input'
 import { cn } from '@/utils/cn'
+import { useEmulatedTxInfo } from '@/hooks/useEmulatedTxInfo'
 import { secretKeyToED25519 } from '@/utils/ed25519'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { formatUnits } from '@/utils/units'
+import { bigIntToBuffer } from '@/utils/ton'
+import { formatUnits, parseUnits } from '@/utils/units'
+import { MessageEmulationResult } from './MessageRow/MessageEmulationResult'
+import { JettonFlow } from './MessageRow/JettonFlow'
+import { Key } from '@/types/Key'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import type { MoneyFlow } from '@/utils/toncenterEmulation'
+
+const emptyKeyPair: KeyPair = {
+  publicKey: Buffer.alloc(32),
+  secretKey: Buffer.alloc(64),
+}
 
 export const MessageRowSignMessage = memo(function MessageRowSignMessage({
   s,
@@ -34,6 +52,7 @@ export const MessageRowSignMessage = memo(function MessageRowSignMessage({
   const sessions = useTonConnectSessions()
   const password = usePassword().password.get()
   const [isSigning, setIsSigning] = useState(false)
+  const [relayGasInput, setRelayGasInput] = useState(formatUnits(SIGN_MODE_EMULATION_VALUE, 9))
 
   const key = useMemo(() => {
     return keys.find((k) => k.id.get() === s.key_id.get())
@@ -78,10 +97,6 @@ export const MessageRowSignMessage = memo(function MessageRowSignMessage({
     }
   }, [s.payload.messages])
 
-  const totalAmount = useMemo(() => {
-    return transfers.reduce((acc, t) => acc + t.amount, 0n)
-  }, [transfers])
-
   const validUntil = useMemo(() => {
     if (!s.payload?.valid_until?.get()) {
       return undefined
@@ -95,6 +110,119 @@ export const MessageRowSignMessage = memo(function MessageRowSignMessage({
     }
     return validUntil > new Date() && validUntil < new Date(Date.now() + 5 * 60 * 1000)
   }, [validUntil])
+
+  const relayGas = useMemo(() => {
+    try {
+      const parsed = parseUnits(relayGasInput || '0', 9)
+      return parsed > 0n ? parsed : SIGN_MODE_EMULATION_VALUE
+    } catch (e) {
+      return SIGN_MODE_EMULATION_VALUE
+    }
+  }, [relayGasInput])
+
+  // Signed internal (relaxed) message that will be returned to the dApp
+  const signedInternalCell = useWalletSignedInternalCell(
+    tonWallet,
+    password && walletKeyPair ? walletKeyPair : emptyKeyPair,
+    transfers,
+    s.payload?.valid_until?.get()
+  )
+
+  // For emulation, wrap into a full internal message as if a relayer delivered it with gas
+  const emulationCell = useMemo(() => {
+    if (!signedInternalCell) {
+      return undefined
+    }
+    try {
+      console.log('Wrapping internal for sign emulation', relayGas)
+      return wrapInternalForSignEmulation(signedInternalCell, relayGas)
+    } catch (e) {
+      console.error('error wrapping internal for sign emulation', e)
+      return undefined
+    }
+  }, [signedInternalCell, relayGas])
+
+  const { response: txInfo, isLoading } = useEmulatedTxInfo(emulationCell, !walletKeyPair)
+
+  const [moneyFlow, setMoneyFlow] = useState<MoneyFlow>({
+    outputs: 0n,
+    inputs: 0n,
+    jettonTransfers: [],
+    ourAddress: null,
+  })
+  useEffect(() => {
+    async function getMoneyFlow() {
+      if (!txInfo || !txInfo.transactions || txInfo.transactions.length === 0) {
+        setMoneyFlow({
+          outputs: 0n,
+          inputs: 0n,
+          jettonTransfers: [],
+          ourAddress: null,
+        })
+        return
+      }
+
+      const ourTxes = txInfo.transactions.filter(
+        (t) => t.address === txInfo.transactions[0].address
+      )
+
+      const messagesFrom = ourTxes.flatMap((t) => t.outMessages.values())
+      const messagesTo = ourTxes.flatMap((t) => t.inMessage)
+
+      const outputs = messagesFrom.reduce((acc, m) => {
+        if (m.info.type === 'internal') {
+          return acc + m.info.value.coins
+        }
+        return acc + 0n
+      }, 0n)
+
+      const inputs = messagesTo.reduce((acc, m) => {
+        if (m?.info?.type === 'internal') {
+          return acc + m?.info?.value.coins
+        }
+        return acc + 0n
+      }, 0n)
+
+      const jettonTransfers: {
+        from: Address
+        to: Address
+        jetton: Address | null
+        amount: bigint
+      }[] = []
+      for (const t of txInfo.transactions) {
+        if (!t.inMessage?.info?.src || !(t.inMessage?.info?.src instanceof Address)) {
+          continue
+        }
+
+        if (t.parsed?.internal !== 'jetton_transfer') {
+          continue
+        }
+
+        const from = t.inMessage.info.src
+        const to = t.parsed.data.destination instanceof Address ? t.parsed.data.destination : null
+        if (!to) {
+          continue
+        }
+        const jettonAmount = t.parsed.data.amount
+        const jettonAddress = t.jettonData?.jettonAddress || null
+
+        jettonTransfers.push({
+          from,
+          to,
+          jetton: jettonAddress,
+          amount: jettonAmount,
+        })
+      }
+
+      setMoneyFlow({
+        outputs,
+        inputs,
+        jettonTransfers,
+        ourAddress: new Address(0, bigIntToBuffer(txInfo.transactions[0].address)),
+      })
+    }
+    getMoneyFlow()
+  }, [txInfo])
 
   const rejectConnectMessage = () => {
     RejectTonConnectMessageSignMessage({
@@ -194,18 +322,45 @@ export const MessageRowSignMessage = memo(function MessageRowSignMessage({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1 my-2">
-        {transfers.map((t, i) => (
-          <div className="flex items-center gap-2" key={i}>
-            <div className="w-40 shrink-0">Send {formatUnits(t.amount, 9)} TON to:</div>
-            <AddressRow address={t.destination} />
-          </div>
-        ))}
+      <div className="flex items-center gap-2 my-2">
+        <div className="flex items-center gap-1 shrink-0">
+          <div>Relay gas (TON):</div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger className="cursor-pointer">
+                <FontAwesomeIcon icon={faInfoCircle} />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  Amount of TON the relayer is assumed to attach when delivering this message to
+                  your wallet. Used only for the emulation preview below, it does not affect the
+                  signed message.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <Input
+          className="w-32"
+          value={relayGasInput}
+          onChange={(e) => setRelayGasInput(e.target.value)}
+        />
+      </div>
+
+      <div className="flex gap-4">
         <div className="flex items-center gap-2">
-          <div>Total:</div>
-          <div className="break-words break-all">{formatUnits(totalAmount, 9)} TON</div>
+          <div>Ton Flow:</div>
+          <div className="break-words break-all">
+            {formatUnits(moneyFlow.outputs, 9)} TON → {formatUnits(moneyFlow.inputs, 9)} TON
+          </div>
+          <div>Diff: {formatUnits(moneyFlow.inputs - moneyFlow.outputs, 9)} TON</div>
         </div>
       </div>
+      <JettonFlow
+        jettonTransfers={moneyFlow.jettonTransfers}
+        ourAddress={moneyFlow.ourAddress}
+        tonDifference={moneyFlow.inputs - moneyFlow.outputs}
+      />
 
       {tonWallet && !tonWallet.getSignedInternalCell && (
         <div className="text-red-500">
@@ -236,6 +391,15 @@ export const MessageRowSignMessage = memo(function MessageRowSignMessage({
           </BlueButton>
         </>
       )}
+
+      <MessageEmulationResult
+        txInfo={txInfo}
+        isLoading={isLoading}
+        wallet={tonWallet}
+        selectedKey={key.get({ noproxy: true }) as Key}
+        unsignedExternal={undefined}
+        signedExternal={undefined}
+      />
     </Block>
   )
 })

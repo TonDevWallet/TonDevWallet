@@ -252,6 +252,13 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
       return
     }
 
+    // Reset state from any previous emulation, the ref is only meant to survive
+    // library-fetch restarts within a single emulation run.
+    txesRef.current = []
+    setResponse(undefined)
+    setProgress({ done: 0, total: 0 })
+    setIsLoading(true)
+
     let isStopped = false
     const blockchainClient = liteClient as BlockchainClient
 
@@ -287,7 +294,7 @@ export function useEmulatedTxInfo(cell: Cell | undefined, ignoreChecksig: boolea
         }
         ;(tx as ParsedTransaction).shards = shards
 
-        const txAddress = new Address(0, bigIntToBuffer(tx.address))
+        const txAddress = new Address(0, tx.address ? bigIntToBuffer(tx.address) : Buffer.alloc(32))
         const shard = Object.keys(shards?.shards[0] || {}).find((shard) =>
           isSameShard(txAddress, BigInt.asUintN(64, BigInt(shard)))
         )

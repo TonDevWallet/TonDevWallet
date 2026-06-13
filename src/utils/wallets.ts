@@ -37,7 +37,9 @@ import {
   Dictionary,
   external,
   internal,
+  loadMessageRelaxed,
   loadStateInit,
+  Message,
   OutActionSendMsg,
   SendMode,
   StateInit,
@@ -815,6 +817,70 @@ export function useWalletExternalMessageCell(
       setCell(c)
     })
   }, [wallet?.id, transfers, liteClient, keyPair])
+
+  return cell
+}
+
+export const SIGN_MODE_EMULATION_VALUE = toNano('0.1')
+
+// Converts the relaxed internal message produced for signMessage into a full internal
+// message suitable for emulation, simulating the relayer attaching gas to it.
+export function wrapInternalForSignEmulation(
+  relaxedCell: Cell,
+  relayGas: bigint = SIGN_MODE_EMULATION_VALUE
+): Cell {
+  const message = loadMessageRelaxed(relaxedCell.beginParse())
+  if (message.info.type !== 'internal') {
+    throw new Error('Expected relaxed internal message for sign-mode emulation')
+  }
+
+  const fullMessage: Message = {
+    info: {
+      type: 'internal',
+      ihrDisabled: true,
+      bounce: message.info.bounce,
+      bounced: false,
+      // Dummy relayer address, the actual relayer is unknown at signing time
+      src: new Address(0, Buffer.alloc(32)),
+      dest: message.info.dest,
+      value: { coins: relayGas },
+      ihrFee: 0n,
+      forwardFee: 0n,
+      createdLt: 0n,
+      createdAt: Math.floor(Date.now() / 1000),
+    },
+    init: message.init,
+    body: message.body,
+  }
+
+  return beginCell().store(storeMessage(fullMessage)).endCell()
+}
+
+export function useWalletSignedInternalCell(
+  wallet: IWallet | undefined,
+  keyPair: KeyPair | undefined,
+  transfers: WalletTransfer[],
+  validUntil?: number
+) {
+  const [cell, setCell] = useState<Cell | undefined>()
+  const liteClient = useLiteclient()
+
+  useEffect(() => {
+    if (!keyPair || !wallet?.getSignedInternalCell) {
+      setCell(undefined)
+      return
+    }
+
+    wallet
+      .getSignedInternalCell(keyPair, transfers, validUntil)
+      .then((c) => {
+        setCell(c)
+      })
+      .catch((e) => {
+        console.error('error building signed internal cell', e)
+        setCell(undefined)
+      })
+  }, [wallet?.id, transfers, liteClient, keyPair, validUntil])
 
   return cell
 }
